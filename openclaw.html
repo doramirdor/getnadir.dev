@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NadirClaw + OpenClaw - Cut Your Autonomous Agent Costs by 50-70%</title>
+    <meta name="description" content="OpenClaw agents burn tokens 24/7. NadirClaw routes simple heartbeats to Flash and complex coding to Opus automatically. Save 50-70% on your multi-agent setup.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #ffffff;
+            --bg-subtle: #fafafa;
+            --bg-hover: #f5f5f5;
+            --text: #0a0a0a;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border: #e5e5e5;
+            --accent: #0066ff;
+            --accent-hover: #0052cc;
+            --success: #00a86b;
+            --code-bg: #f8f8f8;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+        
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        
+        .logo {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+        }
+        
+        code, .mono { font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+        
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--accent); }
+        
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .github-link:hover { border-color: var(--text); background: var(--bg-subtle); }
+        
+        .hero {
+            padding: 100px 0 60px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+        
+        section { padding: 100px 0; }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+        }
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .pain-points {
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .pain-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 48px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .pain-item h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .pain-item p { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 48px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .step-number {
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .step h3 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+        .step p { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+        
+        .code-section {
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .code-wrapper { max-width: 720px; margin: 0 auto; }
+        
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+        .code-label {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .code-line { display: block; }
+        .highlight {
+            background: rgba(0, 102, 255, 0.08);
+            margin: 0 -20px;
+            padding: 0 20px;
+        }
+        
+        /* Scenario Table */
+        .scenario { max-width: 900px; margin: 0 auto; }
+        
+        .scenario-intro {
+            text-align: center;
+            margin-bottom: 48px;
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        thead { background: var(--bg-subtle); }
+        th {
+            padding: 14px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 14px 20px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: var(--bg-subtle); }
+        
+        .savings-row td {
+            font-weight: 700;
+            background: rgba(0, 168, 107, 0.05);
+        }
+        
+        .savings-badge {
+            display: inline-block;
+            background: rgba(0, 168, 107, 0.12);
+            color: var(--success);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        /* Sim Terminal */
+        .sim-terminal {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 14px;
+            text-align: left;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+        .sim-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-subtle);
+        }
+        .sim-dots { display: flex; gap: 6px; }
+        .sim-dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+        .sim-title { font-size: 12px; color: var(--text-tertiary); }
+        .sim-body { padding: 20px; }
+        .sim-line { margin-bottom: 4px; line-height: 1.8; }
+        .sim-dim { color: var(--text-tertiary); }
+        .sim-green { color: var(--success); }
+        .sim-accent { color: var(--accent); }
+        .sim-spacer { height: 16px; }
+        .sim-request {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            background: var(--bg-subtle);
+        }
+        .sim-req-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .sim-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sim-badge-simple { background: rgba(0, 168, 107, 0.1); color: var(--success); }
+        .sim-badge-complex { background: rgba(0, 102, 255, 0.1); color: var(--accent); }
+        .sim-arrow { color: var(--text-tertiary); }
+        .sim-model { font-weight: 600; color: var(--text); }
+        .sim-cost { margin-left: auto; font-weight: 500; font-size: 13px; }
+        .sim-agent-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            min-width: 80px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-github { background: #0a0a0a; color: white; }
+        .btn-github:hover { background: #333; }
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--bg-hover); border-color: var(--text-secondary); }
+        
+        .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        
+        footer {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        .footer-links { display: flex; gap: 32px; flex-wrap: wrap; }
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+        .footer-links a:hover { color: var(--text); }
+        .footer-note { color: var(--text-tertiary); font-size: 14px; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .hero { padding: 60px 0 40px; }
+            .hero h1 { font-size: 32px; }
+            .section-header h2 { font-size: 28px; }
+            .pain-grid { grid-template-columns: 1fr; gap: 32px; }
+            .steps { grid-template-columns: 1fr; gap: 32px; }
+            section { padding: 60px 0; }
+            table { font-size: 12px; }
+            th, td { padding: 10px 12px; }
+            .nav-links { gap: 16px; }
+            .sim-terminal { font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">nadirclaw</a>
+                <div class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/openclaw" class="active">OpenClaw</a>
+                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Your autonomous agents are burning money while you sleep</h1>
+                <p class="subtitle">
+                    OpenClaw runs agents 24/7 — heartbeats, brain ticks, nightly builds. Most of those calls are simple status checks hitting <code>opus-4</code>. NadirClaw routes them to <code>flash</code> automatically. Save 50-70%.
+                </p>
+                <div class="cta-group">
+                    <a href="#setup" class="btn btn-github">Set Up in 5 Minutes</a>
+                    <a href="#example" class="btn btn-secondary">See the Math</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="pain-points">
+            <div class="container">
+                <div class="section-header">
+                    <h2>The autonomous agent cost problem</h2>
+                    <p>OpenClaw makes it easy to run agents around the clock. That's the point. But it also means your bill never stops growing.</p>
+                </div>
+                <div class="pain-grid">
+                    <div class="pain-item">
+                        <h3>Heartbeats hit your expensive model</h3>
+                        <p>Every agent checks in 6x/day. That's "I'm alive, nothing to report" routed to <code>opus-4</code> at $15/1M input tokens. It should cost $0.001, not $0.15.</p>
+                    </div>
+                    <div class="pain-item">
+                        <h3>Brain ticks are mostly idle</h3>
+                        <p>Hourly brain ticks scan for work. 90% of the time: "nothing new." But each tick still burns a full Opus call because that's the configured model.</p>
+                    </div>
+                    <div class="pain-item">
+                        <h3>It scales linearly with agents</h3>
+                        <p>5 agents × 6 heartbeats × 24 brain ticks = 144 calls/day before any real work happens. At Opus prices, that's $20+/day in overhead alone.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="setup">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Setup: 5 minutes, 2 steps</h2>
+                    <p>NadirClaw runs locally as a proxy. Point OpenClaw at it. Done.</p>
+                </div>
+                
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">STEP 1</div>
+                        <h3>Install and start NadirClaw</h3>
+                        <p>NadirClaw runs on port 8856 and proxies to any LLM provider. The classifier runs locally — no data leaves your machine.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">STEP 2</div>
+                        <h3>Point OpenClaw at the proxy</h3>
+                        <p>One config change. OpenClaw sends all LLM calls through NadirClaw, which classifies complexity and routes to the cheapest model that can handle it.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="code-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>The config</h2>
+                    <p>Two files. Copy, paste, done.</p>
+                </div>
+                
+                <div class="code-wrapper">
+                    <div class="code-block">
+                        <div class="code-label">Terminal — Install NadirClaw</div>
+                        <pre><code><span class="code-line">pip install nadirclaw</span>
+<span class="code-line">nadirclaw serve --port 8856</span></code></pre>
+                    </div>
+                    
+                    <div class="code-block">
+                        <div class="code-label">~/.openclaw/config.yaml — Point OpenClaw at NadirClaw</div>
+                        <pre><code><span class="code-line"># OpenClaw global config</span>
+<span class="code-line">llm:</span>
+<span class="code-line highlight">  base_url: "http://localhost:8856"</span>
+<span class="code-line">  default_model: "claude-opus-4"</span>
+<span class="code-line">  api_key: "${ANTHROPIC_API_KEY}"</span></code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">nadirclaw.yaml — Route config (optional, sensible defaults work)</div>
+                        <pre><code><span class="code-line"># NadirClaw routing rules</span>
+<span class="code-line">classifier:</span>
+<span class="code-line">  model: "local"           # runs on-device, no API cost</span>
+<span class="code-line">  threshold: 0.6           # complexity score cutoff</span>
+<span class="code-line"></span>
+<span class="code-line">routes:</span>
+<span class="code-line">  simple:</span>
+<span class="code-line highlight">    - gemini-2.0-flash     # $0.10/$0.40 per 1M tokens</span>
+<span class="code-line highlight">    - claude-haiku-3.5     # $0.80/$4.00 per 1M tokens</span>
+<span class="code-line">  complex:</span>
+<span class="code-line">    - claude-opus-4         # $15/$75 per 1M tokens</span>
+<span class="code-line">    - claude-sonnet-4       # $3/$15 per 1M tokens</span>
+<span class="code-line"></span>
+<span class="code-line">fallback: claude-sonnet-4   # if classifier is unsure</span></code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="example">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Real example: 5-agent OpenClaw setup</h2>
+                    <p>A typical production setup. Let's do the math.</p>
+                </div>
+
+                <div class="scenario">
+                    <p class="scenario-intro">
+                        You're running 5 OpenClaw agents: engineering lead, PM, QA, DevOps, and a research agent. Each runs 6 dispatches/day, brain ticks every hour, plus nightly builds. Here's what a typical day looks like:
+                    </p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Task Type</th>
+                                <th>Daily Calls</th>
+                                <th>Complexity</th>
+                                <th>Without NadirClaw</th>
+                                <th>With NadirClaw</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Heartbeats</strong> (5 agents × 6/day)</td>
+                                <td>30</td>
+                                <td>Simple</td>
+                                <td>$4.50 <span class="sim-dim">(Opus)</span></td>
+                                <td class="sim-green">$0.03 <span class="sim-dim">(Flash)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Brain ticks</strong> (5 agents × 24/day)</td>
+                                <td>120</td>
+                                <td>90% Simple</td>
+                                <td>$18.00 <span class="sim-dim">(Opus)</span></td>
+                                <td class="sim-green">$2.52 <span class="sim-dim">(108 Flash + 12 Opus)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Dispatch work</strong> (coding, reviews)</td>
+                                <td>30</td>
+                                <td>Complex</td>
+                                <td>$13.50 <span class="sim-dim">(Opus)</span></td>
+                                <td>$13.50 <span class="sim-dim">(Opus — stays)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Nightly builds</strong> (5 agents)</td>
+                                <td>5</td>
+                                <td>Mixed</td>
+                                <td>$3.75 <span class="sim-dim">(Opus)</span></td>
+                                <td class="sim-green">$1.50 <span class="sim-dim">(3 Flash + 2 Opus)</span></td>
+                            </tr>
+                            <tr class="savings-row">
+                                <td><strong>Daily Total</strong></td>
+                                <td>185</td>
+                                <td></td>
+                                <td>$39.75</td>
+                                <td>$17.55</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="text-align: center; margin-top: 24px;">
+                        <div class="savings-badge">56% saved — $22.20/day → $666/month</div>
+                        <p style="margin-top: 12px; font-size: 14px; color: var(--text-tertiary);">
+                            Complex work stays on Opus. Only the simple stuff moves to Flash.<br>
+                            Quality where it matters. Savings everywhere else.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="code-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>What it looks like running</h2>
+                    <p>NadirClaw classifying OpenClaw agent traffic in real time.</p>
+                </div>
+
+                <div class="sim-terminal">
+                    <div class="sim-header">
+                        <div class="sim-dots"><span></span><span></span><span></span></div>
+                        <div class="sim-title">nadirclaw serve --port 8856</div>
+                    </div>
+                    <div class="sim-body">
+                        <div class="sim-line"><span class="sim-green">✓</span> Classifier ready <span class="sim-dim">(local model)</span></div>
+                        <div class="sim-line"><span class="sim-green">✓</span> Listening on <span class="sim-accent">localhost:8856</span></div>
+                        <div class="sim-line"><span class="sim-green">✓</span> OpenClaw agents detected: <strong>5 connected</strong></div>
+                        <div class="sim-spacer"></div>
+                        
+                        <div class="sim-request">
+                            <div class="sim-req-header">
+                                <span class="sim-agent-label">forge</span>
+                                <span class="sim-badge sim-badge-simple">simple</span>
+                                <span class="sim-dim">"session_status: idle, no tasks"</span>
+                                <span class="sim-arrow">→</span>
+                                <span class="sim-model">flash-2.0</span>
+                                <span class="sim-cost sim-green">$0.001</span>
+                            </div>
+                        </div>
+                        <div class="sim-request">
+                            <div class="sim-req-header">
+                                <span class="sim-agent-label">scout</span>
+                                <span class="sim-badge sim-badge-simple">simple</span>
+                                <span class="sim-dim">"brain tick: checking BACKLOG.md..."</span>
+                                <span class="sim-arrow">→</span>
+                                <span class="sim-model">flash-2.0</span>
+                                <span class="sim-cost sim-green">$0.001</span>
+                            </div>
+                        </div>
+                        <div class="sim-request">
+                            <div class="sim-req-header">
+                                <span class="sim-agent-label">forge</span>
+                                <span class="sim-badge sim-badge-complex">complex</span>
+                                <span class="sim-dim">"refactor auth middleware to support..."</span>
+                                <span class="sim-arrow">→</span>
+                                <span class="sim-model">opus-4</span>
+                                <span class="sim-cost">$0.450</span>
+                            </div>
+                        </div>
+                        <div class="sim-request">
+                            <div class="sim-req-header">
+                                <span class="sim-agent-label">sentinel</span>
+                                <span class="sim-badge sim-badge-simple">simple</span>
+                                <span class="sim-dim">"nightly build: all tests passing"</span>
+                                <span class="sim-arrow">→</span>
+                                <span class="sim-model">flash-2.0</span>
+                                <span class="sim-cost sim-green">$0.001</span>
+                            </div>
+                        </div>
+                        <div class="sim-request">
+                            <div class="sim-req-header">
+                                <span class="sim-agent-label">clawy</span>
+                                <span class="sim-badge sim-badge-complex">complex</span>
+                                <span class="sim-dim">"draft Q1 roadmap considering..."</span>
+                                <span class="sim-arrow">→</span>
+                                <span class="sim-model">opus-4</span>
+                                <span class="sim-cost">$0.380</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="container">
+                <div class="section-header">
+                    <h2>Start saving now</h2>
+                    <p>Takes less time than reading this page did.</p>
+                </div>
+                <div class="cta-group">
+                    <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-github">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                        Get NadirClaw
+                    </a>
+                    <a href="https://github.com/doramirdor/NadirClaw#readme" class="btn btn-secondary">Read the Docs</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="/">Home</a>
+                    <a href="https://github.com/doramirdor/NadirClaw">GitHub</a>
+                    <a href="https://github.com/doramirdor/NadirClaw/issues">Issues</a>
+                    <a href="https://github.com/doramirdor/NadirClaw/blob/main/LICENSE">MIT License</a>
+                </div>
+                <div class="footer-note">Built by developers tired of overpaying</div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
