@@ -160,17 +160,13 @@
             cursor: pointer;
         }
         
-        .btn-github {
-            background: #0a0a0a;
+        .btn-primary {
+            background: var(--accent);
             color: white;
         }
         
-        .btn-github:hover {
-            background: #333;
-        }
-        
-        .btn-github svg {
-            flex-shrink: 0;
+        .btn-primary:hover {
+            background: var(--accent-hover);
         }
         
         .btn-secondary {
@@ -731,45 +727,6 @@
                 justify-content: center;
             }
         }
-        /* Community */
-        .community-links {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .community-card {
-            padding: 24px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            text-decoration: none;
-            color: var(--text);
-            transition: all 0.15s ease;
-        }
-        
-        .community-card:hover {
-            border-color: var(--accent);
-            background: rgba(0, 102, 255, 0.02);
-        }
-        
-        .community-card-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-        
-        .community-card-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-        
-        @media (max-width: 768px) {
-            .community-links {
-                grid-template-columns: 1fr;
-            }
-        }
     </style>
 </head>
 <body>
@@ -777,11 +734,12 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">nadirclaw</div>
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <a href="/openclaw" style="color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500;">OpenClaw</a>
-                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link">
-                        <span class="star-count" id="star-count">stars</span>
-                    </a>
+                <div style="display:flex;align-items:center;gap:16px;">
+                <a href="docs.html" style="color:var(--text-secondary);text-decoration:none;font-size:14px;font-weight:500;">Docs</a>
+                <a href="https://github.com/doramirdor/NadirClaw" class="github-link">
+                    <span>★</span>
+                    <span class="star-count">240+ stars</span>
+                </a>
                 </div>
             </div>
         </div>
@@ -796,9 +754,8 @@
                 </p>
                 
                 <div class="cta-group">
-                    <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-github">
-                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-                        View on GitHub
+                    <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-primary">
+                        View on GitHub →
                     </a>
                     <a href="#quickstart" class="btn btn-secondary">
                         Quick Start
@@ -1126,37 +1083,13 @@
                 </div>
                 
                 <div class="cta-final">
-                    <a href="https://github.com/doramirdor/NadirClaw#readme" class="btn btn-github">
-                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-                        Read the docs
+                    <a href="https://github.com/doramirdor/NadirClaw#readme" class="btn btn-primary">
+                        Read the docs →
                     </a>
                 </div>
             </div>
         </section>
     </main>
-
-    <section class="community">
-        <div class="container">
-            <div class="section-header">
-                <h2>Join the community</h2>
-                <p>Questions, ideas, or just want to say hi?</p>
-            </div>
-            <div class="community-links">
-                <a href="https://github.com/doramirdor/NadirClaw/discussions" class="community-card">
-                    <div class="community-card-title">GitHub Discussions</div>
-                    <div class="community-card-desc">Ask questions, share configs, request features</div>
-                </a>
-                <a href="https://github.com/doramirdor/NadirClaw/issues" class="community-card">
-                    <div class="community-card-title">Report Issues</div>
-                    <div class="community-card-desc">Found a bug? Let us know</div>
-                </a>
-                <a href="https://dev.to/dor_amir_dbb52baafff7ca5b" class="community-card">
-                    <div class="community-card-title">Blog</div>
-                    <div class="community-card-desc">Tutorials, benchmarks, and deep dives</div>
-                </a>
-            </div>
-        </div>
-    </section>
 
     <footer>
         <div class="container">
@@ -1173,17 +1106,5 @@
             </div>
         </div>
     </footer>
-    <script>
-        fetch('https://api.github.com/repos/doramirdor/NadirClaw')
-            .then(r => r.json())
-            .then(data => {
-                if (data.stargazers_count) {
-                    const count = data.stargazers_count;
-                    const display = count >= 1000 ? (count / 1000).toFixed(1) + 'K' : count;
-                    document.getElementById('star-count').textContent = '★ ' + display + ' stars';
-                }
-            })
-            .catch(() => {});
-    </script>
 </body>
 </html>
