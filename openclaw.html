@@ -381,13 +381,37 @@
         <div class="container">
             <div class="header-content">
                 <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
-                    <img src="/logo.png" alt="NadirClaw" style="height:32px;width:auto;">
+                    <img src="logo.png" alt="NadirClaw" style="height:32px;width:auto;">
+                    <span style="color:var(--text);font-weight:600;font-size:15px;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;">nadirclaw</span>
                 </a>
                 <div class="nav-links">
                     <a href="/">Home</a>
+                    <a href="docs.html">Docs</a>
                     <a href="/openclaw" class="active">OpenClaw</a>
-                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link">GitHub</a>
-                </div>
+                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
+                        <span>★</span>
+                        <span class="star-count" id="star-count">Loading stars...</span>
+                      </a>
+                      
+                      <script>
+                        async function loadGitHubStars() {
+                          try {
+                            const res = await fetch("https://api.github.com/repos/doramirdor/NadirClaw");
+                            if (!res.ok) throw new Error("Failed to fetch GitHub repo data");
+                      
+                            const data = await res.json();
+                            const stars = data.stargazers_count;
+                      
+                            document.getElementById("star-count").textContent =
+                              `${stars.toLocaleString()} stars`;
+                          } catch (error) {
+                            console.error(error);
+                            document.getElementById("star-count").textContent = "View on GitHub";
+                          }
+                        }
+                      
+                        loadGitHubStars();
+                      </script>              </div>
             </div>
         </div>
     </header>

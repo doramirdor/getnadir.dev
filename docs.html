@@ -53,10 +53,7 @@
             z-index: 200;
         }
         
-        .header-inner {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 32px;
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -71,23 +68,16 @@
             letter-spacing: -0.3px;
         }
         
-        .header-nav {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
-        
-        .header-nav a {
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a {
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
             transition: color 0.15s;
         }
-        
-        .header-nav a:hover, .header-nav a.active {
-            color: var(--text);
-        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--accent); }
         
         .github-link {
             display: inline-flex;
@@ -321,17 +311,40 @@
 </head>
 <body>
     <header>
-        <div class="header-inner">
-            <div style="display:flex;align-items:center;gap:16px;">
-                <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
-                <a href="index.html" class="logo">nadirclaw</a>
-            </div>
-            <div class="header-nav">
-                <a href="index.html">Home</a>
-                <a href="docs.html" class="active">Docs</a>
-                <a href="https://github.com/doramirdor/NadirClaw" class="github-link">
-                    <span>★</span> GitHub
+        <div class="container">
+            <div class="header-content">
+                <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                    <img src="logo.png" alt="NadirClaw" style="height:32px;width:auto;">
+                    <span style="color:var(--text);font-weight:600;font-size:15px;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;">nadirclaw</span>
                 </a>
+                <div class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="docs.html" class="active">Docs</a>
+                    <a href="/openclaw">OpenClaw</a>
+                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
+                        <span>★</span>
+                        <span class="star-count" id="star-count">Loading stars...</span>
+                      </a>
+                      
+                      <script>
+                        async function loadGitHubStars() {
+                          try {
+                            const res = await fetch("https://api.github.com/repos/doramirdor/NadirClaw");
+                            if (!res.ok) throw new Error("Failed to fetch GitHub repo data");
+                      
+                            const data = await res.json();
+                            const stars = data.stargazers_count;
+                      
+                            document.getElementById("star-count").textContent =
+                              `${stars.toLocaleString()} stars`;
+                          } catch (error) {
+                            console.error(error);
+                            document.getElementById("star-count").textContent = "View on GitHub";
+                          }
+                        }
+                      
+                        loadGitHubStars();
+                      </script>              </div>
             </div>
         </div>
     </header>

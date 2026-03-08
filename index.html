@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NadirClaw — Cut Claude & GPT API Costs 40–70% | Open-Source LLM Router</title>
     <meta name="description" content="Open-source LLM router that automatically routes simple prompts to cheaper models. Works with Claude Code, Cursor, Aider. Save 40-70% on LLM API costs without changing a line of code.">
@@ -13,13 +15,15 @@
     <meta property="og:url" content="https://getnadir.com/">
     <meta property="og:title" content="NadirClaw — Cut Claude & GPT API Costs 40–70%">
     <meta property="og:description" content="Open-source LLM router. Routes simple prompts to cheap models automatically. Works with Claude Code, Cursor, Aider. Save 40-70% without changing a line of code.">
-    <meta property="og:image" content="https://getnadir.com/logo.png">
+    <meta property="og:image" content="https://getnadir.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://getnadir.com/">
     <meta property="twitter:title" content="NadirClaw — Cut Claude & GPT API Costs 40–70%">
     <meta property="twitter:description" content="Open-source LLM router. Routes simple prompts to cheap models automatically. Works with Claude Code, Cursor, Aider. Save 40-70% without changing a line of code.">
-    <meta property="twitter:image" content="https://getnadir.com/logo.png">
+    <meta property="twitter:image" content="https://getnadir.com/og-image.png">
 
     <script type="application/ld+json">
     {
@@ -39,6 +43,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>document.documentElement.classList.add('js');</script>
     
     <style>
         * {
@@ -105,6 +110,17 @@
             font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
         }
         
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--accent); }
+
         .github-link {
             display: inline-flex;
             align-items: center;
@@ -119,12 +135,12 @@
             font-weight: 500;
             transition: all 0.15s ease;
         }
-        
+
         .github-link:hover {
             border-color: var(--text);
             background: var(--bg-subtle);
         }
-        
+
         .star-count {
             color: var(--text-secondary);
         }
@@ -144,6 +160,10 @@
             max-width: 900px;
             margin-left: auto;
             margin-right: auto;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0a0a0a 50%, #0066ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .hero .subtitle {
@@ -170,7 +190,7 @@
             font-size: 15px;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.15s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -182,31 +202,158 @@
             background: #0a0a0a;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background: #333333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(10, 10, 10, 0.15);
         }
-        
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
         .btn-secondary {
             background: var(--bg);
             color: var(--text);
             border: 1px solid var(--border);
         }
-        
+
         .btn-secondary:hover {
             background: var(--bg-hover);
             border-color: var(--text-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0);
+            box-shadow: none;
         }
         
         .install-hint {
             font-size: 13px;
             color: var(--text-tertiary);
-            margin-bottom: 60px;
+            margin-bottom: 32px;
         }
-        
+
+        .works-with {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+            font-size: 14px;
+        }
+
+        .works-with-label {
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+        .works-with-item {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .works-with-sep {
+            color: var(--border);
+        }
+
+        /* Sticky bottom CTA */
+        .sticky-cta {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 12px 0;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sticky-cta.is-visible {
+            transform: translateY(0);
+        }
+
+        .sticky-cta-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            font-size: 14px;
+        }
+
+        .sticky-cta-text {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .sticky-cta .btn {
+            padding: 8px 18px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .sticky-cta-text { display: none; }
+        }
+
+        /* Final CTA */
+        .final-cta {
+            text-align: center;
+            padding: 80px 0;
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 50%, var(--bg) 100%);
+        }
+
+        .final-cta h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+        }
+
+        .final-cta p {
+            font-size: 17px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta .cta-group {
+            margin-bottom: 16px;
+        }
+
+        .final-cta .star-note {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
         .product-preview {
             margin: 0 auto;
             max-width: 1000px;
+            position: relative;
+        }
+
+        .product-preview::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(0, 102, 255, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
         }
         
         .product-preview img {
@@ -372,7 +519,17 @@
             letter-spacing: -0.8px;
             margin-bottom: 12px;
         }
-        
+
+        .section-header h2::after {
+            content: '';
+            display: block;
+            width: 48px;
+            height: 3px;
+            background: linear-gradient(90deg, #0066ff, #00a86b);
+            border-radius: 2px;
+            margin: 16px auto 0;
+        }
+
         .section-header p {
             font-size: 18px;
             color: var(--text-secondary);
@@ -382,9 +539,7 @@
         
         /* Pain Points */
         .pain-points {
-            background: var(--bg-subtle);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);
         }
         
         .pain-grid {
@@ -395,13 +550,27 @@
             margin: 0 auto;
         }
         
+        .pain-item {
+            padding: 24px;
+            border-radius: 10px;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        background 0.25s ease;
+        }
+
+        .pain-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
         .pain-item h3 {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 8px;
             letter-spacing: -0.3px;
         }
-        
+
         .pain-item p {
             font-size: 15px;
             color: var(--text-secondary);
@@ -419,6 +588,15 @@
         
         .step {
             text-align: left;
+            padding: 24px;
+            border-radius: 10px;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
         }
         
         .step-number {
@@ -445,9 +623,7 @@
         
         /* Code Example */
         .code-section {
-            background: var(--bg-subtle);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);
         }
         
         .code-wrapper {
@@ -461,6 +637,12 @@
             border-radius: 8px;
             overflow: hidden;
             margin-bottom: 32px;
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
+        }
+
+        .code-block:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1px);
         }
         
         .code-label {
@@ -520,13 +702,25 @@
             margin: 0 auto;
         }
         
+        .obs-item {
+            padding: 24px;
+            border-radius: 10px;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .obs-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
         .obs-item h3 {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
             letter-spacing: -0.2px;
         }
-        
+
         .obs-item p {
             font-size: 14px;
             color: var(--text-secondary);
@@ -588,6 +782,10 @@
             border-bottom: none;
         }
         
+        tbody tr {
+            transition: background 0.15s ease;
+        }
+
         tbody tr:hover {
             background: var(--bg-subtle);
         }
@@ -616,8 +814,7 @@
         
         /* Quick Start */
         .quickstart {
-            background: var(--bg-subtle);
-            border-top: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 100%);
         }
         
         .terminal {
@@ -745,6 +942,146 @@
                 justify-content: center;
             }
         }
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* --- Scroll Animation System --- */
+        .js [data-anim] {
+            opacity: 0;
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+
+        .js [data-anim="fade-up"] { transform: translateY(48px); }
+        .js [data-anim="fade-in"] { transform: none; }
+        .js [data-anim="fade-left"] { transform: translateX(-24px); }
+        .js [data-anim="fade-right"] { transform: translateX(24px); }
+        .js [data-anim="scale-in"] { transform: scale(0.95); }
+
+        .js [data-anim].is-visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Stagger delays for grid children */
+        [data-stagger] > [data-anim]:nth-child(1) { transition-delay: 0ms; }
+        [data-stagger] > [data-anim]:nth-child(2) { transition-delay: 100ms; }
+        [data-stagger] > [data-anim]:nth-child(3) { transition-delay: 200ms; }
+        [data-stagger] > [data-anim]:nth-child(4) { transition-delay: 300ms; }
+        [data-stagger] > [data-anim]:nth-child(5) { transition-delay: 400ms; }
+        [data-stagger] > [data-anim]:nth-child(6) { transition-delay: 500ms; }
+
+        /* --- Parallax System --- */
+        .parallax-orb {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(60px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 102, 255, 0.12) 0%, transparent 70%);
+            top: -100px;
+            right: -80px;
+        }
+
+        .hero-orb-2 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(0, 168, 107, 0.10) 0%, transparent 70%);
+            bottom: 40px;
+            left: -60px;
+        }
+
+        .pain-points {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pain-orb {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 102, 255, 0.06) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            margin-left: -250px;
+            margin-top: -250px;
+        }
+
+        .code-section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-orb {
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(0, 168, 107, 0.06) 0%, transparent 70%);
+            top: 20%;
+            right: -200px;
+            filter: blur(80px);
+        }
+
+        [data-parallax] {
+            will-change: transform;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .js [data-anim] {
+                opacity: 1 !important;
+                transform: none !important;
+                transition: none !important;
+            }
+            [data-parallax] {
+                transform: none !important;
+            }
+            .parallax-orb {
+                display: none;
+            }
+        }
+
+        /* --- Terminal Animation --- */
+        .js .sim-terminal .sim-line,
+        .js .sim-terminal .sim-request,
+        .js .sim-terminal .sim-spacer,
+        .js .sim-terminal .sim-stats {
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .sim-cursor::after {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--accent);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
+
     </style>
 </head>
 <body>
@@ -752,47 +1089,89 @@
         <div class="container">
             <div class="header-content">
                 <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
-                    <img src="/logo.png" alt="NadirClaw" style="height:32px;width:auto;">
-                    <span style="color:var(--text-primary);font-weight:600;font-size:15px;">nadirclaw</span>
+                    <img src="logo.png" alt="NadirClaw" style="height:32px;width:auto;">
+                    <span style="color:var(--text);font-weight:600;font-size:15px;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;">nadirclaw</span>
                 </a>
-                <div style="display:flex;align-items:center;gap:16px;">
-                <a href="docs.html" style="color:var(--text-secondary);text-decoration:none;font-size:14px;font-weight:500;">Docs</a>
-                <a href="https://github.com/doramirdor/NadirClaw" class="github-link">
-                    <span>★</span>
-                    <span class="star-count" id="star-count">263 stars</span>
-                </a>
-                </div>
+                <div class="nav-links">
+                    <a href="/" class="active">Home</a>
+                    <a href="docs.html">Docs</a>
+                    <a href="/openclaw">OpenClaw</a>
+                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
+                        <span>★</span>
+                        <span class="star-count" id="star-count">Loading stars...</span>
+                      </a>
+                      
+                      <script>
+                        async function loadGitHubStars() {
+                          try {
+                            const res = await fetch("https://api.github.com/repos/doramirdor/NadirClaw");
+                            if (!res.ok) throw new Error("Failed to fetch GitHub repo data");
+                      
+                            const data = await res.json();
+                            const stars = data.stargazers_count;
+                      
+                            document.getElementById("star-count").textContent =
+                              `${stars.toLocaleString()} stars`;
+                            var heroCount = document.getElementById("hero-star-count");
+                            if (heroCount) heroCount.textContent = stars.toLocaleString() + " developers starred \u00b7 ";
+                          } catch (error) {
+                            console.error(error);
+                            document.getElementById("star-count").textContent = "View on GitHub";
+                          }
+                        }
+                      
+                        loadGitHubStars();
+                      </script>              </div>
             </div>
         </div>
     </header>
 
     <main>
         <section class="hero">
+            <div class="parallax-orb hero-orb-1" data-parallax="0.15"></div>
+            <div class="parallax-orb hero-orb-2" data-parallax="0.25"></div>
             <div class="container">
-                <h1>Your simple prompts are burning premium tokens</h1>
-                <p class="subtitle">
-                    Every "write a test" or "fix this typo" burns <code>gpt-5.2</code> credits. <code>nadirclaw</code> routes simple prompts to cheaper models automatically. Save on every call that doesn't need your most expensive model.
+                <h1 data-anim="fade-up">Your simple prompts are burning premium tokens</h1>
+                <p class="subtitle" data-anim="fade-up" style="transition-delay: 100ms;">
+                    Every "write a test" or "fix this typo" burns premium LLM credits. <code>nadirclaw</code> routes simple prompts to cheaper models automatically. Save on every call that doesn't need your most expensive model.
                 </p>
-                
-                <div class="cta-group">
+
+                <div class="cta-group" data-anim="fade-up" style="transition-delay: 200ms;">
                     <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-primary">
-                        View on GitHub →
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:2px;"><polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63"/></svg>
+                        Star on GitHub
                     </a>
                     <a href="#quickstart" class="btn btn-secondary">
                         Quick Start
                     </a>
                 </div>
+
+                <p class="install-hint" data-anim="fade-in" style="transition-delay: 300ms;">
+                    <span id="hero-star-count" style="font-weight:600; color: var(--text-secondary);"></span>
+                    Two commands. Zero configuration.
+                </p>
                 
-                <p class="install-hint">Two commands. Zero configuration.</p>
-                
-                <div class="product-preview">
+                <div class="works-with" data-anim="fade-in" style="transition-delay: 350ms;">
+                    <span class="works-with-label">Works with</span>
+                    <span class="works-with-item">Claude Code</span>
+                    <span class="works-with-sep">/</span>
+                    <span class="works-with-item">Cursor</span>
+                    <span class="works-with-sep">/</span>
+                    <span class="works-with-item">Aider</span>
+                    <span class="works-with-sep">/</span>
+                    <span class="works-with-item">Windsurf</span>
+                    <span class="works-with-sep">/</span>
+                    <span class="works-with-item">Any OpenAI-compatible client</span>
+                </div>
+
+                <div class="product-preview" data-anim="scale-in" style="transition-delay: 400ms;">
                     <div class="sim-terminal">
                         <div class="sim-header">
                             <div class="sim-dots"><span></span><span></span><span></span></div>
                             <div class="sim-title">nadirclaw serve</div>
                         </div>
                         <div class="sim-body">
-                            <div class="sim-line"><span class="sim-dim">$</span> nadirclaw serve</div>
+                            <div class="sim-line"><span class="sim-dim">$</span> <span class="sim-cursor">nadirclaw serve</span></div>
                             <div class="sim-line"><span class="sim-green">✓</span> Classifier ready</div>
                             <div class="sim-line"><span class="sim-green">✓</span> Listening on <span class="sim-accent">localhost:8000</span></div>
                             <div class="sim-spacer"></div>
@@ -867,17 +1246,18 @@
         </section>
 
         <section class="pain-points">
+            <div class="parallax-orb pain-orb" data-parallax="0.1"></div>
             <div class="container">
-                <div class="pain-grid">
-                    <div class="pain-item">
+                <div class="pain-grid" data-stagger>
+                    <div class="pain-item" data-anim="fade-up">
                         <h3>Most prompts don't need your best model</h3>
                         <p>Code formatting, basic questions, simple edits. They don't need <code>gpt-5.2</code> at $1.75/$14 per 1M tokens or <code>opus-4.6</code> at $15/$75, but that's what you're paying for.</p>
                     </div>
-                    <div class="pain-item">
+                    <div class="pain-item" data-anim="fade-up">
                         <h3>You're blind to where money goes</h3>
                         <p>API bills show totals, not breakdowns. You have no idea which prompts cost $0.001 and which cost $0.50.</p>
                     </div>
-                    <div class="pain-item">
+                    <div class="pain-item" data-anim="fade-up">
                         <h3>Changing models breaks workflow</h3>
                         <p>Switching between <code>gpt-5.2</code> and <code>gpt-5-mini</code> in your editor kills momentum. So you just pay more.</p>
                     </div>
@@ -887,31 +1267,31 @@
 
         <section>
             <div class="container">
-                <div class="section-header">
+                <div class="section-header" data-anim="fade-up">
                     <h2>How it works</h2>
                     <p>Install once. Route forever.</p>
                 </div>
-                
-                <div class="steps">
-                    <div class="step">
+
+                <div class="steps" data-stagger>
+                    <div class="step" data-anim="fade-up">
                         <div class="step-number">STEP 1</div>
                         <h3>Start the router</h3>
                         <p>Run NadirClaw locally. It sits between your app and OpenAI's API. No cloud services, no signup, no tracking.</p>
                     </div>
-                    
-                    <div class="step">
+
+                    <div class="step" data-anim="fade-up">
                         <div class="step-number">STEP 2</div>
                         <h3>Point your tools to localhost</h3>
                         <p>Change your base URL from <code>api.openai.com</code> to <code>localhost:8000</code>. Works with Claude Code, Cursor, Aider, or any OpenAI-compatible client.</p>
                     </div>
-                    
-                    <div class="step">
+
+                    <div class="step" data-anim="fade-up">
                         <div class="step-number">STEP 3</div>
                         <h3>Watch costs drop</h3>
                         <p>NadirClaw classifies every prompt and routes it to the cheapest model that can handle it. Check the dashboard to see where you're actually spending.</p>
                     </div>
-                    
-                    <div class="step">
+
+                    <div class="step" data-anim="fade-up">
                         <div class="step-number">STEP 4</div>
                         <h3>See exactly where your money goes</h3>
                         <p>Full request logs, per-model costs, latency tracking. Know which features of your app are expensive before the bill arrives.</p>
@@ -921,14 +1301,15 @@
         </section>
 
         <section class="code-section">
+            <div class="parallax-orb code-orb" data-parallax="0.2"></div>
             <div class="container">
-                <div class="section-header">
+                <div class="section-header" data-anim="fade-up">
                     <h2>One line changes everything</h2>
                     <p>Literally one URL swap. That's it.</p>
                 </div>
-                
+
                 <div class="code-wrapper">
-                    <div class="code-block">
+                    <div class="code-block" data-anim="fade-left">
                         <div class="code-label">Before</div>
                         <pre><code><span class="code-line">import openai</span>
 <span class="code-line"></span>
@@ -937,8 +1318,8 @@
 <span class="code-line">    api_key="sk-..."</span>
 <span class="code-line">)</span></code></pre>
                     </div>
-                    
-                    <div class="code-block">
+
+                    <div class="code-block" data-anim="fade-right">
                         <div class="code-label">After</div>
                         <pre><code><span class="code-line">import openai</span>
 <span class="code-line"></span>
@@ -947,10 +1328,10 @@
 <span class="code-line">    api_key="sk-..."</span>
 <span class="code-line">)</span></code></pre>
                     </div>
-                    
-                    <div class="code-result">
+
+                    <div class="code-result" data-anim="fade-up">
                         <div>Simple prompts route to <code>gpt-5-mini</code> ($0.25/1M) or <code>haiku-4.5</code> ($1/1M) instead of <code>gpt-5.2</code> ($1.75/$14) or <code>opus-4.6</code> ($15/$75)</div>
-                        <div class="savings">Up to 7x cheaper input, 37x cheaper output</div>
+                        <div class="savings">Up to <span data-count="7">0</span>x cheaper input, <span data-count="37">0</span>x cheaper output</div>
                         <div class="savings-math">
                             Your actual savings depend on your prompt mix. Run <code>nadirclaw report</code> to see your real breakdown.
                         </div>
@@ -961,33 +1342,33 @@
 
         <section class="observability">
             <div class="container">
-                <div class="section-header">
+                <div class="section-header" data-anim="fade-up">
                     <h2>Observability built in</h2>
                     <p>Every request through <code>nadirclaw</code> is logged automatically. No SDK changes, no decorators, no instrumentation.</p>
                 </div>
-                
-                <div class="obs-grid">
-                    <div class="obs-item">
+
+                <div class="obs-grid" data-stagger>
+                    <div class="obs-item" data-anim="fade-up">
                         <h3>Cost per request</h3>
                         <p>See exactly what each prompt costs. Break down spend by model, by task, by user. Find the $5 prompt hiding in your $200 bill.</p>
                     </div>
-                    <div class="obs-item">
+                    <div class="obs-item" data-anim="fade-up">
                         <h3>Full request logs</h3>
                         <p>Every prompt and response captured. Debug weird agent behavior by reading the actual conversation, not guessing.</p>
                     </div>
-                    <div class="obs-item">
+                    <div class="obs-item" data-anim="fade-up">
                         <h3>Latency tracking</h3>
                         <p>p50, p95, p99 per model. See which calls are slow. Spot timeouts before they become a problem.</p>
                     </div>
-                    <div class="obs-item">
+                    <div class="obs-item" data-anim="fade-up">
                         <h3>Error rates and retries</h3>
                         <p>How often are calls failing? Which models have the highest error rates? Are you retrying intelligently or burning money?</p>
                     </div>
-                    <div class="obs-item">
+                    <div class="obs-item" data-anim="fade-up">
                         <h3>Classification breakdown</h3>
                         <p>See what percentage of your traffic is simple vs complex. Understand your actual usage patterns, not assumptions.</p>
                     </div>
-                    <div class="obs-item">
+                    <div class="obs-item" data-anim="fade-up">
                         <h3>Zero instrumentation</h3>
                         <p>Other tools require decorators, SDK wrappers, or OpenTelemetry setup. <code>nadirclaw</code> logs everything at the proxy layer. Point your app at it and you're done.</p>
                     </div>
@@ -997,12 +1378,12 @@
 
         <section>
             <div class="container">
-                <div class="section-header">
+                <div class="section-header" data-anim="fade-up">
                     <h2>How we compare</h2>
                     <p>Verified against each product's public docs and pricing pages.</p>
                 </div>
-                
-                <div class="comparison-wrapper">
+
+                <div class="comparison-wrapper" data-anim="fade-up">
                     <table>
                         <thead>
                             <tr>
@@ -1076,14 +1457,14 @@
             </div>
         </section>
 
-        <section id="calculator" style="padding: 80px 0; background: var(--bg-subtle); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+        <section id="calculator" style="padding: 80px 0; background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);">
             <div class="container">
-                <div class="section-header">
+                <div class="section-header" data-anim="fade-up">
                     <h2>Calculate your savings</h2>
                     <p>See exactly how much NadirClaw saves your setup.</p>
                 </div>
 
-                <div style="max-width: 640px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 36px;">
+                <div data-anim="scale-in" style="max-width: 640px; margin: 0 auto; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 36px;">
                     <div style="display: grid; gap: 24px;">
 
                         <div>
@@ -1143,9 +1524,15 @@
                             </div>
                         </div>
 
-                        <a href="https://github.com/doramirdor/NadirClaw" style="display: block; text-align: center; padding: 12px 24px; background: #0a0a0a; color: white; border-radius: 6px; font-weight: 600; font-size: 15px; text-decoration: none;">
-                            Start saving — pip install nadirclaw
-                        </a>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <a href="https://github.com/doramirdor/NadirClaw" style="flex:1; min-width:200px; text-align: center; padding: 12px 24px; background: #0a0a0a; color: white; border-radius: 6px; font-weight: 600; font-size: 15px; text-decoration: none; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+                                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63"/></svg>
+                                Star & start saving
+                            </a>
+                            <a href="#quickstart" style="flex:1; min-width:160px; text-align: center; padding: 12px 24px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font-weight: 600; font-size: 15px; text-decoration: none;">
+                                pip install nadirclaw
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1154,7 +1541,24 @@
         <script>
         (function() {
             var AVG_TOKENS_IN = 300, AVG_TOKENS_OUT = 150;
-            var CHEAP_IN = 0.075, CHEAP_OUT = 0.3; // flash/haiku per 1M
+            var CHEAP_IN = 0.075, CHEAP_OUT = 0.3;
+            var animFrames = {};
+
+            function animateValue(el, target, prefix, suffix, decimals, duration) {
+                if (animFrames[el.id]) cancelAnimationFrame(animFrames[el.id]);
+                var start = performance.now();
+                duration = duration || 500;
+                var from = parseFloat((el.textContent || '0').replace(/[^0-9.-]/g, '')) || 0;
+                function update(now) {
+                    var elapsed = now - start;
+                    var progress = Math.min(elapsed / duration, 1);
+                    var eased = 1 - Math.pow(1 - progress, 3);
+                    var current = from + (target - from) * eased;
+                    el.textContent = (prefix || '') + current.toFixed(decimals || 0) + (suffix || '');
+                    if (progress < 1) animFrames[el.id] = requestAnimationFrame(update);
+                }
+                requestAnimationFrame(update);
+            }
 
             function calc() {
                 var prompts = +document.getElementById('calc-prompts').value;
@@ -1164,7 +1568,6 @@
 
                 var totalIn = prompts * AVG_TOKENS_IN / 1e6;
                 var totalOut = prompts * AVG_TOKENS_OUT / 1e6;
-
                 var before = totalIn * premIn + totalOut * premOut;
 
                 var complexIn = prompts * (1 - simple) * AVG_TOKENS_IN / 1e6;
@@ -1176,11 +1579,11 @@
                 var saved = before - after;
                 var pct = Math.round(saved / before * 100);
 
-                document.getElementById('calc-before-day').textContent = '$' + before.toFixed(2);
+                animateValue(document.getElementById('calc-before-day'), before, '$', '', 2, 400);
                 document.getElementById('calc-before-month').textContent = '$' + (before * 30).toFixed(0) + '/month';
-                document.getElementById('calc-after-day').textContent = '$' + after.toFixed(2);
+                animateValue(document.getElementById('calc-after-day'), after, '$', '', 2, 400);
                 document.getElementById('calc-after-month').textContent = '$' + (after * 30).toFixed(0) + '/month';
-                document.getElementById('calc-savings').textContent = '$' + (saved * 30).toFixed(0) + '/month';
+                animateValue(document.getElementById('calc-savings'), saved * 30, '$', '/month', 0, 400);
                 document.getElementById('calc-badge').textContent = pct + '% off';
                 document.getElementById('calc-prompts-label').textContent = prompts.toLocaleString();
                 document.getElementById('calc-simple-label').textContent = Math.round(simple * 100) + '%';
@@ -1195,12 +1598,12 @@
 
         <section id="quickstart" class="quickstart">
             <div class="container">
-                <div class="section-header">
+                <div class="section-header" data-anim="fade-up">
                     <h2>Get started now</h2>
                     <p>Two commands. Seriously.</p>
                 </div>
-                
-                <div class="terminal">
+
+                <div class="terminal" data-anim="scale-in">
                     <div class="terminal-line">
                         <span class="prompt">$</span>
                         <span class="command">pip install nadirclaw</span>
@@ -1220,14 +1623,169 @@
                     </div>
                 </div>
                 
-                <div class="cta-final">
-                    <a href="https://github.com/doramirdor/NadirClaw#readme" class="btn btn-primary">
+                <div class="cta-final" data-anim="fade-up">
+                    <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:2px;"><polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63"/></svg>
+                        Star on GitHub
+                    </a>
+                    <a href="https://github.com/doramirdor/NadirClaw#readme" class="btn btn-secondary" style="margin-left:8px;">
                         Read the docs →
                     </a>
                 </div>
             </div>
         </section>
+        <section class="final-cta" data-anim="fade-up">
+            <div class="container">
+                <h2>Stop overpaying for simple prompts</h2>
+                <p>Star the repo to bookmark it, or get started in 30 seconds flat.</p>
+                <div class="cta-group">
+                    <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="margin-right:2px;"><polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63"/></svg>
+                        Star on GitHub
+                    </a>
+                    <a href="#quickstart" class="btn btn-secondary">pip install nadirclaw</a>
+                </div>
+                <p class="star-note">Free and open source. MIT licensed. No signup required.</p>
+            </div>
+        </section>
     </main>
+
+    <div class="sticky-cta" id="sticky-cta">
+        <div class="container">
+            <div class="sticky-cta-inner">
+                <span class="sticky-cta-text">Cut your LLM costs 40-70%</span>
+                <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-primary">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63"/></svg>
+                    Star on GitHub
+                </a>
+                <a href="#quickstart" class="btn btn-secondary">Quick Start</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        // Scroll-triggered animations
+        var animObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    animObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('[data-anim]').forEach(function(el) {
+            animObserver.observe(el);
+        });
+
+        // Animated hero terminal - lines appear sequentially
+        var terminal = document.querySelector('.sim-terminal');
+        if (terminal) {
+            var termChildren = terminal.querySelectorAll('.sim-line, .sim-request, .sim-spacer, .sim-stats');
+            var cursorEl = terminal.querySelector('.sim-cursor');
+            var termAnimated = false;
+
+            var termObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting && !termAnimated) {
+                        termAnimated = true;
+                        termObserver.unobserve(entry.target);
+                        termChildren.forEach(function(child, i) {
+                            setTimeout(function() {
+                                child.style.opacity = '1';
+                                child.style.transform = 'none';
+                                // Remove cursor after last line
+                                if (i === termChildren.length - 1 && cursorEl) {
+                                    setTimeout(function() {
+                                        cursorEl.classList.remove('sim-cursor');
+                                    }, 400);
+                                }
+                            }, 300 + i * 180);
+                        });
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            termObserver.observe(terminal);
+        }
+
+        // Number counter animations for savings figures
+        function animateCount(el, target, suffix, duration) {
+            var start = performance.now();
+            duration = duration || 1000;
+            function update(now) {
+                var elapsed = now - start;
+                var progress = Math.min(elapsed / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(target * eased) + (suffix || '');
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        var countEls = document.querySelectorAll('[data-count]');
+        if (countEls.length) {
+            var countObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        var target = parseInt(entry.target.getAttribute('data-count'));
+                        animateCount(entry.target, target, 'x', 1200);
+                        countObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            countEls.forEach(function(el) { countObserver.observe(el); });
+        }
+
+        // Sticky CTA bar - show after scrolling past hero
+        var stickyCta = document.getElementById('sticky-cta');
+        var heroSection = document.querySelector('.hero');
+        if (stickyCta && heroSection) {
+            var stickyObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        stickyCta.classList.remove('is-visible');
+                    } else {
+                        stickyCta.classList.add('is-visible');
+                    }
+                });
+            }, { threshold: 0 });
+            stickyObserver.observe(heroSection);
+        }
+
+        // Parallax scroll handler
+        var parallaxEls = document.querySelectorAll('[data-parallax]');
+        if (parallaxEls.length) {
+            var ticking = false;
+            var viewH = window.innerHeight;
+            window.addEventListener('resize', function() { viewH = window.innerHeight; });
+            function updateParallax() {
+                parallaxEls.forEach(function(el) {
+                    var rect = el.getBoundingClientRect();
+                    // Only animate when element is near viewport
+                    if (rect.top > viewH * 1.5 || rect.bottom < -viewH * 0.5) return;
+                    var speed = parseFloat(el.getAttribute('data-parallax')) || 0.1;
+                    // Progress: 0 when element enters bottom, 1 when it exits top
+                    var progress = 1 - (rect.top + rect.height) / (viewH + rect.height);
+                    var offset = (progress - 0.5) * viewH * speed;
+                    el.style.transform = 'translateY(' + offset + 'px)';
+                });
+                ticking = false;
+            }
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    requestAnimationFrame(updateParallax);
+                    ticking = true;
+                }
+            }, { passive: true });
+            updateParallax();
+        }
+    })();
+    </script>
 
     <footer>
         <div class="container">
