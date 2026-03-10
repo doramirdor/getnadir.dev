@@ -66,6 +66,62 @@
       }
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is NadirClaw?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NadirClaw is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 40-70% on API costs without changing any code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does NadirClaw reduce costs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to cheaper models (Claude Haiku, GPT-4o-mini). Complex tasks like code generation and reasoning stay on premium models (Claude Opus, GPT-4). You pay less per token on average."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does NadirClaw require code changes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. NadirClaw is a drop-in proxy. Point your LLM client's base URL to NadirClaw instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is NadirClaw free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. NadirClaw is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What LLM providers does NadirClaw support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NadirClaw supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I install NadirClaw?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Run pip install nadirclaw or use Docker: docker run -p 8000:8000 nadirclaw/nadirclaw. Configuration is done through environment variables or a config file."
+          }
+        }
+      ]
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1109,6 +1165,68 @@
             animation: blink 1s step-end infinite;
         }
 
+        /* FAQ Section */
+        .faq-section {
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);
+        }
+
+        .faq-grid {
+            max-width: 800px;
+            margin: 0 auto;
+            display: grid;
+            gap: 16px;
+        }
+
+        .faq-item {
+            padding: 24px 28px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .faq-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .faq-item h3 {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .faq-item p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .faq-item p code {
+            font-size: 13px;
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        /* About Section */
+        .about-section {
+            padding: 60px 0 80px;
+        }
+
+        .about-text {
+            max-width: 640px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
     </style>
 </head>
 <body>
@@ -1661,6 +1779,53 @@
                 </div>
             </div>
         </section>
+        <section id="faq" class="faq-section">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>Frequently asked questions</h2>
+                    <p>Everything you need to know about NadirClaw.</p>
+                </div>
+
+                <div class="faq-grid" data-stagger>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>What is NadirClaw?</h3>
+                        <p>NadirClaw is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 40-70% on API costs without changing any code.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>How does NadirClaw reduce costs?</h3>
+                        <p>NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to cheaper models (<code>Claude Haiku</code>, <code>GPT-4o-mini</code>). Complex tasks like code generation and reasoning stay on premium models (<code>Claude Opus</code>, <code>GPT-4</code>). You pay less per token on average.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>Does NadirClaw require code changes?</h3>
+                        <p>No. NadirClaw is a drop-in proxy. Point your LLM client's base URL to NadirClaw instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>Is NadirClaw free?</h3>
+                        <p>Yes. NadirClaw is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>What LLM providers does NadirClaw support?</h3>
+                        <p>NadirClaw supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>How do I install NadirClaw?</h3>
+                        <p>Run <code>pip install nadirclaw</code> or use Docker: <code>docker run -p 8000:8000 nadirclaw/nadirclaw</code>. Configuration is done through environment variables or a config file.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>About</h2>
+                </div>
+                <p class="about-text" data-anim="fade-up">
+                    NadirClaw is built by Dor, an engineer frustrated with overpaying for simple LLM requests. The project is open-source (MIT), self-hosted, and designed to save developers money without adding complexity.
+                </p>
+            </div>
+        </section>
+
         <section class="final-cta" data-anim="fade-up">
             <div class="container">
                 <h2>Stop overpaying for simple prompts</h2>
