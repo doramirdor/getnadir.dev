@@ -123,6 +123,41 @@
     }
     </script>
 
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Article",
+          "headline": "How NadirClaw Saves 40-70% on LLM API Costs",
+          "datePublished": "2026-03-10",
+          "author": { "@type": "Organization", "name": "NadirClaw" },
+          "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+          "url": "https://getnadir.com/#blog",
+          "description": "Most LLM API costs are wasted on simple requests. NadirClaw analyzes prompt complexity in real-time and routes simple prompts to cheaper models, saving 40-70% on API costs."
+        },
+        {
+          "@type": "Article",
+          "headline": "NadirClaw + Claude Code: A Cost Optimization Guide",
+          "datePublished": "2026-03-07",
+          "author": { "@type": "Organization", "name": "NadirClaw" },
+          "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+          "url": "https://getnadir.com/#blog",
+          "description": "Claude Code generates thousands of API calls per session. NadirClaw classifies each request and routes simple operations to cheaper models while keeping complex tasks on premium models."
+        },
+        {
+          "@type": "Article",
+          "headline": "Why Open-Source LLM Routing Matters",
+          "datePublished": "2026-03-04",
+          "author": { "@type": "Organization", "name": "NadirClaw" },
+          "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+          "url": "https://getnadir.com/#blog",
+          "description": "Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. NadirClaw is MIT-licensed, self-hosted, and fully transparent."
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1213,6 +1248,62 @@
             border: 1px solid var(--border);
         }
 
+        /* Blog Section */
+        .blog-section {
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            max-width: 1060px;
+            margin: 0 auto;
+        }
+
+        .blog-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 32px 28px;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .blog-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .blog-card-date {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .blog-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin-bottom: 16px;
+            color: var(--text);
+            line-height: 1.35;
+        }
+
+        .blog-card-body {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        @media (max-width: 768px) {
+            .blog-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+        }
+
         /* About Section */
         .about-section {
             padding: 60px 0 80px;
@@ -1240,6 +1331,7 @@
                 <div class="nav-links">
                     <a href="/" class="active">Home</a>
                     <a href="docs.html">Docs</a>
+                    <a href="#blog">Blog</a>
                     <a href="/openclaw">OpenClaw</a>
                     <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
                         <span>★</span>
@@ -1811,6 +1903,47 @@
                         <h3>How do I install NadirClaw?</h3>
                         <p>Run <code>pip install nadirclaw</code> or use Docker: <code>docker run -p 8000:8000 nadirclaw/nadirclaw</code>. Configuration is done through environment variables or a config file.</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="blog" class="blog-section">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>From the blog</h2>
+                    <p>Practical guides to cutting your LLM costs.</p>
+                </div>
+
+                <div class="blog-grid" data-stagger>
+                    <article class="blog-card" data-anim="fade-up">
+                        <div class="blog-card-date">March 10, 2026</div>
+                        <h3>How NadirClaw Saves 40-70% on LLM API Costs</h3>
+                        <div class="blog-card-body">
+                            <p>Most LLM API costs are wasted on simple requests. Status checks, formatting tasks, basic Q&amp;A, and heartbeat pings all get routed to expensive models like Claude Opus or GPT-4 &mdash; even when a cheaper model would produce identical results.</p>
+                            <p style="margin-top:12px;">NadirClaw analyzes each prompt's complexity in real-time using lightweight classification. Simple prompts route to cost-efficient models (Claude Haiku, GPT-4o-mini) while complex tasks like code generation and multi-step reasoning stay on premium models. The routing is transparent to your application &mdash; NadirClaw sits as a proxy, so no code changes are required.</p>
+                            <p style="margin-top:12px;">In real-world multi-agent setups running Claude Code, Cursor, or Aider, we see consistent 40-70% cost reductions without any degradation in output quality for complex tasks.</p>
+                        </div>
+                    </article>
+
+                    <article class="blog-card" data-anim="fade-up">
+                        <div class="blog-card-date">March 7, 2026</div>
+                        <h3>NadirClaw + Claude Code: A Cost Optimization Guide</h3>
+                        <div class="blog-card-body">
+                            <p>Claude Code generates thousands of API calls per session &mdash; from simple file reads and status updates to complex code generation and architectural reasoning. Without routing, every call hits the same expensive model.</p>
+                            <p style="margin-top:12px;">With NadirClaw, you point Claude Code's base URL to your NadirClaw proxy. NadirClaw classifies each request: simple operations like listing files, reading configs, and formatting code route to Claude Haiku at a fraction of the cost. Complex operations like writing new features, debugging, and refactoring stay on Claude Opus for maximum quality.</p>
+                            <p style="margin-top:12px;">Setup takes under two minutes: install NadirClaw, set your API keys, and update your base URL. No changes to your workflow, no changes to your prompts, no quality loss on the tasks that matter.</p>
+                        </div>
+                    </article>
+
+                    <article class="blog-card" data-anim="fade-up">
+                        <div class="blog-card-date">March 4, 2026</div>
+                        <h3>Why Open-Source LLM Routing Matters</h3>
+                        <div class="blog-card-body">
+                            <p>Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. You send your prompts through a black box and hope the routing decisions are optimal. Open-source routing changes this equation entirely.</p>
+                            <p style="margin-top:12px;">NadirClaw is MIT-licensed, self-hosted, and fully transparent. You can inspect every routing decision, customize the complexity classifier for your specific workload, add new model providers, and audit the codebase for security. Self-hosting means your prompts never leave your infrastructure &mdash; critical for teams handling sensitive code or data.</p>
+                            <p style="margin-top:12px;">Open-source also means the community contributes improvements: better classifiers, new provider integrations, and performance optimizations. The LLM cost problem affects every developer using AI tools. The solution should be open, auditable, and owned by the community, not locked behind another SaaS subscription.</p>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
