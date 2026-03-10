@@ -1,0 +1,37 @@
+# NadirClaw
+
+> Open-source LLM router that automatically routes simple prompts to cheaper models. Save 40-70% on LLM API costs without changing a line of code.
+
+NadirClaw is an open-source, drop-in LLM proxy that sits between your application and LLM providers. It analyzes prompt complexity in real-time and routes simple requests (heartbeats, status checks, simple Q&A) to cheaper models while keeping complex tasks (code generation, reasoning) on premium models like Claude Opus or GPT-4. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client.
+
+## Key Features
+
+- Automatic prompt complexity analysis and model routing
+- Drop-in proxy: no code changes required, just point your base URL
+- Works with Claude Code, Cursor, Aider, and OpenAI-compatible tools
+- Real-time cost tracking and observability dashboard
+- Configurable routing rules and model tiers
+- Self-hosted: runs on your infrastructure
+
+## Pages
+
+- [Homepage](https://getnadir.com): Product overview, cost calculator, and quick start
+- [Documentation](https://getnadir.com/docs.html): Installation, configuration, API reference, and troubleshooting
+- [OpenClaw Integration](https://getnadir.com/openclaw.html): Using NadirClaw with autonomous multi-agent setups
+
+## Installation
+
+pip install nadirclaw
+
+## Pricing
+
+Free and open-source (MIT License)
+
+## Links
+
+- [GitHub Repository](https://github.com/doramirdor/NadirClaw)
+- [Dev.to Articles](https://dev.to/doramirdor)
+
+## Contact
+
+- GitHub: @doramirdor
