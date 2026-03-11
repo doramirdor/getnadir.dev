@@ -13,6 +13,14 @@ NadirClaw is an open-source, drop-in LLM proxy that sits between your applicatio
 - Configurable routing rules and model tiers
 - Self-hosted: runs on your infrastructure, zero telemetry
 
+## Key Facts
+
+- Saves 40-70% on LLM API costs in real-world usage
+- ~10ms classification latency, ~80MB model size
+- Routes to 4 complexity tiers: Simple, Complex, Reasoning, Agentic
+- Runs on port 8856 by default
+- MIT licensed, zero telemetry
+
 ## Installation
 
 pip install nadirclaw
@@ -37,4 +45,4 @@ Free and open-source (MIT License)
 ## Contact
 
 - Email: dor@getnadir.com
-- GitHub: @doramirdor
+- Builder: Dor Amir (@doramirdor on GitHub)
