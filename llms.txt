@@ -11,17 +11,19 @@ NadirClaw is an open-source, drop-in LLM proxy that sits between your applicatio
 - Works with Claude Code, Cursor, Aider, and OpenAI-compatible tools
 - Real-time cost tracking and observability dashboard
 - Configurable routing rules and model tiers
-- Self-hosted: runs on your infrastructure
+- Self-hosted: runs on your infrastructure, zero telemetry
+
+## Installation
+
+pip install nadirclaw
 
 ## Pages
 
 - [Homepage](https://getnadir.com): Product overview, cost calculator, and quick start
 - [Documentation](https://getnadir.com/docs.html): Installation, configuration, API reference, and troubleshooting
 - [OpenClaw Integration](https://getnadir.com/openclaw.html): Using NadirClaw with autonomous multi-agent setups
-
-## Installation
-
-pip install nadirclaw
+- [Terms of Service](https://getnadir.com/terms.html)
+- [Privacy Policy](https://getnadir.com/privacy.html)
 
 ## Pricing
 
@@ -34,4 +36,5 @@ Free and open-source (MIT License)
 
 ## Contact
 
+- Email: dor@getnadir.com
 - GitHub: @doramirdor
