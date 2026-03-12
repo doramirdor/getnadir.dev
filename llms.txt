@@ -44,5 +44,5 @@ Free and open-source (MIT License)
 
 ## Contact
 
-- Email: dor@getnadir.com
+- Email: amirdor@gmail.com
 - Builder: Dor Amir (@doramirdor on GitHub)
