@@ -118,6 +118,38 @@
             "@type": "Answer",
             "text": "Run pip install nadirclaw or use Docker: docker run -p 8000:8000 nadirclaw/nadirclaw. Configuration is done through environment variables or a config file."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the NadirClaw classifier work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NadirClaw uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes approximately 10ms. It also detects agentic workflows, reasoning chains, and vision content as separate routing signals."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens when the NadirClaw classifier is wrong?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NadirClaw biases toward the complex model on low-confidence classifications. This means it is more likely to over-serve than under-serve. You can test any prompt with nadirclaw classify and tune the confidence threshold."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much latency does NadirClaw routing add?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Approximately 10ms for the sentence embedding classification. The router runs locally, so there is no network hop. For comparison, a typical LLM API call takes 500ms-5s, making routing overhead less than 1% of total request time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Where does the 40-70% savings claim come from?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In typical coding sessions, 60-70% of prompts are simple tasks like file reads, formatting, and basic questions. If those route to models that cost 10-20x less per token, your blended cost drops 40-70%. Your actual savings depend on your prompt mix. Run nadirclaw report to see your real breakdown."
+          }
         }
       ]
     }
@@ -1332,6 +1364,205 @@
             line-height: 1.7;
         }
 
+        /* Routing Examples */
+        .routing-examples-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .routing-example-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 140px 100px;
+            gap: 16px;
+            align-items: center;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .routing-example-row:last-child {
+            border-bottom: none;
+        }
+
+        .routing-example-header {
+            background: var(--bg-subtle);
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .routing-examples-table {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .routing-prompt {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .routing-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .routing-badge-simple {
+            background: rgba(0, 168, 107, 0.1);
+            color: var(--success);
+        }
+
+        .routing-badge-complex {
+            background: rgba(0, 102, 255, 0.1);
+            color: var(--accent);
+        }
+
+        .routing-badge-agentic {
+            background: rgba(139, 92, 246, 0.1);
+            color: #7c3aed;
+        }
+
+        .routing-badge-reasoning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .routing-model {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .routing-why {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .routing-example-row {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                padding: 12px 16px;
+            }
+            .routing-example-header {
+                display: none;
+            }
+            .routing-prompt::before {
+                content: 'Prompt: ';
+                color: var(--text-tertiary);
+                font-family: 'Inter', sans-serif;
+                font-size: 11px;
+                text-transform: uppercase;
+            }
+        }
+
+        /* Why Not Rules */
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .why-item {
+            padding: 24px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .why-item h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .why-item p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .why-item .why-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-tertiary);
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .why-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        /* Production-ready */
+        .prod-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .prod-item {
+            padding: 20px 24px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .prod-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .prod-item h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+
+        .prod-item p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .prod-item code {
+            font-size: 12px;
+            background: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .prod-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1408,9 +1639,13 @@
                     <span class="works-with-sep">/</span>
                     <span class="works-with-item">Cursor</span>
                     <span class="works-with-sep">/</span>
+                    <span class="works-with-item">Codex</span>
+                    <span class="works-with-sep">/</span>
                     <span class="works-with-item">Aider</span>
                     <span class="works-with-sep">/</span>
                     <span class="works-with-item">Windsurf</span>
+                    <span class="works-with-sep">/</span>
+                    <span class="works-with-item">Continue</span>
                     <span class="works-with-sep">/</span>
                     <span class="works-with-item">Any OpenAI-compatible client</span>
                 </div>
@@ -1424,7 +1659,7 @@
                         <div class="sim-body">
                             <div class="sim-line"><span class="sim-dim">$</span> <span class="sim-cursor">nadirclaw serve</span></div>
                             <div class="sim-line"><span class="sim-green">✓</span> Classifier ready</div>
-                            <div class="sim-line"><span class="sim-green">✓</span> Listening on <span class="sim-accent">localhost:8000</span></div>
+                            <div class="sim-line"><span class="sim-green">✓</span> Listening on <span class="sim-accent">localhost:8856</span></div>
                             <div class="sim-spacer"></div>
                             <div class="sim-request">
                                 <div class="sim-req-header">
@@ -1533,7 +1768,7 @@
                     <div class="step" data-anim="fade-up">
                         <div class="step-number">STEP 2</div>
                         <h3>Point your tools to localhost</h3>
-                        <p>Change your base URL from <code>api.openai.com</code> to <code>localhost:8000</code>. Works with Claude Code, Cursor, Aider, or any OpenAI-compatible client.</p>
+                        <p>Change your base URL from <code>api.openai.com</code> to <code>localhost:8856</code>. Works with Claude Code, Cursor, Codex, Aider, or any OpenAI-compatible client.</p>
                     </div>
 
                     <div class="step" data-anim="fade-up">
@@ -1575,7 +1810,7 @@
                         <pre><code><span class="code-line">import openai</span>
 <span class="code-line"></span>
 <span class="code-line">client = openai.OpenAI(</span>
-<span class="code-line highlight">    base_url="http://localhost:8000",</span>
+<span class="code-line highlight">    base_url="http://localhost:8856",</span>
 <span class="code-line">    api_key="sk-..."</span>
 <span class="code-line">)</span></code></pre>
                     </div>
@@ -1586,6 +1821,119 @@
                         <div class="savings-math">
                             Your actual savings depend on your prompt mix. Run <code>nadirclaw report</code> to see your real breakdown.
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="routing-examples">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>See the classifier decide</h2>
+                    <p>Real prompts. Real routing decisions. No black box.</p>
+                </div>
+
+                <div class="routing-examples-wrapper" data-anim="fade-up">
+                    <div class="routing-examples-table">
+                        <div class="routing-example-row routing-example-header">
+                            <div>Prompt</div>
+                            <div>Class</div>
+                            <div>Routed to</div>
+                            <div>Why</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"What is 2+2?"</div>
+                            <div><span class="routing-badge routing-badge-simple">simple</span></div>
+                            <div class="routing-model">gemini-flash</div>
+                            <div class="routing-why">Trivial lookup</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"Format this JSON"</div>
+                            <div><span class="routing-badge routing-badge-simple">simple</span></div>
+                            <div class="routing-model">gpt-5-mini</div>
+                            <div class="routing-why">Mechanical transform</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"Write a docstring for get_user()"</div>
+                            <div><span class="routing-badge routing-badge-simple">simple</span></div>
+                            <div class="routing-model">haiku-4.5</div>
+                            <div class="routing-why">Template output</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"List the files in src/"</div>
+                            <div><span class="routing-badge routing-badge-simple">simple</span></div>
+                            <div class="routing-model">gemini-flash</div>
+                            <div class="routing-why">Direct retrieval</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"Refactor auth module to use JWT..."</div>
+                            <div><span class="routing-badge routing-badge-complex">complex</span></div>
+                            <div class="routing-model">sonnet-4.5</div>
+                            <div class="routing-why">Multi-file reasoning</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"Debug this race condition in..."</div>
+                            <div><span class="routing-badge routing-badge-complex">complex</span></div>
+                            <div class="routing-model">opus-4.6</div>
+                            <div class="routing-why">Deep analysis</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"Design a caching layer for..."</div>
+                            <div><span class="routing-badge routing-badge-complex">complex</span></div>
+                            <div class="routing-model">gpt-5.2</div>
+                            <div class="routing-why">Architecture decision</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">"Analyze tradeoffs between SQL and NoSQL"</div>
+                            <div><span class="routing-badge routing-badge-reasoning">reasoning</span></div>
+                            <div class="routing-model">o3</div>
+                            <div class="routing-why">Chain-of-thought detected</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">[tool_calls in message context]</div>
+                            <div><span class="routing-badge routing-badge-agentic">agentic</span></div>
+                            <div class="routing-model">sonnet-4.5</div>
+                            <div class="routing-why">Tool use detected</div>
+                        </div>
+                        <div class="routing-example-row">
+                            <div class="routing-prompt">[image_url in message content]</div>
+                            <div><span class="routing-badge routing-badge-complex">vision</span></div>
+                            <div class="routing-model">gpt-4o</div>
+                            <div class="routing-why">Image content detected</div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 16px; font-size: 13px; color: var(--text-tertiary); text-align: center;">
+                        Classification uses sentence embeddings (~10ms overhead). When uncertain (confidence &lt;0.06), defaults to the complex model. Better to over-serve than under-serve.
+                    </p>
+                    <p style="margin-top: 8px; font-size: 13px; color: var(--text-tertiary); text-align: center;">
+                        Test any prompt yourself: <code style="font-size:12px;background:var(--code-bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);">nadirclaw classify "your prompt here"</code>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section style="background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>Why not just use rules?</h2>
+                    <p>The most common question: "Can't I just write if/else logic instead?"</p>
+                </div>
+
+                <div class="why-grid" data-stagger>
+                    <div class="why-item" data-anim="fade-up">
+                        <div class="why-label">Manual rules</div>
+                        <h3>Breaks on edge cases</h3>
+                        <p>Rules like "short prompt = cheap model" fail immediately. "Fix the auth bug" is short but complex. "Explain the entire codebase architecture in detail" is long but a simple retrieval. You end up maintaining a growing regex graveyard.</p>
+                    </div>
+                    <div class="why-item" data-anim="fade-up">
+                        <div class="why-label">Gateway + heuristics</div>
+                        <h3>Works, but you build everything</h3>
+                        <p>LiteLLM gives you multi-provider access. But you still write the routing logic, the classifier, the fallback chains, the cost tracking, the dashboard. NadirClaw ships all of that. <code>pip install</code> and done.</p>
+                    </div>
+                    <div class="why-item" data-anim="fade-up">
+                        <div class="why-label">NadirClaw</div>
+                        <h3>Semantic understanding</h3>
+                        <p>Sentence embeddings understand intent, not keywords. Detects agentic workflows, reasoning chains, and vision content automatically. Biases toward the complex model when uncertain. You configure models, not rules.</p>
                     </div>
                 </div>
             </div>
@@ -1640,20 +1988,18 @@
                             <tr>
                                 <th>Feature</th>
                                 <th class="nadirclaw-col"><code>nadirclaw</code></th>
+                                <th>LiteLLM + rules</th>
                                 <th>OpenRouter</th>
                                 <th>Helicone</th>
                                 <th>Portkey</th>
-                                <th>vLLM Router</th>
-                                <th>Langfuse</th>
-                                <th>LangSmith</th>
+                                <th>Always premium</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td class="feature-cell">Auto Classification</td>
-                                <td class="nadirclaw-col"><span class="check">✓</span> Complexity classifier</td>
-                                <td><span class="dash">—</span></td>
-                                <td><span class="dash">—</span></td>
+                                <td class="nadirclaw-col"><span class="check">✓</span> Sentence embeddings</td>
+                                <td>You write it</td>
                                 <td><span class="dash">—</span></td>
                                 <td><span class="dash">—</span></td>
                                 <td><span class="dash">—</span></td>
@@ -1662,49 +2008,103 @@
                             <tr>
                                 <td class="feature-cell">Cost-Based Routing</td>
                                 <td class="nadirclaw-col"><span class="check">✓</span> Automatic</td>
-                                <td>Manual model selection</td>
+                                <td><span class="check">✓</span> Manual rules</td>
+                                <td>Manual model pick</td>
                                 <td>Fallbacks only</td>
                                 <td><span class="check">✓</span> Rule-based</td>
-                                <td>Load balancing only</td>
+                                <td><span class="dash">—</span> Fixed model</td>
+                            </tr>
+                            <tr>
+                                <td class="feature-cell">Agentic/Reasoning detection</td>
+                                <td class="nadirclaw-col"><span class="check">✓</span> Auto</td>
+                                <td>You write it</td>
                                 <td><span class="dash">—</span></td>
+                                <td><span class="dash">—</span></td>
+                                <td><span class="dash">—</span></td>
+                                <td>N/A</td>
+                            </tr>
+                            <tr>
+                                <td class="feature-cell">Fallback chains</td>
+                                <td class="nadirclaw-col"><span class="check">✓</span> Per-tier</td>
+                                <td><span class="check">✓</span> Built-in</td>
+                                <td><span class="check">✓</span></td>
+                                <td><span class="dash">—</span></td>
+                                <td><span class="check">✓</span></td>
                                 <td><span class="dash">—</span></td>
                             </tr>
                             <tr>
                                 <td class="feature-cell">Observability</td>
-                                <td class="nadirclaw-col"><span class="check">✓</span> Built-in</td>
-                                <td>Basic usage stats</td>
+                                <td class="nadirclaw-col"><span class="check">✓</span> + Prometheus</td>
+                                <td>You add it</td>
+                                <td>Basic stats</td>
                                 <td><span class="check">✓</span> Full suite</td>
                                 <td><span class="check">✓</span> Full suite</td>
-                                <td><span class="dash">—</span></td>
-                                <td><span class="check">✓</span> Full suite</td>
-                                <td><span class="check">✓</span> Full suite</td>
+                                <td>Provider dashboard</td>
                             </tr>
                             <tr>
-                                <td class="feature-cell">Open Source</td>
-                                <td class="nadirclaw-col"><span class="check">✓</span> MIT</td>
-                                <td><span class="dash">—</span></td>
-                                <td><span class="check">✓</span> Apache 2.0</td>
-                                <td>Gateway only</td>
-                                <td><span class="check">✓</span> Apache 2.0</td>
-                                <td><span class="check">✓</span> MIT</td>
-                                <td><span class="dash">—</span></td>
+                                <td class="feature-cell">Setup effort</td>
+                                <td class="nadirclaw-col"><strong>2 commands</strong></td>
+                                <td>Days of engineering</td>
+                                <td>Account + config</td>
+                                <td>SDK integration</td>
+                                <td>SDK integration</td>
+                                <td>None</td>
                             </tr>
                             <tr>
                                 <td class="feature-cell">Pricing</td>
-                                <td class="nadirclaw-col"><strong>Free</strong></td>
+                                <td class="nadirclaw-col"><strong>Free (MIT)</strong></td>
+                                <td>Free (your time)</td>
                                 <td>Per-token markup</td>
-                                <td>Free 10K req, Pro $79/mo</td>
-                                <td>Free 10K req, Pro undisclosed</td>
-                                <td>Free</td>
-                                <td>Free hobby, Pro $59/mo</td>
-                                <td>Free 5K traces, Plus $39/seat</td>
+                                <td>Free 10K, Pro $79/mo</td>
+                                <td>Free 10K, Pro $$</td>
+                                <td>Full price</td>
                             </tr>
                         </tbody>
                     </table>
                     <p style="margin-top: 16px; font-size: 13px; color: var(--text-tertiary); text-align: center;">
-                        <code>nadirclaw</code>'s differentiator: automatic prompt complexity classification. Other routers need manual rules. We analyze the prompt and route it for you.
+                        Verified against each product's public docs. The "LiteLLM + rules" column reflects what you'd build yourself on top of a gateway.
                     </p>
                 </div>
+            </div>
+        </section>
+
+        <section style="padding: 80px 0;">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>Built for production</h2>
+                    <p>Not a prototype. Ship it with confidence.</p>
+                </div>
+
+                <div class="prod-grid" data-stagger>
+                    <div class="prod-item" data-anim="fade-up">
+                        <h3>Docker + Compose</h3>
+                        <p><code>docker compose up</code> gives you NadirClaw + Ollama for a fully local stack. Mount your <code>.env</code> for API keys.</p>
+                    </div>
+                    <div class="prod-item" data-anim="fade-up">
+                        <h3>Fallback chains</h3>
+                        <p>When a provider returns 429 or 5xx, NadirClaw cascades through your fallback chain. Configure per-tier or use the global default.</p>
+                    </div>
+                    <div class="prod-item" data-anim="fade-up">
+                        <h3>Prometheus metrics</h3>
+                        <p><code>/metrics</code> endpoint with request counts, latency histograms, token totals, cache hit rates. Zero extra dependencies.</p>
+                    </div>
+                    <div class="prod-item" data-anim="fade-up">
+                        <h3>Budget controls</h3>
+                        <p>Set daily and monthly spending limits. Get alerts before you hit them. <code>nadirclaw budget</code> shows real-time status.</p>
+                    </div>
+                    <div class="prod-item" data-anim="fade-up">
+                        <h3>Session persistence</h3>
+                        <p>Pins model choice for multi-turn conversations (30min TTL). No jarring mid-thread model switches.</p>
+                    </div>
+                    <div class="prod-item" data-anim="fade-up">
+                        <h3>Context window safety</h3>
+                        <p>Estimates token count before routing. If a 150K-token conversation targets a 128K model, it swaps to a larger-context model automatically.</p>
+                    </div>
+                </div>
+
+                <p style="margin-top: 32px; font-size: 14px; color: var(--text-secondary); text-align: center; max-width: 640px; margin-left: auto; margin-right: auto;" data-anim="fade-up">
+                    All credentials stay on your machine in <code style="font-size:12px;background:var(--code-bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);">~/.nadirclaw/credentials.json</code>. No telemetry. No data leaves your network. Your API keys never touch our servers because there are no servers.
+                </p>
             </div>
         </section>
 
@@ -1860,17 +2260,17 @@
                         <span class="command">pip install nadirclaw</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="terminal-output">Successfully installed nadirclaw-0.6.0</span>
+                        <span class="terminal-output">Successfully installed nadirclaw-0.7.0</span>
                     </div>
                     <div class="terminal-line" style="margin-top: 16px;">
                         <span class="prompt">$</span>
                         <span class="command">nadirclaw serve</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="terminal-output">✓ Router running on http://localhost:8000</span>
+                        <span class="terminal-output">✓ Router running on http://localhost:8856</span>
                     </div>
                     <div class="terminal-line">
-                        <span class="terminal-output">✓ Dashboard at http://localhost:8000/dashboard</span>
+                        <span class="terminal-output">✓ Dashboard at http://localhost:8856/dashboard</span>
                     </div>
                 </div>
                 
@@ -1916,6 +2316,22 @@
                     <div class="faq-item" data-anim="fade-up">
                         <h3>How do I install NadirClaw?</h3>
                         <p>Run <code>pip install nadirclaw</code> or use Docker: <code>docker run -p 8000:8000 nadirclaw/nadirclaw</code>. Configuration is done through environment variables or a config file.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>How does the classifier work?</h3>
+                        <p>NadirClaw uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes ~10ms. It also detects agentic workflows (tool calls), reasoning chains ("step by step"), and vision content (images) as separate routing signals.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>What happens when the classifier is wrong?</h3>
+                        <p>NadirClaw biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with <code>nadirclaw classify "your prompt"</code> and tune the threshold via <code>NADIRCLAW_CONFIDENCE_THRESHOLD</code>.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>How much latency does routing add?</h3>
+                        <p>~10ms for the sentence embedding classification. The router runs locally on your machine, so there is no network hop. For comparison, a typical LLM API call takes 500ms-5s. The routing overhead is less than 1% of total request time.</p>
+                    </div>
+                    <div class="faq-item" data-anim="fade-up">
+                        <h3>Where does the "40-70% savings" claim come from?</h3>
+                        <p>In typical coding sessions, 60-70% of prompts are simple (file reads, formatting, basic questions, docstrings). If those route to models that cost 10-20x less per token, your blended cost drops 40-70%. Your actual savings depend on your prompt mix. Run <code>nadirclaw report</code> to see your real breakdown after a day of use.</p>
                     </div>
                 </div>
             </div>

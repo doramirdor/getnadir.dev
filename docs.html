@@ -379,8 +379,10 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Core Concepts</div>
                 <a href="#routing">Routing</a>
+                <a href="#three-tier">Three-Tier Routing</a>
                 <a href="#routing-profiles">Routing Profiles</a>
                 <a href="#fallback-chains">Fallback Chains</a>
+                <a href="#rate-limiting">Rate Limiting</a>
                 <a href="#prompt-caching">Prompt Caching</a>
             </div>
             <div class="sidebar-section">
@@ -388,6 +390,9 @@
                 <a href="#claude-code">Claude Code</a>
                 <a href="#openclaw">OpenClaw</a>
                 <a href="#codex">Codex</a>
+                <a href="#continue">Continue</a>
+                <a href="#cursor">Cursor</a>
+                <a href="#open-webui">Open WebUI</a>
                 <a href="#openai-compatible">Any OpenAI Client</a>
             </div>
             <div class="sidebar-section">
@@ -397,6 +402,8 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Operations</div>
                 <a href="#budget">Budget & Cost Tracking</a>
+                <a href="#prometheus">Prometheus Metrics</a>
+                <a href="#opentelemetry">OpenTelemetry</a>
                 <a href="#docker">Docker</a>
                 <a href="#api-reference">API Reference</a>
                 <a href="#troubleshooting">Troubleshooting</a>
@@ -459,8 +466,12 @@ nadirclaw serve --verbose</code></pre>
                     <tr><td><code>NADIRCLAW_SIMPLE_MODEL</code></td><td><code>gemini-3-flash-preview</code></td><td>Model for simple prompts</td></tr>
                     <tr><td><code>NADIRCLAW_COMPLEX_MODEL</code></td><td><code>openai-codex/gpt-5.3-codex</code></td><td>Model for complex prompts</td></tr>
                     <tr><td><code>NADIRCLAW_REASONING_MODEL</code></td><td><em>falls back to complex</em></td><td>Model for reasoning tasks</td></tr>
+                    <tr><td><code>NADIRCLAW_MID_MODEL</code></td><td><em>none (enables 3-tier)</em></td><td>Model for mid-complexity prompts</td></tr>
                     <tr><td><code>NADIRCLAW_FREE_MODEL</code></td><td><em>falls back to simple</em></td><td>Free/local fallback model</td></tr>
-                    <tr><td><code>NADIRCLAW_FALLBACK_CHAIN</code></td><td><em>all tier models</em></td><td>Comma-separated cascade on failure</td></tr>
+                    <tr><td><code>NADIRCLAW_TIER_THRESHOLDS</code></td><td><code>0.35,0.65</code></td><td>Score thresholds for simple/mid/complex boundaries</td></tr>
+                    <tr><td><code>NADIRCLAW_FALLBACK_CHAIN</code></td><td><em>all tier models</em></td><td>Comma-separated global cascade on failure</td></tr>
+                    <tr><td><code>NADIRCLAW_SIMPLE_FALLBACK</code></td><td><em>none</em></td><td>Per-tier fallback for simple model failures</td></tr>
+                    <tr><td><code>NADIRCLAW_COMPLEX_FALLBACK</code></td><td><em>none</em></td><td>Per-tier fallback for complex model failures</td></tr>
                     <tr><td><code>NADIRCLAW_CONFIDENCE_THRESHOLD</code></td><td><code>0.06</code></td><td>Classification threshold (lower = more complex)</td></tr>
                     <tr><td><code>NADIRCLAW_PORT</code></td><td><code>8856</code></td><td>Server port</td></tr>
                     <tr><td><code>NADIRCLAW_AUTH_TOKEN</code></td><td><em>empty (auth disabled)</em></td><td>Bearer token requirement</td></tr>
@@ -473,6 +484,10 @@ nadirclaw serve --verbose</code></pre>
                     <tr><td><code>NADIRCLAW_BUDGET_STDOUT_ALERTS</code></td><td><code>false</code></td><td>Print budget alerts to stdout</td></tr>
                     <tr><td><code>NADIRCLAW_CACHE_TTL</code></td><td><em>default</em></td><td>Cache time-to-live in seconds</td></tr>
                     <tr><td><code>NADIRCLAW_CACHE_MAX_SIZE</code></td><td><em>default</em></td><td>Max cache entries</td></tr>
+                    <tr><td><code>NADIRCLAW_CACHE_ENABLED</code></td><td><code>true</code></td><td>Enable/disable prompt cache</td></tr>
+                    <tr><td><code>NADIRCLAW_MODEL_RATE_LIMITS</code></td><td><em>none</em></td><td>Per-model RPM limits (e.g. <code>gemini-3-flash-preview=30,gpt-4.1=60</code>)</td></tr>
+                    <tr><td><code>NADIRCLAW_DEFAULT_MODEL_RPM</code></td><td><code>0</code> (unlimited)</td><td>Default RPM limit for all models</td></tr>
+                    <tr><td><code>NADIRCLAW_API_BASE</code></td><td><em>none</em></td><td>Custom OpenAI-compatible endpoint (vLLM, LocalAI, etc.)</td></tr>
                     <tr><td><code>GEMINI_API_KEY</code></td><td>—</td><td>Google Gemini API key</td></tr>
                     <tr><td><code>ANTHROPIC_API_KEY</code></td><td>—</td><td>Anthropic API key</td></tr>
                     <tr><td><code>OPENAI_API_KEY</code></td><td>—</td><td>OpenAI API key</td></tr>
@@ -528,8 +543,11 @@ NADIRCLAW_MONTHLY_BUDGET=200.00</code></pre>
                     <tr><td><code>opus</code></td><td><code>claude-opus-4-6-20250918</code></td></tr>
                     <tr><td><code>haiku</code></td><td><code>claude-haiku-4-5-20251001</code></td></tr>
                     <tr><td><code>gpt4</code></td><td><code>gpt-4.1</code></td></tr>
+                    <tr><td><code>gpt5</code></td><td><code>gpt-5.2</code></td></tr>
                     <tr><td><code>flash</code></td><td><code>gemini-2.5-flash</code></td></tr>
+                    <tr><td><code>gemini-pro</code></td><td><code>gemini-2.5-pro</code></td></tr>
                     <tr><td><code>deepseek</code></td><td><code>deepseek/deepseek-chat</code></td></tr>
+                    <tr><td><code>deepseek-r1</code></td><td><code>deepseek/deepseek-reasoner</code></td></tr>
                     <tr><td><code>llama</code></td><td><code>ollama/llama3.1:8b</code></td></tr>
                 </tbody>
             </table>
@@ -571,9 +589,11 @@ nadirclaw auth remove google</code></pre>
                 <thead><tr><th>Tier</th><th>When Used</th><th>Typical Prompts</th></tr></thead>
                 <tbody>
                     <tr><td><strong>Simple</strong></td><td>Prompt closer to simple centroid with confidence above threshold</td><td>"What does this function do?", "Format this JSON", "Add a docstring"</td></tr>
+                    <tr><td><strong>Mid</strong></td><td>Score between tier thresholds (requires <code>NADIRCLAW_MID_MODEL</code>)</td><td>"Write a unit test for this function", "Explain this error"</td></tr>
                     <tr><td><strong>Complex</strong></td><td>Prompt closer to complex centroid, or borderline</td><td>"Refactor this module", "Design a caching layer", "Debug this deadlock"</td></tr>
                     <tr><td><strong>Reasoning</strong></td><td>2+ reasoning markers detected ("step by step", "prove that", "analyze tradeoffs")</td><td>Mathematical proofs, architecture analysis, critical evaluations</td></tr>
                     <tr><td><strong>Agentic</strong></td><td>Tool definitions, tool-role messages, agent system prompts, deep conversations (&gt;10 messages)</td><td>Any multi-step agent workflow, coding agent sessions</td></tr>
+                    <tr><td><strong>Vision</strong></td><td>Image content (<code>image_url</code>) detected in messages</td><td>Screenshot analysis, diagram reading, image-based questions</td></tr>
                 </tbody>
             </table>
 
@@ -582,6 +602,7 @@ nadirclaw auth remove google</code></pre>
             <ul>
                 <li><strong>Agentic detection</strong> — forces complex when tool definitions, tool-role messages, or agent system prompts are detected</li>
                 <li><strong>Reasoning detection</strong> — routes to reasoning model when 2+ reasoning markers found</li>
+                <li><strong>Vision detection</strong> — swaps to a vision-capable model (GPT-4o, Claude, Gemini) when <code>image_url</code> content is detected</li>
                 <li><strong>Context window check</strong> — swaps to a model with larger context if conversation exceeds model's limit</li>
                 <li><strong>Session persistence</strong> — reuses the same model for follow-up messages (30-minute TTL)</li>
             </ul>
@@ -611,6 +632,28 @@ curl http://localhost:8856/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "eco", "messages": [{"role": "user", "content": "Hello"}]}'</code></pre>
 
+            <!-- THREE-TIER ROUTING -->
+            <h2 id="three-tier">Three-Tier Routing</h2>
+            <p>By default, NadirClaw uses binary routing (simple/complex). Enable three-tier routing by setting a mid model:</p>
+
+<pre><code># Enable three-tier routing
+NADIRCLAW_MID_MODEL=gpt-4.1-mini
+
+# Customize tier boundaries (default: 0.35,0.65)
+NADIRCLAW_TIER_THRESHOLDS=0.35,0.65</code></pre>
+
+            <p>With three-tier routing, classification scores map to tiers:</p>
+            <table>
+                <thead><tr><th>Score Range</th><th>Tier</th><th>Model</th></tr></thead>
+                <tbody>
+                    <tr><td>0.00 – 0.35</td><td>Simple</td><td><code>NADIRCLAW_SIMPLE_MODEL</code></td></tr>
+                    <tr><td>0.35 – 0.65</td><td>Mid</td><td><code>NADIRCLAW_MID_MODEL</code></td></tr>
+                    <tr><td>0.65 – 1.00</td><td>Complex</td><td><code>NADIRCLAW_COMPLEX_MODEL</code></td></tr>
+                </tbody>
+            </table>
+
+            <p>If <code>NADIRCLAW_MID_MODEL</code> is not set, NadirClaw falls back to binary routing (simple/complex).</p>
+
             <!-- FALLBACK CHAINS -->
             <h2 id="fallback-chains">Fallback Chains</h2>
             <p>When a model fails (429 rate limit, 5xx error, or timeout), NadirClaw cascades through a configurable chain of fallback models until one succeeds.</p>
@@ -618,9 +661,30 @@ curl http://localhost:8856/v1/chat/completions \
 <pre><code># Configure fallback order
 NADIRCLAW_FALLBACK_CHAIN=gpt-4.1,claude-sonnet-4-5-20250929,gemini-2.5-flash</code></pre>
 
-            <p><strong>Default behavior:</strong> If no fallback chain is configured, NadirClaw uses all your configured tier models. For example, if the simple model hits a 429, it retries once, then tries the complex model.</p>
+            <h3>Per-tier fallback chains</h3>
+            <p>You can also configure fallback chains per tier for more granular control:</p>
+<pre><code># Per-tier fallback chains
+NADIRCLAW_SIMPLE_FALLBACK=gemini-2.5-flash,gemini-3-flash-preview
+NADIRCLAW_COMPLEX_FALLBACK=gpt-4.1,claude-sonnet-4-5-20250929
+NADIRCLAW_MID_FALLBACK=gpt-4.1-mini,gemini-2.5-flash</code></pre>
+
+            <p><strong>Default behavior:</strong> If no fallback chain is configured, NadirClaw uses all your configured tier models: [COMPLEX_MODEL, MID_MODEL, SIMPLE_MODEL, REASONING_MODEL, FREE_MODEL].</p>
 
             <p><strong>Rate limit handling:</strong> On 429 errors, NadirClaw automatically retries once before moving to the next model in the chain. If all models are exhausted, it returns a friendly error message.</p>
+
+            <!-- RATE LIMITING -->
+            <h2 id="rate-limiting">Rate Limiting</h2>
+            <p>Configure per-model request rate limits to stay within provider quotas:</p>
+
+<pre><code># Per-model RPM limits
+NADIRCLAW_MODEL_RATE_LIMITS=gemini-3-flash-preview=30,gpt-4.1=60
+
+# Default RPM for all models (0 = unlimited)
+NADIRCLAW_DEFAULT_MODEL_RPM=0</code></pre>
+
+            <p>When a model hits its RPM limit, NadirClaw automatically triggers the fallback chain rather than returning an error. Monitor rate limit status via the API:</p>
+
+<pre><code>curl http://localhost:8856/v1/rate-limits</code></pre>
 
             <!-- PROMPT CACHING -->
             <h2 id="prompt-caching">Prompt Caching</h2>
@@ -708,6 +772,21 @@ api_key = "local"</code></pre>
 <pre><code># Use ChatGPT subscription instead of API key
 nadirclaw auth openai login</code></pre>
 
+            <h2 id="continue">Continue</h2>
+<pre><code># Auto-configure Continue
+nadirclaw continue onboard</code></pre>
+            <p>This writes NadirClaw as a provider in <code>~/.continue/config.json</code>. Continue reads the config on startup.</p>
+
+            <h2 id="cursor">Cursor</h2>
+<pre><code># Show setup instructions
+nadirclaw cursor onboard</code></pre>
+            <p>In Cursor: <strong>Settings → Models → OpenAI API Key:</strong> <code>local</code>, <strong>Base URL:</strong> <code>http://localhost:8856/v1</code>. Select a model or use <code>auto</code>.</p>
+
+            <h2 id="open-webui">Open WebUI</h2>
+<pre><code># Show setup instructions
+nadirclaw openwebui onboard</code></pre>
+            <p>In Open WebUI: <strong>Admin Settings → Connections → OpenAI → Add Connection</strong>. Set URL to <code>http://localhost:8856/v1</code> and API Key to <code>local</code>. Open WebUI auto-discovers NadirClaw's routing profiles and tier models via <code>/v1/models</code>.</p>
+
             <h2 id="openai-compatible">Any OpenAI-Compatible Client</h2>
             <p>NadirClaw exposes a standard OpenAI-compatible API. Point any tool at it:</p>
 <pre><code># Base URL: http://localhost:8856/v1
@@ -736,7 +815,14 @@ print(response.choices[0].message.content)</code></pre>
     "stream": true
   }'</code></pre>
 
-            <p>Works with <strong>Continue</strong>, <strong>aider</strong>, <strong>Cursor</strong>, or any tool that speaks the OpenAI chat completions API. Just set the base URL to <code>http://localhost:8856/v1</code>.</p>
+            <p>Works with <strong>Continue</strong>, <strong>Aider</strong>, <strong>Cursor</strong>, <strong>Windsurf</strong>, or any tool that speaks the OpenAI chat completions API. Just set the base URL to <code>http://localhost:8856/v1</code>.</p>
+
+            <h3>Custom Endpoints (vLLM, LocalAI, LM Studio)</h3>
+            <p>NadirClaw can route to any OpenAI-compatible endpoint:</p>
+<pre><code>NADIRCLAW_API_BASE=http://your-server:8000/v1 \
+NADIRCLAW_SIMPLE_MODEL=openai/your-small-model \
+NADIRCLAW_COMPLEX_MODEL=openai/your-large-model \
+nadirclaw serve --verbose</code></pre>
 
             <!-- CLI COMMANDS -->
             <h2 id="cli-commands">CLI Reference</h2>
@@ -801,12 +887,33 @@ Port:          8856
 Threshold:     0.06
 Server:        RUNNING (ok)</code></pre>
 
+            <h3>nadirclaw test</h3>
+            <p>Probe each configured model to verify credentials and connectivity. CI-friendly (exits 1 on failure):</p>
+<pre><code>nadirclaw test
+nadirclaw test --simple-model gemini-2.5-flash --complex-model gpt-4.1</code></pre>
+
+            <h3>nadirclaw export</h3>
+            <p>Export request logs for offline analysis:</p>
+<pre><code>nadirclaw export --format csv --since 7d
+nadirclaw export --format jsonl</code></pre>
+
+            <h3>nadirclaw budget</h3>
+            <p>Show real-time budget status and alerts:</p>
+<pre><code>nadirclaw budget</code></pre>
+
             <h3>Other Commands</h3>
 <pre><code>nadirclaw auth add/status/remove    # Manage credentials
-nadirclaw auth openai login         # OAuth login
+nadirclaw auth openai login         # OAuth login (ChatGPT subscription)
+nadirclaw auth anthropic login      # OAuth login (Claude subscription)
+nadirclaw auth gemini login         # OAuth login (Google Gemini)
+nadirclaw auth setup-token          # Store Claude subscription token
 nadirclaw codex onboard             # Configure Codex integration
 nadirclaw openclaw onboard          # Configure OpenClaw integration
+nadirclaw continue onboard          # Configure Continue integration
+nadirclaw cursor onboard            # Show Cursor setup instructions
+nadirclaw openwebui onboard         # Show Open WebUI setup
 nadirclaw ollama discover           # Auto-discover Ollama instances
+nadirclaw ollama discover --scan-network  # Network-wide scan
 nadirclaw cache                     # View cache stats
 nadirclaw build-centroids           # Regenerate centroid vectors</code></pre>
 
@@ -838,6 +945,51 @@ nadirclaw report --since 7d
 nadirclaw dashboard</code></pre>
 
             <p>Reports include: total requests, tier distribution, per-model usage and tokens, latency percentiles (p50/p95), fallback counts, and error rates.</p>
+
+            <!-- PROMETHEUS -->
+            <h2 id="prometheus">Prometheus Metrics</h2>
+            <p>NadirClaw exposes a <code>/metrics</code> endpoint in Prometheus format with zero extra dependencies.</p>
+
+<pre><code>curl http://localhost:8856/metrics</code></pre>
+
+            <table>
+                <thead><tr><th>Metric</th><th>Type</th><th>Labels</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>nadirclaw_requests_total</code></td><td>counter</td><td>model, tier, status</td><td>Total completed LLM requests</td></tr>
+                    <tr><td><code>nadirclaw_tokens_prompt_total</code></td><td>counter</td><td>model</td><td>Total prompt tokens</td></tr>
+                    <tr><td><code>nadirclaw_tokens_completion_total</code></td><td>counter</td><td>model</td><td>Total completion tokens</td></tr>
+                    <tr><td><code>nadirclaw_cost_dollars_total</code></td><td>counter</td><td>model</td><td>Estimated cost in USD</td></tr>
+                    <tr><td><code>nadirclaw_request_latency_ms</code></td><td>histogram</td><td>model, tier</td><td>Request latency distribution</td></tr>
+                    <tr><td><code>nadirclaw_cache_hits_total</code></td><td>counter</td><td>—</td><td>Prompt cache hits</td></tr>
+                    <tr><td><code>nadirclaw_fallbacks_total</code></td><td>counter</td><td>from_model, to_model</td><td>Fallback events</td></tr>
+                    <tr><td><code>nadirclaw_errors_total</code></td><td>counter</td><td>model, error_type</td><td>Request errors</td></tr>
+                    <tr><td><code>nadirclaw_uptime_seconds</code></td><td>gauge</td><td>—</td><td>Seconds since start</td></tr>
+                </tbody>
+            </table>
+
+            <p>Add NadirClaw as a Prometheus scrape target:</p>
+<pre><code># prometheus.yml
+scrape_configs:
+  - job_name: nadirclaw
+    static_configs:
+      - targets: ['localhost:8856']</code></pre>
+
+            <!-- OPENTELEMETRY -->
+            <h2 id="opentelemetry">OpenTelemetry Tracing</h2>
+            <p>Optional distributed tracing with GenAI semantic conventions. Install the telemetry extra:</p>
+
+<pre><code>pip install nadirclaw[telemetry]
+
+# Point to your collector
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 nadirclaw serve</code></pre>
+
+            <p>Emitted spans:</p>
+            <ul>
+                <li><code>smart_route_analysis</code> — classifier decision (tier, confidence, model selected)</li>
+                <li><code>dispatch_model</code> — LLM provider call (model, tokens, latency)</li>
+                <li><code>chat_completion</code> — full request lifecycle</li>
+            </ul>
+            <p>Includes GenAI semantic conventions plus custom <code>nadirclaw.*</code> attributes for routing metadata.</p>
 
             <!-- DOCKER -->
             <h2 id="docker">Docker</h2>
@@ -873,6 +1025,9 @@ docker run -p 8856:8856 --env-file .env nadirclaw</code></pre>
                     <tr><td><code>/v1/models</code></td><td>GET</td><td>List available models</td></tr>
                     <tr><td><code>/v1/logs</code></td><td>GET</td><td>View recent request logs</td></tr>
                     <tr><td><code>/v1/cache</code></td><td>GET</td><td>Cache stats</td></tr>
+                    <tr><td><code>/v1/rate-limits</code></td><td>GET</td><td>Per-model rate limit status</td></tr>
+                    <tr><td><code>/v1/budget</code></td><td>GET</td><td>Budget status and alerts</td></tr>
+                    <tr><td><code>/metrics</code></td><td>GET</td><td>Prometheus metrics</td></tr>
                     <tr><td><code>/health</code></td><td>GET</td><td>Health check (no auth)</td></tr>
                     <tr><td><code>/dashboard</code></td><td>GET</td><td>Web dashboard UI</td></tr>
                 </tbody>
