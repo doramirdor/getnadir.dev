@@ -132,6 +132,11 @@ class Settings:
         self.COHERE_API_KEY: Optional[str] = os.getenv("COHERE_API_KEY")
         self.MISTRAL_API_KEY: Optional[str] = os.getenv("MISTRAL_API_KEY")
     
+    # Stripe billing
+        self.STRIPE_SECRET_KEY: Optional[str] = os.getenv("STRIPE_SECRET_KEY")
+        self.STRIPE_WEBHOOK_SECRET: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")
+        self.STRIPE_PRICE_ID_BASE: Optional[str] = os.getenv("STRIPE_PRICE_ID_BASE")  # $9/mo base plan
+
     # API keys for authentication
         self.API_KEYS: Dict[str, str] = self._parse_api_keys()
 

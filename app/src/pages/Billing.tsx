@@ -2,29 +2,31 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   CreditCard,
-  Download,
   AlertCircle,
-  CheckCircle,
   Plus,
   Minus,
   Gift,
   Timer,
   DollarSign,
-  Settings,
-  Trash2
+  Trash2,
+  TrendingDown,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { useApiKey } from "@/hooks/useApiKey";
+import { SavingsAPI } from "@/services/savingsApi";
 import { AddPaymentMethodDialog } from "@/components/AddPaymentMethodDialog";
 import { logger } from "@/utils/logger";
+
+// ── Types ────────────────────────────────────────────────────────────────
 
 interface BillingPlan {
   id: string;
@@ -70,6 +72,24 @@ interface ActiveToken {
   days_remaining: number | null;
 }
 
+// ── Fee calculator ───────────────────────────────────────────────────────
+
+function calculateFee(totalSavings: number): {
+  base: number;
+  first2k: number;
+  above2k: number;
+  total: number;
+} {
+  const base = 9;
+  const first2k = Math.min(totalSavings, 2000) * 0.25;
+  const above2k = Math.max(totalSavings - 2000, 0) * 0.10;
+  return { base, first2k, above2k, total: base + first2k + above2k };
+}
+
+// ── Component ────────────────────────────────────────────────────────────
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 const Billing = () => {
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
@@ -81,7 +101,22 @@ const Billing = () => {
   const [showAddCard, setShowAddCard] = useState(false);
   const [showRedeemToken, setShowRedeemToken] = useState(false);
   const [tokenCode, setTokenCode] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
   const { toast } = useToast();
+  const { apiKey } = useApiKey();
+
+  // Fetch savings summary via backend API
+  const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;
+  const { data: savingsSummary } = useQuery({
+    queryKey: ["savings", "summary", apiKey],
+    queryFn: () => savingsApi!.getSavingsSummary(),
+    enabled: !!savingsApi,
+    retry: 1,
+    staleTime: 60_000,
+  });
+
+  const currentSavings = savingsSummary?.totalSaved ?? 0;
+  const fee = calculateFee(currentSavings);
 
   useEffect(() => {
     fetchBillingData();
@@ -92,35 +127,30 @@ const Billing = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch billing plans
       const { data: plansData } = await supabase
         .from('billing_plans')
         .select('*')
         .eq('is_active', true)
         .order('plan_type', { ascending: true });
 
-      // Fetch user subscription
       const { data: subscriptionData } = await supabase
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      // Fetch user credits
       const { data: creditsData } = await supabase
         .from('user_credits')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      // Fetch payment methods
       const { data: paymentMethodsData } = await supabase
         .from('user_payment_methods')
         .select('*')
         .eq('user_id', user.id)
         .order('is_default', { ascending: false });
 
-      // Check for active tokens
       const { data: activeTokensData } = await supabase.rpc('check_user_active_tokens', {
         p_user_id: user.id
       });
@@ -142,23 +172,41 @@ const Billing = () => {
     }
   };
 
-  const handleSubscribeToPlan = async (planId: string) => {
+  const handleSubscribe = async (planId?: string) => {
+    setSubscribing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // Call backend checkout endpoint
+      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(apiKey ? { "X-API-Key": apiKey } : {}),
+        },
+        body: JSON.stringify({ plan_id: planId }),
+      });
 
-      // This would integrate with Stripe in production
+      if (res.ok) {
+        const data = await res.json();
+        if (data.checkout_url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.checkout_url;
+          return;
+        }
+      }
+
+      // If no checkout URL returned, show fallback
       toast({
-        title: "Feature Coming Soon",
-        description: "Stripe integration will be implemented for plan subscriptions",
+        title: "Checkout",
+        description: "Stripe checkout is being set up. Please check back shortly or contact support.",
       });
     } catch (error) {
-      logger.error('Error subscribing to plan:', error);
+      logger.error('Error starting checkout:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to subscribe to plan",
+        title: "Checkout",
+        description: "Stripe checkout is being set up. Please check back shortly or contact support.",
       });
+    } finally {
+      setSubscribing(false);
     }
   };
 
@@ -167,14 +215,7 @@ const Billing = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // In production, this would:
-      // 1. Create Stripe payment intent
-      // 2. Process payment
-      // 3. Add credits to user account
-      // 4. Log the purchase
-
-      // For demo purposes, we'll simulate the purchase logging
-      const { data, error } = await supabase.rpc('log_purchase', {
+      const { error } = await supabase.rpc('log_purchase', {
         p_user_id: user.id,
         p_purchase_type: 'credits',
         p_item_name: `$${creditAmount} Credits`,
@@ -182,7 +223,7 @@ const Billing = () => {
         p_credits_purchased: creditAmount,
         p_metadata: {
           source: 'admin_dashboard',
-          payment_method: 'demo'
+          payment_method: paymentMethods.length > 0 ? 'card' : 'demo'
         }
       });
 
@@ -190,10 +231,11 @@ const Billing = () => {
         logger.error('Error logging purchase:', error);
       }
 
-      // This would integrate with Stripe in production
       toast({
-        title: "Feature Coming Soon",
-        description: `Stripe integration will be implemented for purchasing $${creditAmount} in credits. Purchase logged for demo.`,
+        title: "Credits Purchase",
+        description: paymentMethods.length > 0
+          ? `$${creditAmount} in credits will be charged to your default card.`
+          : `Add a payment method to purchase $${creditAmount} in credits.`,
       });
     } catch (error) {
       logger.error('Error buying credits:', error);
@@ -206,7 +248,6 @@ const Billing = () => {
   };
 
   const handleUpdateAutoCharge = async (enabled: boolean) => {
-    // Check if user has payment methods before enabling auto-charge
     if (enabled && paymentMethods.length === 0) {
       toast({
         variant: "destructive",
@@ -263,7 +304,6 @@ const Billing = () => {
         });
 
       if (error) throw error;
-
       setCredits(prev => prev ? { ...prev, auto_charge_threshold: threshold } : null);
     } catch (error) {
       logger.error('Error updating threshold:', error);
@@ -285,7 +325,6 @@ const Billing = () => {
         });
 
       if (error) throw error;
-
       setCredits(prev => prev ? { ...prev, auto_charge_amount: amount } : null);
     } catch (error) {
       logger.error('Error updating amount:', error);
@@ -306,7 +345,6 @@ const Billing = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Call the redeem_token function
       const { data, error } = await supabase.rpc('redeem_token', {
         p_user_id: user.id,
         p_token_code: tokenCode.toUpperCase()
@@ -325,7 +363,6 @@ const Billing = () => {
         return;
       }
 
-      // Success message based on token type
       let successMessage = "";
       if (result.token_type === 'time_limited') {
         successMessage = `Successfully redeemed! You now have ${result.days_granted} days of unlimited access.`;
@@ -340,8 +377,6 @@ const Billing = () => {
 
       setShowRedeemToken(false);
       setTokenCode("");
-
-      // Refresh billing data to show updated credits/status
       fetchBillingData();
     } catch (error) {
       logger.error('Error redeeming token:', error);
@@ -364,7 +399,6 @@ const Billing = () => {
   const subscriptionPlans = plans
     .filter(p => p.plan_type === 'subscription')
     .sort((a, b) => {
-      // Ensure proper ordering: Free Tier, Pro Plan, Enterprise
       const order = { 'Free Tier': 1, 'Pro Plan': 2, 'Enterprise': 3 };
       return (order[a.name as keyof typeof order] || 999) - (order[b.name as keyof typeof order] || 999);
     });
@@ -405,9 +439,7 @@ const Billing = () => {
               </div>
             </DialogContent>
           </Dialog>
-          <Button
-            onClick={() => setShowAddCard(true)}
-          >
+          <Button onClick={() => setShowAddCard(true)}>
             <CreditCard className="w-4 h-4 mr-2" />
             Add Payment Method
           </Button>
@@ -459,6 +491,64 @@ const Billing = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Current Month Savings Fee */}
+      <Card className="clean-card border-blue-100">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-foreground">Current Month Savings Fee</CardTitle>
+            </div>
+            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+              ${fee.total.toFixed(2)}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-4 gap-4 text-center mb-6">
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="text-xs text-muted-foreground">Base fee</div>
+              <div className="text-lg font-bold text-foreground">${fee.base.toFixed(2)}</div>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="text-xs text-muted-foreground">25% on first $2K</div>
+              <div className="text-lg font-bold text-foreground">${fee.first2k.toFixed(2)}</div>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <div className="text-xs text-muted-foreground">10% above $2K</div>
+              <div className="text-lg font-bold text-foreground">${fee.above2k.toFixed(2)}</div>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-xs text-blue-700">Total fee</div>
+              <div className="text-lg font-bold text-blue-600">${fee.total.toFixed(2)}</div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+            <div>
+              <p className="text-sm font-medium text-emerald-800">
+                You saved ${currentSavings.toFixed(2)} this month
+              </p>
+              <p className="text-xs text-emerald-600">
+                Net savings after fee: ${(currentSavings - fee.total).toFixed(2)}
+              </p>
+            </div>
+            <Button
+              onClick={() => handleSubscribe()}
+              disabled={subscribing}
+              size="sm"
+            >
+              {subscribing ? "Loading..." : (
+                <>
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                  Subscribe
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Active Tokens */}
       {activeTokens.length > 0 && (
@@ -576,13 +666,12 @@ const Billing = () => {
                   <Button
                     onClick={() => {
                       if (plan.features?.contact_sales) {
-                        // Open contact us or mailto
                         window.open('mailto:sales@nadir.dev?subject=Enterprise Plan Inquiry', '_blank');
                       } else {
-                        handleSubscribeToPlan(plan.id);
+                        handleSubscribe(plan.id);
                       }
                     }}
-                    disabled={subscription?.plan_id === plan.id && !plan.features?.contact_sales}
+                    disabled={(subscription?.plan_id === plan.id && !plan.features?.contact_sales) || subscribing}
                     className="w-full"
                     variant={subscription?.plan_id === plan.id ? "outline" : "default"}
                   >
@@ -590,7 +679,7 @@ const Billing = () => {
                       ? 'Current Plan'
                       : plan.features?.contact_sales
                         ? 'Contact Us'
-                        : 'Select Plan'
+                        : 'Subscribe'
                     }
                   </Button>
                 </CardContent>
@@ -622,7 +711,7 @@ const Billing = () => {
                     placeholder="$100"
                     className="w-24 mt-1"
                     value={credits?.upper_limit || ''}
-                    onChange={(e) => {
+                    onChange={() => {
                       // Handle upper limit update
                     }}
                   />
@@ -638,7 +727,6 @@ const Billing = () => {
         <h2 className="text-lg font-semibold text-foreground mb-4">Buy Credits</h2>
         <p className="text-muted-foreground mb-6">Purchase credits to use with any plan. Credits never expire.</p>
 
-        {/* Custom Amount */}
         <Card className="clean-card">
           <CardHeader>
             <CardTitle className="text-foreground">Custom Amount</CardTitle>
@@ -667,9 +755,7 @@ const Billing = () => {
                 </Button>
               </div>
 
-              <Button
-                onClick={handleBuyCredits}
-              >
+              <Button onClick={handleBuyCredits}>
                 <DollarSign className="w-4 h-4 mr-2" />
                 Buy Credits
               </Button>
@@ -678,7 +764,6 @@ const Billing = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Purchase Options */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[10, 25, 50, 100].map((amount) => (
             <Card key={amount} className="clean-card cursor-pointer hover:bg-accent" onClick={() => setCreditAmount(amount)}>

@@ -19,8 +19,6 @@ logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from app.clusters.supabase_clustering import clustering_service
 from app.database.supabase_db import supabase_db
@@ -33,20 +31,18 @@ from app.api.logs import router as logs_router
 from app.api.health import router as health_router
 from app.api.recommendation import router as recommendation_router
 from app.api.user_profile import router as user_profile_router
-from app.api.test_ui import router as test_ui_router
 from app.api.enhanced_router import router as enhanced_router
 from app.api.playground import router as playground_router
 from app.api.production_completion import router as production_completion_router
-from app.api.production_test_ui import router as production_test_ui_router
-from app.api.analyzer_comparison import router as analyzer_comparison_router
 from app.api.clustering_api import router as clustering_api_router
 from app.api.organizations import router as organizations_router
 from app.api.classifier_analytics import router as classifier_analytics_router
 from app.api.routing_analytics import router as routing_analytics_router
-from app.api.routing_replay import router as routing_replay_router
 from app.api.cost_anomaly_api import router as cost_anomaly_router
 from app.api.metrics_endpoint import router as metrics_router
 from app.api.distillation_api import router as distillation_router
+from app.api.savings_api import router as savings_router
+from app.api.stripe_webhooks import router as stripe_webhook_router
 
 
 # Create FastAPI application
@@ -90,12 +86,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "X-API-Key", "X-Request-ID", "Authorization"],
 )
-
-# Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# Initialize templates
-templates = Jinja2Templates(directory="app/templates")
 
 # Initialize services on startup
 @app.on_event("startup")
@@ -383,25 +373,23 @@ async def shutdown_event():
 
 # Include API routers
 app.include_router(production_completion_router)  # Production API endpoints
-app.include_router(production_test_ui_router)     # Production test UI
 app.include_router(completion_router)
 app.include_router(models_router)
 app.include_router(logs_router)
 app.include_router(health_router)
 app.include_router(recommendation_router)
 app.include_router(user_profile_router)
-app.include_router(test_ui_router)
 app.include_router(enhanced_router)             # Enhanced router API
 app.include_router(playground_router)
-app.include_router(analyzer_comparison_router)    # Analyzer comparison API
 app.include_router(clustering_api_router)         # Clustering API
 app.include_router(organizations_router)          # Organizations API
 app.include_router(classifier_analytics_router)    # Classifier Analytics API
 app.include_router(routing_analytics_router)        # Routing Analytics API
-app.include_router(routing_replay_router)           # Routing Replay API
 app.include_router(cost_anomaly_router)             # Cost Anomaly Detection API
 app.include_router(metrics_router)                   # Prometheus metrics
 app.include_router(distillation_router)              # Distillation API
+app.include_router(savings_router)                    # Savings tracking API
+app.include_router(stripe_webhook_router)             # Stripe webhooks
 
 
 # Root endpoint

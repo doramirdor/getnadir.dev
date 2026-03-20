@@ -45,11 +45,58 @@ CREATE TABLE IF NOT EXISTS savings_invoices (
 
 -- Stripe webhook event log for idempotency
 CREATE TABLE IF NOT EXISTS stripe_events (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stripe_event_id TEXT NOT NULL UNIQUE,
   event_type TEXT NOT NULL,
   processed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   payload JSONB
 );
+
+-- Stripe customer mapping
+CREATE TABLE IF NOT EXISTS stripe_customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  stripe_customer_id TEXT NOT NULL UNIQUE,
+  email TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- User subscriptions
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  status TEXT NOT NULL DEFAULT 'inactive',
+  current_period_start BIGINT,
+  current_period_end BIGINT,
+  cancel_at_period_end BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- User credits for hosted key billing
+CREATE TABLE IF NOT EXISTS user_credits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  balance_usd NUMERIC(10,2) NOT NULL DEFAULT 0,
+  last_payment_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- RLS for new tables
+ALTER TABLE stripe_customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_credits ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY stripe_customers_user_policy ON stripe_customers
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY user_subscriptions_user_policy ON user_subscriptions
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY user_credits_user_policy ON user_credits
+  FOR ALL USING (auth.uid() = user_id);
 
 -- Row Level Security
 ALTER TABLE savings_tracking ENABLE ROW LEVEL SECURITY;

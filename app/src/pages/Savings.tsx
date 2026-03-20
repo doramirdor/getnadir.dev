@@ -1,30 +1,9 @@
-import { useState, useEffect } from "react";
 import { TrendingDown, DollarSign, Percent, Zap } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-
-interface SavingsSummary {
-  totalSaved: number;
-  totalSpent: number;
-  savingsRate: number;
-  requestsRouted: number;
-  nadisFee: number;
-  netSavings: number;
-}
-
-interface DailySaving {
-  date: string;
-  saved: number;
-  spent: number;
-  benchmarkCost: number;
-}
-
-interface TierBreakdown {
-  tier: string;
-  requests: number;
-  saved: number;
-}
+import { useQuery } from "@tanstack/react-query";
+import { useApiKey } from "@/hooks/useApiKey";
+import { SavingsAPI } from "@/services/savingsApi";
+import type { SavingsSummary, DailySaving, TierBreakdown } from "@/services/savingsApi";
 
 function calculateFee(totalSavings: number): number {
   const base = 9;
@@ -32,6 +11,46 @@ function calculateFee(totalSavings: number): number {
   const feeAbove2K = Math.max(totalSavings - 2000, 0) * 0.10;
   return base + feeOnFirst2K + feeAbove2K;
 }
+
+// ── Demo data fallback ──────────────────────────────────────────────────
+
+function generateDemoData(): { summary: SavingsSummary; daily: DailySaving[]; tiers: TierBreakdown[] } {
+  const daily = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - 13 + i);
+    const saved = Math.round(40 + Math.random() * 80);
+    return {
+      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      saved,
+      spent: Math.round(saved * 0.55),
+      benchmarkCost: Math.round(saved * 1.55),
+    };
+  });
+
+  const totalSaved = daily.reduce((s, d) => s + d.saved, 0);
+  const totalSpent = daily.reduce((s, d) => s + d.spent, 0);
+  const fee = calculateFee(totalSaved);
+
+  return {
+    summary: {
+      totalSaved,
+      totalSpent,
+      savingsRate: totalSaved / (totalSaved + totalSpent),
+      requestsRouted: Math.round(totalSaved * 12),
+      nadisFee: fee,
+      netSavings: totalSaved - fee,
+    },
+    daily,
+    tiers: [
+      { tier: "Simple", requests: 4200, saved: totalSaved * 0.55 },
+      { tier: "Complex", requests: 1800, saved: totalSaved * 0.15 },
+      { tier: "Reasoning", requests: 600, saved: totalSaved * 0.05 },
+      { tier: "Context Optimize", requests: 6600, saved: totalSaved * 0.25 },
+    ],
+  };
+}
+
+// ── StatCard ─────────────────────────────────────────────────────────────
 
 function StatCard({ icon: Icon, label, value, subtext, color = "blue" }: {
   icon: any; label: string; value: string; subtext?: string; color?: string;
@@ -57,130 +76,44 @@ function StatCard({ icon: Icon, label, value, subtext, color = "blue" }: {
   );
 }
 
+// ── Main component ──────────────────────────────────────────────────────
+
 export default function Savings() {
-  const { user } = useAuth();
-  const [summary, setSummary] = useState<SavingsSummary>({
-    totalSaved: 0, totalSpent: 0, savingsRate: 0, requestsRouted: 0, nadisFee: 0, netSavings: 0,
+  const { apiKey } = useApiKey();
+
+  const api = apiKey ? new SavingsAPI(apiKey) : null;
+
+  // Fetch summary
+  const { data: summaryData, isLoading: summaryLoading } = useQuery({
+    queryKey: ["savings", "summary", apiKey],
+    queryFn: () => api!.getSavingsSummary(),
+    enabled: !!api,
+    retry: 1,
+    staleTime: 60_000,
   });
-  const [dailyData, setDailyData] = useState<DailySaving[]>([]);
-  const [tierData, setTierData] = useState<TierBreakdown[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) return;
+  // Fetch breakdown (tiers + daily)
+  const { data: breakdownData, isLoading: breakdownLoading } = useQuery({
+    queryKey: ["savings", "breakdown", apiKey],
+    queryFn: () => api!.getSavingsBreakdown(),
+    enabled: !!api,
+    retry: 1,
+    staleTime: 60_000,
+  });
 
-    async function fetchSavings() {
-      try {
-        // Fetch usage events for current month
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const loading = summaryLoading || breakdownLoading;
 
-        const { data: events } = await (supabase as any)
-          .from("usage_events")
-          .select("created_at, cost, metadata, model, route")
-          .eq("user_id", user.id)
-          .gte("created_at", startOfMonth)
-          .order("created_at", { ascending: true })
-          .limit(5000);
+  // Use API data if available, otherwise fall back to demo data
+  const demo = generateDemoData();
+  const hasRealData = !!summaryData && summaryData.requestsRouted > 0;
 
-        if (!events || events.length === 0) {
-          // Show demo data for empty state
-          const demoDaily = Array.from({ length: 14 }, (_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() - 13 + i);
-            const saved = Math.round(40 + Math.random() * 80);
-            return {
-              date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-              saved,
-              spent: Math.round(saved * 0.55),
-              benchmarkCost: Math.round(saved * 1.55),
-            };
-          });
-
-          const totalSaved = demoDaily.reduce((s, d) => s + d.saved, 0);
-          const totalSpent = demoDaily.reduce((s, d) => s + d.spent, 0);
-          const fee = calculateFee(totalSaved);
-
-          setSummary({
-            totalSaved,
-            totalSpent,
-            savingsRate: totalSaved / (totalSaved + totalSpent),
-            requestsRouted: Math.round(totalSaved * 12),
-            nadisFee: fee,
-            netSavings: totalSaved - fee,
-          });
-          setDailyData(demoDaily);
-          setTierData([
-            { tier: "Simple", requests: 4200, saved: totalSaved * 0.55 },
-            { tier: "Complex", requests: 1800, saved: totalSaved * 0.15 },
-            { tier: "Reasoning", requests: 600, saved: totalSaved * 0.05 },
-            { tier: "Context Optimize", requests: 6600, saved: totalSaved * 0.25 },
-          ]);
-          setLoading(false);
-          return;
-        }
-
-        // Calculate real savings from events
-        let totalCost = 0;
-        let totalBenchmarkCost = 0;
-        const dailyMap: Record<string, { saved: number; spent: number; benchmarkCost: number }> = {};
-        const tierMap: Record<string, { requests: number; saved: number }> = {};
-
-        for (const event of events) {
-          const cost = event.cost || 0;
-          const benchmarkCost = event.metadata?.benchmark_cost || cost * 2.5;
-          const savings = benchmarkCost - cost;
-          const tier = event.metadata?.complexity_analysis?.tier || event.route || "unknown";
-
-          totalCost += cost;
-          totalBenchmarkCost += benchmarkCost;
-
-          const dateKey = new Date(event.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-          if (!dailyMap[dateKey]) dailyMap[dateKey] = { saved: 0, spent: 0, benchmarkCost: 0 };
-          dailyMap[dateKey].saved += savings;
-          dailyMap[dateKey].spent += cost;
-          dailyMap[dateKey].benchmarkCost += benchmarkCost;
-
-          if (!tierMap[tier]) tierMap[tier] = { requests: 0, saved: 0 };
-          tierMap[tier].requests += 1;
-          tierMap[tier].saved += savings;
-        }
-
-        const totalSaved = totalBenchmarkCost - totalCost;
-        const fee = calculateFee(totalSaved);
-
-        setSummary({
-          totalSaved,
-          totalSpent: totalCost,
-          savingsRate: totalSaved / totalBenchmarkCost,
-          requestsRouted: events.length,
-          nadisFee: fee,
-          netSavings: totalSaved - fee,
-        });
-
-        setDailyData(
-          Object.entries(dailyMap).map(([date, d]) => ({
-            date,
-            saved: Math.round(d.saved * 100) / 100,
-            spent: Math.round(d.spent * 100) / 100,
-            benchmarkCost: Math.round(d.benchmarkCost * 100) / 100,
-          }))
-        );
-
-        setTierData(
-          Object.entries(tierMap)
-            .map(([tier, d]) => ({ tier, ...d }))
-            .sort((a, b) => b.saved - a.saved)
-        );
-      } catch (err) {
-        console.error("Failed to fetch savings:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchSavings();
-  }, [user]);
+  const summary: SavingsSummary = hasRealData ? summaryData : demo.summary;
+  const dailyData: DailySaving[] = hasRealData && breakdownData?.daily?.length
+    ? breakdownData.daily
+    : demo.daily;
+  const tierData: TierBreakdown[] = hasRealData && breakdownData?.tiers?.length
+    ? breakdownData.tiers
+    : demo.tiers;
 
   if (loading) {
     return (
@@ -197,6 +130,11 @@ export default function Savings() {
         <p className="text-gray-500 text-sm mt-1">
           How much Nadir saved you this billing period
         </p>
+        {!hasRealData && (
+          <p className="text-xs text-amber-600 mt-1">
+            Showing demo data -- savings will appear once you start routing requests.
+          </p>
+        )}
       </div>
 
       {/* Stat cards */}

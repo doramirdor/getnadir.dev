@@ -2,34 +2,45 @@
 import { useState, useEffect } from "react";
 import {
   Activity,
-  TrendingUp,
-  Users,
   CreditCard,
-  Brain,
-  BarChart3
+  Key,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useApiKey } from "@/hooks/useApiKey";
+import { SavingsAPI } from "@/services/savingsApi";
 import { logger } from "@/utils/logger";
 
 interface Metrics {
   totalRequests: number;
   monthlyCost: number;
-  activeUsers: number;
+  activeApiKeys: number;
   avgResponseTime: number;
-  intelligentRoutes: number;
-  complexityAnalysis: number;
 }
 
 export const MetricsGrid = () => {
   const [metrics, setMetrics] = useState<Metrics>({
     totalRequests: 0,
     monthlyCost: 0,
-    activeUsers: 0,
+    activeApiKeys: 0,
     avgResponseTime: 0,
-    intelligentRoutes: 0,
-    complexityAnalysis: 0
   });
   const [loading, setLoading] = useState(true);
+  const { apiKey } = useApiKey();
+
+  // Fetch savings summary from backend
+  const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;
+  const { data: savingsSummary } = useQuery({
+    queryKey: ["savings", "summary", apiKey],
+    queryFn: () => savingsApi!.getSavingsSummary(),
+    enabled: !!savingsApi,
+    retry: 1,
+    staleTime: 60_000,
+  });
+
+  const savedThisMonth = savingsSummary?.totalSaved ?? 0;
 
   useEffect(() => {
     fetchMetrics();
@@ -37,36 +48,39 @@ export const MetricsGrid = () => {
 
   const fetchMetrics = async () => {
     try {
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('status, requests_this_month, cost_this_month');
+      const { data: { user } } = await supabase.auth.getUser();
 
+      // Fetch usage events for the last 30 days
       const { data: eventsData } = await supabase
         .from('usage_events')
         .select('latency_ms, cost, error, created_at')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .not('latency_ms', 'is', null);
 
+      // Fetch active API keys count
+      let activeApiKeys = 0;
+      if (user) {
+        const { count } = await supabase
+          .from('api_keys')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'active');
+        activeApiKeys = count || 0;
+      }
+
       const totalRequests = eventsData?.length || 0;
 
-      const monthlyCost = profilesData?.reduce((sum, profile) => sum + (profile.cost_this_month || 0), 0) ||
-        eventsData?.reduce((sum, ev) => sum + (ev.cost || 0), 0) || 0;
+      const monthlyCost = eventsData?.reduce((sum, ev) => sum + (ev.cost || 0), 0) || 0;
 
-      const activeUsers = profilesData?.filter(profile => profile.status === 'active').length || 0;
-
-      const avgResponseTime = eventsData?.length ?
-        (eventsData.reduce((sum, ev) => sum + (ev.latency_ms || 0), 0) / eventsData.length / 1000) : 0;
-
-      const intelligentRoutes = Math.floor(totalRequests * 0.7);
-      const complexityAnalysis = Math.floor(totalRequests * 0.8);
+      const avgResponseTime = eventsData?.length
+        ? (eventsData.reduce((sum, ev) => sum + (ev.latency_ms || 0), 0) / eventsData.length / 1000)
+        : 0;
 
       setMetrics({
         totalRequests,
         monthlyCost,
-        activeUsers,
+        activeApiKeys,
         avgResponseTime,
-        intelligentRoutes,
-        complexityAnalysis
       });
     } catch (error) {
       logger.error('Error fetching metrics:', error);
@@ -83,17 +97,16 @@ export const MetricsGrid = () => {
 
   const metricsConfig = [
     { title: "Total Requests", value: formatNumber(metrics.totalRequests), icon: Activity },
-    { title: "Intelligent Routes", value: formatNumber(metrics.intelligentRoutes), icon: Brain },
     { title: "Monthly Cost", value: `$${metrics.monthlyCost.toFixed(2)}`, icon: CreditCard },
-    { title: "Active Users", value: metrics.activeUsers.toString(), icon: Users },
-    { title: "Complexity Analysis", value: formatNumber(metrics.complexityAnalysis), icon: BarChart3 },
+    { title: "Savings This Month", value: `$${savedThisMonth.toFixed(2)}`, icon: TrendingDown, highlight: savedThisMonth > 0 },
+    { title: "Active API Keys", value: metrics.activeApiKeys.toString(), icon: Key },
     { title: "Avg Response", value: `${metrics.avgResponseTime.toFixed(1)}s`, icon: TrendingUp },
   ];
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, index) => (
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {[...Array(5)].map((_, index) => (
           <div key={index} className="metric-card">
             <div className="w-20 h-3 bg-muted rounded animate-pulse mb-3" />
             <div className="w-16 h-7 bg-muted rounded animate-pulse" />
@@ -104,16 +117,19 @@ export const MetricsGrid = () => {
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {metricsConfig.map((metric) => {
         const Icon = metric.icon;
+        const isHighlighted = (metric as any).highlight;
         return (
-          <div key={metric.title} className="metric-card group">
+          <div key={metric.title} className={`metric-card group ${isHighlighted ? 'border-emerald-200 bg-emerald-50/30' : ''}`}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-medium text-muted-foreground">{metric.title}</span>
-              <Icon className="w-4 h-4 text-muted-foreground/50" strokeWidth={1.5} />
+              <Icon className={`w-4 h-4 ${isHighlighted ? 'text-emerald-500' : 'text-muted-foreground/50'}`} strokeWidth={1.5} />
             </div>
-            <div className="text-2xl font-semibold text-foreground">{metric.value}</div>
+            <div className={`text-2xl font-semibold ${isHighlighted ? 'text-emerald-700' : 'text-foreground'}`}>
+              {metric.value}
+            </div>
           </div>
         );
       })}

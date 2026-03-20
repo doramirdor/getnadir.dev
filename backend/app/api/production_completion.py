@@ -9,7 +9,7 @@ import logging
 import time
 import uuid
 from typing import Dict, Any, Optional, List, Tuple, Literal
-from fastapi import APIRouter, HTTPException, status, Header, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Header, Depends, Request
 from pydantic import BaseModel, Field
 
 from app.auth.supabase_auth import validate_api_key, UserSession
@@ -442,7 +442,8 @@ async def get_intelligent_model_recommendation_with_analysis(
 @router.post("/v1/chat/completions", response_model=ProductionCompletionResponse, dependencies=[Depends(check_rate_limit)])
 async def create_completion(
     request: ProductionCompletionRequest,
-    current_user: UserSession = Depends(validate_api_key)
+    background_tasks: BackgroundTasks,
+    current_user: UserSession = Depends(validate_api_key),
 ) -> ProductionCompletionResponse:
     """
     Create a chat completion using intelligent model selection.
@@ -826,6 +827,55 @@ async def create_completion(
         )
         
         logger.info(f"✅ Completed: {request_id} | {response_time_ms}ms | Model: {response.get('model_used', 'unknown')} | Cost: ${cost_info.get('total_cost_usd', 0):.4f}")
+
+        # --- Savings tracking (background) ---
+        # Calculate what the user would have paid with their benchmark model
+        # and compare against the actual routed cost.
+        if benchmark_model and not is_zero_completion:
+            try:
+                from app.services.cost_calculation_service import cost_service
+                from app.services.savings_billing_service import SavingsBillingService
+
+                routed_cost = cost_info.get("total_cost_usd", 0.0)
+                prompt_tokens = usage_dict.get("prompt_tokens", 0)
+                completion_tokens = usage_dict.get("completion_tokens", 0)
+
+                # Estimate what the same request would have cost on the benchmark model
+                benchmark_breakdown = cost_service.calculate_comprehensive_cost(
+                    model=benchmark_model,
+                    tokens_in=prompt_tokens,
+                    tokens_out=completion_tokens,
+                )
+                benchmark_cost = benchmark_breakdown.total_cost
+
+                if benchmark_cost > routed_cost:
+                    savings_svc = SavingsBillingService(supabase_db.client)
+                    complexity_tier = str(
+                        complexity_analysis_result.get("extracted_metrics", {}).get("tier", "unknown")
+                        if isinstance(complexity_analysis_result.get("extracted_metrics"), dict)
+                        else complexity_analysis_result.get("strategy", "unknown")
+                    )
+
+                    async def _track_savings():
+                        try:
+                            await savings_svc.track_request_savings(
+                                user_id=str(current_user.id),
+                                request_id=request_id,
+                                benchmark_model=benchmark_model,
+                                benchmark_cost=benchmark_cost,
+                                routed_model=response.get("model_used", "unknown"),
+                                routed_cost=routed_cost,
+                                prompt_tokens=prompt_tokens,
+                                completion_tokens=completion_tokens,
+                                complexity_tier=complexity_tier,
+                            )
+                        except Exception as sav_err:
+                            logger.warning("Savings tracking failed for %s: %s", request_id, sav_err)
+
+                    background_tasks.add_task(_track_savings)
+            except Exception as sav_setup_err:
+                logger.debug("Savings tracking setup skipped: %s", sav_setup_err)
+
         return formatted_response
         
     except HTTPException:

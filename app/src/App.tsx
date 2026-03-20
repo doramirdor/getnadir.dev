@@ -29,6 +29,7 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Docs = lazy(() => import("./pages/Docs"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -92,6 +93,7 @@ const App = () => (
             <Route path="/docs/:section?" element={<Docs />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/auth" element={<Auth />} />
 
             {/* Dashboard (authenticated) */}
             <Route path="/dashboard" element={<Layout />}>

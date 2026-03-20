@@ -30,6 +30,9 @@ fakeredis>=2.10.0  # Redis mock for local development
 # Monitoring
 prometheus-client>=0.20.0
 
+# Billing
+stripe>=7.0.0
+
 # Utilities
 requests>=2.28.2
 httpx>=0.24.0
