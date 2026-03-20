@@ -1,0 +1,2410 @@
+{
+  "version": "2.0",
+  "updated_at": "2026-02-11",
+  "simple": [
+    {
+      "text": "What is the capital of France?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Who wrote Romeo and Juliet?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What year did World War II end?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How many continents are there?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the chemical symbol for gold?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What language do they speak in Brazil?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Who painted the Mona Lisa?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the largest planet in our solar system?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the speed of light?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How many sides does a hexagon have?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is 25 times 4?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Calculate 150 divided by 3",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What is 17 plus 38?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What is 10% of 250?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Convert 5 kilometers to miles",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Define photosynthesis",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What does GDP stand for?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is an algorithm?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Define the word 'serendipity'",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is a metaphor?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How do you say hello in Japanese?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Translate 'thank you' to Spanish",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is 'goodbye' in French?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Is Python a compiled language?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Does the Earth revolve around the Sun?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Is 7 a prime number?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Can penguins fly?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Is HTML a programming language?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Convert this text to uppercase: hello world",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "List the days of the week",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Sort these numbers: 5, 2, 8, 1, 9",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What is today's date?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Reverse the string 'hello'",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Hello, how are you?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Good morning!",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Tell me a joke",
+      "domain": "creative",
+      "source": "seed"
+    },
+    {
+      "text": "What's your name?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the boiling point of water?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What timezone is New York in?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the population of Tokyo?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How tall is Mount Everest?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the atomic number of carbon?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Summarize this in one sentence",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Give me a synonym for 'happy'",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What is the opposite of 'cold'?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Name three primary colors",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What comes after Tuesday?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Read the file config.yaml",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Show me the contents of README.md",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What's in the .env file?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "List all files in the src directory",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Find all Python files in this project",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Run npm install",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Check the git status",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What branch am I on?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Show me the last 5 git commits",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Run the tests",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Search for the latest version of React",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What is the current price of Bitcoin?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Look up the npm package express",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Fetch the docs for FastAPI Query parameters",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What does this function do?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What's the syntax for a Python list comprehension?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do I create a new branch in git?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What port is the server running on?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Show me the imports in main.py",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Change the port from 3000 to 8080",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Add a newline at the end of this file",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Rename the variable x to count",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Fix this typo: 'recieve' should be 'receive'",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Remove the unused import on line 3",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What version of Node is installed?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "How much disk space is available?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Is the database running?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What's my IP address?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Show the environment variables",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What is the square root of 81?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "How many hours in a day?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the formula for area of a circle?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Who discovered penicillin?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the longest river in the world?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How many bytes in a kilobyte?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What does HTTP stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Convert 32 degrees Fahrenheit to Celsius",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What is the hex code for white?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do you comment in Python?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What's the shortcut for copy on Mac?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Spell check this paragraph",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What file extension do TypeScript files use?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the default port for PostgreSQL?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do I exit vim?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What does JSON stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What year was Python created?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is 2 to the power of 10?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "List the vowels in English",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is pi rounded to 2 decimal places?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What color do you get mixing red and blue?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What's the difference between == and === in JavaScript?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Print 'Hello World' in Python",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the default branch name in git?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How many bits in a byte?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the capital of Japan?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Name a programming language that starts with R",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the chemical formula for salt?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How do you create a list in Python?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What does CSS stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What's 7 factorial?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What day is Christmas?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Count the words in this sentence",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What is the opposite of 'increase'?",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Format this date as ISO 8601",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What continent is Egypt in?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What does API stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How many planets are in our solar system?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the latest LTS version of Node.js?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Ping google.com",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Show the current working directory",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "List running processes",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What is my shell?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Create a new file called notes.txt",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Delete the temp directory",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Show git log --oneline",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Restart the dev server",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Clear the terminal",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What time zone am I in?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the shorthand for 'console.log' in VS Code?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Who invented the telephone?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What gas do plants absorb?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How many weeks in a year?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What does RAM stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What's the fastest land animal?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is localhost?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What does sudo stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Convert this string to lowercase",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What's the RGB value for black?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Concatenate these two strings",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the boiling point of water in Fahrenheit?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How many minutes in an hour?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the largest ocean?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Write a one-line Python function to add two numbers",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the current year?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Remove trailing whitespace from this string",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the file size limit for GitHub?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do I install pip?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the difference between git pull and git fetch?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Show memory usage",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What operating system am I using?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Check if port 8080 is in use",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Display the first 10 lines of this file",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Rename this file from old.txt to new.txt",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What is the size of the node_modules folder?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "How many files are in this directory?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Copy this file to the backup folder",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What's the syntax for a for loop in JavaScript?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do you declare a variable in Go?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the npm command to update packages?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What does the 'ls -la' command show?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do you import a module in Python?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What port does HTTPS use?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the maximum integer in JavaScript?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do you round a number in Python?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a hello world program in Java",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What's the keyboard shortcut for undo?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Name three JavaScript frameworks",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What does MVP stand for in software?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Calculate the average of 4, 8, 15, 16, 23, 42",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "How many zeros in a million?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "What is absolute zero in Celsius?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Who is the CEO of Tesla?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What color is the sun?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How do you make text italic in Markdown?",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What is a haiku format?",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Give me five rhyming words for 'light'",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What is an acronym?",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Capitalize the first letter of each word",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What is the tallest building in the world?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Name the 7 dwarfs from Snow White",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the melting point of ice?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Who is the author of Harry Potter?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What does USB stand for?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How do you declare a constant in JavaScript?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What color is an emerald?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the smallest prime number?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Translate 'cat' to French",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What does the 'return' keyword do in Python?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "How many states are in the USA?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the shorthand for 'function' in JavaScript arrow syntax?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the national animal of Australia?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How do you create a dictionary in Python?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the decimal value of hex 0xFF?",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Who wrote '1984'?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What is the command to list Docker containers?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What is the SI unit of force?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How do I check the Python version?",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "What is a boolean?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Name the three states of matter",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "What does 'NaN' mean in JavaScript?",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "What is the plural of 'mouse'?",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "What year was the iPhone first released?",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "How do you write a ternary operator in Python?",
+      "domain": "code",
+      "source": "seed"
+    }
+  ],
+  "medium": [
+    {
+      "text": "Write a function to check if a string is a palindrome, handling edge cases like spaces and punctuation",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the difference between SQL joins: INNER, LEFT, RIGHT, and FULL OUTER with examples",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Python class for a linked list with insert, delete, and search methods",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a bash script that backs up a directory with timestamp naming and keeps only the last 5 backups",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how DNS resolution works, from browser to response",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Write unit tests for a shopping cart class that handles adding, removing items and calculating totals",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a REST API endpoint in FastAPI that handles file uploads with validation",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the difference between processes and threads with practical examples",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Write a React component for a sortable data table with pagination",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a binary search tree with insert and in-order traversal in Python",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Docker Compose file for a web app with Postgres and Redis services",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Python script to parse CSV files and generate summary statistics",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how HTTPS and TLS handshake works step by step",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a rate limiter middleware in Express.js using Redis",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a regular expression to validate email addresses and explain each part",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a GitHub Actions workflow for CI/CD that runs tests and deploys to staging",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the event loop in Node.js with code examples showing blocking vs non-blocking operations",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Python decorator that caches function results with TTL expiration",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a responsive navigation component with a hamburger menu for mobile using React and Tailwind",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement depth-first and breadth-first search for a graph in Python",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Terraform configuration to provision an EC2 instance with a security group",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how garbage collection works in JavaScript including mark-and-sweep",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create an authentication middleware in FastAPI that validates JWT tokens",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Python script to interact with the GitHub API to list and create issues",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple pub/sub system in Python using asyncio",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Compare and contrast REST vs GraphQL with pros and cons for each",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a SQL query to find the top 3 customers by total spending with their most purchased product",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a TypeScript utility type that makes all nested properties optional",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple state machine in Python for an order processing workflow",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a blog post outline about the benefits of microservices",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the SOLID principles with code examples for each principle",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Python context manager for database connections with error handling",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a shell script that monitors CPU and memory usage and sends alerts when thresholds are exceeded",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple web scraper in Python that extracts product data from an HTML page",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Kubernetes manifest for deploying a web application with 3 replicas",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a function to flatten a deeply nested JSON object into dot-notation keys",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how React hooks work internally, focusing on useState and useEffect",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Python logging configuration with file rotation, formatting, and multiple handlers",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Summarize the key points of this research paper in 3 paragraphs",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comparison of 5 popular CSS frameworks highlighting their trade-offs",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Create a data migration script that transforms records from one schema to another",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how WebSocket connections work and implement a simple chat server",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Python function to merge two sorted arrays efficiently",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create an OpenAPI spec for a todo list API with CRUD operations",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Debug this React component that re-renders infinitely and explain the fix",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Makefile for a Go project with build, test, lint, and clean targets",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the CAP theorem in simple terms with real-world database examples",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Create an Nginx configuration for reverse proxying to multiple backend services",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a technical email to the team explaining a recent production incident",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple observer pattern in TypeScript",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a short tutorial on using Python virtual environments",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Create a React custom hook for handling form state and validation",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the difference between horizontal and vertical scaling with examples",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive README for an open source Python library",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Implement retry logic with exponential backoff in Python",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Prometheus alert rule for high error rates and latency",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a function to detect cycles in a linked list using Floyd's algorithm",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain database normalization up to 3NF with examples",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Create a simple CLI tool in Python using argparse with subcommands",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a technical specification for a user notification feature",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Debug this SQL query that returns incorrect results due to a GROUP BY issue",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple task queue with priority support in Python",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a script to set up a new development environment with all necessary tools",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how OAuth 2.0 authorization code flow works with a sequence diagram",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Python dataclass hierarchy for a library management system",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive .gitignore file for a full-stack project and explain each entry",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple LRU cache in Python using OrderedDict",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Debug this async Python function that sometimes hangs and explain why",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Write a migration guide from Class Components to React Hooks",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Python script that monitors a directory for file changes and triggers actions",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the pros and cons of NoSQL vs SQL databases for different use cases",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a Trie data structure for autocomplete functionality",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive error handling strategy document for a REST API",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Create a CI pipeline configuration that includes linting, testing, and code coverage",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Fix this race condition in a multi-threaded Python program",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Write a function to convert between different date formats with timezone support",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how container networking works in Docker and Kubernetes",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Create a simple plugin system in Python using abstract base classes",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a data visualization script using matplotlib to show sales trends",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement input validation and sanitization for a web form",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write an ADR (Architecture Decision Record) for choosing a message queue",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Create a health check endpoint that tests database, cache, and external service connections",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Find and fix the memory leak in this Node.js event listener code",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Python generator for paginating through large API responses",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a configuration management setup that supports multiple environments",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the trade-offs between monorepo and polyrepo approaches",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive API rate limiting strategy document",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a simple circuit breaker pattern in Python",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Debug why this Docker container keeps crashing on startup",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Create a project scaffolding script that sets up a new microservice",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Write an end-to-end test for a login flow using Playwright",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how B-trees work and why databases use them for indexing",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Create a webhook handler that validates signatures and processes events",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a performance benchmarking script for comparing two implementations",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Set up ESLint and Prettier for a TypeScript React project with custom rules",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a feature flag system with percentage-based rollouts",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a database seed script with realistic test data for development",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a load testing script using k6 for an API endpoint",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the differences between symmetric and asymmetric encryption with use cases",
+      "domain": "factual",
+      "source": "seed"
+    },
+    {
+      "text": "Write a Python function to convert a Roman numeral string to an integer",
+      "domain": "code",
+      "source": "seed"
+    }
+  ],
+  "complex": [
+    {
+      "text": "Design a microservices architecture for a real-time multiplayer game with matchmaking, leaderboards, and anti-cheat systems",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Architect a distributed event-sourcing system for a financial trading platform that handles millions of transactions per second",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a scalable notification system that supports push, email, SMS, and in-app channels with user preferences and rate limiting",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a system design for a URL shortener that handles 100 million daily requests with analytics",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Explain the trade-offs between consistency and availability in distributed systems, using real-world examples from companies like Netflix and Amazon",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Compare and contrast the CAP theorem implications for SQL vs NoSQL databases in a microservices context, then recommend an approach for an e-commerce platform",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the economic impacts of remote work adoption on urban real estate markets, transportation infrastructure, and local businesses",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Walk me through the reasoning behind choosing between a monolithic and microservices architecture for a startup's MVP",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a thread-safe LRU cache in Python with TTL support, size limits, and cache statistics tracking",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a complete REST API with authentication, rate limiting, pagination, and comprehensive error handling using FastAPI",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Build a React component library with a design system that includes theming, accessibility, responsive design, and documentation",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a B-tree data structure with insert, delete, search, and range query operations, including rebalancing",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a Python decorator that implements retry logic with exponential backoff, jitter, circuit breaking, and logging",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Debug this memory leak in a Node.js application that occurs during WebSocket connections under high concurrency, and explain the GC implications",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Optimize this SQL query that takes 30 seconds on a table with 50 million rows, considering indexing strategies, query plan analysis, and partitioning",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Profile and optimize a Python data pipeline that processes 10GB CSV files, currently taking 4 hours to complete",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Compare the latest transformer architectures (GPT-4, Claude, Gemini, Llama) in terms of training methodology, context handling, and real-world performance benchmarks",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Synthesize the current research on quantum error correction and explain the implications for practical quantum computing timelines",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the trade-offs between different consensus algorithms (Paxos, Raft, PBFT) for blockchain applications",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Write a short story exploring the ethical implications of AI consciousness, incorporating themes from both Eastern and Western philosophy",
+      "domain": "creative",
+      "source": "seed"
+    },
+    {
+      "text": "Create a detailed fictional world with its own political system, economy, religion, and history spanning 1000 years",
+      "domain": "creative",
+      "source": "seed"
+    },
+    {
+      "text": "Write a technical blog post explaining category theory concepts using cooking metaphors, targeted at software engineers",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Prove that the halting problem is undecidable using a diagonalization argument, and explain the practical implications for software verification",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Derive the backpropagation algorithm from first principles and explain how automatic differentiation relates to it",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Prove the correctness of Dijkstra's algorithm and analyze its time complexity under different priority queue implementations",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Design a database schema for a social media platform, then write migration scripts, explain indexing strategy, outline the caching layer, and describe the data archival process",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a complete CI/CD pipeline configuration including build, test, security scanning, staging deployment, canary releases, and rollback procedures",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Build a comprehensive monitoring and alerting system covering application metrics, infrastructure health, business KPIs, and incident response automation",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Perform a security audit of this authentication flow, identifying potential vulnerabilities including OWASP Top 10 risks, and recommend mitigations with code examples",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Design a zero-trust security architecture for a multi-cloud environment with on-premises legacy systems",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the security implications of implementing OAuth 2.0 with PKCE for a mobile application, including threat modeling",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Develop a technical migration strategy to move a monolithic PHP application to a cloud-native architecture, including timeline, risk assessment, and team structure",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive data strategy for a healthcare company transitioning to AI-driven diagnostics, addressing privacy, compliance, and technical infrastructure",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a disaster recovery plan for a financial services company with RPO of 15 minutes and RTO of 1 hour across multiple regions",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the performance characteristics of different garbage collection algorithms and recommend the optimal GC configuration for a latency-sensitive trading system",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Compare container orchestration approaches (Kubernetes, Nomad, ECS) for a company running 500 microservices across three cloud providers",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Evaluate the trade-offs of different state management solutions in a large-scale React application with offline-first requirements",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Refactor this 2000-line God class into a proper domain-driven design with bounded contexts, aggregates, and event handlers",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Review this distributed transaction implementation for correctness, identify race conditions, and propose a saga pattern alternative",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze this machine learning pipeline for data leakage, feature engineering issues, and suggest improvements to the model evaluation strategy",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Explain how principles from control theory apply to designing auto-scaling systems, with specific implementation recommendations",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Connect concepts from game theory to microservices communication patterns and explain how to prevent cascade failures",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Apply information theory concepts to optimize data compression in a real-time video streaming architecture",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Diagnose why this Kubernetes cluster experiences intermittent pod evictions during peak traffic, analyzing resource limits, node pressure, and scheduler behavior",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Investigate a race condition in this concurrent Go program that only manifests under specific timing conditions with high CPU load",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Troubleshoot why this distributed cache shows inconsistent reads after network partitions despite using quorum-based replication",
+      "domain": "debugging",
+      "source": "seed"
+    },
+    {
+      "text": "Refactor the authentication system from JWT to session-based auth, updating all middleware, routes, and tests across the codebase",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Migrate this Express.js app to use TypeScript, converting all files, adding type definitions, and updating the build pipeline",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Split this monolithic app.py into a proper package structure with separate modules for routes, models, services, and utils",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "The deploy is failing in CI \u2014 check the GitHub Actions logs, find the error, trace it back to the source file, and fix it",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Users are reporting 500 errors on the /api/checkout endpoint \u2014 check the logs, reproduce the issue, identify the root cause, and implement a fix",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "The app is consuming 4GB of memory in production \u2014 profile the application, identify the memory leak, and fix it",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Read the existing database schema, then implement a new feature for user notifications with migrations, models, API endpoints, and WebSocket support",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Look at how authentication works in this codebase, then add OAuth2 login with Google and GitHub providers, including callback handlers and token refresh",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the current test suite, identify gaps in coverage, and write integration tests for all untested API endpoints",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Set up a complete development environment: clone the repo, install dependencies, configure the database, run migrations, seed test data, and verify everything works",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Create a new microservice that integrates with the existing API gateway \u2014 scaffold the project, implement the service, add Docker config, update the gateway routes, and write deployment manifests",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Audit all dependencies for security vulnerabilities, update the vulnerable ones, verify no breaking changes, and update the lockfile",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the current database query patterns, identify the N+1 queries, and refactor the ORM layer to use eager loading with proper join strategies",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Review the error handling across the entire API, standardize the error response format, add proper error codes, and implement a global exception handler",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Evaluate whether we should migrate from REST to GraphQL for this project, analyze the current endpoints, and create a migration plan with schema design",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Scrape the documentation site, extract all API endpoints and their parameters, generate TypeScript types, and create an API client library",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Monitor this web application for performance regressions \u2014 set up Lighthouse CI, configure budgets, and create alerts for Core Web Vitals degradation",
+      "domain": "agent-task",
+      "source": "seed"
+    },
+    {
+      "text": "Design a multi-tenant SaaS platform architecture with tenant isolation, custom domains, billing integration, and data partitioning strategies",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a distributed tracing system from scratch that integrates with OpenTelemetry and provides service dependency mapping",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design and implement a real-time fraud detection pipeline using stream processing, feature stores, and ML model serving",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a custom query language parser and executor for a domain-specific analytics platform",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Architect a content delivery network with edge caching, origin shielding, and intelligent routing based on network conditions",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a CRDT-based collaborative editing system that supports offline editing and conflict-free merging across multiple devices",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom memory allocator in C that outperforms malloc for a specific workload pattern, with benchmarks and analysis",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive data governance framework for a multinational organization, covering GDPR, CCPA, and HIPAA compliance",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a machine learning model serving infrastructure that supports A/B testing, canary deployments, and automatic rollback",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a compiler frontend for a simple programming language including lexer, parser, AST construction, and semantic analysis",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a real-time bidding system for an ad platform that processes 1 million bid requests per second with sub-10ms latency",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the trade-offs between different vector database architectures (HNSW, IVF, PQ) for a large-scale similarity search application",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Build a custom Kubernetes operator that manages the lifecycle of a stateful distributed database",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a privacy-preserving analytics system using differential privacy, secure aggregation, and federated computation",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a distributed consensus protocol for a cluster of 7 nodes, handling leader election, log replication, and membership changes",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive threat model for a fintech mobile application, including attack trees, risk scoring, and mitigation strategies",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design an event-driven architecture for a supply chain management system with saga orchestration and compensating transactions",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom neural network training framework with automatic mixed precision, gradient accumulation, and distributed data parallel support",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a technical design document for migrating a monolithic e-commerce platform to a service mesh architecture with Istio",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a real-time recommendation engine that combines collaborative filtering, content-based filtering, and contextual bandits",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the consistency guarantees of different database replication strategies and design a multi-region data platform for a global social network",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a zero-downtime database migration system that handles schema changes, data backfills, and dual-writing across versions",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a chaos engineering framework that systematically tests distributed system resilience with automated failure injection",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a custom observability platform that correlates logs, metrics, and traces to automatically detect and diagnose production issues",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a formal proof of correctness for a concurrent lock-free queue implementation and analyze its linearizability properties",
+      "domain": "math",
+      "source": "seed"
+    },
+    {
+      "text": "Design a multi-region active-active architecture for a real-time gaming platform with global state synchronization and conflict resolution",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create an end-to-end encrypted messaging protocol with forward secrecy, deniability, and support for group conversations",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the architectural patterns used by Netflix, Uber, and Airbnb for handling microservice failures, and design a unified resilience framework",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom database storage engine optimized for append-only time-series data with columnar compression and efficient range scans",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a comprehensive API versioning strategy for a platform with 200+ endpoints, handling backwards compatibility, deprecation, and client migration",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a serverless data pipeline that processes streaming IoT data, performs anomaly detection, and triggers automated responses",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a technical architecture review for a healthcare platform, evaluating HIPAA compliance, data encryption, audit logging, and access control patterns",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design and implement a feature store for a machine learning platform with real-time feature computation, versioning, and point-in-time correctness",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a WebAssembly runtime with JIT compilation, sandboxed execution, and host function bindings",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a global content moderation system using ML classifiers, human review queues, appeal workflows, and cross-language support",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive capacity planning model for a cloud infrastructure, including growth projections, cost optimization, and resource right-sizing",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Write a novel exploring the sociological implications of artificial general intelligence, weaving together multiple narrative perspectives and technical accuracy",
+      "domain": "creative",
+      "source": "seed"
+    },
+    {
+      "text": "Design a programming language that guarantees memory safety without garbage collection, proving the soundness of its type system",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive playbook for incident response including detection, triage, communication, mitigation, and post-mortem processes for a 24/7 platform",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a distributed search engine with inverted indexing, relevance ranking, faceted search, and horizontal scaling across multiple shards",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a platform engineering team charter, including self-service developer portals, internal tooling strategy, and golden path templates",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a custom APM solution that instruments Python applications with minimal overhead, providing transaction tracing, error tracking, and performance profiling",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the trade-offs between different approaches to multi-tenancy in a SaaS database layer, including schema-per-tenant, row-level security, and hybrid approaches",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a policy engine that evaluates complex authorization rules using OPA/Rego, supporting RBAC, ABAC, and relationship-based access control",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a system for automated root cause analysis that uses causal inference and dependency graphs to identify failure propagation in microservices",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create an interactive data exploration tool with natural language query support, automated visualization selection, and insight generation",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a blue-green deployment strategy for a stateful distributed system with zero-downtime migration of persistent connections and in-flight transactions",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive analysis of emerging AI regulation across US, EU, and China, including technical compliance strategies for AI companies",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a graph-based recommendation system that combines knowledge graphs, user behavior signals, and contextual features for personalized content discovery",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom gRPC framework with interceptors for authentication, rate limiting, circuit breaking, and distributed tracing",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create an automated performance regression detection system that identifies slowdowns across releases using statistical change-point detection",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a data mesh architecture for a large enterprise, defining domain ownership, data products, self-serve infrastructure, and federated governance",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a streaming SQL engine that processes unbounded data streams with windowed aggregations, joins, and exactly-once processing guarantees",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive technical due diligence report evaluating a startup's codebase, architecture, scalability, security posture, and technical debt",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Design an end-to-end MLOps pipeline covering data versioning, experiment tracking, model registry, automated retraining, and production monitoring",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a Byzantine fault-tolerant state machine replication protocol that maintains safety under up to f failures in a 3f+1 node cluster",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a technical strategy document for decomposing a legacy monolith into event-driven microservices, including strangler fig pattern implementation and team topology",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a cross-platform mobile application architecture that shares business logic between iOS, Android, and web while maintaining native performance",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a real-time anomaly detection system for network traffic using unsupervised learning, handling concept drift and providing explainable alerts",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a distributed key-value store with tunable consistency levels, gossip-based failure detection, and anti-entropy repair mechanisms",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a multi-modal AI pipeline that combines vision, language, and audio models for automated video content moderation at YouTube-scale",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive cost optimization strategy for a cloud-native application spending $500K/month across AWS, GCP, and Azure",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom database transaction manager with MVCC, write-ahead logging, and deadlock detection supporting serializable isolation",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design an AI-powered code review system that detects bugs, security vulnerabilities, performance issues, and style violations across multiple languages",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a distributed workflow orchestration engine similar to Temporal/Cadence with durable execution, saga support, and activity retry policies",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the architectural decisions behind Kafka's design and propose improvements for a next-generation event streaming platform with exactly-once semantics",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a privacy-preserving machine learning system using federated learning, differential privacy, and secure multi-party computation for healthcare data",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom container runtime from scratch that supports namespaces, cgroups, overlay filesystems, and OCI-compatible image pulling",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a technical architecture for a self-driving vehicle perception system combining LiDAR, camera, and radar sensor fusion with real-time object tracking",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a globally distributed configuration management system with strong consistency, versioning, rollback support, and real-time propagation to millions of clients",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom language server protocol (LSP) implementation with semantic analysis, refactoring support, and cross-file dependency resolution",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a comprehensive data lake architecture with medallion layers, schema evolution, data quality checks, and cost-optimized storage tiering",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a real-time collaborative whiteboard application with vector graphics, infinite canvas, undo/redo across users, and conflict-free state synchronization",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the trade-offs between different approaches to implementing ACID transactions in a distributed NewSQL database and propose a novel hybrid approach",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a platform for automated machine learning experiment tracking, model versioning, A/B testing, and gradual rollout with automatic rollback",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom query planner and optimizer for a columnar analytical database that handles complex joins, aggregations, and window functions",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive security architecture for a cryptocurrency exchange, covering cold/hot wallet management, transaction signing, fraud detection, and regulatory compliance",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design an intelligent load balancing system that uses reinforcement learning to optimize request routing based on server health, latency, and cost metrics",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build a custom time-series forecasting platform that automatically selects models, handles seasonality detection, and provides uncertainty quantification",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a verifiable computation framework that allows a client to outsource expensive computations to untrusted servers with mathematical proof of correctness",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a comprehensive developer platform with service catalog, environment provisioning, deployment pipelines, and internal API marketplace",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a technical strategy for migrating a petabyte-scale data warehouse from on-premise to cloud, maintaining business continuity and data integrity throughout",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom graph database engine with property graph support, Cypher-like query language, and efficient traversal algorithms for social network analysis",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a multi-player real-time strategy game backend with deterministic simulation, client-side prediction, server reconciliation, and anti-cheat measures",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build an automated infrastructure security scanner that identifies misconfigurations across Kubernetes, cloud IAM, network policies, and secrets management",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the theoretical limits of distributed consensus under various failure models and design a protocol that optimizes for the common case while maintaining safety",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design an edge computing platform for IoT that handles device provisioning, OTA updates, local ML inference, and seamless cloud synchronization",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a formal specification and implementation of a type system that supports dependent types, linear types, and effect tracking for a systems programming language",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Build a comprehensive API testing framework that auto-generates test cases from OpenAPI specs, performs contract testing, and detects breaking changes",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a real-time personalization engine for an e-commerce platform that combines user behavior, item features, contextual signals, and business rules",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom distributed file system with erasure coding, metadata caching, tiered storage, and automatic data rebalancing across heterogeneous nodes",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Write a comprehensive analysis of how transformer attention mechanisms can be optimized for inference, covering FlashAttention, KV-cache, speculative decoding, and quantization",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a CI/CD platform that supports canary deployments across multiple clouds, automated performance regression testing, and intelligent rollback using ML-based anomaly detection",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build an automated database schema evolution system that generates migration plans, handles zero-downtime schema changes, and provides rollback capabilities for distributed databases",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a technical design for a large-scale recommendation system that handles billions of user-item interactions, supports real-time feature updates, and maintains sub-50ms latency",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design and implement a custom service mesh data plane in Rust that handles mTLS, load balancing, circuit breaking, and distributed tracing with minimal latency overhead",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the implications of quantum computing on current cryptographic systems and design a migration strategy for transitioning a financial platform to post-quantum cryptography",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive observability platform that uses causal inference to automatically correlate alerts, identify root causes, and suggest remediation actions",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Design a system for real-time natural language understanding that handles multiple languages, domain-specific terminology, and context-dependent disambiguation at scale",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom vector database optimized for high-dimensional similarity search with support for hybrid queries combining vector similarity and metadata filtering",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Build a comprehensive audit logging system for a regulated industry that guarantees tamper-evident storage, supports complex compliance queries, and handles petabyte-scale retention",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design an automated capacity planning system that uses time-series forecasting, simulation, and optimization to recommend infrastructure changes ahead of demand",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Create a multi-tenant serverless platform that provides strong isolation guarantees, fair resource allocation, cold start optimization, and cost transparency per tenant",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a stream processing framework that supports exactly-once processing, stateful computations with checkpointing, and dynamic scaling based on backpressure signals",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Design a knowledge graph construction pipeline that extracts entities and relationships from unstructured text, resolves entity references, and maintains temporal versioning",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Write an in-depth technical comparison of WebAssembly runtimes for server-side use cases, analyzing security models, performance characteristics, and ecosystem maturity",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a platform-agnostic feature flag system that supports percentage rollouts, user targeting, mutual exclusion groups, and real-time flag evaluation at edge locations",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement an incremental computation framework that automatically tracks data dependencies and re-executes only the minimum necessary computations when inputs change",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive testing strategy for a microservices architecture covering unit tests, contract tests, integration tests, chaos tests, and performance benchmarks",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Design a real-time collaborative code editor with syntax highlighting, multi-cursor support, integrated terminal, and conflict-free replicated document model",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Build an automated security response system that detects intrusions, contains threats, collects forensic evidence, and orchestrates remediation across a distributed infrastructure",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Analyze the architectural patterns of modern LLM serving systems and design an inference platform that optimizes for throughput, latency, and cost across heterogeneous hardware",
+      "domain": "research",
+      "source": "seed"
+    },
+    {
+      "text": "Design a data pipeline architecture that handles schema-on-read and schema-on-write patterns, supports backfilling, and provides exactly-once delivery guarantees",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Implement a custom profiling and optimization toolkit for GPU-accelerated applications that identifies memory bottlenecks, kernel inefficiencies, and data transfer overhead",
+      "domain": "code",
+      "source": "seed"
+    },
+    {
+      "text": "Create a comprehensive technical roadmap for evolving a monolithic application into a platform with public APIs, webhooks, marketplace integrations, and developer documentation",
+      "domain": "writing",
+      "source": "seed"
+    },
+    {
+      "text": "Design a privacy-by-design architecture for a health data platform that implements data minimization, purpose limitation, consent management, and the right to be forgotten",
+      "domain": "architecture",
+      "source": "seed"
+    },
+    {
+      "text": "Write a novel short story that uses unreliable narration across three timelines to explore the nature of consciousness in artificial beings, incorporating hard science fiction elements",
+      "domain": "creative",
+      "source": "seed"
+    }
+  ]
+}

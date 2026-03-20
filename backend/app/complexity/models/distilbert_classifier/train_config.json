@@ -1,0 +1,15 @@
+{
+  "model_name": "distilbert-base-uncased",
+  "num_labels": 3,
+  "label_map": {
+    "simple": 0,
+    "medium": 1,
+    "complex": 2
+  },
+  "max_length": 128,
+  "best_val_accuracy": 1.0,
+  "epochs": 3,
+  "augment": true,
+  "train_samples": 1749,
+  "val_samples": 308
+}

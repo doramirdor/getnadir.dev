@@ -1,0 +1,59 @@
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { StickyCtaBar } from "@/components/homepage/StickyCtaBar";
+import { DocsSidebar } from "@/components/docs/DocsSidebar";
+import { PrevNextNav } from "@/components/docs/PrevNextNav";
+import { docsContentMap } from "@/data/docsContent";
+import { validSlugs } from "@/data/docsNavigation";
+
+const DEFAULT_SECTION = "quickstart";
+
+export default function Docs() {
+  const { section } = useParams<{ section?: string }>();
+  const navigate = useNavigate();
+
+  const activeSection =
+    section && validSlugs.has(section) ? section : DEFAULT_SECTION;
+
+  // Redirect invalid slugs to quickstart
+  useEffect(() => {
+    if (section && !validSlugs.has(section)) {
+      navigate(`/docs/${DEFAULT_SECTION}`, { replace: true });
+    }
+  }, [section, navigate]);
+
+  // Scroll to top on section change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [activeSection]);
+
+  const ContentComponent = docsContentMap[activeSection];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <StickyCtaBar />
+
+      <div className="container mx-auto px-6 pt-20 pb-16 max-w-7xl">
+        <Button
+          variant="ghost"
+          className="mb-6 hover:bg-muted"
+          onClick={() => navigate("/")}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Button>
+
+        <div className="flex gap-10">
+          <DocsSidebar activeSection={activeSection} />
+
+          <main className="flex-1 min-w-0">
+            {ContentComponent ? <ContentComponent /> : null}
+            <PrevNextNav currentSlug={activeSection} />
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
