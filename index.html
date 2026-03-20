@@ -1287,8 +1287,8 @@
 
         .blog-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
             max-width: 1060px;
             margin: 0 auto;
         }
@@ -1563,6 +1563,154 @@
             }
         }
 
+        /* Context Optimize */
+        .optimize-section {
+            padding: 80px 0;
+            background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);
+        }
+
+        .optimize-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            max-width: 960px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        .optimize-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .optimize-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .optimize-bar-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            width: 140px;
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .optimize-bar-track {
+            flex: 1;
+            height: 28px;
+            background: var(--bg-hover);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .optimize-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .optimize-bar-fill.before {
+            background: var(--text-tertiary);
+            width: 100%;
+        }
+
+        .optimize-bar-fill.after {
+            background: var(--accent);
+        }
+
+        .optimize-bar-pct {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            width: 48px;
+            text-align: left;
+        }
+
+        .optimize-detail {
+            padding: 24px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .optimize-detail h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: -0.2px;
+        }
+
+        .optimize-transforms {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .optimize-transforms li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .optimize-transforms li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 7px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            opacity: 0.6;
+        }
+
+        .optimize-code {
+            margin-top: 16px;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 12px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .optimize-layout {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+            .optimize-bar-label {
+                width: 100px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content { flex-wrap: wrap; gap: 12px; }
+            .nav-links { gap: 12px; flex-wrap: wrap; }
+            .nav-links a { font-size: 13px; }
+            .github-link { padding: 4px 10px; font-size: 13px; }
+        }
+
     </style>
 </head>
 <body>
@@ -1578,6 +1726,7 @@
                     <a href="docs.html">Docs</a>
                     <a href="#blog">Blog</a>
                     <a href="/openclaw">OpenClaw</a>
+                    <a href="/optimize">Optimize</a>
                     <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
                         <span>★</span>
                         <span class="star-count" id="star-count">Loading stars...</span>
@@ -2042,6 +2191,15 @@
                                 <td>Provider dashboard</td>
                             </tr>
                             <tr>
+                                <td class="feature-cell">Context Optimize</td>
+                                <td class="nadirclaw-col"><span class="check">✓</span> Lossless</td>
+                                <td><span class="cross">✗</span></td>
+                                <td><span class="cross">✗</span></td>
+                                <td><span class="cross">✗</span></td>
+                                <td><span class="cross">✗</span></td>
+                                <td><span class="cross">✗</span></td>
+                            </tr>
+                            <tr>
                                 <td class="feature-cell">Setup effort</td>
                                 <td class="nadirclaw-col"><strong>2 commands</strong></td>
                                 <td>Days of engineering</td>
@@ -2105,6 +2263,87 @@
                 <p style="margin-top: 32px; font-size: 14px; color: var(--text-secondary); text-align: center; max-width: 640px; margin-left: auto; margin-right: auto;" data-anim="fade-up">
                     All credentials stay on your machine in <code style="font-size:12px;background:var(--code-bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);">~/.nadirclaw/credentials.json</code>. No telemetry. No data leaves your network. Your API keys never touch our servers because there are no servers.
                 </p>
+            </div>
+        </section>
+
+        <section class="optimize-section">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>Context Optimize</h2>
+                    <p>Routes to the right model, then trims the payload before it hits your bill.</p>
+                </div>
+
+                <div class="optimize-layout">
+                    <div class="optimize-stats" data-anim="fade-right">
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Benchmarked on Claude Opus 4.6 &mdash; safe mode (lossless)</p>
+
+                        <div class="optimize-bar">
+                            <span class="optimize-bar-label">Agentic (8 turns)</span>
+                            <div class="optimize-bar-track">
+                                <div class="optimize-bar-fill after" style="width: 43%;">43%</div>
+                            </div>
+                            <span class="optimize-bar-pct">57% saved</span>
+                        </div>
+
+                        <div class="optimize-bar">
+                            <span class="optimize-bar-label">RAG pipeline</span>
+                            <div class="optimize-bar-track">
+                                <div class="optimize-bar-fill after" style="width: 71%;">71%</div>
+                            </div>
+                            <span class="optimize-bar-pct">29% saved</span>
+                        </div>
+
+                        <div class="optimize-bar">
+                            <span class="optimize-bar-label">API responses</span>
+                            <div class="optimize-bar-track">
+                                <div class="optimize-bar-fill after" style="width: 38%;">38%</div>
+                            </div>
+                            <span class="optimize-bar-pct">62% saved</span>
+                        </div>
+
+                        <div class="optimize-bar">
+                            <span class="optimize-bar-label">Debug sessions</span>
+                            <div class="optimize-bar-track">
+                                <div class="optimize-bar-fill after" style="width: 37%;">37%</div>
+                            </div>
+                            <span class="optimize-bar-pct">63% saved</span>
+                        </div>
+
+                        <div class="optimize-bar">
+                            <span class="optimize-bar-label">OpenAPI specs</span>
+                            <div class="optimize-bar-track">
+                                <div class="optimize-bar-fill after" style="width: 29%;">29%</div>
+                            </div>
+                            <span class="optimize-bar-pct">71% saved</span>
+                        </div>
+
+                        <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">Bars show tokens remaining after optimization. Average: <strong style="color: var(--accent);">61.5% reduction</strong> across structured payloads.</p>
+                    </div>
+
+                    <div data-anim="fade-left">
+                        <div class="optimize-detail">
+                            <h3>Safe mode transforms</h3>
+                            <ul class="optimize-transforms">
+                                <li><strong>JSON minification</strong> &mdash; compact pretty-printed JSON without changing values</li>
+                                <li><strong>Tool schema dedup</strong> &mdash; repeated tool schemas replaced with short references</li>
+                                <li><strong>System prompt dedup</strong> &mdash; duplicated system text removed from later messages</li>
+                                <li><strong>Whitespace normalization</strong> &mdash; collapse runs of blanks, skip code blocks</li>
+                                <li><strong>Chat history trimming</strong> &mdash; keep system + first turn + last N turns</li>
+                            </ul>
+                        </div>
+
+                        <div class="optimize-code" style="margin-top: 16px;">
+                            <span style="color: var(--text-tertiary);"># enable on your server</span><br>
+                            nadirclaw serve --optimize safe<br><br>
+                            <span style="color: var(--text-tertiary);"># or per-request</span><br>
+                            {"optimize": "safe", "model": "auto", ...}<br><br>
+                            <span style="color: var(--text-tertiary);"># dry-run on any file</span><br>
+                            nadirclaw optimize payload.json
+                        </div>
+
+                        <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 12px;">All transforms are lossless. Code blocks, URLs, and unicode are never modified. Off by default &mdash; zero overhead when disabled.</p>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -2345,6 +2584,13 @@
                 </div>
 
                 <div class="blog-grid" data-stagger>
+                    <a href="/blog/context-optimize-cut-llm-input-tokens.html" class="blog-card" data-anim="fade-up">
+                        <div class="blog-card-date"><time datetime="2026-03-20">March 20, 2026</time></div>
+                        <h3>Context Optimize: How We Cut LLM Input Tokens 30-70%</h3>
+                        <p class="blog-card-excerpt">Safe mode applies lossless transforms. Aggressive mode adds diff-preserving semantic dedup. Both backed by 60 automated accuracy tests.</p>
+                        <span class="blog-card-read-more">Read more &rarr;</span>
+                    </a>
+
                     <a href="/blog/how-nadirclaw-saves-40-70-percent-on-llm-api-costs.html" class="blog-card" data-anim="fade-up">
                         <div class="blog-card-date"><time datetime="2026-03-10">March 10, 2026</time></div>
                         <h3>How NadirClaw Saves 40-70% on LLM API Costs</h3>
@@ -2543,15 +2789,13 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-links">
+                    <a href="/">Home</a>
                     <a href="/docs.html">Docs</a>
-                    <a href="/openclaw.html">OpenClaw</a>
                     <a href="https://github.com/doramirdor/NadirClaw">GitHub</a>
                     <a href="https://github.com/doramirdor/NadirClaw/issues">Issues</a>
-                    <a href="https://dev.to/dor_amir_dbb52baafff7ca5b">Articles</a>
                     <a href="https://github.com/doramirdor/NadirClaw/blob/main/LICENSE">MIT License</a>
                     <a href="/terms.html">Terms</a>
                     <a href="/privacy.html">Privacy</a>
-                    <a href="mailto:amirdor@gmail.com">Contact</a>
                 </div>
                 <div class="footer-note">
                     Built by developers tired of overpaying

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NadirClaw Documentation</title>
+    <title>NadirClaw Docs — Installation, API Reference & Configuration</title>
     <meta name="description" content="Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.">
     <link rel="canonical" href="https://getnadir.com/docs.html" />
     <meta property="og:type" content="website">
@@ -17,6 +17,19 @@
     <meta name="twitter:title" content="NadirClaw Documentation">
     <meta name="twitter:description" content="Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.">
     <meta name="twitter:image" content="https://getnadir.com/og-image.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "NadirClaw Documentation — Installation, Configuration & API Reference",
+      "description": "Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.",
+      "url": "https://getnadir.com/docs.html",
+      "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" }
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -318,6 +331,37 @@
                 font-size: 16px;
                 cursor: pointer;
             }
+            .docs-footer .footer-content { flex-direction: column; gap: 16px; text-align: center; }
+            .docs-footer .footer-links { justify-content: center; }
+        }
+
+        /* Footer */
+        .docs-footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            margin-left: var(--sidebar-w);
+        }
+        .docs-footer .footer-content {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+        .docs-footer .footer-links { display: flex; gap: 32px; flex-wrap: wrap; }
+        .docs-footer .footer-links a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+        .docs-footer .footer-links a:hover { color: var(--text); }
+        .docs-footer .footer-note { color: var(--text-tertiary); font-size: 14px; }
+        @media (max-width: 900px) {
+            .docs-footer { margin-left: 0; }
         }
     </style>
 </head>
@@ -332,7 +376,9 @@
                 <div class="nav-links">
                     <a href="/">Home</a>
                     <a href="docs.html" class="active">Docs</a>
+                    <a href="/#blog">Blog</a>
                     <a href="/openclaw">OpenClaw</a>
+                    <a href="/optimize">Optimize</a>
                     <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
                         <span>★</span>
                         <span class="star-count" id="star-count">Loading stars...</span>
@@ -1147,5 +1193,20 @@ nadirclaw report --since 24h</code></pre>
             });
         });
     </script>
+
+    <footer class="docs-footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/docs.html">Docs</a>
+                <a href="https://github.com/doramirdor/NadirClaw">GitHub</a>
+                <a href="https://github.com/doramirdor/NadirClaw/issues">Issues</a>
+                <a href="https://github.com/doramirdor/NadirClaw/blob/main/LICENSE">MIT License</a>
+                <a href="/terms.html">Terms</a>
+                <a href="/privacy.html">Privacy</a>
+            </div>
+            <div class="footer-note">Built by developers tired of overpaying</div>
+        </div>
+    </footer>
 </body>
 </html>

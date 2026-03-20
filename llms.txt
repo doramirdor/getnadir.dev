@@ -29,7 +29,12 @@ pip install nadirclaw
 
 - [Homepage](https://getnadir.com): Product overview, cost calculator, and quick start
 - [Documentation](https://getnadir.com/docs.html): Installation, configuration, API reference, and troubleshooting
+- [Context Optimize](https://getnadir.com/optimize.html): Cut input tokens 30-70% with lossless context compaction and semantic dedup
 - [OpenClaw Integration](https://getnadir.com/openclaw.html): Using NadirClaw with autonomous multi-agent setups
+- [Blog: Context Optimize](https://getnadir.com/blog/context-optimize-cut-llm-input-tokens.html): How we cut LLM input tokens 30-70% without losing accuracy
+- [Blog: Cost Savings](https://getnadir.com/blog/how-nadirclaw-saves-40-70-percent-on-llm-api-costs.html): How NadirClaw saves 40-70% on LLM API costs
+- [Blog: Claude Code Guide](https://getnadir.com/blog/nadirclaw-claude-code-cost-optimization-guide.html): NadirClaw + Claude Code cost optimization guide
+- [Blog: Open Source Routing](https://getnadir.com/blog/why-open-source-llm-routing-matters.html): Why open-source LLM routing matters
 - [Terms of Service](https://getnadir.com/terms.html)
 - [Privacy Policy](https://getnadir.com/privacy.html)
 

@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Optimize — Cut LLM Input Tokens 30-70% | NadirClaw</title>
+    <meta name="description" content="NadirClaw Context Optimize compacts bloated context (JSON, tool schemas, chat history) before LLM dispatch. Lossless transforms save 30-70% on input tokens. Benchmarked on Claude Opus 4.6.">
+    <link rel="canonical" href="https://getnadir.com/optimize.html" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://getnadir.com/optimize.html">
+    <meta property="og:title" content="Context Optimize — Cut Input Tokens 30-70% Without Losing Accuracy">
+    <meta property="og:description" content="NadirClaw compacts bloated context before LLM dispatch. Lossless transforms save 30-70% on input tokens with zero semantic degradation.">
+    <meta property="og:image" content="https://getnadir.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Context Optimize — Cut Input Tokens 30-70%">
+    <meta name="twitter:description" content="Lossless context compaction for agents, RAG, and structured payloads. Benchmarked on Claude Opus 4.6.">
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "Context Optimize — Cut LLM Input Tokens 30-70%",
+      "description": "NadirClaw Context Optimize compacts bloated context (JSON, tool schemas, chat history) before LLM dispatch. Lossless transforms save 30-70% on input tokens.",
+      "url": "https://getnadir.com/optimize.html",
+      "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+      "about": {
+        "@type": "SoftwareApplication",
+        "name": "NadirClaw",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Cross-platform"
+      }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #ffffff;
+            --bg-subtle: #fafafa;
+            --bg-hover: #f5f5f5;
+            --text: #0a0a0a;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --border: #e5e5e5;
+            --accent: #0066ff;
+            --accent-hover: #0052cc;
+            --success: #00a86b;
+            --code-bg: #f8f8f8;
+            --danger: #e53e3e;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        code, pre, .mono {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+
+        .container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--accent); }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .github-link:hover { border-color: var(--text); background: var(--bg-subtle); }
+
+        /* Hero */
+        .hero {
+            padding: 100px 0 60px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 640px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
+        }
+
+        .hero-stat {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .hero-stat strong {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Sections */
+        section { padding: 80px 0; }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+        .section-header h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+        }
+        .section-header p {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Before/After section */
+        .ba-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .ba-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .ba-card-header {
+            padding: 12px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ba-card-header.before {
+            background: #fff5f5;
+            color: var(--danger);
+        }
+
+        .ba-card-header.after {
+            background: #f0faf5;
+            color: var(--success);
+        }
+
+        .ba-card pre {
+            padding: 20px;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+            background: var(--code-bg);
+            margin: 0;
+        }
+
+        .ba-card .token-count {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .ba-card .token-count strong {
+            color: var(--text);
+        }
+
+        /* Benchmark table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        thead { background: var(--bg-subtle); }
+        th {
+            padding: 14px 20px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 14px 20px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: var(--bg-hover); }
+
+        .benchmark-table {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        th.num { text-align: right; }
+
+        .pct-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pct-badge.high { background: #f0faf5; color: var(--success); }
+        .pct-badge.medium { background: #fef9ee; color: #b45309; }
+
+        .transforms-list {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* Accuracy section */
+        .accuracy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .accuracy-card {
+            padding: 24px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .accuracy-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .accuracy-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .accuracy-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .check-icon {
+            width: 18px;
+            height: 18px;
+            background: var(--success);
+            color: #fff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        /* Projected savings */
+        .savings-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .savings-card {
+            text-align: center;
+            padding: 24px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .savings-card .volume {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .savings-card .amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+
+        .savings-card .period {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* How it works */
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .how-item {
+            padding: 24px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .how-item h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .how-item p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .how-item code {
+            font-size: 12px;
+            background: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+
+        /* Code block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .code-label {
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-block pre {
+            padding: 20px;
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        .code-line { display: block; }
+        .highlight {
+            background: rgba(0, 102, 255, 0.08);
+            margin: 0 -20px;
+            padding: 0 20px;
+        }
+
+        .dim { color: var(--text-tertiary); }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            padding: 80px 0;
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--text);
+            color: var(--bg);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--text);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+        }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .footer-links { display: flex; gap: 32px; flex-wrap: wrap; }
+        .footer-links a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+        .footer-links a:hover { color: var(--text); }
+        .footer-note { color: var(--text-tertiary); font-size: 14px; }
+
+        /* Animations */
+        [data-anim] {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        [data-anim].visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 0 16px; }
+            .header-content { flex-wrap: wrap; gap: 12px; }
+            .nav-links { gap: 12px; flex-wrap: wrap; }
+            .nav-links a { font-size: 13px; }
+            .github-link { padding: 4px 10px; font-size: 13px; }
+            .hero { padding: 60px 0 40px; }
+            .hero h1 { font-size: 32px; letter-spacing: -1px; }
+            .hero .subtitle { font-size: 16px; }
+            .hero-stat { font-size: 13px; padding: 6px 14px; }
+            section { padding: 48px 0; }
+            .section-header { margin-bottom: 32px; }
+            .section-header h2 { font-size: 26px; }
+            .section-header p { font-size: 15px; }
+            .ba-grid { grid-template-columns: 1fr; }
+            .ba-card pre { font-size: 11px; }
+            .accuracy-grid { grid-template-columns: 1fr; }
+            .savings-grid { grid-template-columns: repeat(2, 1fr); }
+            .how-grid { grid-template-columns: 1fr; }
+            .benchmark-table { overflow-x: auto; }
+            .code-block { max-width: 100%; }
+            .code-block pre { font-size: 12px; padding: 16px; }
+            .footer-content { flex-direction: column; gap: 16px; text-align: center; }
+            .footer-links { justify-content: center; flex-wrap: wrap; gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                    <img src="logo.png" alt="NadirClaw" style="height:32px;width:auto;">
+                    <span style="color:var(--text);font-weight:600;font-size:15px;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;">nadirclaw</span>
+                </a>
+                <div class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="docs.html">Docs</a>
+                    <a href="/openclaw">OpenClaw</a>
+                    <a href="/optimize" class="active">Optimize</a>
+                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
+                        <span>&#9733;</span>
+                        <span class="star-count" id="star-count">GitHub</span>
+                    </a>
+                    <script>
+                        fetch("https://api.github.com/repos/doramirdor/NadirClaw")
+                            .then(r => r.json())
+                            .then(d => { if (d.stargazers_count) document.getElementById("star-count").textContent = d.stargazers_count.toLocaleString() + " stars"; })
+                            .catch(() => {});
+                    </script>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero -->
+        <section class="hero">
+            <div class="container">
+                <h1 data-anim>Context Optimize</h1>
+                <p class="subtitle" data-anim>Routes to the right model, then trims the payload before it hits your bill. Two modes: lossless safe, or aggressive with diff-preserving semantic dedup. Off by default.</p>
+                <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;" data-anim>
+                    <span class="hero-stat"><strong>61.5%</strong> avg reduction (safe)</span>
+                    <span class="hero-stat"><strong>+18%</strong> more with aggressive</span>
+                    <span class="hero-stat"><strong>60</strong> accuracy tests</span>
+                    <span class="hero-stat"><strong>0ms</strong> overhead when off</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Before / After -->
+        <section style="padding: 80px 0; background: var(--bg-subtle); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Before and after</h2>
+                    <p>Same data. Same meaning. Fewer tokens.</p>
+                </div>
+
+                <div class="ba-grid" data-anim>
+                    <div class="ba-card">
+                        <div class="ba-card-header before">Before &mdash; raw agent context</div>
+<pre><span class="dim">// Tool schema sent every turn (turn 4 of 8)</span>
+{
+  "name": "web_search",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Search query"
+      },
+      "num_results": {
+        "type": "integer",
+        "default": 5
+      },
+      "site_filter": {
+        "type": "string",
+        "description": "Restrict to domain"
+      }
+    },
+    "required": [
+      "query"
+    ]
+  }
+}</pre>
+                        <div class="token-count">~<strong>120</strong> tokens (repeated 8x = ~960 wasted tokens)</div>
+                    </div>
+
+                    <div class="ba-card">
+                        <div class="ba-card-header after">After &mdash; safe mode</div>
+<pre><span class="dim">// First turn: full schema preserved</span>
+{"name":"web_search","parameters":{"type":"object",
+"properties":{"query":{"type":"string","description":
+"Search query"},"num_results":{"type":"integer",
+"default":5},"site_filter":{"type":"string",
+"description":"Restrict to domain"}},"required":
+["query"]}}
+
+<span class="dim">// Turns 2-8: replaced with reference</span>
+[see tool "web_search" schema above]</pre>
+                        <div class="token-count">~<strong>45</strong> tokens first turn + ~<strong>8</strong> tokens per repeat = <strong style="color: var(--success);">92% saved</strong> on schema tokens</div>
+                    </div>
+                </div>
+
+                <p style="text-align: center; margin-top: 32px; font-size: 13px; color: var(--text-tertiary);" data-anim>
+                    The LLM sees identical semantic content. The tool name, all parameters, types, and descriptions are preserved in the first occurrence. Subsequent turns reference it.
+                </p>
+            </div>
+        </section>
+
+        <!-- Benchmark -->
+        <section>
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Benchmarked on Claude Opus 4.6</h2>
+                    <p>Real payloads. Measured savings. $15/1M input tokens.</p>
+                </div>
+
+                <div class="benchmark-table" data-anim>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Payload</th>
+                                <th class="num">Before</th>
+                                <th class="num">After</th>
+                                <th class="num">Saved</th>
+                                <th class="num">%</th>
+                                <th class="num">Saved / 1K req</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    Agentic coding assistant
+                                    <div class="transforms-list">tool_schema_dedup, json_minify, whitespace_normalize</div>
+                                </td>
+                                <td class="num">3,657</td>
+                                <td class="num">1,573</td>
+                                <td class="num">2,084</td>
+                                <td class="num"><span class="pct-badge high">57%</span></td>
+                                <td class="num">$31.26</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    RAG pipeline (6 chunks)
+                                    <div class="transforms-list">json_minify</div>
+                                </td>
+                                <td class="num">544</td>
+                                <td class="num">386</td>
+                                <td class="num">158</td>
+                                <td class="num"><span class="pct-badge medium">29%</span></td>
+                                <td class="num">$2.37</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    API response analysis (nested JSON)
+                                    <div class="transforms-list">json_minify</div>
+                                </td>
+                                <td class="num">1,634</td>
+                                <td class="num">616</td>
+                                <td class="num">1,018</td>
+                                <td class="num"><span class="pct-badge high">62%</span></td>
+                                <td class="num">$15.27</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Long debug session (50 turns)
+                                    <div class="transforms-list">json_minify, chat_history_trim</div>
+                                </td>
+                                <td class="num">3,856</td>
+                                <td class="num">1,414</td>
+                                <td class="num">2,442</td>
+                                <td class="num"><span class="pct-badge high">63%</span></td>
+                                <td class="num">$36.63</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    OpenAPI spec context (5 endpoints)
+                                    <div class="transforms-list">json_minify</div>
+                                </td>
+                                <td class="num">2,649</td>
+                                <td class="num">762</td>
+                                <td class="num">1,887</td>
+                                <td class="num"><span class="pct-badge high">71%</span></td>
+                                <td class="num">$28.30</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-tertiary);" data-anim>
+                    Input tokens only. Output tokens are unaffected. Savings scale linearly with request volume.
+                </p>
+            </div>
+        </section>
+
+        <!-- Accuracy guarantees -->
+        <section style="background: var(--bg-subtle); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Accuracy is not harmed</h2>
+                    <p>Every safe-mode transform is deterministic and lossless. The LLM receives identical semantic content.</p>
+                </div>
+
+                <div class="accuracy-grid" data-anim>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> JSON roundtrips exactly</h3>
+                        <p>Pretty-printed JSON is parsed and re-serialized compact. <code>json.loads(before) == json.loads(after)</code> always holds. No keys dropped, no values changed, no type coercion.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> Code blocks untouched</h3>
+                        <p>Content inside fenced code blocks (<code>```</code>) is never modified. Indentation, whitespace, and formatting inside code are preserved exactly as written.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> Tool schemas preserved</h3>
+                        <p>Deduplication keeps the full schema on first occurrence. Later turns get a named reference. The LLM sees the complete schema definition once and knows to look up.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> Recent context kept</h3>
+                        <p>Chat history trimming preserves the system prompt, the first turn (for task context), and the last N turns. A placeholder notes how many turns were trimmed.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> Unicode and emoji safe</h3>
+                        <p>All transforms use <code>ensure_ascii=False</code>. CJK characters, emoji, RTL text, and special Unicode are preserved byte-for-byte through the optimization pipeline.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> URLs never altered</h3>
+                        <p>URLs, file paths, and query strings pass through unchanged. Whitespace normalization only affects runs of spaces outside code blocks, never inside structured strings.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> Refinements survive dedup</h3>
+                        <p>Aggressive mode uses word-level diffing (<code>difflib.SequenceMatcher</code>) to extract unique phrases before compacting. "Return values, not indices" is never lost even when the rest of the message is near-identical.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> No negative savings</h3>
+                        <p>Every transform checks that its output is smaller than its input. If a replacement would be larger (e.g., diff overhead exceeds savings), the original message is kept untouched.</p>
+                    </div>
+                    <div class="accuracy-card">
+                        <h3><span class="check-icon">&#10003;</span> Accurate token counting</h3>
+                        <p>Token estimates use <code>tiktoken</code> (<code>cl100k_base</code> BPE encoding, same as GPT-4/Claude). Falls back to <code>len//4</code> heuristic only if tiktoken is unavailable.</p>
+                    </div>
+                </div>
+
+                <div style="max-width: 640px; margin: 48px auto 0; padding: 20px 24px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg);" data-anim>
+                    <p style="font-size: 14px; color: var(--text); line-height: 1.7;">
+                        <strong>Why lossless matters:</strong> Lossy compression (semantic summarization) risks changing meaning. An LLM might answer differently if a nuance is lost. Safe mode avoids this entirely &mdash; it only removes formatting redundancy that carries zero semantic weight. Aggressive mode goes further with semantic dedup, but preserves every unique phrase via word-level diff extraction. Both are backed by <strong>60 automated tests</strong> covering accuracy, edge cases, and roundtrip integrity.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projected savings -->
+        <section>
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Projected monthly savings</h2>
+                    <p>Claude Opus 4.6 at $15/1M input tokens. Based on average 61.5% reduction.</p>
+                </div>
+
+                <div class="savings-grid" data-anim>
+                    <div class="savings-card">
+                        <div class="volume">100 req/day</div>
+                        <div class="amount">$68</div>
+                        <div class="period">per month</div>
+                    </div>
+                    <div class="savings-card">
+                        <div class="volume">500 req/day</div>
+                        <div class="amount">$342</div>
+                        <div class="period">per month</div>
+                    </div>
+                    <div class="savings-card">
+                        <div class="volume">1K req/day</div>
+                        <div class="amount">$683</div>
+                        <div class="period">per month</div>
+                    </div>
+                    <div class="savings-card">
+                        <div class="volume">5K req/day</div>
+                        <div class="amount">$3,415</div>
+                        <div class="period">per month</div>
+                    </div>
+                </div>
+
+                <p style="text-align: center; margin-top: 24px; font-size: 13px; color: var(--text-tertiary);" data-anim>
+                    These are input-token savings only. Combined with routing (40-70% via cheaper models), total cost reduction is higher.
+                </p>
+            </div>
+        </section>
+
+        <!-- What it optimizes -->
+        <section style="background: var(--bg-subtle); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Six transforms across two modes</h2>
+                    <p>Five deterministic transforms in safe mode. One embedding-based transform added in aggressive.</p>
+                </div>
+
+                <div class="how-grid" data-anim>
+                    <div class="how-item">
+                        <h3>JSON minification <span style="font-size:11px;color:var(--success);font-weight:500;">safe</span></h3>
+                        <p>Finds JSON objects and arrays in message content using <code>raw_decode</code>. Re-serializes with no whitespace. Skips content inside fenced code blocks. Only replaces when the compact form is shorter.</p>
+                    </div>
+                    <div class="how-item">
+                        <h3>Tool schema deduplication <span style="font-size:11px;color:var(--success);font-weight:500;">safe</span></h3>
+                        <p>Detects identical tool/function schemas across messages (by canonical JSON comparison). Keeps the first occurrence, replaces subsequent copies with <code>[see tool "name" schema above]</code>.</p>
+                    </div>
+                    <div class="how-item">
+                        <h3>System prompt deduplication <span style="font-size:11px;color:var(--success);font-weight:500;">safe</span></h3>
+                        <p>If the system prompt text appears verbatim in a later user message (common in some frameworks), the duplicate is removed from the later message. System message itself is never modified.</p>
+                    </div>
+                    <div class="how-item">
+                        <h3>Whitespace normalization <span style="font-size:11px;color:var(--success);font-weight:500;">safe</span></h3>
+                        <p>Collapses 3+ consecutive blank lines to 2. Collapses runs of multiple spaces to one. Skips lines inside fenced code blocks to preserve formatting where it matters.</p>
+                    </div>
+                </div>
+
+                <div style="max-width: 860px; margin: 32px auto 0;" data-anim>
+                    <div class="how-item" style="text-align: center;">
+                        <h3>Chat history trimming <span style="font-size:11px;color:var(--success);font-weight:500;">safe</span></h3>
+                        <p>For conversations exceeding <code>max_turns</code> (default: 40), keeps the system prompt, the first user/assistant turn, and the last N turns. Inserts a placeholder noting how many turns were trimmed. Configurable via <code>NADIRCLAW_OPTIMIZE_MAX_TURNS</code>.</p>
+                    </div>
+                </div>
+
+                <div style="max-width: 860px; margin: 24px auto 0;" data-anim>
+                    <div class="how-item" style="text-align: center; border-color: var(--accent); background: rgba(0,102,255,0.02);">
+                        <h3>Semantic deduplication <span style="font-size:11px;color:var(--accent);font-weight:500;">aggressive</span></h3>
+                        <p>Uses <code>all-MiniLM-L6-v2</code> sentence embeddings to find near-duplicate messages (cosine similarity &ge; 0.85). Replaces the later message with a compact reference <strong>plus any unique differences</strong> extracted via word-level diffing. System messages and short messages (&lt;60 chars) are never touched. Only fires when the replacement is actually smaller than the original.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aggressive mode deep dive -->
+        <section>
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Aggressive mode preserves what matters</h2>
+                    <p>Near-duplicate messages get compacted, but unique details are extracted and kept.</p>
+                </div>
+
+                <div class="ba-grid" data-anim>
+                    <div class="ba-card">
+                        <div class="ba-card-header before">Before &mdash; user refines their request</div>
+<pre><span class="dim">// Turn 1</span>
+Write a Python function that takes a list of
+integers and returns the two numbers that add
+up to a target sum. Use a hash map for O(n)
+time complexity. Handle edge cases like empty
+lists and duplicates. <strong>Return the indices</strong>
+<strong>of the two numbers.</strong>
+
+<span class="dim">// Turn 3 (near-duplicate, different ending)</span>
+Write a Python function that takes a list of
+integers and returns the two numbers that add
+up to a target sum. Use a hash map for O(n)
+time complexity. Handle edge cases like empty
+lists and duplicates. <strong>Return the actual</strong>
+<strong>values, not indices.</strong></pre>
+                        <div class="token-count">Turn 3 repeats ~90% of turn 1 &mdash; <strong>wasted tokens</strong></div>
+                    </div>
+
+                    <div class="ba-card">
+                        <div class="ba-card-header after">After &mdash; aggressive mode</div>
+<pre><span class="dim">// Turn 1 — preserved in full</span>
+Write a Python function that takes a list of
+integers and returns the two numbers that add
+up to a target sum. Use a hash map for O(n)
+time complexity. Handle edge cases like empty
+lists and duplicates. Return the indices
+of the two numbers.
+
+<span class="dim">// Turn 3 — compacted with diff preserved</span>
+[similar to earlier message: "Write a Python
+function that takes a list of integers and re..."]
+<strong>Key differences: actual values, not indices.</strong></pre>
+                        <div class="token-count">Critical refinement kept &mdash; boilerplate removed &mdash; <strong style="color: var(--success);">tokens saved</strong></div>
+                    </div>
+                </div>
+
+                <p style="text-align: center; margin-top: 32px; font-size: 13px; color: var(--text-tertiary);" data-anim>
+                    The diff is extracted using <code>difflib.SequenceMatcher</code> at the word level. Only inserted or replaced words are kept. If the replacement would be larger than the original, the dedup is skipped entirely.
+                </p>
+            </div>
+        </section>
+
+        <!-- How to enable -->
+        <section>
+            <div class="container">
+                <div class="section-header" data-anim>
+                    <h2>Enable in one flag</h2>
+                    <p>Off by default. Zero overhead when disabled.</p>
+                </div>
+
+                <div class="code-block" data-anim>
+                    <div class="code-label">Enable context optimize</div>
+<pre><span class="dim"># On the server</span>
+<span class="code-line highlight">nadirclaw serve --optimize safe</span>
+
+<span class="dim"># Or via environment variable</span>
+<span class="code-line">NADIRCLAW_OPTIMIZE=safe nadirclaw serve</span>
+
+<span class="dim"># Per-request override (in the JSON body)</span>
+<span class="code-line">{"model": "auto", "optimize": "safe", "messages": [...]}</span>
+
+<span class="dim"># Dry-run on a file (no server needed)</span>
+<span class="code-line">nadirclaw optimize payload.json --mode safe --format json</span></pre>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 640px; margin: 32px auto 0;" data-anim>
+                    <div style="text-align: center; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">off</div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">Default. No processing. Zero overhead.</div>
+                    </div>
+                    <div style="text-align: center; padding: 16px; border-radius: 8px; border: 1px solid var(--accent); background: rgba(0,102,255,0.04);">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 4px;">safe</div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">Lossless transforms only. Recommended.</div>
+                    </div>
+                    <div style="text-align: center; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">aggressive</div>
+                        <div style="font-size: 12px; color: var(--text-tertiary);">Safe + semantic dedup via embeddings.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <div class="container" data-anim>
+                <h2 style="font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 12px;">Route smarter. Send less. Pay less.</h2>
+                <p style="font-size: 17px; color: var(--text-secondary); margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto;">NadirClaw picks the right model and trims the payload before it hits your bill.</p>
+                <div style="display: flex; gap: 16px; justify-content: center;">
+                    <a href="https://github.com/doramirdor/NadirClaw" class="btn btn-primary" target="_blank">Get Started</a>
+                    <a href="/" class="btn btn-secondary">Back to Home</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="/">Home</a>
+                    <a href="docs.html">Docs</a>
+                    <a href="https://github.com/doramirdor/NadirClaw">GitHub</a>
+                    <a href="https://github.com/doramirdor/NadirClaw/issues">Issues</a>
+                    <a href="https://github.com/doramirdor/NadirClaw/blob/main/LICENSE">MIT License</a>
+                    <a href="/terms.html">Terms</a>
+                    <a href="/privacy.html">Privacy</a>
+                </div>
+                <div class="footer-note">Built by developers tired of overpaying</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15 });
+
+        document.querySelectorAll('[data-anim]').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
