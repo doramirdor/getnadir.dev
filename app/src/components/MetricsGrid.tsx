@@ -52,7 +52,7 @@ export const MetricsGrid = () => {
 
       // Fetch usage events for the last 30 days
       const { data: eventsData } = await supabase
-        .from('usage_events')
+        .from('usage_logs')
         .select('latency_ms, cost, error, created_at')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .not('latency_ms', 'is', null);
@@ -64,7 +64,7 @@ export const MetricsGrid = () => {
           .from('api_keys')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-          .eq('status', 'active');
+          .eq('is_active', true);
         activeApiKeys = count || 0;
       }
 

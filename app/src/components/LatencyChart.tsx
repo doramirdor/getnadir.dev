@@ -30,7 +30,7 @@ export const LatencyChart = () => {
   const fetchLatencyData = async () => {
     try {
       const { data: eventsData } = await supabase
-        .from('usage_events')
+        .from('usage_logs')
         .select('created_at, latency_ms, model_name')
         .not('latency_ms', 'is', null)
         .order('created_at', { ascending: true });

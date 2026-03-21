@@ -22,7 +22,7 @@ export const UsageChart = () => {
   const fetchUsageData = async () => {
     try {
       const { data: eventsData } = await supabase
-        .from('usage_events')
+        .from('usage_logs')
         .select('created_at, cost')
         .order('created_at', { ascending: true });
 

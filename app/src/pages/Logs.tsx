@@ -26,7 +26,6 @@ interface LogEntry {
   response: string;
   latency_ms: number | null;
   cluster_id: string | null;
-  embedding: string | null;
   metadata: any;
   error: string | null;
 }
@@ -56,7 +55,7 @@ const Logs = () => {
 
     try {
       const { data: logs, error } = await supabase
-        .from('usage_events')
+        .from('usage_logs')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })

@@ -84,7 +84,7 @@ class AnalyticsService {
     // Fetch only the columns needed for overview calculations (not full prompt/response text).
     // Capped at ANALYTICS_ROW_LIMIT to prevent browser crashes with large datasets.
     const { data: events, error: eventsError } = await supabase
-      .from('usage_events')
+      .from('usage_logs')
       .select('created_at, model_name, provider, cost, tokens_in, tokens_out, latency_ms, error')
       .eq('user_id', user.id)
       .gte('created_at', startDate.toISOString())
@@ -191,7 +191,7 @@ class AnalyticsService {
     startDate.setDate(startDate.getDate() - days);
 
     const { data: events, error: eventsError } = await supabase
-      .from('usage_events')
+      .from('usage_logs')
       .select('created_at, model_name, provider, cost, error')
       .eq('user_id', user.id)
       .gte('created_at', startDate.toISOString())
@@ -271,7 +271,7 @@ class AnalyticsService {
     startDate.setDate(startDate.getDate() - days);
 
     const { data: events, error } = await supabase
-      .from('usage_events')
+      .from('usage_logs')
       .select('created_at, model_name, provider, latency_ms, error')
       .eq('user_id', user.id)
       .gte('created_at', startDate.toISOString())
@@ -331,7 +331,7 @@ class AnalyticsService {
     };
   }
 
-  // Task complexity insights — reads metadata from usage_events
+  // Task complexity insights — reads metadata from usage_logs
   async getComplexityInsights(timeRange: string = '30d'): Promise<ComplexityInsights> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -341,7 +341,7 @@ class AnalyticsService {
     startDate.setDate(startDate.getDate() - days);
 
     const { data: events, error } = await supabase
-      .from('usage_events')
+      .from('usage_logs')
       .select('created_at, model_name, cost, metadata')
       .eq('user_id', user.id)
       .gte('created_at', startDate.toISOString())

@@ -23,13 +23,13 @@ export const Dashboard = () => {
       if (!user || cancelled) return;
 
       const channel = supabase
-        .channel('usage_events_realtime')
+        .channel('usage_logs_realtime')
         .on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'usage_events',
+            table: 'usage_logs',
             filter: `user_id=eq.${user.id}`,
           },
           (payload) => {

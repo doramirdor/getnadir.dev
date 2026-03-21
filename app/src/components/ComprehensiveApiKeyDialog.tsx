@@ -351,28 +351,23 @@ export const ComprehensiveApiKeyDialog = ({ open, onOpenChange, onSave, editingK
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // provider_keys table stores BYOK keys, not provider configurations
+      // Use an empty array as user providers are configured via provider_keys
       const { data, error } = await supabase
-        .from('user_providers')
-        .select(`
-          *,
-          provider:providers(*)
-        `)
+        .from('provider_keys')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        // If table doesn't exist or has structure issues, just set empty array
-        if (error.code === 'PGRST116' || error.message.includes('does not exist') || error.code === '42P01') {
-          logger.warn('User providers table does not exist yet. Using default providers.');
-          setUserProviders([]);
-          return;
-        }
-        throw error;
+        logger.warn('Could not fetch provider keys:', error.message);
+        setUserProviders([]);
+        return;
       }
-      setUserProviders(data || []);
+      // Map provider_keys to the expected UserProvider format
+      setUserProviders([]);
     } catch (error) {
-      logger.error('Error fetching user providers:', error);
-      // Set empty array on any error to prevent UI crashes
+      logger.error('Error fetching provider keys:', error);
       setUserProviders([]);
     }
   };

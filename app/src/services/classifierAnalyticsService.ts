@@ -67,7 +67,7 @@ async function fetchClassifierEvents(range: string): Promise<UsageEvent[]> {
 
   try {
     const { data: events, error } = await supabase
-      .from("usage_events")
+      .from("usage_logs")
       .select("*")
       .eq("user_id", user.id)
       .gte("created_at", startDate.toISOString())
@@ -222,7 +222,7 @@ class ClassifierAnalyticsService {
 
     // Look up original event
     const { data: eventData } = await supabase
-      .from("usage_events")
+      .from("usage_logs")
       .select("metadata, prompt")
       .eq("request_id", payload.requestId)
       .eq("user_id", user.id)

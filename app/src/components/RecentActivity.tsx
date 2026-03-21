@@ -29,7 +29,7 @@ export const RecentActivity = () => {
   const fetchActivities = async () => {
     try {
       const { data, error } = await supabase
-        .from('usage_events')
+        .from('usage_logs')
         .select('id, request_id, prompt, model_name, provider, cost, error, created_at, latency_ms, metadata')
         .order('created_at', { ascending: false })
         .limit(10);

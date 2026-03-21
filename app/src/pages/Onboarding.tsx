@@ -51,8 +51,8 @@ const Onboarding = () => {
         user_id: user.id,
         name: apiKeyName,
         key_hash: keyHash,
-        key_preview: `${keyValue.slice(0, 8)}...${keyValue.slice(-4)}`,
-        status: "active",
+        prefix: keyValue.slice(0, 8),
+        is_active: true,
       });
 
       if (error) throw error;

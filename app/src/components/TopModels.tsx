@@ -26,7 +26,7 @@ export const TopModels = () => {
   const fetchModelData = async () => {
     try {
       const { data: eventsData } = await supabase
-        .from('usage_events')
+        .from('usage_logs')
         .select('model_name, cost, provider, metadata')
         .order('created_at', { ascending: false });
 

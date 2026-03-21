@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Trash2, ChevronDown, Key } from "lucide-react";
+import { Plus, Copy, Trash2, Key } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -30,21 +28,20 @@ async function sha256(message: string): Promise<string> {
 interface ApiKey {
   id: string;
   name: string;
-  key_preview: string;
+  prefix: string;
   created_at: string;
-  status: string;
-  credit_limit?: number | null;
-  include_byok_in_limit?: boolean;
+  is_active: boolean;
+  last_used_at: string | null;
+  selected_models: string[] | null;
+  benchmark_model: string | null;
 }
 
 const ApiKeys = () => {
   const [newKeyName, setNewKeyName] = useState("");
-  const [newKeyCreditLimit, setNewKeyCreditLimit] = useState("");
-  const [includeBYOKInLimit, setIncludeBYOKInLimit] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
-  const [validationErrors, setValidationErrors] = useState<{ name?: string; creditLimit?: string }>({});
+  const [validationErrors, setValidationErrors] = useState<{ name?: string }>({});
   const [showOnceKey, setShowOnceKey] = useState<string | null>(null);
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
@@ -57,7 +54,7 @@ const ApiKeys = () => {
     try {
       const { data, error } = await supabase
         .from('api_keys')
-        .select('id, name, key_preview, created_at, status, credit_limit, include_byok_in_limit')
+        .select('id, name, prefix, created_at, is_active, last_used_at, selected_models, benchmark_model')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -76,18 +73,12 @@ const ApiKeys = () => {
   };
 
   const validateKeyForm = (): boolean => {
-    const errs: { name?: string; creditLimit?: string } = {};
+    const errs: { name?: string } = {};
     const trimmed = newKeyName.trim();
     if (trimmed.length < 1 || trimmed.length > 50) {
       errs.name = "Name must be 1-50 characters";
     } else if (!/^[a-zA-Z0-9 _-]+$/.test(trimmed)) {
       errs.name = "Only letters, numbers, spaces, dashes, and underscores";
-    }
-    if (newKeyCreditLimit) {
-      const limit = parseFloat(newKeyCreditLimit);
-      if (isNaN(limit) || limit <= 0) {
-        errs.creditLimit = "Credit limit must be a positive number";
-      }
     }
     setValidationErrors(errs);
     return Object.keys(errs).length === 0;
@@ -102,7 +93,7 @@ const ApiKeys = () => {
       // Generate API key using cryptographically secure random values
       const randomBytes = crypto.getRandomValues(new Uint8Array(24));
       const apiKey = `sk-${Array.from(randomBytes, b => b.toString(36).padStart(2, '0')).join('').substring(0, 32)}`;
-      const keyPreview = `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`;
+      const prefix = apiKey.substring(0, 8);
 
       // Hash with SHA-256 (one-way — key cannot be recovered from DB)
       const keyHash = await sha256(apiKey);
@@ -111,10 +102,8 @@ const ApiKeys = () => {
         user_id: user.id,
         name: newKeyName,
         key_hash: keyHash,
-        key_preview: keyPreview,
-        status: 'active',
-        credit_limit: newKeyCreditLimit ? parseFloat(newKeyCreditLimit) : null,
-        include_byok_in_limit: includeBYOKInLimit
+        prefix: prefix,
+        is_active: true,
       };
 
       const { error } = await supabase
@@ -130,9 +119,7 @@ const ApiKeys = () => {
       setShowOnceKey(apiKey);
 
       setNewKeyName("");
-      setNewKeyCreditLimit("");
-      setIncludeBYOKInLimit(false);
-      setShowAdvancedSettings(false);
+      setShowCreateForm(false);
       fetchApiKeys();
     } catch (error: unknown) {
       logger.error('Create key error:', error);
@@ -202,7 +189,7 @@ const ApiKeys = () => {
         </div>
         {apiKeys.length > 0 && (
           <Button
-            onClick={() => setShowAdvancedSettings(true)}
+            onClick={() => setShowCreateForm(true)}
             size="sm"
             className="focus-ring shrink-0"
           >
@@ -213,7 +200,7 @@ const ApiKeys = () => {
       </div>
 
       {/* Create New API Key Form */}
-      {(apiKeys.length === 0 || showAdvancedSettings) && (
+      {(apiKeys.length === 0 || showCreateForm) && (
         <Card className="clean-card">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -223,10 +210,8 @@ const ApiKeys = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setShowAdvancedSettings(false);
+                  setShowCreateForm(false);
                   setNewKeyName("");
-                  setNewKeyCreditLimit("");
-                  setIncludeBYOKInLimit(false);
                 }}
               >
                 ✕
@@ -247,38 +232,6 @@ const ApiKeys = () => {
             />
             {validationErrors.name && <p className="text-sm text-red-500">{validationErrors.name}</p>}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="credit-limit" className="text-sm font-medium">Credit limit (optional)</Label>
-            <Input
-              id="credit-limit"
-              type="number"
-              placeholder="Leave blank for unlimited"
-              value={newKeyCreditLimit}
-              onChange={(e) => { setNewKeyCreditLimit(e.target.value); setValidationErrors(prev => ({ ...prev, creditLimit: undefined })); }}
-              className={`focus-ring ${validationErrors.creditLimit ? 'border-red-400' : ''}`}
-            />
-            {validationErrors.creditLimit && <p className="text-sm text-red-500">{validationErrors.creditLimit}</p>}
-          </div>
-
-          <Collapsible open={showAdvancedSettings} onOpenChange={setShowAdvancedSettings}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 p-0 h-auto text-muted-foreground hover:text-foreground">
-                <span className="text-sm">Advanced Settings</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedSettings ? 'rotate-180' : ''}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 mt-4 pt-4">
-              <div className="flex items-center space-x-3">
-                <Switch
-                  id="byok-limit"
-                  checked={includeBYOKInLimit}
-                  onCheckedChange={setIncludeBYOKInLimit}
-                />
-                <Label htmlFor="byok-limit" className="text-sm">Include BYOK usage in limit</Label>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
 
           <Button
             onClick={() => handleCreateKey()}
@@ -316,21 +269,21 @@ const ApiKeys = () => {
                       <div className="flex items-center gap-3 mb-3">
                         <h3 className="font-semibold text-foreground text-lg">{apiKey.name}</h3>
                         <Badge
-                          variant={apiKey.status === "active" ? "default" : "secondary"}
+                          variant={apiKey.is_active ? "default" : "secondary"}
                           className="capitalize"
                         >
-                          {apiKey.status}
+                          {apiKey.is_active ? "active" : "inactive"}
                         </Badge>
                       </div>
 
                       <div className="flex items-center gap-3 mb-4">
                         <code className="bg-muted px-3 py-2 rounded-lg font-mono text-sm flex-1 min-w-0 truncate">
-                          {apiKey.key_preview}
+                          {apiKey.prefix}...
                         </code>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(apiKey.key_preview)}
+                          onClick={() => copyToClipboard(apiKey.prefix)}
                           className="hover:bg-muted"
                         >
                           <Copy className="w-4 h-4" />
@@ -339,8 +292,8 @@ const ApiKeys = () => {
 
                       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                         <span>Created {new Date(apiKey.created_at).toLocaleDateString()}</span>
-                        {apiKey.credit_limit && <span>Credit limit: ${apiKey.credit_limit}</span>}
-                        {apiKey.include_byok_in_limit && <span>BYOK included in limit</span>}
+                        {apiKey.last_used_at && <span>Last used {new Date(apiKey.last_used_at).toLocaleDateString()}</span>}
+                        {apiKey.benchmark_model && <span>Benchmark: {apiKey.benchmark_model}</span>}
                       </div>
                     </div>
 
