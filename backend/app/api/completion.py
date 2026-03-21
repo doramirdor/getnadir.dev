@@ -22,7 +22,11 @@ from app.schemas.completion import (
 )
 from app.services.supabase_unified_llm_service import SupabaseUnifiedLLMService
 from app.services.preset_router_service import PresetRouterService
-from app.api.test_ui import add_log
+# test_ui was removed; stub add_log as a no-op logger
+import logging as _logging
+_completion_logger = _logging.getLogger("app.api.completion")
+def add_log(level: str, message: str, data: dict = None):
+    _completion_logger.info("[%s] %s", level, message)
 
 
 router = APIRouter(prefix="/v1", tags=["completion"])
