@@ -11,20 +11,179 @@
         style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src     'self' data: https:;
         font-src    'self' data: https://fonts.gstatic.com;
-        connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.github.com;
         frame-src   'none';
         object-src  'none';
         base-uri    'self';
       "
     />
-    <title>Nadir</title>
-    <meta name="description" content="Nadir - Intelligent LLM Routing" />
-    <meta name="author" content="Nadir" />
 
-    <meta property="og:title" content="Nadir" />
-    <meta property="og:description" content="Intelligent LLM Routing" />
+    <title>NadirClaw — Cut Claude & GPT API Costs 40–70% | Open-Source LLM Router</title>
+    <meta name="description" content="NadirClaw is a free, open-source LLM router that automatically classifies prompt complexity and routes simple requests to cheaper models. Save 40-70% on Claude, GPT, and Gemini API costs without changing code. Works with Claude Code, Cursor, Aider, and any OpenAI-compatible client." />
+    <meta name="keywords" content="LLM router, AI cost optimization, Claude API savings, GPT API costs, open-source LLM proxy, prompt routing, model routing, AI gateway, reduce LLM costs, NadirClaw, Claude Code cost savings, Cursor cost optimization, LLM cost reduction, API cost management, intelligent model selection" />
+    <meta name="author" content="NadirClaw" />
+    <link rel="canonical" href="https://getnadir.com/" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://serene-froyo-70cd27.netlify.app/image_large.png" />
+    <meta property="og:url" content="https://getnadir.com/" />
+    <meta property="og:title" content="NadirClaw — Cut Claude & GPT API Costs 40–70% | Open-Source LLM Router" />
+    <meta property="og:description" content="Free, open-source LLM router that classifies prompt complexity and routes simple requests to cheaper models. Save 40-70% on API costs without changing code." />
+    <meta property="og:image" content="https://getnadir.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="NadirClaw" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NadirClaw — Cut Claude & GPT API Costs 40–70%" />
+    <meta name="twitter:description" content="Open-source LLM router that classifies prompt complexity and routes simple requests to cheaper models. Save 40-70% on API costs." />
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!-- Google Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "NadirClaw",
+          "description": "Open-source LLM router that classifies prompt complexity and routes simple requests to cheaper models, saving 40-70% on API costs.",
+          "url": "https://getnadir.com",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Cross-platform",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "license": "https://opensource.org/licenses/MIT",
+          "downloadUrl": "https://pypi.org/project/nadirclaw/",
+          "softwareVersion": "0.13.0",
+          "author": {
+            "@type": "Person",
+            "name": "Dor Amir",
+            "url": "https://github.com/doramirdor"
+          }
+        },
+        {
+          "@type": "Organization",
+          "name": "NadirClaw",
+          "url": "https://getnadir.com",
+          "logo": "https://getnadir.com/logo.png",
+          "sameAs": [
+            "https://github.com/doramirdor/NadirClaw"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "name": "NadirClaw",
+          "url": "https://getnadir.com",
+          "description": "Open-source LLM router for cutting AI API costs 40-70%",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://getnadir.com/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is NadirClaw?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "NadirClaw is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 40-70% on API costs without changing any code."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does NadirClaw reduce costs?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget-tier models. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average — without sacrificing quality where it matters."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does NadirClaw require code changes?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. NadirClaw is a drop-in proxy. Point your LLM client's base URL to NadirClaw instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is NadirClaw free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. NadirClaw is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What LLM providers does NadirClaw support?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "NadirClaw supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I install NadirClaw?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Run pip install nadirclaw or use Docker: docker run -p 8000:8000 nadirclaw/nadirclaw. Configuration is done through environment variables or a config file."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the classifier work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "NadirClaw uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes ~10ms. It also detects agentic workflows (tool calls), reasoning chains, and vision content (images) as separate routing signals."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What happens when the classifier is wrong?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "NadirClaw biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadirclaw classify and tune the threshold."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How much latency does routing add?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "~10ms for the sentence embedding classification. The router runs locally on your machine, so there is no network hop. For comparison, a typical LLM API call takes 500ms-5s. The routing overhead is less than 1% of total request time."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Where does the 40-70% savings claim come from?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In typical coding sessions, 60-70% of prompts are simple (file reads, formatting, basic questions, docstrings). If those route to models that cost 10-20x less per token, your blended cost drops 40-70%. Your actual savings depend on your prompt mix. Run nadirclaw report to see your real breakdown after a day of use."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
 
   <body>

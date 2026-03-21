@@ -4,28 +4,28 @@ const posts = [
     title: "Context Optimize: How We Cut LLM Input Tokens 30-70%",
     excerpt:
       "Safe mode applies lossless transforms. Aggressive mode adds diff-preserving semantic dedup. Both backed by 60 automated accuracy tests.",
-    href: "/blog/context-optimize-cut-llm-input-tokens",
+    href: "/blog/context-optimize-cut-llm-input-tokens.html",
   },
   {
     date: "March 10, 2026",
     title: "How NadirClaw Saves 40-70% on LLM API Costs",
     excerpt:
       "Most LLM API costs are wasted on simple requests. NadirClaw analyzes prompt complexity in real-time and routes simple prompts to cheaper models.",
-    href: "/blog/how-nadirclaw-saves-40-70-percent-on-llm-api-costs",
+    href: "/blog/how-nadirclaw-saves-40-70-percent-on-llm-api-costs.html",
   },
   {
     date: "March 7, 2026",
     title: "NadirClaw + Claude Code: A Cost Optimization Guide",
     excerpt:
       "Claude Code generates thousands of API calls per session. Without routing, every call hits the same expensive model.",
-    href: "/blog/nadirclaw-claude-code-cost-optimization-guide",
+    href: "/blog/nadirclaw-claude-code-cost-optimization-guide.html",
   },
   {
     date: "March 4, 2026",
     title: "Why Open-Source LLM Routing Matters",
     excerpt:
       "Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. Open-source routing changes this entirely.",
-    href: "/blog/why-open-source-llm-routing-matters",
+    href: "/blog/why-open-source-llm-routing-matters.html",
   },
 ];
 

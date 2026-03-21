@@ -53,6 +53,18 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
               >
                 Pricing
               </Link>
+              <Link
+                to="/openclaw"
+                className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"
+              >
+                OpenClaw
+              </Link>
+              <Link
+                to="/optimize"
+                className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"
+              >
+                Optimize
+              </Link>
               <a
                 href="#blog"
                 className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"

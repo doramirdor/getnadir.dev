@@ -84,7 +84,7 @@
           "name": "How does NadirClaw reduce costs?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to cheaper models (Claude Haiku, GPT-4o-mini). Complex tasks like code generation and reasoning stay on premium models (Claude Opus, GPT-4). You pay less per token on average."
+            "text": "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget models that cost 10-60x less. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average."
           }
         },
         {
@@ -1871,7 +1871,7 @@
                                 </div>
                                 <div class="sim-stat">
                                     <div class="sim-stat-value">$1.37</div>
-                                    <div class="sim-stat-label">all on gpt-5.2</div>
+                                    <div class="sim-stat-label">without routing</div>
                                 </div>
                             </div>
                         </div>
@@ -1886,7 +1886,7 @@
                 <div class="pain-grid" data-stagger>
                     <div class="pain-item" data-anim="fade-up">
                         <h3>Most prompts don't need your best model</h3>
-                        <p>Code formatting, basic questions, simple edits. They don't need <code>gpt-5.2</code> at $1.75/$14 per 1M tokens or <code>opus-4.6</code> at $15/$75, but that's what you're paying for.</p>
+                        <p>Code formatting, basic questions, simple edits. They don't need a premium model, but that's what you're paying for.</p>
                     </div>
                     <div class="pain-item" data-anim="fade-up">
                         <h3>You're blind to where money goes</h3>
@@ -1894,7 +1894,7 @@
                     </div>
                     <div class="pain-item" data-anim="fade-up">
                         <h3>Changing models breaks workflow</h3>
-                        <p>Switching between <code>gpt-5.2</code> and <code>gpt-5-mini</code> in your editor kills momentum. So you just pay more.</p>
+                        <p>Switching between premium and budget models in your editor kills momentum. So you just pay more.</p>
                     </div>
                 </div>
             </div>
@@ -1965,7 +1965,7 @@
                     </div>
 
                     <div class="code-result" data-anim="fade-up">
-                        <div>Simple prompts route to <code>gpt-5-mini</code> ($0.25/1M) or <code>haiku-4.5</code> ($1/1M) instead of <code>gpt-5.2</code> ($1.75/$14) or <code>opus-4.6</code> ($15/$75)</div>
+                        <div>Simple prompts route to budget models instead of premium ones &mdash; same quality for simple tasks</div>
                         <div class="savings">Up to <span data-count="7">0</span>x cheaper input, <span data-count="37">0</span>x cheaper output</div>
                         <div class="savings-math">
                             Your actual savings depend on your prompt mix. Run <code>nadirclaw report</code> to see your real breakdown.
@@ -2275,7 +2275,7 @@
 
                 <div class="optimize-layout">
                     <div class="optimize-stats" data-anim="fade-right">
-                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Benchmarked on Claude Opus 4.6 &mdash; safe mode (lossless)</p>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Benchmarked on premium models &mdash; safe mode (lossless)</p>
 
                         <div class="optimize-bar">
                             <span class="optimize-bar-label">Agentic (8 turns)</span>
@@ -2538,7 +2538,7 @@
                     </div>
                     <div class="faq-item" data-anim="fade-up">
                         <h3>How does NadirClaw reduce costs?</h3>
-                        <p>NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to cheaper models (<code>Claude Haiku</code>, <code>GPT-4o-mini</code>). Complex tasks like code generation and reasoning stay on premium models (<code>Claude Opus</code>, <code>GPT-4</code>). You pay less per token on average.</p>
+                        <p>NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget models that cost 10-60x less. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average.</p>
                     </div>
                     <div class="faq-item" data-anim="fade-up">
                         <h3>Does NadirClaw require code changes?</h3>
@@ -2621,7 +2621,7 @@
                     <h2>About</h2>
                 </div>
                 <p class="about-text" data-anim="fade-up">
-                    NadirClaw is built by <a href="https://github.com/doramirdor">Dor Amir</a>, a software engineer frustrated with overpaying for simple LLM requests. Every "what's my balance?" query was hitting Claude Opus at $15/MTok when Haiku could handle it for $0.25/MTok. NadirClaw was born to fix that.
+                    NadirClaw is built by <a href="https://github.com/doramirdor">Dor Amir</a>, a software engineer frustrated with overpaying for simple LLM requests. Every basic query was hitting the most expensive model when a budget model could handle it at a fraction of the cost. NadirClaw was born to fix that.
                 </p>
                 <p class="about-text" data-anim="fade-up">
                     The project is open-source (MIT License), fully self-hosted, and designed to save developers 40-70% on API costs without adding complexity. No signup, no telemetry, no vendor lock-in.
