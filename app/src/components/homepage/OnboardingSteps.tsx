@@ -6,11 +6,11 @@ const CHEAP_IN = 0.075;
 const CHEAP_OUT = 0.3;
 
 const MODELS = [
-  { label: "Claude Sonnet ($3/$15 per 1M)", inPrice: 3, outPrice: 15 },
-  { label: "Claude Opus ($15/$75 per 1M)", inPrice: 15, outPrice: 75 },
-  { label: "GPT-4o ($2.50/$10 per 1M)", inPrice: 2.5, outPrice: 10 },
-  { label: "GPT-4 Turbo ($10/$30 per 1M)", inPrice: 10, outPrice: 30 },
-  { label: "Gemini 1.5 Pro ($1/$2 per 1M)", inPrice: 1, outPrice: 2 },
+  { label: "Mid-tier ($3/$15 per 1M)", inPrice: 3, outPrice: 15 },
+  { label: "Premium ($15/$75 per 1M)", inPrice: 15, outPrice: 75 },
+  { label: "Standard ($2.50/$10 per 1M)", inPrice: 2.5, outPrice: 10 },
+  { label: "High-end ($10/$30 per 1M)", inPrice: 10, outPrice: 30 },
+  { label: "Budget ($1/$2 per 1M)", inPrice: 1, outPrice: 2 },
 ];
 
 export const OnboardingSteps = () => {

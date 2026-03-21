@@ -73,9 +73,9 @@ export const ContactFooter = () => {
               Dor Amir
             </a>
             , a software engineer frustrated with overpaying for simple LLM
-            requests. Every "what's my balance?" query was hitting Claude Opus at
-            $15/MTok when Haiku could handle it for $0.25/MTok. NadirClaw was
-            born to fix that.
+            requests. Every basic query was hitting the most expensive model when
+            a budget model could handle it just fine. NadirClaw was born to fix
+            that.
           </p>
           <p className="text-[15px] text-[#666] leading-relaxed mb-4">
             The project is open-source (MIT License), fully self-hosted, and

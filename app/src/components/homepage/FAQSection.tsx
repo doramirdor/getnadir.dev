@@ -5,7 +5,7 @@ const faqs = [
   },
   {
     q: "How does NadirClaw reduce costs?",
-    a: "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to cheaper models (Claude Haiku, GPT-4o-mini). Complex tasks like code generation and reasoning stay on premium models (Claude Opus, GPT-4). You pay less per token on average.",
+    a: "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget-tier models. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average — without sacrificing quality where it matters.",
   },
   {
     q: "Does NadirClaw require code changes?",

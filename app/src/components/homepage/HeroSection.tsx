@@ -95,35 +95,35 @@ export const HeroSection = () => {
                 {
                   type: "simple",
                   prompt: '"What is 2+2?"',
-                  model: "gpt-5-mini",
+                  model: "budget",
                   cost: "$0.0002",
                   green: true,
                 },
                 {
                   type: "simple",
                   prompt: '"Format this JSON"',
-                  model: "haiku-4.5",
+                  model: "budget",
                   cost: "$0.0004",
                   green: true,
                 },
                 {
                   type: "complex",
                   prompt: '"Refactor this auth module..."',
-                  model: "gpt-5.2",
+                  model: "premium",
                   cost: "$0.098",
                   green: false,
                 },
                 {
                   type: "complex",
                   prompt: '"Debug this race condition..."',
-                  model: "opus-4.6",
+                  model: "premium",
                   cost: "$0.450",
                   green: false,
                 },
                 {
                   type: "simple",
                   prompt: '"Write a docstring for get_user()"',
-                  model: "gpt-5-mini",
+                  model: "budget",
                   cost: "$0.0002",
                   green: true,
                 },
@@ -172,7 +172,7 @@ export const HeroSection = () => {
                     label: "with nadirclaw",
                     green: true,
                   },
-                  { value: "$1.37", label: "all on gpt-5.2" },
+                  { value: "$1.37", label: "without routing" },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center">
                     <div

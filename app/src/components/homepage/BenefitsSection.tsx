@@ -146,7 +146,7 @@ export const BenefitsSection = () => {
             {/* Bars */}
             <div>
               <p className="text-[13px] text-[#666] mb-3">
-                Benchmarked on Claude Opus 4.6 -- safe mode (lossless)
+                Benchmarked on premium models — safe mode (lossless)
               </p>
               <div className="space-y-4">
                 {[

@@ -10,15 +10,9 @@ export const FeaturesGrid = () => {
                 Most prompts don't need your best model
               </h3>
               <p className="text-[15px] text-[#666] leading-relaxed">
-                Code formatting, basic questions, simple edits. They don't need{" "}
-                <code className="text-xs bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  gpt-5.2
-                </code>{" "}
-                at $1.75/$14 per 1M tokens or{" "}
-                <code className="text-xs bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  opus-4.6
-                </code>{" "}
-                at $15/$75, but that's what you're paying for.
+                Code formatting, basic questions, simple edits. They don't need
+                your most expensive model — but that's what you're paying for
+                on every call.
               </p>
             </div>
             <div className="p-6 rounded-xl hover:-translate-y-0.5 hover:shadow-lg hover:bg-white/80 transition-all">
@@ -35,15 +29,8 @@ export const FeaturesGrid = () => {
                 Changing models breaks workflow
               </h3>
               <p className="text-[15px] text-[#666] leading-relaxed">
-                Switching between{" "}
-                <code className="text-xs bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  gpt-5.2
-                </code>{" "}
-                and{" "}
-                <code className="text-xs bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  gpt-5-mini
-                </code>{" "}
-                in your editor kills momentum. So you just pay more.
+                Manually switching between premium and budget models in your
+                editor kills momentum. So you just pay more.
               </p>
             </div>
           </div>
@@ -156,34 +143,19 @@ client = openai.OpenAI(`}
             </div>
 
             <div className="text-center p-6 bg-[#fafafa] rounded-lg border border-[#e5e5e5]">
-              <p className="text-[15px] text-[#666] mb-2">
-                Simple prompts route to{" "}
-                <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  gpt-5-mini
-                </code>{" "}
-                ($0.25/1M) or{" "}
-                <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  haiku-4.5
-                </code>{" "}
-                ($1/1M) instead of{" "}
-                <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  gpt-5.2
-                </code>{" "}
-                ($1.75/$14) or{" "}
-                <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  opus-4.6
-                </code>{" "}
-                ($15/$75)
-              </p>
               <p className="text-2xl font-bold text-[#0066ff]">
-                Up to 7x cheaper input, 37x cheaper output
+                Same results. Fraction of the cost.
+              </p>
+              <p className="text-[15px] text-[#666] mt-3">
+                Simple prompts automatically route to cheaper models.
+                Complex ones stay on premium. You save on every call.
               </p>
               <p className="text-[13px] text-[#999] mt-2">
-                Your actual savings depend on your prompt mix. Run{" "}
+                Run{" "}
                 <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
                   nadirclaw report
                 </code>{" "}
-                to see your real breakdown.
+                to see your real savings breakdown.
               </p>
             </div>
           </div>
