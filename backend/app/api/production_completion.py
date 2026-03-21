@@ -18,6 +18,7 @@ from app.settings import settings
 from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
 from app.processors.request_processor import get_processed_request
 from app.middleware.rate_limiter import check_rate_limit
+from app.middleware.subscription_guard import require_active_subscription
 from app.services.preset_router_service import PresetRouterService
 
 from app.complexity.model_registry import extract_provider as _provider_of
@@ -443,7 +444,7 @@ async def get_intelligent_model_recommendation_with_analysis(
 async def create_completion(
     request: ProductionCompletionRequest,
     background_tasks: BackgroundTasks,
-    current_user: UserSession = Depends(validate_api_key),
+    current_user: UserSession = Depends(require_active_subscription),
 ) -> ProductionCompletionResponse:
     """
     Create a chat completion using intelligent model selection.

@@ -48,7 +48,19 @@ class UserSession:
         self.budget_used = user_data.get("cost_this_month", 0.0)
         self.clusters = user_data.get("clusters", [])
         self.api_key_config = user_data.get("api_key_config", {})  # Store the API key configuration used
+        # Subscription / billing
+        self.subscription_status: str = user_data.get("subscription_status", "inactive")  # active, past_due, canceled, inactive
+        self.subscription_plan: str = user_data.get("subscription_plan", "free")  # free, pro, enterprise
         self.raw_data = user_data
+
+    @property
+    def is_subscribed(self) -> bool:
+        """True if user has an active paid subscription."""
+        return self.subscription_status == "active"
+
+    @property
+    def is_free_tier(self) -> bool:
+        return self.subscription_plan == "free" or self.subscription_status != "active"
 
 
 async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSession:
@@ -76,14 +88,14 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
 
         response = await asyncio.to_thread(
-            lambda: supabase.table("api_keys").select("*").eq("key_hash", api_key_hash).eq("status", "active").execute()
+            lambda: supabase.table("api_keys").select("*").eq("key_hash", api_key_hash).eq("is_active", True).execute()
         )
 
         if not response.data or len(response.data) == 0:
             # Fallback: legacy base64 lookup (transition period)
             legacy_hash = base64.b64encode(api_key.encode()).decode()
             response = await asyncio.to_thread(
-                lambda: supabase.table("api_keys").select("*").eq("key_hash", legacy_hash).eq("status", "active").execute()
+                lambda: supabase.table("api_keys").select("*").eq("key_hash", legacy_hash).eq("is_active", True).execute()
             )
 
             if not response.data or len(response.data) == 0:
@@ -113,20 +125,34 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Get user profile data (run blocking call in thread)
-        profile_response = await asyncio.to_thread(
-            lambda: supabase.table("profiles").select("*").eq("user_id", user_id).execute()
+        # Get user profile and subscription status in parallel
+        profile_future = asyncio.to_thread(
+            lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
         )
-        
-        if not profile_response.data:
+        subscription_future = asyncio.to_thread(
+            lambda: supabase.table("user_subscriptions").select("status").eq("user_id", user_id).execute()
+        )
+        profile_response, subscription_response = await asyncio.gather(
+            profile_future, subscription_future, return_exceptions=True
+        )
+
+        # Handle profile
+        if isinstance(profile_response, Exception) or not getattr(profile_response, 'data', None):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User profile not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         profile_data = profile_response.data[0]
-        
+
+        # Resolve subscription status (default to inactive/free if not found)
+        sub_status = "inactive"
+        sub_plan = "free"
+        if not isinstance(subscription_response, Exception) and getattr(subscription_response, 'data', None):
+            sub_status = subscription_response.data[0].get("status", "inactive")
+            sub_plan = "pro" if sub_status == "active" else "free"
+
         # Compile user session data using both API key config and profile data
         user_session_data = {
             "id": user_id,
@@ -139,6 +165,8 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             "budget_used": profile_data.get("cost_this_month", 0.0),
             "clusters": [],  # Will be populated when clustering tables are created
             "api_key_config": api_key_data,  # Store the full API key configuration
+            "subscription_status": sub_status,
+            "subscription_plan": sub_plan,
         }
         
         return UserSession(user_session_data)
@@ -380,7 +408,7 @@ async def update_user_preference(
     try:
         supabase.table("profiles").update({
             preference_type: preference_value
-        }).eq("user_id", user_id).execute()
+        }).eq("id", user_id).execute()
         return True
     except Exception as e:
         logger.error(f"Error updating user preference: {str(e)}")

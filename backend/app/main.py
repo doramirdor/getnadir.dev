@@ -43,6 +43,7 @@ from app.api.metrics_endpoint import router as metrics_router
 from app.api.distillation_api import router as distillation_router
 from app.api.savings_api import router as savings_router
 from app.api.stripe_webhooks import router as stripe_webhook_router
+from app.api.billing_api import router as billing_router
 
 
 # Create FastAPI application
@@ -390,6 +391,7 @@ app.include_router(metrics_router)                   # Prometheus metrics
 app.include_router(distillation_router)              # Distillation API
 app.include_router(savings_router)                    # Savings tracking API
 app.include_router(stripe_webhook_router)             # Stripe webhooks
+app.include_router(billing_router)                     # Billing & subscription API
 
 
 # Root endpoint

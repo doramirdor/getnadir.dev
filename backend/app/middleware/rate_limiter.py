@@ -90,13 +90,19 @@ rate_limiter = RateLimiter()
 
 
 async def check_rate_limit(request: Request):
-    """FastAPI dependency for rate limiting on completion endpoints."""
+    """FastAPI dependency for rate limiting on completion endpoints.
+
+    Uses plan-aware RPM if set by the subscription guard (request.state.rate_limit_rpm),
+    otherwise falls back to the global RATE_LIMIT_PER_MINUTE setting.
+    """
     # Extract API key from header for rate-limit bucketing
     api_key = request.headers.get("X-API-Key", "anonymous")
     # Hash the full key to avoid collisions between different users
     bucket_key = hashlib.sha256(api_key.encode()).hexdigest()[:16]
 
-    allowed, remaining, reset_seconds = rate_limiter.check_rate_limit(bucket_key)
+    # Use plan-aware RPM if subscription guard already ran
+    plan_rpm = getattr(request.state, "rate_limit_rpm", None)
+    allowed, remaining, reset_seconds = rate_limiter.check_rate_limit(bucket_key, rate_per_minute=plan_rpm)
 
     # Store for response headers (middleware or endpoint can read these)
     request.state.rate_limit_remaining = remaining

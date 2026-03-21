@@ -225,6 +225,88 @@ async def _handle_invoice_paid(data: dict) -> None:
     )
 
 
+async def _handle_subscription_updated(data: dict) -> None:
+    """
+    Handle customer.subscription.updated — plan change, renewal, payment failure recovery.
+
+    Updates the subscription status and period in our DB to stay in sync with Stripe.
+    """
+    sub = data.get("object", {})
+    customer_id = sub.get("customer")
+    subscription_id = sub.get("id")
+    sub_status = sub.get("status", "active")  # active, past_due, unpaid, canceled, etc.
+
+    customer_row = (
+        supabase.table("stripe_customers")
+        .select("user_id")
+        .eq("stripe_customer_id", customer_id)
+        .execute()
+    )
+    if not customer_row.data:
+        logger.warning("subscription.updated for unknown customer %s", customer_id)
+        return
+
+    user_id = customer_row.data[0]["user_id"]
+
+    supabase.table("user_subscriptions").upsert(
+        {
+            "user_id": user_id,
+            "stripe_customer_id": customer_id,
+            "stripe_subscription_id": subscription_id,
+            "status": sub_status,
+            "current_period_start": sub.get("current_period_start"),
+            "current_period_end": sub.get("current_period_end"),
+            "cancel_at_period_end": sub.get("cancel_at_period_end", False),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+        on_conflict="user_id",
+    ).execute()
+
+    logger.info(
+        "Subscription updated: user=%s sub=%s status=%s",
+        user_id, subscription_id, sub_status,
+    )
+
+
+async def _handle_invoice_payment_failed(data: dict) -> None:
+    """
+    Handle invoice.payment_failed — payment attempt failed.
+
+    Marks the subscription as past_due so the subscription guard
+    allows a grace period but warns the user.
+    """
+    invoice = data.get("object", {})
+    customer_id = invoice.get("customer")
+    subscription_id = invoice.get("subscription")
+
+    if not subscription_id:
+        return  # One-off invoice, not subscription-related
+
+    customer_row = (
+        supabase.table("stripe_customers")
+        .select("user_id")
+        .eq("stripe_customer_id", customer_id)
+        .execute()
+    )
+    if not customer_row.data:
+        logger.warning("invoice.payment_failed for unknown customer %s", customer_id)
+        return
+
+    user_id = customer_row.data[0]["user_id"]
+
+    supabase.table("user_subscriptions").update(
+        {
+            "status": "past_due",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    ).eq("stripe_subscription_id", subscription_id).execute()
+
+    logger.warning(
+        "Payment failed: user=%s sub=%s — marked as past_due",
+        user_id, subscription_id,
+    )
+
+
 # ------------------------------------------------------------------
 # Webhook endpoint
 # ------------------------------------------------------------------
@@ -232,8 +314,10 @@ async def _handle_invoice_paid(data: dict) -> None:
 EVENT_HANDLERS = {
     "checkout.session.completed": _handle_checkout_session_completed,
     "customer.subscription.created": _handle_subscription_created,
+    "customer.subscription.updated": _handle_subscription_updated,
     "customer.subscription.deleted": _handle_subscription_deleted,
     "invoice.paid": _handle_invoice_paid,
+    "invoice.payment_failed": _handle_invoice_payment_failed,
 }
 
 
