@@ -1,5 +1,5 @@
 """
-Supabase database service for Horizen.
+Supabase database service for Nadir.
 
 This module provides a complete database service using Supabase,
 handling all data operations for the intelligent LLM routing platform.

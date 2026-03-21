@@ -1,5 +1,5 @@
 """
-Supabase API Key Authentication module for Horizen API.
+Supabase API Key Authentication module for Nadir API.
 Handles secure authentication, user sessions, and authorization.
 """
 from typing import Optional, Dict, Any

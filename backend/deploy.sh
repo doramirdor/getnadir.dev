@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Horizen LLM Routing Platform - GCP Deployment Script
+# Nadir LLM Routing Platform - GCP Deployment Script
 # This script deploys the application to Google App Engine
 
 set -e  # Exit on any error
 
-echo "🚀 Starting Horizen deployment to Google App Engine..."
+echo "🚀 Starting Nadir deployment to Google App Engine..."
 
 # Check if gcloud is installed
 if ! command -v gcloud &> /dev/null; then

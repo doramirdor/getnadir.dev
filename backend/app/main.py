@@ -1,5 +1,5 @@
 """
-Main FastAPI application for Horizen.
+Main FastAPI application for Nadir.
 Intelligent LLM routing and analytics platform.
 """
 import asyncio
@@ -100,7 +100,7 @@ async def startup_event():
     _max_workers = int(os.getenv("THREAD_POOL_MAX_WORKERS", "200"))
     _executor = concurrent.futures.ThreadPoolExecutor(
         max_workers=_max_workers,
-        thread_name_prefix="horizen-io",
+        thread_name_prefix="nadir-io",
     )
     asyncio.get_running_loop().set_default_executor(_executor)
     app.state.executor = _executor

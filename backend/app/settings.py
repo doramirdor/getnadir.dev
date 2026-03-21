@@ -1,5 +1,5 @@
 """
-Settings module for Horizen.
+Settings module for Nadir.
 Centralized configuration management for the intelligent LLM routing platform.
 """
 import os
@@ -19,7 +19,7 @@ class Settings:
     
     def __init__(self):
     # API settings
-        self.APP_NAME: str = os.getenv("APP_NAME", "Horizen")
+        self.APP_NAME: str = os.getenv("APP_NAME", "Nadir")
         self.APP_VERSION: str = os.getenv("APP_VERSION", "1.0.0")
         self.DEBUG: bool = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
     

@@ -1,5 +1,5 @@
 """
-Production-ready completion endpoint for Horizen API.
+Production-ready completion endpoint for Nadir API.
 Handles API key authentication, user configuration lookup, and intelligent model recommendation.
 Enterprise-grade endpoint with comprehensive analytics and cost management.
 """

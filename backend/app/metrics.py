@@ -1,5 +1,5 @@
 """
-Central Prometheus metrics registry for Horizen.
+Central Prometheus metrics registry for Nadir.
 
 All metrics are registered on a custom CollectorRegistry so they don't
 collide with the default process/platform collectors from prometheus-client.

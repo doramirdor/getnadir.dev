@@ -1,7 +1,7 @@
 /**
  * NadirAPI — Unified service layer for all backend API calls.
  *
- * Wraps all Horizen backend endpoints with the user's X-API-Key header.
+ * Wraps all Nadir backend endpoints with the user's X-API-Key header.
  * Used by dashboard pages instead of direct Supabase queries for backend-powered features.
  */
 
