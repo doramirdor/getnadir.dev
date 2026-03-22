@@ -62,12 +62,15 @@ class SavingsBillingService:
         self, user_id: str, period_start: date, period_end: date
     ) -> SavingsInvoice:
         """Calculate the invoice for a billing period."""
-        result = self.supabase.table("savings_tracking") \
-            .select("savings_usd") \
-            .eq("user_id", user_id) \
-            .gte("created_at", period_start.isoformat()) \
-            .lt("created_at", period_end.isoformat()) \
+        import asyncio
+        result = await asyncio.to_thread(
+            lambda: self.supabase.table("savings_tracking")
+            .select("savings_usd")
+            .eq("user_id", user_id)
+            .gte("created_at", period_start.isoformat())
+            .lt("created_at", period_end.isoformat())
             .execute()
+        )
 
         rows = result.data or []
         total_savings = sum(r.get("savings_usd", 0) or 0 for r in rows)
@@ -90,16 +93,19 @@ class SavingsBillingService:
         """Calculate invoice and store it in the database."""
         invoice = await self.calculate_monthly_invoice(user_id, period_start, period_end)
 
-        self.supabase.table("savings_invoices").insert({
-            "user_id": user_id,
-            "billing_period_start": period_start.isoformat(),
-            "billing_period_end": period_end.isoformat(),
-            "total_savings_usd": invoice.total_savings_usd,
-            "base_fee_usd": invoice.base_fee_usd,
-            "savings_fee_usd": invoice.savings_fee_usd,
-            "total_invoice_usd": invoice.total_invoice_usd,
-            "status": "draft",
-        }).execute()
+        import asyncio
+        await asyncio.to_thread(
+            lambda: self.supabase.table("savings_invoices").insert({
+                "user_id": user_id,
+                "billing_period_start": period_start.isoformat(),
+                "billing_period_end": period_end.isoformat(),
+                "total_savings_usd": invoice.total_savings_usd,
+                "base_fee_usd": invoice.base_fee_usd,
+                "savings_fee_usd": invoice.savings_fee_usd,
+                "total_invoice_usd": invoice.total_invoice_usd,
+                "status": "draft",
+            }).execute()
+        )
 
         logger.info(
             f"Generated invoice for user {user_id}: "
@@ -129,16 +135,19 @@ class SavingsBillingService:
         if savings <= 0:
             return
 
-        self.supabase.table("savings_tracking").insert({
-            "user_id": user_id,
-            "request_id": request_id,
-            "api_key_id": api_key_id,
-            "benchmark_model": benchmark_model,
-            "benchmark_cost_usd": round(benchmark_cost, 6),
-            "routed_model": routed_model,
-            "routed_cost_usd": round(routed_cost, 6),
-            "savings_usd": round(savings, 6),
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "complexity_tier": complexity_tier,
-        }).execute()
+        import asyncio
+        await asyncio.to_thread(
+            lambda: self.supabase.table("savings_tracking").insert({
+                "user_id": user_id,
+                "request_id": request_id,
+                "api_key_id": api_key_id,
+                "benchmark_model": benchmark_model,
+                "benchmark_cost_usd": round(benchmark_cost, 6),
+                "routed_model": routed_model,
+                "routed_cost_usd": round(routed_cost, 6),
+                "savings_usd": round(savings, 6),
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "complexity_tier": complexity_tier,
+            }).execute()
+        )

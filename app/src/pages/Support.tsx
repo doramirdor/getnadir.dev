@@ -119,9 +119,13 @@ const Support = () => {
 
   const fetchTickets = async () => {
     try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("support_tickets")
         .select("*")
+        .eq("user_id", authUser.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

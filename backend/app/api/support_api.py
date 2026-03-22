@@ -72,7 +72,7 @@ async def create_ticket(
 
     try:
         result = supabase.table("support_tickets").insert({
-            "user_id": user.user_id,
+            "user_id": user.id,
             "subject": req.subject,
             "description": req.description,
             "category": req.category,
@@ -100,7 +100,7 @@ async def list_tickets(
         query = (
             supabase.table("support_tickets")
             .select("*")
-            .eq("user_id", user.user_id)
+            .eq("user_id", user.id)
             .order("created_at", desc=True)
         )
 
@@ -126,7 +126,7 @@ async def get_ticket(
             supabase.table("support_tickets")
             .select("*")
             .eq("id", str(ticket_id))
-            .eq("user_id", user.user_id)
+            .eq("user_id", user.id)
             .execute()
         )
 
@@ -166,7 +166,7 @@ async def add_message(
             supabase.table("support_tickets")
             .select("id")
             .eq("id", str(ticket_id))
-            .eq("user_id", user.user_id)
+            .eq("user_id", user.id)
             .execute()
         )
 
@@ -178,7 +178,7 @@ async def add_message(
             supabase.table("ticket_messages")
             .insert({
                 "ticket_id": str(ticket_id),
-                "user_id": user.user_id,
+                "user_id": user.id,
                 "message": req.message,
                 "is_staff": False,
             })

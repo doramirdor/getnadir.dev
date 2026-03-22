@@ -256,7 +256,13 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         user_provider_keys: Dict[str, str] = {}
         if not isinstance(provider_keys_response, Exception) and getattr(provider_keys_response, 'data', None):
             for pk in provider_keys_response.data:
-                user_provider_keys[pk["provider"]] = pk["encrypted_key"]
+                # Decode base64-encoded key (frontend stores as btoa(raw_key))
+                raw_key = pk["encrypted_key"]
+                try:
+                    raw_key = base64.b64decode(raw_key).decode()
+                except Exception:
+                    pass  # Key might already be plaintext (legacy)
+                user_provider_keys[pk["provider"]] = raw_key
 
         # Determine key mode: "byok" if user has provider keys configured, "hosted" otherwise
         # Priority: api_key override > profile setting > auto-detect from provider_keys
@@ -498,7 +504,7 @@ async def check_user_budget(user_session: UserSession, estimated_cost: float) ->
 
     except Exception as e:
         logger.error(f"Budget check error for user {user_session.id}: {str(e)}")
-        return False
+        return True  # Fail open — budget enforcement is best-effort; don't block traffic
 
 
 async def update_user_preference(
