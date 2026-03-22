@@ -13,12 +13,17 @@ const INITIAL_BACKOFF_MS = 1000;
 // ── Types ────────────────────────────────────────────────────────────────
 
 export interface SavingsSummary {
-  totalSaved: number;
-  totalSpent: number;
-  savingsRate: number;
-  requestsRouted: number;
-  nadisFee: number;
-  netSavings: number;
+  total_savings_usd: number;
+  total_spent_usd: number;
+  total_benchmark_usd: number;
+  savings_rate: number;
+  requests_routed: number;
+  base_fee: number;
+  savings_fee: number;
+  total_fee: number;
+  net_savings: number;
+  period_start: string;
+  period_end: string;
 }
 
 export interface DailySaving {
@@ -31,22 +36,21 @@ export interface DailySaving {
 export interface TierBreakdown {
   tier: string;
   requests: number;
-  saved: number;
+  savings_usd: number;
+  avg_savings_per_request: number;
 }
 
 export interface SavingsHistoryMonth {
   month: string;
-  totalSaved: number;
-  totalSpent: number;
-  savingsRate: number;
-  requestsRouted: number;
-  nadisFee: number;
-  netSavings: number;
+  savings_usd: number;
+  spent_usd: number;
+  benchmark_usd: number;
+  fee_usd: number;
+  net_savings_usd: number;
 }
 
 export interface SavingsBreakdownResponse {
-  tiers: TierBreakdown[];
-  daily: DailySaving[];
+  breakdown: TierBreakdown[];
 }
 
 // ── Internal request helper (mirrors api.ts pattern) ─────────────────────
@@ -135,7 +139,8 @@ export class SavingsAPI {
    */
   async getSavingsHistory(months?: number): Promise<SavingsHistoryMonth[]> {
     const qs = months ? `?months=${months}` : "";
-    return request<SavingsHistoryMonth[]>(`/v1/savings/history${qs}`, this.apiKey);
+    const data = await request<{ history: SavingsHistoryMonth[] }>(`/v1/savings/history${qs}`, this.apiKey);
+    return data.history;
   }
 
   /**

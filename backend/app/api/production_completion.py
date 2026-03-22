@@ -996,7 +996,7 @@ async def create_completion(
 
         # Track hosted spend in-memory (fast, non-blocking)
         if current_user.key_mode == "hosted":
-            total_cost = cost_section.get("total_cost", 0) or 0
+            total_cost = cost_section.get("total_cost_usd", 0) or 0
             if total_cost > 0:
                 record_hosted_spend(str(current_user.id), float(total_cost))
 

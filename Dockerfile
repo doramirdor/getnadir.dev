@@ -34,11 +34,17 @@ WORKDIR /app
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser
+
 # Backend code
 COPY backend/ ./
 
 # Frontend static files (served by FastAPI)
 COPY --from=frontend-build /app/frontend/dist /app/static
+
+# Own app directory by appuser
+RUN chown -R appuser:appuser /app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
@@ -49,6 +55,8 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 ENV ENVIRONMENT=production
 ENV DEBUG=False
+
+USER appuser
 
 CMD ["gunicorn", "app.main:app", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \

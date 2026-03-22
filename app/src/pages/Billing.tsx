@@ -63,7 +63,7 @@ const Billing = () => {
     staleTime: 60_000,
   });
 
-  const currentSavings = savingsSummary?.totalSaved ?? 0;
+  const currentSavings = savingsSummary?.total_savings_usd ?? 0;
   const fee = calculateFee(currentSavings);
   const isActive = subscription?.status === "active";
 
@@ -154,7 +154,7 @@ const Billing = () => {
               ${currentSavings.toFixed(2)}
             </p>
             <p className="text-sm text-muted-foreground">
-              {savingsSummary?.requestsRouted ?? 0} requests routed
+              {savingsSummary?.requests_routed ?? 0} requests routed
             </p>
           </CardContent>
         </Card>

@@ -10,8 +10,6 @@ import logging
 
 from fastapi import Depends, HTTPException, status, Header
 from supabase import create_client, Client
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.settings import settings
 
 logger = logging.getLogger(__name__)

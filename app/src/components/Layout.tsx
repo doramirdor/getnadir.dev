@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import Auth from "@/pages/Auth";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AUTH_TIMEOUT_MS = 15_000;
 
 const Layout = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [authTimedOut, setAuthTimedOut] = useState(false);
 
   useEffect(() => {
@@ -21,6 +23,23 @@ const Layout = () => {
     const timer = setTimeout(() => setAuthTimedOut(true), AUTH_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [loading]);
+
+  // Redirect new users (no API keys) to onboarding
+  useEffect(() => {
+    if (!user) return;
+    if (location.pathname === "/dashboard/onboarding") return;
+
+    const checkOnboarding = async () => {
+      const { count } = await supabase
+        .from("api_keys")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      if (count === 0) {
+        navigate("/dashboard/onboarding");
+      }
+    };
+    checkOnboarding();
+  }, [user]);
 
   if (loading) {
     if (authTimedOut) {

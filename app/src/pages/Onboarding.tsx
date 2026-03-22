@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
+import { useAuth } from "@/hooks/useAuth";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -37,6 +38,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
+  const { user } = useAuth();
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -242,7 +244,7 @@ print(response.choices[0].message.content)`;
                 <p className="text-sm text-muted-foreground">
                   Payment methods can be managed from the Billing page.
                 </p>
-                <Button variant="outline" onClick={() => navigate("/billing")}>
+                <Button variant="outline" onClick={() => navigate("/dashboard/billing")}>
                   Go to Billing
                 </Button>
               </div>

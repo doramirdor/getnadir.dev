@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useApiKey } from "@/hooks/useApiKey";
+import { useAuth } from "@/hooks/useAuth";
 import { SavingsAPI } from "@/services/savingsApi";
 import { logger } from "@/utils/logger";
 
@@ -29,6 +30,7 @@ export const MetricsGrid = () => {
   });
   const [loading, setLoading] = useState(true);
   const { apiKey } = useApiKey();
+  const { user } = useAuth();
 
   // Fetch savings summary from backend
   const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;
@@ -40,7 +42,7 @@ export const MetricsGrid = () => {
     staleTime: 60_000,
   });
 
-  const savedThisMonth = savingsSummary?.totalSaved ?? 0;
+  const savedThisMonth = savingsSummary?.total_savings_usd ?? 0;
 
   useEffect(() => {
     fetchMetrics();
@@ -51,11 +53,13 @@ export const MetricsGrid = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Fetch usage events for the last 30 days
-      const { data: eventsData } = await supabase
+      const query = supabase
         .from('usage_logs')
         .select('latency_ms, cost, error, created_at')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .not('latency_ms', 'is', null);
+      if (user) query.eq('user_id', user.id);
+      const { data: eventsData } = await query;
 
       // Fetch active API keys count
       let activeApiKeys = 0;

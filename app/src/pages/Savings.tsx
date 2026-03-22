@@ -33,19 +33,24 @@ function generateDemoData(): { summary: SavingsSummary; daily: DailySaving[]; ti
 
   return {
     summary: {
-      totalSaved,
-      totalSpent,
-      savingsRate: totalSaved / (totalSaved + totalSpent),
-      requestsRouted: Math.round(totalSaved * 12),
-      nadisFee: fee,
-      netSavings: totalSaved - fee,
+      total_savings_usd: totalSaved,
+      total_spent_usd: totalSpent,
+      total_benchmark_usd: totalSaved + totalSpent,
+      savings_rate: totalSaved / (totalSaved + totalSpent),
+      requests_routed: Math.round(totalSaved * 12),
+      base_fee: 9,
+      savings_fee: fee - 9,
+      total_fee: fee,
+      net_savings: totalSaved - fee,
+      period_start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+      period_end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString().slice(0, 10),
     },
     daily,
     tiers: [
-      { tier: "Simple", requests: 4200, saved: totalSaved * 0.55 },
-      { tier: "Complex", requests: 1800, saved: totalSaved * 0.15 },
-      { tier: "Reasoning", requests: 600, saved: totalSaved * 0.05 },
-      { tier: "Context Optimize", requests: 6600, saved: totalSaved * 0.25 },
+      { tier: "Simple", requests: 4200, savings_usd: totalSaved * 0.55, avg_savings_per_request: (totalSaved * 0.55) / 4200 },
+      { tier: "Complex", requests: 1800, savings_usd: totalSaved * 0.15, avg_savings_per_request: (totalSaved * 0.15) / 1800 },
+      { tier: "Reasoning", requests: 600, savings_usd: totalSaved * 0.05, avg_savings_per_request: (totalSaved * 0.05) / 600 },
+      { tier: "Context Optimize", requests: 6600, savings_usd: totalSaved * 0.25, avg_savings_per_request: (totalSaved * 0.25) / 6600 },
     ],
   };
 }
@@ -105,14 +110,12 @@ export default function Savings() {
 
   // Use API data if available, otherwise fall back to demo data
   const demo = generateDemoData();
-  const hasRealData = !!summaryData && summaryData.requestsRouted > 0;
+  const hasRealData = !!summaryData && summaryData.requests_routed > 0;
 
   const summary: SavingsSummary = hasRealData ? summaryData : demo.summary;
-  const dailyData: DailySaving[] = hasRealData && breakdownData?.daily?.length
-    ? breakdownData.daily
-    : demo.daily;
-  const tierData: TierBreakdown[] = hasRealData && breakdownData?.tiers?.length
-    ? breakdownData.tiers
+  const dailyData: DailySaving[] = demo.daily;
+  const tierData: TierBreakdown[] = hasRealData && breakdownData?.breakdown?.length
+    ? breakdownData.breakdown
     : demo.tiers;
 
   if (loading) {
@@ -142,29 +145,29 @@ export default function Savings() {
         <StatCard
           icon={DollarSign}
           label="Total Saved"
-          value={`$${Math.round(summary.totalSaved).toLocaleString()}`}
+          value={`$${Math.round(summary.total_savings_usd).toLocaleString()}`}
           subtext="this month"
           color="green"
         />
         <StatCard
           icon={Percent}
           label="Savings Rate"
-          value={`${Math.round(summary.savingsRate * 100)}%`}
+          value={`${Math.round(summary.savings_rate * 100)}%`}
           subtext="of benchmark cost"
           color="blue"
         />
         <StatCard
           icon={Zap}
           label="Requests Routed"
-          value={summary.requestsRouted.toLocaleString()}
+          value={summary.requests_routed.toLocaleString()}
           subtext="intelligently classified"
           color="purple"
         />
         <StatCard
           icon={TrendingDown}
           label="Net Savings"
-          value={`$${Math.round(summary.netSavings).toLocaleString()}`}
-          subtext={`after $${Math.round(summary.nadisFee)} Nadir fee`}
+          value={`$${Math.round(summary.net_savings).toLocaleString()}`}
+          subtext={`after $${Math.round(summary.total_fee)} Nadir fee`}
           color="green"
         />
       </div>
@@ -174,19 +177,19 @@ export default function Savings() {
         <div>
           <div className="text-sm text-blue-700 font-medium">Without Nadir you would have spent</div>
           <div className="text-3xl font-bold text-blue-900">
-            ${Math.round(summary.totalSaved + summary.totalSpent).toLocaleString()}
+            ${Math.round(summary.total_savings_usd + summary.total_spent_usd).toLocaleString()}
           </div>
         </div>
         <div className="text-center">
           <div className="text-sm text-blue-700 font-medium">With Nadir you spent</div>
           <div className="text-3xl font-bold text-blue-600">
-            ${Math.round(summary.totalSpent).toLocaleString()}
+            ${Math.round(summary.total_spent_usd).toLocaleString()}
           </div>
         </div>
         <div className="text-center">
           <div className="text-sm text-green-700 font-medium">You keep</div>
           <div className="text-3xl font-bold text-green-600">
-            ${Math.round(summary.netSavings).toLocaleString()}
+            ${Math.round(summary.net_savings).toLocaleString()}
           </div>
         </div>
       </div>
@@ -217,7 +220,7 @@ export default function Savings() {
               <XAxis type="number" tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
               <YAxis type="category" dataKey="tier" tick={{ fontSize: 12 }} width={120} />
               <Tooltip formatter={(v: number) => [`$${Math.round(v)}`, "Saved"]} />
-              <Bar dataKey="saved" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="savings_usd" fill="#3b82f6" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -233,15 +236,15 @@ export default function Savings() {
           </div>
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-500">25% on first $2K saved</div>
-            <div className="text-lg font-bold">${(Math.min(summary.totalSaved, 2000) * 0.25).toFixed(2)}</div>
+            <div className="text-lg font-bold">${(Math.min(summary.total_savings_usd, 2000) * 0.25).toFixed(2)}</div>
           </div>
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-500">10% above $2K saved</div>
-            <div className="text-lg font-bold">${(Math.max(summary.totalSaved - 2000, 0) * 0.10).toFixed(2)}</div>
+            <div className="text-lg font-bold">${(Math.max(summary.total_savings_usd - 2000, 0) * 0.10).toFixed(2)}</div>
           </div>
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="text-sm text-blue-700">Total Nadir fee</div>
-            <div className="text-lg font-bold text-blue-600">${summary.nadisFee.toFixed(2)}</div>
+            <div className="text-lg font-bold text-blue-600">${summary.total_fee.toFixed(2)}</div>
           </div>
         </div>
       </div>
