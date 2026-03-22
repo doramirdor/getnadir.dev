@@ -39,7 +39,7 @@ class Settings:
         self.SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
         self.SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
         self.SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
-        self.SUPABASE_PROJECT_ID: str = os.getenv("SUPABASE_PROJECT_ID", "pamwscwltrvoauiunkkn")
+        self.SUPABASE_PROJECT_ID: str = os.getenv("SUPABASE_PROJECT_ID", "")
     
     # LLM Provider API Keys
         self.OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")

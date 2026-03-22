@@ -53,9 +53,8 @@ async def get_savings_summary(
     user=Depends(get_current_user),
 ):
     """Get savings summary for the current billing period."""
-    from ..services.supabase_client import get_supabase_client
+    from ..auth.supabase_auth import supabase
 
-    supabase = get_supabase_client()
 
     now = datetime.utcnow()
     if period == "current_month":
@@ -103,9 +102,8 @@ async def get_savings_history(
     user=Depends(get_current_user),
 ):
     """Get monthly savings history."""
-    from ..services.supabase_client import get_supabase_client
+    from ..auth.supabase_auth import supabase
 
-    supabase = get_supabase_client()
 
     now = datetime.utcnow()
     results = []
@@ -152,9 +150,8 @@ async def get_savings_breakdown(
     user=Depends(get_current_user),
 ):
     """Get savings breakdown by complexity tier."""
-    from ..services.supabase_client import get_supabase_client
+    from ..auth.supabase_auth import supabase
 
-    supabase = get_supabase_client()
 
     now = datetime.utcnow()
     period_start = date(now.year, now.month, 1)

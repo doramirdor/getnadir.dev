@@ -579,9 +579,12 @@ async def get_user_budget(
     """Get budget information for the current user."""
     try:
         # Get budget info from user session (stored in Supabase)
-        budget_info = current_user.budget_info
-        
-        if not budget_info:
+        budget_info = {
+            "budget_limit": current_user.budget_limit,
+            "budget_used": current_user.budget_used,
+        }
+
+        if not current_user.budget_limit:
             return {
                 "success": True,
                 "has_budget": False,

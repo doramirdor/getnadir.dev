@@ -94,8 +94,12 @@ async def list_models_detailed(
                 })
         
         # Get budget info from user session
-        budget_info = current_user.budget_info
-        
+        budget_info = {
+            "budget_limit": current_user.budget_limit,
+            "budget_used": current_user.budget_used,
+            "remaining": (float(current_user.budget_limit or 0) - float(current_user.budget_used or 0)) if current_user.budget_limit else None,
+        }
+
         return {
             "models": models,
             "total_models": len(models),

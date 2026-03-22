@@ -70,7 +70,26 @@ const Onboarding = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
+    // Save BYOK provider keys when leaving step 2 (Configure)
+    if (currentStep === 1 && mode === "byok" && user) {
+      const keysToSave = Object.entries(providerKeys).filter(([_, v]) => v.trim());
+      if (keysToSave.length > 0) {
+        try {
+          for (const [provider, key] of keysToSave) {
+            await supabase.from("provider_keys").upsert({
+              user_id: user.id,
+              provider,
+              encrypted_key: btoa(key),
+              is_active: true,
+            }, { onConflict: "user_id,provider" });
+          }
+          toast({ title: "Provider keys saved", description: `${keysToSave.length} provider key(s) configured.` });
+        } catch (e: any) {
+          toast({ variant: "destructive", title: "Error saving keys", description: e.message });
+        }
+      }
+    }
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     }
