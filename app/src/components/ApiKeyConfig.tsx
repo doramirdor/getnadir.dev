@@ -72,16 +72,24 @@ interface ApiKeyConfigProps {
 // ── Fallback model catalog (used when backend is unavailable) ──────────
 
 const FALLBACK_CATALOG: ModelInfo[] = [
+  // OpenAI
+  { id: "gpt-5.4-nano", name: "GPT-5.4 Nano", provider: "OpenAI", input_price: 0.20, output_price: 1.25, tier: 3 },
+  { id: "gpt-5.4-mini", name: "GPT-5.4 Mini", provider: "OpenAI", input_price: 0.75, output_price: 4.50, tier: 3 },
+  { id: "gpt-5.4", name: "GPT-5.4", provider: "OpenAI", input_price: 2.50, output_price: 15, tier: 2 },
+  { id: "gpt-5.4-pro", name: "GPT-5.4 Pro", provider: "OpenAI", input_price: 30, output_price: 180, tier: 1 },
+  { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "OpenAI", input_price: 0.25, output_price: 2, tier: 3 },
   { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", input_price: 0.15, output_price: 0.60, tier: 3 },
-  { id: "gpt-4o", name: "GPT-4o", provider: "OpenAI", input_price: 2.50, output_price: 10, tier: 2 },
-  { id: "o3", name: "OpenAI o3", provider: "OpenAI", input_price: 10, output_price: 40, tier: 1 },
   { id: "o4-mini", name: "OpenAI o4-mini", provider: "OpenAI", input_price: 1.10, output_price: 4.40, tier: 2 },
-  { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku", provider: "Anthropic", input_price: 0.80, output_price: 4, tier: 3 },
-  { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4", provider: "Anthropic", input_price: 3, output_price: 15, tier: 2 },
-  { id: "claude-opus-4-20250514", name: "Claude Opus 4", provider: "Anthropic", input_price: 15, output_price: 75, tier: 1 },
-  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "Google", input_price: 0.10, output_price: 0.40, tier: 3 },
+  { id: "o3", name: "OpenAI o3", provider: "OpenAI", input_price: 2, output_price: 8, tier: 2 },
+  // Anthropic
+  { id: "claude-opus-4-6", name: "Claude Opus 4.6", provider: "Anthropic", input_price: 5, output_price: 25, tier: 1 },
+  { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", provider: "Anthropic", input_price: 3, output_price: 15, tier: 2 },
+  { id: "claude-opus-4-5", name: "Claude Opus 4.5", provider: "Anthropic", input_price: 5, output_price: 25, tier: 1 },
+  { id: "claude-haiku-4-5", name: "Claude Haiku 4.5", provider: "Anthropic", input_price: 1, output_price: 5, tier: 3 },
+  // Google
   { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google", input_price: 1.25, output_price: 10, tier: 2 },
-  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", input_price: 0.15, output_price: 0.60, tier: 3 },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", input_price: 0.30, output_price: 2.50, tier: 3 },
+  { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "Google", input_price: 0.10, output_price: 0.40, tier: 3 },
 ];
 
 const OPTIMIZE_OPTIONS: { value: Layers["optimize"]; label: string; desc: string }[] = [
@@ -124,10 +132,10 @@ export default function ApiKeyConfig({ open, onClose, onSave, initialConfig, key
   // Model state
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>(FALLBACK_CATALOG);
   const [selectedModelIds, setSelectedModelIds] = useState<string[]>(
-    initialConfig?.selected_models || ["gpt-4o-mini", "gpt-4o", "claude-opus-4-20250514"]
+    initialConfig?.selected_models || ["gpt-5-mini", "gpt-5.4", "claude-opus-4-6"]
   );
   const [fallbackOrder, setFallbackOrder] = useState<string[]>(
-    initialConfig?.fallback_order || initialConfig?.selected_models || ["gpt-4o-mini", "gpt-4o", "claude-opus-4-20250514"]
+    initialConfig?.fallback_order || initialConfig?.selected_models || ["gpt-5-mini", "gpt-5.4", "claude-opus-4-6"]
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingModels, setLoadingModels] = useState(false);

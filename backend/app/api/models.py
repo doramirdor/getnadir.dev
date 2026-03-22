@@ -349,32 +349,40 @@ async def list_model_catalog(provider: Optional[str] = None):
     cost_map = getattr(litellm, "model_cost", {})
 
     # Curated list of models we support for routing (provider/model pairs)
-    # This keeps the list clean — no internal/deprecated models
+    # Updated March 2026 — includes GPT-5.x, Claude 4.x, Gemini 2.5
     SUPPORTED = [
-        # OpenAI
+        # OpenAI — current generation
+        ("openai", "gpt-5.4-nano", "GPT-5.4 Nano"),
+        ("openai", "gpt-5.4-mini", "GPT-5.4 Mini"),
+        ("openai", "gpt-5.4", "GPT-5.4"),
+        ("openai", "gpt-5.4-pro", "GPT-5.4 Pro"),
+        ("openai", "gpt-5.2", "GPT-5.2"),
+        ("openai", "gpt-5-mini", "GPT-5 Mini"),
+        ("openai", "gpt-5-nano", "GPT-5 Nano"),
+        ("openai", "gpt-4.1-nano", "GPT-4.1 Nano"),
+        ("openai", "gpt-4.1-mini", "GPT-4.1 Mini"),
+        ("openai", "gpt-4.1", "GPT-4.1"),
         ("openai", "gpt-4o-mini", "GPT-4o Mini"),
         ("openai", "gpt-4o", "GPT-4o"),
-        ("openai", "gpt-4o-2024-11-20", "GPT-4o (Nov '24)"),
-        ("openai", "gpt-4.1", "GPT-4.1"),
-        ("openai", "gpt-4.1-mini", "GPT-4.1 Mini"),
-        ("openai", "gpt-4.1-nano", "GPT-4.1 Nano"),
-        ("openai", "o3", "OpenAI o3"),
-        ("openai", "o3-mini", "OpenAI o3-mini"),
         ("openai", "o4-mini", "OpenAI o4-mini"),
-        # Anthropic
-        ("anthropic", "claude-opus-4-20250514", "Claude Opus 4"),
+        ("openai", "o3", "OpenAI o3"),
+        ("openai", "o3-pro", "OpenAI o3-pro"),
+        # Anthropic — current generation
+        ("anthropic", "claude-opus-4-6", "Claude Opus 4.6"),
+        ("anthropic", "claude-sonnet-4-6", "Claude Sonnet 4.6"),
+        ("anthropic", "claude-opus-4-5", "Claude Opus 4.5"),
+        ("anthropic", "claude-sonnet-4-5", "Claude Sonnet 4.5"),
+        ("anthropic", "claude-haiku-4-5", "Claude Haiku 4.5"),
         ("anthropic", "claude-sonnet-4-20250514", "Claude Sonnet 4"),
         ("anthropic", "claude-3-5-haiku-20241022", "Claude 3.5 Haiku"),
-        ("anthropic", "claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet"),
         # Google
         ("google", "gemini-2.5-pro", "Gemini 2.5 Pro"),
         ("google", "gemini-2.5-flash", "Gemini 2.5 Flash"),
         ("google", "gemini-2.0-flash", "Gemini 2.0 Flash"),
-        ("google", "gemini-1.5-pro", "Gemini 1.5 Pro"),
-        ("google", "gemini-1.5-flash", "Gemini 1.5 Flash"),
         # AWS Bedrock
-        ("aws", "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0", "Claude 3.5 Sonnet (Bedrock)"),
-        ("aws", "bedrock/anthropic.claude-3-haiku-20240307-v1:0", "Claude 3 Haiku (Bedrock)"),
+        ("aws", "bedrock/anthropic.claude-opus-4-6-v1", "Claude Opus 4.6 (Bedrock)"),
+        ("aws", "bedrock/anthropic.claude-sonnet-4-6", "Claude Sonnet 4.6 (Bedrock)"),
+        ("aws", "bedrock/anthropic.claude-haiku-4-5-20251001-v1:0", "Claude Haiku 4.5 (Bedrock)"),
         ("aws", "bedrock/amazon.nova-pro-v1:0", "Amazon Nova Pro"),
         ("aws", "bedrock/amazon.nova-lite-v1:0", "Amazon Nova Lite"),
         ("aws", "bedrock/amazon.nova-micro-v1:0", "Amazon Nova Micro"),
