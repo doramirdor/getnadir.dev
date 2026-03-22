@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Trash2, Key } from "lucide-react";
+import { Plus, Copy, Trash2, Key, Settings2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { logger } from "@/utils/logger";
+import ApiKeyConfig, { type ApiKeyConfiguration } from "@/components/ApiKeyConfig";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -34,6 +35,7 @@ interface ApiKey {
   last_used_at: string | null;
   selected_models: string[] | null;
   benchmark_model: string | null;
+  model_parameters: Record<string, any> | null;
 }
 
 const ApiKeys = () => {
@@ -43,6 +45,9 @@ const ApiKeys = () => {
   const [loading, setLoading] = useState(true);
   const [validationErrors, setValidationErrors] = useState<{ name?: string }>({});
   const [showOnceKey, setShowOnceKey] = useState<string | null>(null);
+  const [configKeyId, setConfigKeyId] = useState<string | null>(null);
+  const [configKeyName, setConfigKeyName] = useState("");
+  const [configInitial, setConfigInitial] = useState<Partial<ApiKeyConfiguration> | undefined>();
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
 
@@ -54,7 +59,7 @@ const ApiKeys = () => {
     try {
       const { data, error } = await supabase
         .from('api_keys')
-        .select('id, name, prefix, created_at, is_active, last_used_at, selected_models, benchmark_model')
+        .select('id, name, prefix, created_at, is_active, last_used_at, selected_models, benchmark_model, model_parameters')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -158,6 +163,39 @@ const ApiKeys = () => {
         title: "Error",
         description: errorMessage,
       });
+    }
+  };
+
+  const handleOpenConfig = (key: ApiKey) => {
+    setConfigKeyId(key.id);
+    setConfigKeyName(key.name);
+    setConfigInitial({
+      selected_models: key.selected_models || undefined,
+      benchmark_model: key.benchmark_model || undefined,
+      model_parameters: key.model_parameters || undefined,
+    });
+  };
+
+  const handleSaveConfig = async (config: ApiKeyConfiguration) => {
+    if (!configKeyId) return;
+    try {
+      const { error } = await supabase
+        .from("api_keys")
+        .update({
+          selected_models: config.selected_models,
+          benchmark_model: config.benchmark_model,
+          model_parameters: config.model_parameters,
+        })
+        .eq("id", configKeyId);
+
+      if (error) throw error;
+
+      toast({ title: "Saved", description: "API key configuration updated" });
+      setConfigKeyId(null);
+      fetchApiKeys();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to save config";
+      toast({ variant: "destructive", title: "Error", description: msg });
     }
   };
 
@@ -293,18 +331,32 @@ const ApiKeys = () => {
                       <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                         <span>Created {new Date(apiKey.created_at).toLocaleDateString()}</span>
                         {apiKey.last_used_at && <span>Last used {new Date(apiKey.last_used_at).toLocaleDateString()}</span>}
+                        {apiKey.selected_models && apiKey.selected_models.length > 0 && (
+                          <span>{apiKey.selected_models.length} models configured</span>
+                        )}
                         {apiKey.benchmark_model && <span>Benchmark: {apiKey.benchmark_model}</span>}
                       </div>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleDeleteKey(apiKey.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleOpenConfig(apiKey)}
+                      >
+                        <Settings2 className="w-4 h-4 mr-1" />
+                        Configure
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDeleteKey(apiKey.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -312,6 +364,15 @@ const ApiKeys = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* API Key Configuration Dialog */}
+      <ApiKeyConfig
+        open={!!configKeyId}
+        onClose={() => setConfigKeyId(null)}
+        onSave={handleSaveConfig}
+        initialConfig={configInitial}
+        keyName={configKeyName}
+      />
 
       {/* Show-Once Key Dialog */}
       <Dialog open={!!showOnceKey} onOpenChange={(open) => { if (!open) setShowOnceKey(null); }}>
