@@ -670,6 +670,46 @@ async def create_completion(
             if request.reasoning is not None:
                 extra_kwargs["reasoning"] = request.reasoning.dict(exclude_none=True)
 
+            # KEY MODE: inject per-user API keys
+            if current_user.key_mode == "byok" and current_user.provider_api_keys:
+                # Resolve which provider key to use based on the model
+                from app.complexity.model_registry import extract_provider as _prov
+                model_provider = _prov(recommended_model).lower()
+                # Map provider names to key names in provider_keys table
+                provider_key_map = {
+                    "openai": "openai",
+                    "anthropic": "anthropic",
+                    "google": "google",
+                    "aws": "aws",
+                    "bedrock": "aws",
+                    "xai": "xai",
+                    "together_ai": "together_ai",
+                    "mistral": "mistral",
+                    "cohere": "cohere",
+                }
+                key_name = provider_key_map.get(model_provider, model_provider)
+                user_key = current_user.provider_api_keys.get(key_name)
+                if user_key:
+                    extra_kwargs["api_key"] = user_key
+                    logger.debug("BYOK: using user's %s key for model %s", key_name, recommended_model)
+            elif current_user.key_mode == "hosted":
+                # Hosted mode: for non-Bedrock models, prefix with bedrock/ if needed
+                if not recommended_model.startswith("bedrock/"):
+                    # Map Anthropic models to their Bedrock equivalents
+                    bedrock_map = {
+                        "claude-opus-4-6": "bedrock/anthropic.claude-opus-4-6-v1",
+                        "claude-sonnet-4-6": "bedrock/anthropic.claude-sonnet-4-6",
+                        "claude-haiku-4-5": "bedrock/anthropic.claude-haiku-4-5-20251001-v1:0",
+                        "claude-opus-4-5": "bedrock/anthropic.claude-opus-4-5-20251101-v1:0",
+                        "claude-sonnet-4-5": "bedrock/anthropic.claude-sonnet-4-5-20250929-v1:0",
+                        "claude-3-5-haiku-20241022": "bedrock/anthropic.claude-3-5-haiku-20241022-v1:0",
+                    }
+                    bedrock_model = bedrock_map.get(recommended_model)
+                    if bedrock_model:
+                        logger.info("Hosted mode: remapping %s → %s", recommended_model, bedrock_model)
+                        recommended_model = bedrock_model
+                    # AWS keys come from server env (already set in .env)
+
             response = await llm_service.process_prompt(
                 prompt=prompt,
                 system_message=system_message,

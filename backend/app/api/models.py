@@ -336,7 +336,7 @@ async def get_model_info(
 
 
 @router.get("/v1/models/catalog")
-async def list_model_catalog(provider: Optional[str] = None):
+async def list_model_catalog(provider: Optional[str] = None, mode: Optional[str] = None):
     """
     Public endpoint — returns all supported models with real pricing from LiteLLM.
 
@@ -440,6 +440,10 @@ async def list_model_catalog(provider: Optional[str] = None):
     # Filter by provider if requested
     if provider:
         result = [m for m in result if m["provider"].lower() == provider.lower()]
+
+    # Filter by mode: "hosted" = only Bedrock/AWS models, "byok" = all
+    if mode == "hosted":
+        result = [m for m in result if m["provider"] == "AWS"]
 
     # Sort by provider then by price
     result.sort(key=lambda m: (m["provider"], m["input_price"] + m["output_price"]))

@@ -51,6 +51,9 @@ class UserSession:
         # Subscription / billing
         self.subscription_status: str = user_data.get("subscription_status", "inactive")  # active, past_due, canceled, inactive
         self.subscription_plan: str = user_data.get("subscription_plan", "free")  # free, pro, enterprise
+        # Key mode: "byok" = user's own provider keys, "hosted" = Nadir's Bedrock keys
+        self.key_mode: str = user_data.get("key_mode", "hosted")
+        self.provider_api_keys: Dict[str, str] = user_data.get("provider_api_keys", {})
         self.raw_data = user_data
 
     @property
@@ -125,15 +128,18 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Get user profile and subscription status in parallel
+        # Get user profile, subscription status, and provider keys in parallel
         profile_future = asyncio.to_thread(
             lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
         )
         subscription_future = asyncio.to_thread(
             lambda: supabase.table("user_subscriptions").select("status").eq("user_id", user_id).execute()
         )
-        profile_response, subscription_response = await asyncio.gather(
-            profile_future, subscription_future, return_exceptions=True
+        provider_keys_future = asyncio.to_thread(
+            lambda: supabase.table("provider_keys").select("provider, encrypted_key").eq("user_id", user_id).execute()
+        )
+        profile_response, subscription_response, provider_keys_response = await asyncio.gather(
+            profile_future, subscription_future, provider_keys_future, return_exceptions=True
         )
 
         # Handle profile
@@ -153,6 +159,17 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             sub_status = subscription_response.data[0].get("status", "inactive")
             sub_plan = "pro" if sub_status == "active" else "free"
 
+        # Resolve provider keys (for BYOK mode)
+        user_provider_keys: Dict[str, str] = {}
+        if not isinstance(provider_keys_response, Exception) and getattr(provider_keys_response, 'data', None):
+            for pk in provider_keys_response.data:
+                user_provider_keys[pk["provider"]] = pk["encrypted_key"]
+
+        # Determine key mode: "byok" if user has provider keys configured, "hosted" otherwise
+        # Can also be explicitly set in api_key model_parameters
+        key_mode_override = (api_key_data.get("model_parameters") or {}).get("key_mode")
+        key_mode = key_mode_override or ("byok" if user_provider_keys else "hosted")
+
         # Compile user session data using both API key config and profile data
         user_session_data = {
             "id": user_id,
@@ -167,6 +184,8 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             "api_key_config": api_key_data,  # Store the full API key configuration
             "subscription_status": sub_status,
             "subscription_plan": sub_plan,
+            "key_mode": key_mode,
+            "provider_api_keys": user_provider_keys,
         }
         
         return UserSession(user_session_data)
