@@ -450,20 +450,37 @@ async def get_intelligent_model_recommendation_with_analysis(
         
     except Exception as e:
         logger.error(f"Error in model recommendation: {e}")
-        # Fallback to first available model or default
-        fallback_models = user_config.get("selected_models", current_user.allowed_models)
-        fallback_model = fallback_models[0] if fallback_models else "gpt-4o-mini"
-        
-        # Create fallback analysis result
-        fallback_analysis = {
-            "model_selection_type": "error_fallback",
-            "strategy": "fallback",
-            "selected_model": fallback_model,
-            "reasoning": f"Error occurred during analysis: {str(e)}, using fallback model",
-            "error": str(e)
-        }
-        
-        return fallback_model, fallback_analysis
+        # Fallback: use heuristic classifier for intelligent routing even when ML fails
+        try:
+            from app.complexity.heuristic_classifier import HeuristicClassifier
+            heuristic = HeuristicClassifier(
+                allowed_providers=current_user.allowed_providers,
+                allowed_models=available_models,
+            )
+            heuristic_result = await heuristic.analyze(text=latest_prompt)
+            fallback_model = heuristic_result.get("recommended_model", available_models[0] if available_models else "gpt-4o-mini")
+            fallback_analysis = {
+                "model_selection_type": "heuristic_fallback",
+                "strategy": "smart-routing",
+                "selected_model": fallback_model,
+                "reasoning": f"ML analyzer failed ({e}), routed via heuristic classifier",
+                "error": str(e),
+                "heuristic_result": heuristic_result,
+            }
+            logger.info(f"Heuristic fallback routed to {fallback_model} (tier={heuristic_result.get('tier_name')})")
+            return fallback_model, fallback_analysis
+        except Exception as heuristic_err:
+            logger.error(f"Heuristic fallback also failed: {heuristic_err}")
+            fallback_models = user_config.get("selected_models", current_user.allowed_models)
+            fallback_model = fallback_models[0] if fallback_models else "gpt-4o-mini"
+            fallback_analysis = {
+                "model_selection_type": "error_fallback",
+                "strategy": "fallback",
+                "selected_model": fallback_model,
+                "reasoning": f"All analyzers failed: {str(e)}, using first available model",
+                "error": str(e),
+            }
+            return fallback_model, fallback_analysis
 
 @router.post("/v1/chat/completions", response_model=ProductionCompletionResponse, dependencies=[Depends(check_rate_limit)])
 async def create_completion(

@@ -49,8 +49,8 @@ async def health_check() -> Dict[str, Any]:
     # 3. Complexity analyzer availability
     try:
         from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
-        analyzer_info = ComplexityAnalyzerFactory.get_analyzer_info(settings.COMPLEXITY_ANALYZER_TYPE)
-        checks["complexity_analyzer"] = "ok" if analyzer_info else "unavailable"
+        analyzer_info = ComplexityAnalyzerFactory.get_analyzer_info()
+        checks["complexity_analyzer"] = "ok" if settings.COMPLEXITY_ANALYZER_TYPE in analyzer_info else "unavailable"
     except Exception:
         checks["complexity_analyzer"] = "unavailable"
         degraded = True

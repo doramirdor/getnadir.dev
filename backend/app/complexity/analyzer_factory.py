@@ -24,6 +24,9 @@ from app.complexity.two_tower_analyzer import TwoTowerModelRecommender
 # Import the binary complexity classifier
 from app.complexity.binary_classifier import BinaryComplexityClassifier, get_binary_classifier
 
+# Import the heuristic classifier (zero-dependency, <1ms)
+from app.complexity.heuristic_classifier import HeuristicClassifier, get_heuristic_classifier
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,6 +61,7 @@ class AnalyzerType(str, Enum):
     ENSEMBLE = "ensemble"  # Combines multiple analyzers
     HYBRID_FAST = "hybrid_fast"  # Rule-based with ML fallback for sub-500ms
     BINARY = "binary"  # Semantic prototype binary classifier
+    HEURISTIC = "heuristic"  # Zero-dependency rule-based classifier (<1ms)
     CONFIDENCE_AWARE = "confidence_aware"  # Binary → two-tower cascade
 
 
@@ -136,6 +140,10 @@ class ComplexityAnalyzerFactory:
             )
         elif analyzer_type == AnalyzerType.BINARY:
             return ComplexityAnalyzerFactory._create_binary_classifier(
+                allowed_providers, allowed_models, **kwargs
+            )
+        elif analyzer_type == AnalyzerType.HEURISTIC:
+            return ComplexityAnalyzerFactory._create_heuristic_classifier(
                 allowed_providers, allowed_models, **kwargs
             )
         elif analyzer_type == AnalyzerType.CONFIDENCE_AWARE:
@@ -287,6 +295,18 @@ class ComplexityAnalyzerFactory:
         )
 
     @staticmethod
+    def _create_heuristic_classifier(
+        allowed_providers: Optional[List[str]],
+        allowed_models: Optional[List[str]],
+        **kwargs
+    ) -> HeuristicClassifier:
+        """Create zero-dependency heuristic classifier (<1ms latency)."""
+        return get_heuristic_classifier(
+            allowed_providers=allowed_providers,
+            allowed_models=allowed_models,
+        )
+
+    @staticmethod
     def _create_confidence_aware_analyzer(
         allowed_providers: Optional[List[str]],
         allowed_models: Optional[List[str]],
@@ -384,6 +404,14 @@ class ComplexityAnalyzerFactory:
                 "accuracy": "high",
                 "requires_api": False,
                 "cost": "very_low"
+            },
+            AnalyzerType.HEURISTIC.value: {
+                "name": "Heuristic Rule-Based Classifier",
+                "description": "Zero-dependency rule-based classifier using pattern matching and scoring. <1ms latency, no ML models needed. Works out of the box.",
+                "speed": "instant",
+                "accuracy": "medium",
+                "requires_api": False,
+                "cost": "zero"
             },
             AnalyzerType.BINARY.value: {
                 "name": "Ternary Prototype Classifier",
