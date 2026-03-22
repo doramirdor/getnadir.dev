@@ -5,6 +5,7 @@ Handles customer management, checkout sessions, usage-based invoicing,
 and subscription lifecycle.
 """
 
+import asyncio
 import logging
 from typing import Optional, Dict, Any
 
@@ -37,11 +38,9 @@ class StripeService:
         Returns the Stripe customer ID.
         """
         # Check if customer already exists
-        existing = (
-            supabase.table("stripe_customers")
-            .select("stripe_customer_id")
-            .eq("user_id", user_id)
-            .execute()
+        existing = await asyncio.to_thread(
+            lambda: supabase.table("stripe_customers")
+            .select("stripe_customer_id").eq("user_id", user_id).execute()
         )
         if existing.data:
             return existing.data[0]["stripe_customer_id"]
@@ -51,24 +50,20 @@ class StripeService:
             metadata={"nadir_user_id": user_id},
         )
 
-        supabase.table("stripe_customers").insert(
-            {
-                "user_id": user_id,
-                "stripe_customer_id": customer.id,
-                "email": email,
-            }
-        ).execute()
+        await asyncio.to_thread(
+            lambda: supabase.table("stripe_customers").insert(
+                {"user_id": user_id, "stripe_customer_id": customer.id, "email": email}
+            ).execute()
+        )
 
         logger.info("Created Stripe customer %s for user %s", customer.id, user_id)
         return customer.id
 
     async def get_customer_id(self, user_id: str) -> Optional[str]:
         """Look up the Stripe customer ID for a Nadir user."""
-        result = (
-            supabase.table("stripe_customers")
-            .select("stripe_customer_id")
-            .eq("user_id", user_id)
-            .execute()
+        result = await asyncio.to_thread(
+            lambda: supabase.table("stripe_customers")
+            .select("stripe_customer_id").eq("user_id", user_id).execute()
         )
         if result.data:
             return result.data[0]["stripe_customer_id"]
@@ -94,10 +89,10 @@ class StripeService:
         if not customer_id:
             # Auto-create customer from profile
             profile = (
-                supabase.table("profiles")
-                .select("email")
-                .eq("id", user_id)
-                .execute()
+                await asyncio.to_thread(
+                    lambda: supabase.table("profiles")
+                    .select("email").eq("id", user_id).execute()
+                )
             )
             email = profile.data[0]["email"] if profile.data else f"{user_id}@unknown"
             customer_id = await self.create_customer(user_id, email)
@@ -131,9 +126,11 @@ class StripeService:
         logger.info("Subscription %s set to cancel at period end", subscription_id)
 
         # Update local record
-        supabase.table("user_subscriptions").update(
-            {"cancel_at_period_end": True}
-        ).eq("stripe_subscription_id", subscription_id).execute()
+        await asyncio.to_thread(
+            lambda: supabase.table("user_subscriptions").update(
+                {"cancel_at_period_end": True}
+            ).eq("stripe_subscription_id", subscription_id).execute()
+        )
 
         return {
             "subscription_id": sub.id,

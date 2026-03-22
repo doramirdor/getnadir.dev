@@ -5,6 +5,7 @@ Receives and processes Stripe events for subscription lifecycle,
 payment processing, and credit management.
 """
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -18,10 +19,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["stripe"])
 
 
+async def _db(fn):
+    """Run a synchronous Supabase call in a thread to avoid blocking the event loop."""
+    return await asyncio.to_thread(fn)
+
+
 async def _is_duplicate_event(event_id: str) -> bool:
     """Check if we already processed this Stripe event (idempotency)."""
-    result = (
-        supabase.table("stripe_events")
+    result = await asyncio.to_thread(
+        lambda: supabase.table("stripe_events")
         .select("id")
         .eq("stripe_event_id", event_id)
         .execute()
@@ -31,14 +37,16 @@ async def _is_duplicate_event(event_id: str) -> bool:
 
 async def _store_event(event_id: str, event_type: str, payload: dict) -> None:
     """Record the event so we never process it twice."""
-    supabase.table("stripe_events").insert(
-        {
-            "stripe_event_id": event_id,
-            "event_type": event_type,
-            "payload": payload,
-            "processed_at": datetime.now(timezone.utc).isoformat(),
-        }
-    ).execute()
+    await asyncio.to_thread(
+        lambda: supabase.table("stripe_events").insert(
+            {
+                "stripe_event_id": event_id,
+                "event_type": event_type,
+                "payload": payload,
+                "processed_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ).execute()
+    )
 
 
 # ------------------------------------------------------------------
@@ -63,7 +71,7 @@ async def _handle_checkout_session_completed(data: dict) -> None:
         return
 
     # Upsert subscription record
-    supabase.table("user_subscriptions").upsert(
+    await _db(lambda: supabase.table("user_subscriptions").upsert(
         {
             "user_id": user_id,
             "stripe_customer_id": customer_id,
@@ -73,7 +81,7 @@ async def _handle_checkout_session_completed(data: dict) -> None:
             "updated_at": datetime.now(timezone.utc).isoformat(),
         },
         on_conflict="user_id",
-    ).execute()
+    ).execute())
 
     logger.info(
         "Checkout completed: user=%s subscription=%s", user_id, subscription_id
@@ -88,40 +96,26 @@ async def _handle_subscription_created(data: dict) -> None:
     sub_status = sub.get("status", "active")
 
     # Resolve user_id from stripe_customers table
-    customer_row = (
-        supabase.table("stripe_customers")
-        .select("user_id")
-        .eq("stripe_customer_id", customer_id)
-        .execute()
-    )
+    customer_row = await _db(lambda: supabase.table("stripe_customers")
+        .select("user_id").eq("stripe_customer_id", customer_id).execute())
     if not customer_row.data:
-        logger.warning(
-            "subscription.created for unknown customer %s", customer_id
-        )
+        logger.warning("subscription.created for unknown customer %s", customer_id)
         return
 
     user_id = customer_row.data[0]["user_id"]
 
-    supabase.table("user_subscriptions").upsert(
+    await _db(lambda: supabase.table("user_subscriptions").upsert(
         {
-            "user_id": user_id,
-            "stripe_customer_id": customer_id,
-            "stripe_subscription_id": subscription_id,
-            "status": sub_status,
+            "user_id": user_id, "stripe_customer_id": customer_id,
+            "stripe_subscription_id": subscription_id, "status": sub_status,
             "current_period_start": sub.get("current_period_start"),
             "current_period_end": sub.get("current_period_end"),
             "cancel_at_period_end": sub.get("cancel_at_period_end", False),
             "updated_at": datetime.now(timezone.utc).isoformat(),
-        },
-        on_conflict="user_id",
-    ).execute()
+        }, on_conflict="user_id",
+    ).execute())
 
-    logger.info(
-        "Subscription created: user=%s sub=%s status=%s",
-        user_id,
-        subscription_id,
-        sub_status,
-    )
+    logger.info("Subscription created: user=%s sub=%s status=%s", user_id, subscription_id, sub_status)
 
 
 async def _handle_subscription_deleted(data: dict) -> None:
@@ -131,30 +125,19 @@ async def _handle_subscription_deleted(data: dict) -> None:
     subscription_id = sub.get("id")
 
     # Resolve user_id
-    customer_row = (
-        supabase.table("stripe_customers")
-        .select("user_id")
-        .eq("stripe_customer_id", customer_id)
-        .execute()
-    )
+    customer_row = await _db(lambda: supabase.table("stripe_customers")
+        .select("user_id").eq("stripe_customer_id", customer_id).execute())
     if not customer_row.data:
-        logger.warning(
-            "subscription.deleted for unknown customer %s", customer_id
-        )
+        logger.warning("subscription.deleted for unknown customer %s", customer_id)
         return
 
     user_id = customer_row.data[0]["user_id"]
 
-    supabase.table("user_subscriptions").update(
-        {
-            "status": "canceled",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-    ).eq("stripe_subscription_id", subscription_id).execute()
+    await _db(lambda: supabase.table("user_subscriptions").update(
+        {"status": "canceled", "updated_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("stripe_subscription_id", subscription_id).execute())
 
-    logger.info(
-        "Subscription deleted: user=%s sub=%s", user_id, subscription_id
-    )
+    logger.info("Subscription deleted: user=%s sub=%s", user_id, subscription_id)
 
 
 async def _handle_invoice_paid(data: dict) -> None:
@@ -169,12 +152,8 @@ async def _handle_invoice_paid(data: dict) -> None:
     subscription_id = invoice.get("subscription")
 
     # Resolve user_id
-    customer_row = (
-        supabase.table("stripe_customers")
-        .select("user_id")
-        .eq("stripe_customer_id", customer_id)
-        .execute()
-    )
+    customer_row = await _db(lambda: supabase.table("stripe_customers")
+        .select("user_id").eq("stripe_customer_id", customer_id).execute())
     if not customer_row.data:
         logger.warning("invoice.paid for unknown customer %s", customer_id)
         return
@@ -185,37 +164,23 @@ async def _handle_invoice_paid(data: dict) -> None:
     amount_usd = amount_paid / 100.0
 
     # Upsert credit balance (add to existing)
-    existing = (
-        supabase.table("user_credits")
-        .select("balance_usd")
-        .eq("user_id", user_id)
-        .execute()
-    )
+    existing = await _db(lambda: supabase.table("user_credits")
+        .select("balance_usd").eq("user_id", user_id).execute())
     if existing.data:
         new_balance = (existing.data[0].get("balance_usd", 0) or 0) + amount_usd
-        supabase.table("user_credits").update(
-            {
-                "balance_usd": new_balance,
-                "last_payment_at": datetime.now(timezone.utc).isoformat(),
-            }
-        ).eq("user_id", user_id).execute()
+        await _db(lambda: supabase.table("user_credits").update(
+            {"balance_usd": new_balance, "last_payment_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("user_id", user_id).execute())
     else:
-        supabase.table("user_credits").insert(
-            {
-                "user_id": user_id,
-                "balance_usd": amount_usd,
-                "last_payment_at": datetime.now(timezone.utc).isoformat(),
-            }
-        ).execute()
+        await _db(lambda: supabase.table("user_credits").insert(
+            {"user_id": user_id, "balance_usd": amount_usd, "last_payment_at": datetime.now(timezone.utc).isoformat()}
+        ).execute())
 
     # Update subscription period if applicable
     if subscription_id:
-        supabase.table("user_subscriptions").update(
-            {
-                "status": "active",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-        ).eq("stripe_subscription_id", subscription_id).execute()
+        await _db(lambda: supabase.table("user_subscriptions").update(
+            {"status": "active", "updated_at": datetime.now(timezone.utc).isoformat()}
+        ).eq("stripe_subscription_id", subscription_id).execute())
 
     logger.info(
         "Invoice paid: user=%s amount=$%.2f invoice=%s",
@@ -236,36 +201,26 @@ async def _handle_subscription_updated(data: dict) -> None:
     subscription_id = sub.get("id")
     sub_status = sub.get("status", "active")  # active, past_due, unpaid, canceled, etc.
 
-    customer_row = (
-        supabase.table("stripe_customers")
-        .select("user_id")
-        .eq("stripe_customer_id", customer_id)
-        .execute()
-    )
+    customer_row = await _db(lambda: supabase.table("stripe_customers")
+        .select("user_id").eq("stripe_customer_id", customer_id).execute())
     if not customer_row.data:
         logger.warning("subscription.updated for unknown customer %s", customer_id)
         return
 
     user_id = customer_row.data[0]["user_id"]
 
-    supabase.table("user_subscriptions").upsert(
+    await _db(lambda: supabase.table("user_subscriptions").upsert(
         {
-            "user_id": user_id,
-            "stripe_customer_id": customer_id,
-            "stripe_subscription_id": subscription_id,
-            "status": sub_status,
+            "user_id": user_id, "stripe_customer_id": customer_id,
+            "stripe_subscription_id": subscription_id, "status": sub_status,
             "current_period_start": sub.get("current_period_start"),
             "current_period_end": sub.get("current_period_end"),
             "cancel_at_period_end": sub.get("cancel_at_period_end", False),
             "updated_at": datetime.now(timezone.utc).isoformat(),
-        },
-        on_conflict="user_id",
-    ).execute()
+        }, on_conflict="user_id",
+    ).execute())
 
-    logger.info(
-        "Subscription updated: user=%s sub=%s status=%s",
-        user_id, subscription_id, sub_status,
-    )
+    logger.info("Subscription updated: user=%s sub=%s status=%s", user_id, subscription_id, sub_status)
 
 
 async def _handle_invoice_payment_failed(data: dict) -> None:
@@ -282,24 +237,17 @@ async def _handle_invoice_payment_failed(data: dict) -> None:
     if not subscription_id:
         return  # One-off invoice, not subscription-related
 
-    customer_row = (
-        supabase.table("stripe_customers")
-        .select("user_id")
-        .eq("stripe_customer_id", customer_id)
-        .execute()
-    )
+    customer_row = await _db(lambda: supabase.table("stripe_customers")
+        .select("user_id").eq("stripe_customer_id", customer_id).execute())
     if not customer_row.data:
         logger.warning("invoice.payment_failed for unknown customer %s", customer_id)
         return
 
     user_id = customer_row.data[0]["user_id"]
 
-    supabase.table("user_subscriptions").update(
-        {
-            "status": "past_due",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-    ).eq("stripe_subscription_id", subscription_id).execute()
+    await _db(lambda: supabase.table("user_subscriptions").update(
+        {"status": "past_due", "updated_at": datetime.now(timezone.utc).isoformat()}
+    ).eq("stripe_subscription_id", subscription_id).execute())
 
     logger.warning(
         "Payment failed: user=%s sub=%s — marked as past_due",

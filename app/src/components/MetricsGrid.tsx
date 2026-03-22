@@ -53,12 +53,14 @@ export const MetricsGrid = () => {
       const { data: { user } } = await supabase.auth.getUser();
 
       // Fetch usage events for the last 30 days
-      const query = supabase
+      let query = supabase
         .from('usage_logs')
         .select('latency_ms, cost, error, created_at')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .not('latency_ms', 'is', null);
-      if (user) query.eq('user_id', user.id);
+      if (user) {
+        query = query.eq('user_id', user.id);
+      }
       const { data: eventsData } = await query;
 
       // Fetch active API keys count
