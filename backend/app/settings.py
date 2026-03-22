@@ -10,7 +10,7 @@ from pydantic import Field, PostgresDsn
 
 # Load environment variables from .env file
 ENV_FILE = os.getenv("ENV_FILE", ".env")
-load_dotenv(ENV_FILE)
+load_dotenv(ENV_FILE, override=True)  # Override empty env vars from shell
 load_dotenv(".env.local", override=True)  # Override with local settings if available
 
 

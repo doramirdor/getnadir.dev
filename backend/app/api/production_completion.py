@@ -713,9 +713,21 @@ async def create_completion(
                     extra_kwargs["api_key"] = user_key
                     logger.debug("BYOK: using user's %s key for model %s", key_name, recommended_model)
             elif current_user.key_mode == "hosted":
-                # Hosted mode: for non-Bedrock models, prefix with bedrock/ if needed
-                if not recommended_model.startswith("bedrock/"):
-                    # Map Anthropic models to their Bedrock equivalents
+                # Hosted mode: use Nadir's provider keys from server env.
+                # Only remap to Bedrock if AWS keys are configured AND the direct
+                # provider key (e.g., ANTHROPIC_API_KEY) is NOT set. This allows
+                # operators to use either direct API keys or Bedrock depending on
+                # what's configured in the server environment.
+                from app.complexity.model_registry import extract_provider as _get_provider
+                model_provider = _get_provider(recommended_model) or ""
+                has_direct_key = (
+                    (model_provider in ("anthropic",) and settings.ANTHROPIC_API_KEY)
+                    or (model_provider in ("openai",) and settings.OPENAI_API_KEY)
+                    or (model_provider in ("google", "gemini") and settings.GOOGLE_API_KEY)
+                )
+                use_bedrock = settings.AWS_ACCESS_KEY_ID and not has_direct_key
+
+                if use_bedrock and not recommended_model.startswith("bedrock/"):
                     bedrock_map = {
                         "claude-opus-4-6": "bedrock/anthropic.claude-opus-4-6-v1",
                         "claude-sonnet-4-6": "bedrock/anthropic.claude-sonnet-4-6",
@@ -726,9 +738,10 @@ async def create_completion(
                     }
                     bedrock_model = bedrock_map.get(recommended_model)
                     if bedrock_model:
-                        logger.info("Hosted mode: remapping %s → %s", recommended_model, bedrock_model)
+                        logger.info("Hosted mode (Bedrock): remapping %s → %s", recommended_model, bedrock_model)
                         recommended_model = bedrock_model
-                    # AWS keys come from server env (already set in .env)
+                else:
+                    logger.debug("Hosted mode (direct): using server env key for %s", recommended_model)
 
             response = await llm_service.process_prompt(
                 prompt=prompt,
