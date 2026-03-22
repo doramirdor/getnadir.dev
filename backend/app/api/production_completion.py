@@ -19,6 +19,7 @@ from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
 from app.processors.request_processor import get_processed_request
 from app.middleware.rate_limiter import check_rate_limit
 from app.middleware.subscription_guard import require_active_subscription
+from app.middleware.hosted_budget import check_hosted_budget, record_hosted_spend
 from app.services.preset_router_service import PresetRouterService
 
 from app.complexity.model_registry import extract_provider as _provider_of
@@ -502,6 +503,25 @@ async def create_completion(
         layer_fallback = layers.get("fallback", True)
         layer_optimize = layers.get("optimize", "off")
 
+        # HOSTED MODE: Check per-user spend budget before making LLM call
+        if current_user.key_mode == "hosted":
+            custom_budget = (current_user.raw_data.get("hosted_budget_usd") or
+                             (current_user.api_key_config or {}).get("hosted_budget_usd"))
+            allowed, spent, budget = await check_hosted_budget(
+                current_user.id, current_user.subscription_plan, custom_budget
+            )
+            if not allowed:
+                raise HTTPException(
+                    status_code=402,
+                    detail={
+                        "error": "hosted_budget_exceeded",
+                        "message": f"Monthly hosted budget of ${budget:.0f} exceeded (spent: ${spent:.2f}). Add your own provider keys (BYOK) for unlimited usage, or upgrade your plan.",
+                        "spent": spent,
+                        "budget": budget,
+                        "upgrade_url": "https://getnadir.com/pricing",
+                    },
+                )
+
         # P0 #4: Read sticky provider for cache-hit affinity
         sticky_provider: Optional[str] = None
         has_cache_control = any(getattr(msg, "cache_control", None) for msg in request.messages)
@@ -973,6 +993,12 @@ async def create_completion(
                     background_tasks.add_task(_track_savings)
             except Exception as sav_setup_err:
                 logger.debug("Savings tracking setup skipped: %s", sav_setup_err)
+
+        # Track hosted spend in-memory (fast, non-blocking)
+        if current_user.key_mode == "hosted":
+            total_cost = cost_section.get("total_cost", 0) or 0
+            if total_cost > 0:
+                record_hosted_spend(str(current_user.id), float(total_cost))
 
         return formatted_response
         
