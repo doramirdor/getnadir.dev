@@ -150,19 +150,36 @@ class CostCalculationService:
     MAX_COST_PER_REQUEST = 10.0  # $10 ceiling
 
     def _calculate_llm_cost(self, model: str, tokens_in: int, tokens_out: int) -> float:
-        """Calculate the cost of the LLM call itself."""
+        """Calculate the cost of the LLM call itself.
+
+        Uses LiteLLM's built-in pricing database (always up-to-date) as the
+        primary source, falling back to the hardcoded MODEL_PRICING table only
+        when LiteLLM doesn't know the model.
+        """
         # Clamp token counts to prevent abuse
         tokens_in = min(max(tokens_in, 0), self.MAX_TOKENS_PER_FIELD)
         tokens_out = min(max(tokens_out, 0), self.MAX_TOKENS_PER_FIELD)
 
-        # Find matching model pricing
+        # Primary: use LiteLLM's pricing database (covers 1000+ models, auto-updated)
+        try:
+            import litellm
+            litellm_pricing = litellm.model_cost.get(model, {})
+            if litellm_pricing:
+                input_cpt = litellm_pricing.get("input_cost_per_token", 0)
+                output_cpt = litellm_pricing.get("output_cost_per_token", 0)
+                if input_cpt > 0 or output_cpt > 0:
+                    total = (tokens_in * input_cpt) + (tokens_out * output_cpt)
+                    return round(total, 6)
+        except Exception as e:
+            logger.debug("LiteLLM pricing lookup failed for %s: %s", model, e)
+
+        # Fallback: hardcoded MODEL_PRICING table (per 1K tokens)
         model_key = self._find_model_key(model)
         pricing = self.MODEL_PRICING.get(model_key, self.MODEL_PRICING["default"])
 
         input_cost = pricing["input"]
         output_cost = pricing["output"]
 
-        # Calculate total LLM cost
         total_llm_cost = (tokens_in / 1000 * input_cost) + (tokens_out / 1000 * output_cost)
         return round(total_llm_cost, 6)
     
