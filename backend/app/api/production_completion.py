@@ -795,17 +795,40 @@ async def create_completion(
         benchmark_comparison = None
         benchmark_model = user_config.get("benchmark_model") or current_user.benchmark_model
         if benchmark_model and response.get("model_used") != benchmark_model and routing_strategy.startswith("smart-routing"):
+            # Calculate actual benchmark cost using the same service as background savings
+            benchmark_cost_usd = 0.0
+            try:
+                from app.services.cost_calculation_service import cost_service
+                prompt_tokens = usage_info.get("prompt_tokens", cost_info.get("prompt_tokens", 0))
+                completion_tokens = usage_info.get("completion_tokens", cost_info.get("completion_tokens", 0))
+                benchmark_breakdown = cost_service.calculate_comprehensive_cost(
+                    model=benchmark_model,
+                    tokens_in=prompt_tokens,
+                    tokens_out=completion_tokens,
+                )
+                benchmark_cost_usd = benchmark_breakdown.total_cost
+            except Exception as bc_err:
+                logger.debug("Benchmark cost calculation failed: %s", bc_err)
+
+            routed_cost_usd = cost_info.get("total_cost_usd", 0.0)
             benchmark_comparison = {
                 "benchmark_model": benchmark_model,
                 "selected_model": response.get("model_used"),
+                "benchmark_cost_usd": round(benchmark_cost_usd, 6),
+                "routed_cost_usd": round(routed_cost_usd, 6),
+                "savings_usd": round(max(benchmark_cost_usd - routed_cost_usd, 0), 6),
                 "cost_difference": "Model selected based on complexity analysis vs benchmark",
                 "performance_trade_off": complexity_analysis_result.get("reasoning", "Optimized for task complexity"),
                 "is_benchmark_used": False
             }
         elif benchmark_model and response.get("model_used") == benchmark_model:
+            routed_cost_usd = cost_info.get("total_cost_usd", 0.0)
             benchmark_comparison = {
                 "benchmark_model": benchmark_model,
                 "selected_model": response.get("model_used"),
+                "benchmark_cost_usd": round(routed_cost_usd, 6),
+                "routed_cost_usd": round(routed_cost_usd, 6),
+                "savings_usd": 0.0,
                 "cost_difference": "Using benchmark model",
                 "performance_trade_off": "Using user's preferred benchmark model",
                 "is_benchmark_used": True

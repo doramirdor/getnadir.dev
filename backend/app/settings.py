@@ -132,6 +132,9 @@ class Settings:
         self.COHERE_API_KEY: Optional[str] = os.getenv("COHERE_API_KEY")
         self.MISTRAL_API_KEY: Optional[str] = os.getenv("MISTRAL_API_KEY")
     
+    # Encryption
+        self.ENCRYPTION_SECRET: Optional[str] = os.getenv("ENCRYPTION_SECRET")
+
     # Stripe billing
         self.STRIPE_SECRET_KEY: Optional[str] = os.getenv("STRIPE_SECRET_KEY")
         self.STRIPE_WEBHOOK_SECRET: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")

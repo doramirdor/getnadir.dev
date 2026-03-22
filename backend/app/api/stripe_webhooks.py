@@ -24,19 +24,15 @@ async def _db(fn):
     return await asyncio.to_thread(fn)
 
 
-async def _is_duplicate_event(event_id: str) -> bool:
-    """Check if we already processed this Stripe event (idempotency)."""
-    result = await asyncio.to_thread(
-        lambda: supabase.table("stripe_events")
-        .select("id")
-        .eq("stripe_event_id", event_id)
-        .execute()
-    )
-    return bool(result.data)
-
-
 async def _store_event(event_id: str, event_type: str, payload: dict) -> None:
-    """Record the event so we never process it twice."""
+    """
+    Record the event so we never process it twice.
+
+    Uses the stripe_event_id UNIQUE constraint for atomic idempotency.
+    Must be called BEFORE the handler runs — if insert fails with a
+    duplicate-key error (Postgres 23505), the caller knows another
+    worker already claimed this event.
+    """
     await asyncio.to_thread(
         lambda: supabase.table("stripe_events").insert(
             {
@@ -144,7 +140,11 @@ async def _handle_invoice_paid(data: dict) -> None:
     """
     Handle invoice.paid — successful payment.
 
-    Credits the user's account based on the invoice amount.
+    Logs the payment and marks the subscription as active.
+    Does NOT credit user_credits — the hosted budget is enforced
+    via usage_logs (see hosted_budget.py), not a prepaid credit
+    balance.  The subscription payment covers the service fee,
+    not prepaid API credits.
     """
     invoice = data.get("object", {})
     customer_id = invoice.get("customer")
@@ -159,24 +159,9 @@ async def _handle_invoice_paid(data: dict) -> None:
         return
 
     user_id = customer_row.data[0]["user_id"]
-
-    # Credit user_credits table
     amount_usd = amount_paid / 100.0
 
-    # Upsert credit balance (add to existing)
-    existing = await _db(lambda: supabase.table("user_credits")
-        .select("balance_usd").eq("user_id", user_id).execute())
-    if existing.data:
-        new_balance = (existing.data[0].get("balance_usd", 0) or 0) + amount_usd
-        await _db(lambda: supabase.table("user_credits").update(
-            {"balance_usd": new_balance, "last_payment_at": datetime.now(timezone.utc).isoformat()}
-        ).eq("user_id", user_id).execute())
-    else:
-        await _db(lambda: supabase.table("user_credits").insert(
-            {"user_id": user_id, "balance_usd": amount_usd, "last_payment_at": datetime.now(timezone.utc).isoformat()}
-        ).execute())
-
-    # Update subscription period if applicable
+    # Update subscription status if applicable
     if subscription_id:
         await _db(lambda: supabase.table("user_subscriptions").update(
             {"status": "active", "updated_at": datetime.now(timezone.utc).isoformat()}
@@ -313,17 +298,22 @@ async def stripe_webhook(request: Request):
 
     logger.info("Received Stripe event: %s (%s)", event_type, event_id)
 
-    # Idempotency check
-    if await _is_duplicate_event(event_id):
-        logger.info("Duplicate event %s — skipping", event_id)
-        return {"status": "already_processed"}
+    # Atomic idempotency: insert the event FIRST.
+    # The stripe_event_id UNIQUE constraint ensures only one worker
+    # can claim a given event — all others get a duplicate-key error.
+    try:
+        await _store_event(event_id, event_type, event)
+    except Exception as e:
+        if "duplicate" in str(e).lower() or "23505" in str(e):
+            logger.info("Duplicate event %s — skipping", event_id)
+            return {"status": "already_processed"}
+        raise
 
-    # Dispatch to handler
+    # Now safe to run the handler (we hold the unique row)
     handler = EVENT_HANDLERS.get(event_type)
     if handler:
         try:
             await handler(event.get("data", {}))
-            await _store_event(event_id, event_type, event)
         except Exception as e:
             logger.error(
                 "Error processing Stripe event %s (%s): %s",
@@ -338,6 +328,5 @@ async def stripe_webhook(request: Request):
             )
     else:
         logger.debug("Unhandled Stripe event type: %s", event_type)
-        await _store_event(event_id, event_type, event)
 
     return {"status": "ok"}

@@ -255,13 +255,10 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         # Resolve provider keys (for BYOK mode)
         user_provider_keys: Dict[str, str] = {}
         if not isinstance(provider_keys_response, Exception) and getattr(provider_keys_response, 'data', None):
+            from app.services.key_encryption import decrypt_key
             for pk in provider_keys_response.data:
-                # Decode base64-encoded key (frontend stores as btoa(raw_key))
-                raw_key = pk["encrypted_key"]
-                try:
-                    raw_key = base64.b64decode(raw_key).decode()
-                except Exception:
-                    pass  # Key might already be plaintext (legacy)
+                # Decrypt provider key (supports Fernet, legacy base64, and plaintext)
+                raw_key = decrypt_key(pk["encrypted_key"])
                 user_provider_keys[pk["provider"]] = raw_key
 
         # Determine key mode: "byok" if user has provider keys configured, "hosted" otherwise

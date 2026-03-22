@@ -114,15 +114,15 @@ async def get_savings_summary(
     total_fee = base_fee + savings_fee
 
     return SavingsSummary(
-        total_savings_usd=round(total_savings, 2),
-        total_spent_usd=round(total_spent, 2),
-        total_benchmark_usd=round(total_benchmark, 2),
-        savings_rate=round(savings_rate, 4),
+        total_savings_usd=round(total_savings, 6),
+        total_spent_usd=round(total_spent, 6),
+        total_benchmark_usd=round(total_benchmark, 6),
+        savings_rate=round(savings_rate, 6),
         requests_routed=len(rows),
         base_fee=base_fee,
-        savings_fee=round(savings_fee, 2),
-        total_fee=round(total_fee, 2),
-        net_savings=round(total_savings - total_fee, 2),
+        savings_fee=round(savings_fee, 6),
+        total_fee=round(total_fee, 6),
+        net_savings=round(total_savings - total_fee, 6),
         period_start=period_start,
         period_end=period_end,
     )

@@ -28,7 +28,8 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
+  const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -127,6 +128,33 @@ const Auth = () => {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: window.location.origin + '/auth?mode=reset',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email sent",
+        description: "Check your email for a password reset link.",
+      });
+      setResetEmail("");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left panel */}
@@ -165,124 +193,180 @@ const Auth = () => {
 
           <div className="mb-8">
             <h1 className="text-xl font-semibold text-foreground">
-              {mode === "signin" ? "Sign in to your account" : "Create your account"}
+              {mode === "signin" ? "Sign in to your account" : mode === "signup" ? "Create your account" : "Reset your password"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1.5">
               {mode === "signin"
                 ? "Enter your credentials to continue."
-                : "Get started with Nadir in seconds."}
+                : mode === "signup"
+                ? "Get started with Nadir in seconds."
+                : "Enter your email and we'll send you a reset link."}
             </p>
           </div>
 
-          {/* OAuth buttons */}
-          <div className="space-y-3 mb-6">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-10 gap-3"
-              disabled={oauthLoading !== null}
-              onClick={() => handleOAuthSignIn("google")}
-            >
-              {oauthLoading === "google" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <GoogleIcon />
-              )}
-              Continue with Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-10 gap-3"
-              disabled={oauthLoading !== null}
-              onClick={() => handleOAuthSignIn("github")}
-            >
-              {oauthLoading === "github" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <GitHubIcon />
-              )}
-              Continue with GitHub
-            </Button>
-          </div>
+          {mode === "forgot" ? (
+            <>
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="reset-email" className="text-sm font-medium">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    className="h-10"
+                  />
+                </div>
 
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-3 text-muted-foreground">or continue with email</span>
-            </div>
-          </div>
+                <Button type="submit" className="w-full h-10" disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      Send reset link
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </form>
 
-          <form
-            onSubmit={mode === "signin" ? handleSignIn : handleSignUp}
-            className="space-y-4"
-          >
-            {mode === "signup" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-sm font-medium">Full name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Jane Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="h-10"
-                />
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Back to sign in
+                </button>
               </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-10"
-              />
-            </div>
+            </>
+          ) : (
+            <>
+              {/* OAuth buttons */}
+              <div className="space-y-3 mb-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 gap-3"
+                  disabled={oauthLoading !== null}
+                  onClick={() => handleOAuthSignIn("google")}
+                >
+                  {oauthLoading === "google" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <GoogleIcon />
+                  )}
+                  Continue with Google
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 gap-3"
+                  disabled={oauthLoading !== null}
+                  onClick={() => handleOAuthSignIn("github")}
+                >
+                  {oauthLoading === "github" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <GitHubIcon />
+                  )}
+                  Continue with GitHub
+                </Button>
+              </div>
 
-            <Button type="submit" className="w-full h-10" disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  {mode === "signin" ? "Sign in" : "Create account"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </form>
+              {/* Divider */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-background px-3 text-muted-foreground">or continue with email</span>
+                </div>
+              </div>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {mode === "signin"
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
-            </button>
-          </div>
+              <form
+                onSubmit={mode === "signin" ? handleSignIn : handleSignUp}
+                className="space-y-4"
+              >
+                {mode === "signup" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="text-sm font-medium">Full name</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Jane Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="h-10"
+                    />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="h-10"
+                  />
+                </div>
+
+                {mode === "signin" && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setMode("forgot")}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full h-10" disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      {mode === "signin" ? "Sign in" : "Create account"}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {mode === "signin"
+                    ? "Don't have an account? Sign up"
+                    : "Already have an account? Sign in"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
