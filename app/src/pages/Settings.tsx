@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Save, LogOut, Brain, DollarSign, Settings as SettingsIcon, Shield, Key } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { logger } from "@/utils/logger";
+import LayerConfig, { type Layers } from "@/components/LayerConfig";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -17,6 +18,7 @@ const Settings = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [benchmarkModel, setBenchmarkModel] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [layers, setLayers] = useState<Layers>({ routing: true, fallback: true, optimize: "off" });
 
   useEffect(() => {
     if (user) {
@@ -48,6 +50,15 @@ const Settings = () => {
       setUserProfile(data);
       setBenchmarkModel(data.benchmark_model || '');
       setCompanyName(data.name || data.full_name || '');
+      // Load layers from profile model_parameters
+      const savedLayers = data.model_parameters?.layers;
+      if (savedLayers) {
+        setLayers({
+          routing: savedLayers.routing ?? true,
+          fallback: savedLayers.fallback ?? true,
+          optimize: savedLayers.optimize ?? "off",
+        });
+      }
     } catch (error) {
       logger.error('Error fetching user profile:', error);
       toast({
@@ -63,11 +74,14 @@ const Settings = () => {
 
     setLoading(true);
     try {
+      // Merge layers into existing model_parameters
+      const existingParams = userProfile?.model_parameters || {};
       const { error } = await supabase
         .from('profiles')
         .update({
           name: companyName,
           benchmark_model: benchmarkModel,
+          model_parameters: { ...existingParams, layers },
         })
         .eq('id', user.id);
 
@@ -163,6 +177,9 @@ const Settings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Feature Layers */}
+      <LayerConfig layers={layers} onChange={setLayers} />
 
       {/* Current Usage */}
       {userProfile && (

@@ -112,6 +112,8 @@ class ProductionCompletionRequest(BaseModel):
     route: Optional[str] = Field(None, description="Routing mode: 'fallback' enables automatic fallback chain")
     fallback_models: Optional[List[str]] = Field(None, description="Explicit fallback model chain (used with route='fallback')")
     transforms: Optional[List[str]] = Field(None, description="Message transforms to apply, e.g. ['middle-out']")
+    # Per-request layer overrides (override preset defaults)
+    layers: Optional[Dict[str, Any]] = Field(None, description="Feature layer overrides: {routing: bool, fallback: bool, optimize: 'off'|'safe'|'aggressive'}")
 
 class ProductionCompletionResponse(BaseModel):
     """Production completion response."""
@@ -123,14 +125,33 @@ class ProductionCompletionResponse(BaseModel):
     usage: Dict[str, Any] = Field(..., description="Token usage statistics")
     nadir_metadata: Dict[str, Any] = Field(..., description="Nadir-specific metadata")
 
+def _resolve_layers(model_params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Resolve feature layers from preset model_parameters.
+
+    Layers control which features are active per-preset:
+      - routing: bool (default True) — intelligent complexity-based model selection
+      - fallback: bool (default True) — auto-retry with fallback chain on failure
+      - optimize: "off"|"safe"|"aggressive" (default "off") — context optimization
+
+    Always-on (not toggleable): token tracking, savings tracking, response healing, rate limiting.
+    """
+    layers_raw = model_params.get("layers", {})
+    return {
+        "routing": layers_raw.get("routing", True),
+        "fallback": layers_raw.get("fallback", True),
+        "optimize": layers_raw.get("optimize", "off"),  # "off", "safe", "aggressive"
+    }
+
+
 async def get_user_config_from_api_key(current_user: UserSession, model_override: Optional[str] = None) -> Dict[str, Any]:
     """
     Get user configuration from their API key preset.
-    
+
     Args:
         current_user: Current user session (contains API key configuration)
         model_override: Optional model override
-        
+
     Returns:
         Dict containing user configuration and selected model
     """
@@ -167,7 +188,8 @@ async def get_user_config_from_api_key(current_user: UserSession, model_override
                         "model_parameters": model_params,
                         "slug": slug,
                         "name": preset_data.get("name", slug),
-                        "sort_strategy": model_params.get("sort", "smart-routing")
+                        "sort_strategy": model_params.get("sort", "smart-routing"),
+                        "layers": _resolve_layers(model_params),
                     }
                 else:
                     raise HTTPException(
@@ -183,7 +205,8 @@ async def get_user_config_from_api_key(current_user: UserSession, model_override
                     "use_fallback": api_key_config.get("use_fallback", True),
                     "model_parameters": api_key_config.get("model_parameters", {}),
                     "slug": None,
-                    "api_key_name": api_key_config.get("name", "default")
+                    "api_key_name": api_key_config.get("name", "default"),
+                    "layers": _resolve_layers(api_key_config.get("model_parameters", {})),
                 }
                 logger.debug(f"Using direct model override '{model_override}' for user {current_user.id}")
                 return user_config
@@ -197,7 +220,8 @@ async def get_user_config_from_api_key(current_user: UserSession, model_override
             "model_parameters": api_key_config.get("model_parameters", {}),
             "slug": api_key_config.get("slug"),
             "api_key_name": api_key_config.get("name", "default"),
-            "sort_strategy": api_key_config.get("sort_strategy", "smart-routing")
+            "sort_strategy": api_key_config.get("sort_strategy", "smart-routing"),
+            "layers": _resolve_layers(api_key_config.get("model_parameters", {})),
         }
         
         logger.debug(f"Using API key preset '{api_key_config.get('slug', 'default')}' for user {current_user.id}")
@@ -464,6 +488,20 @@ async def create_completion(
         # Get user configuration from API key
         user_config = await get_user_config_from_api_key(current_user, request.model)
 
+        # Resolve active layers (per-request overrides take priority over preset)
+        layers = user_config.get("layers", {"routing": True, "fallback": True, "optimize": "off"})
+        if request.layers:
+            layers = {**layers, **request.layers}
+
+        # Billing enforcement: free tier only gets routing; fallback + optimize require Pro
+        if current_user.is_free_tier:
+            layers["fallback"] = False
+            layers["optimize"] = "off"
+
+        layer_routing = layers.get("routing", True)
+        layer_fallback = layers.get("fallback", True)
+        layer_optimize = layers.get("optimize", "off")
+
         # P0 #4: Read sticky provider for cache-hit affinity
         sticky_provider: Optional[str] = None
         has_cache_control = any(getattr(msg, "cache_control", None) for msg in request.messages)
@@ -476,16 +514,27 @@ async def create_completion(
             except Exception as sp_err:
                 logger.debug(f"Sticky provider read failed: {sp_err}")
 
-        # Get intelligent model recommendation (with P0 #1 provider prefs + P0 #4 sticky)
-        recommended_model, complexity_analysis_result = await get_intelligent_model_recommendation_with_analysis(
-            request.messages, user_config, current_user,
-            provider_prefs=request.provider,
-            sticky_provider=sticky_provider,
-        )
+        # LAYER: Intelligent routing — complexity analysis → model selection
+        if layer_routing:
+            recommended_model, complexity_analysis_result = await get_intelligent_model_recommendation_with_analysis(
+                request.messages, user_config, current_user,
+                provider_prefs=request.provider,
+                sticky_provider=sticky_provider,
+            )
+        else:
+            # Routing disabled — use first selected model or request model directly
+            selected = user_config.get("selected_models", [])
+            recommended_model = selected[0] if selected else (request.model or "gpt-4o-mini")
+            complexity_analysis_result = {
+                "model_selection_type": "direct",
+                "strategy": "layer_routing_disabled",
+                "selected_model": recommended_model,
+                "reasoning": "Routing layer disabled — using specified model directly",
+            }
 
-        # P0 #2: Derive fallback chain when route="fallback"
+        # LAYER: Fallback chain — only resolve when layer is enabled
         resolved_fallback_models: Optional[List[str]] = None
-        if request.route == "fallback":
+        if layer_fallback and request.route == "fallback":
             if request.fallback_models:
                 # Priority 1: Explicit per-request override (dedup primary model)
                 resolved_fallback_models = [m for m in request.fallback_models if m != recommended_model]
@@ -536,17 +585,22 @@ async def create_completion(
         # Build messages dicts once, preserving cache_control for prompt caching
         messages_dicts = [msg.dict(exclude_none=True) for msg in request.messages]
 
-        # P0 #3: Apply middle-out context truncation if requested (before routing branch)
+        # LAYER: Context Optimize — apply truncation/minification
+        # Activated by: layer setting ("safe"/"aggressive") OR per-request transforms
         transforms_applied = False
+        optimize_mode = layer_optimize
+        # Per-request transforms override layer setting
         if request.transforms and "middle-out" in request.transforms:
+            optimize_mode = "safe"  # middle-out = safe mode
+        if optimize_mode in ("safe", "aggressive"):
             from app.services.context_truncation import truncate_middle_out
             original_count = len(messages_dicts)
             messages_dicts = truncate_middle_out(messages_dicts, recommended_model)
             if len(messages_dicts) < original_count:
                 transforms_applied = True
                 logger.info(
-                    "middle-out truncation: %d -> %d messages for model %s",
-                    original_count, len(messages_dicts), recommended_model,
+                    "context optimize (%s): %d -> %d messages for model %s",
+                    optimize_mode, original_count, len(messages_dicts), recommended_model,
                 )
 
         # Determine routing strategy
@@ -623,7 +677,7 @@ async def create_completion(
                 temperature=request.temperature or 0.7,
                 max_tokens=request.max_tokens,
                 messages=messages_dicts,
-                fallback_models=resolved_fallback_models,  # P0 #2
+                fallback_models=resolved_fallback_models if layer_fallback else None,
                 **extra_kwargs
             )
 
@@ -788,8 +842,11 @@ async def create_completion(
                     "benchmark_model": benchmark_model,
                     "load_balancing_policy": user_config.get("load_balancing_policy"),
                     "use_fallback": user_config.get("use_fallback", True),
-                    "sort_strategy": user_config.get("sort_strategy", "smart-routing")
+                    "sort_strategy": user_config.get("sort_strategy", "smart-routing"),
                 },
+
+                # Active feature layers
+                "layers": layers,
 
                 # Complexity Analysis (full details)
                 "complexity_analysis": complexity_analysis_result,
