@@ -13,6 +13,78 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Header, D
 from pydantic import BaseModel, Field
 
 from app.auth.supabase_auth import validate_api_key, UserSession
+
+
+# ── Tier-to-model mapping (auto-sort by price) ──────────────────────────
+
+
+def _get_model_input_cost(model: str) -> float:
+    """Get the input cost per token for a model using litellm's pricing data."""
+    try:
+        from litellm import model_cost
+        for key in (model, model.split("/")[-1]):
+            info = model_cost.get(key, {})
+            cost = info.get("input_cost_per_token", 0)
+            if cost:
+                return float(cost)
+        # Substring match
+        model_lower = model.lower()
+        candidates = []
+        for k, v in model_cost.items():
+            if model_lower in k.lower():
+                c = v.get("input_cost_per_token", 0)
+                if c:
+                    candidates.append((len(k), c))
+        if candidates:
+            candidates.sort()
+            return float(candidates[0][1])
+    except Exception:
+        pass
+    return 0.0
+
+
+def _map_tier_to_model(
+    tier_name: str,
+    selected_models: List[str],
+    model_parameters: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:
+    """Map a complexity tier (simple/medium/complex) to the right model
+    from the user's selected_models, sorted by price.
+
+    Priority:
+      1. Explicit overrides in model_parameters.tier_models.{simple,medium,complex}
+         or model_parameters.{simple,medium,complex}_model
+      2. Auto-sort by input cost:
+         1 model → all tiers use it
+         2 models → simple→cheapest, complex→expensive
+         3+ → simple→cheapest, medium→middle, complex→most expensive
+    """
+    if not selected_models:
+        return None
+
+    # 1. Manual overrides
+    if model_parameters:
+        tier_models = model_parameters.get("tier_models", {})
+        override = tier_models.get(tier_name)
+        if override and override in selected_models:
+            return override
+        flat_override = model_parameters.get(f"{tier_name}_model")
+        if flat_override and flat_override in selected_models:
+            return flat_override
+
+    # 2. Auto-sort by price
+    if len(selected_models) == 1:
+        return selected_models[0]
+
+    sorted_models = sorted(selected_models, key=_get_model_input_cost)
+
+    if len(sorted_models) == 2:
+        mapping = {"simple": sorted_models[0], "medium": sorted_models[1], "complex": sorted_models[1]}
+    else:
+        mid = len(sorted_models) // 2
+        mapping = {"simple": sorted_models[0], "medium": sorted_models[mid], "complex": sorted_models[-1]}
+
+    return mapping.get(tier_name)
 from app.database.supabase_db import supabase_db
 from app.settings import settings
 from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
@@ -558,6 +630,42 @@ async def create_completion(
                 provider_prefs=request.provider,
                 sticky_provider=sticky_provider,
             )
+
+            # Map complexity tier → appropriate model from user's selected_models
+            # The ranker may overwrite the classifier's tier, so extract from
+            # the raw reasoning string or complexity_score as authoritative source.
+            complexity_score = complexity_analysis_result.get("complexity_score", 0)
+            reasoning = complexity_analysis_result.get("reasoning", "").lower()
+
+            # Primary: parse tier from the classifier's reasoning text
+            if "complex" in reasoning and "simple" not in reasoning.split("complex")[0][-10:]:
+                tier_name = "complex"
+            elif "medium" in reasoning or "moderate" in reasoning:
+                tier_name = "medium"
+            elif "simple" in reasoning:
+                tier_name = "simple"
+            # Fallback: use complexity_score (0.0=simple, 0.5=medium, 1.0=complex)
+            elif complexity_score >= 0.7:
+                tier_name = "complex"
+            elif complexity_score >= 0.3:
+                tier_name = "medium"
+            else:
+                tier_name = "simple"
+
+            selected_models = user_config.get("selected_models", [])
+            model_params = user_config.get("model_parameters", {})
+            tier_model = _map_tier_to_model(tier_name, selected_models, model_params)
+
+            if tier_model and tier_model != recommended_model:
+                logger.info(
+                    "Tier mapping: %s (tier=%s) → %s (was %s)",
+                    tier_name, tier_name, tier_model, recommended_model,
+                )
+                recommended_model = tier_model
+                complexity_analysis_result["tier_mapped"] = True
+                complexity_analysis_result["tier_mapped_from"] = tier_name
+
+            complexity_analysis_result["tier"] = tier_name
         else:
             # Routing disabled — use first selected model or request model directly
             selected = user_config.get("selected_models", [])
