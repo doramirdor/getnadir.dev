@@ -13,10 +13,17 @@ import {
   FileText,
   Zap,
   LogOut,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const mainMenuItems = [
   { id: "dashboard", label: "Dashboard", icon: Activity, path: "/dashboard" },
@@ -41,7 +48,16 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  };
 
   const renderMenuSection = (
     items: typeof mainMenuItems,
@@ -60,10 +76,10 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
           return (
             <li key={item.id}>
               <button
-                onClick={() => navigate(item.path)}
+                onClick={() => handleNavigate(item.path)}
                 className={cn(
                   "w-full flex items-center rounded-lg transition-all duration-150 text-left",
-                  isCollapsed ? "px-3 py-2.5 justify-center" : "px-3 py-2",
+                  isCollapsed && !isMobile ? "px-3 py-2.5 justify-center" : "px-3 py-2",
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -72,11 +88,11 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
                 <Icon
                   className={cn(
                     "w-[18px] h-[18px] flex-shrink-0",
-                    !isCollapsed && "mr-3"
+                    (!isCollapsed || isMobile) && "mr-3"
                   )}
                   strokeWidth={isActive ? 2 : 1.5}
                 />
-                {!isCollapsed && (
+                {(!isCollapsed || isMobile) && (
                   <span className="text-[13px]">{item.label}</span>
                 )}
               </button>
@@ -92,6 +108,73 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
     navigate("/");
   };
 
+  const sidebarContent = (
+    <>
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-2">
+        {renderMenuSection(mainMenuItems)}
+        {renderMenuSection(manageMenuItems, "Manage")}
+        {renderMenuSection(accountMenuItems, "Account")}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-2">
+        <ThemeToggle collapsed={isCollapsed && !isMobile} />
+        <button
+          onClick={handleSignOut}
+          className={cn(
+            "w-full flex items-center rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+            isCollapsed && !isMobile && "justify-center"
+          )}
+        >
+          <LogOut className={cn("w-[18px] h-[18px] flex-shrink-0", (!isCollapsed || isMobile) && "mr-3")} strokeWidth={1.5} />
+          {(!isCollapsed || isMobile) && <span className="text-[13px]">Sign out</span>}
+        </button>
+      </div>
+    </>
+  );
+
+  // Mobile: render as a Sheet drawer
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile top bar */}
+        <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-sidebar border-b border-sidebar-border flex items-center px-4 gap-3">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-semibold text-xs">N</span>
+            </div>
+            <span className="text-sm font-semibold text-foreground">Nadir</span>
+          </div>
+        </div>
+
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            {/* Sheet header */}
+            <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-primary-foreground font-semibold text-xs">N</span>
+                </div>
+                <span className="text-sm font-semibold text-foreground">Nadir</span>
+              </div>
+            </div>
+            {sidebarContent}
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  // Desktop: render as a fixed sidebar column
   return (
     <div
       className={cn(
@@ -124,27 +207,7 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
-        {renderMenuSection(mainMenuItems)}
-        {renderMenuSection(manageMenuItems, "Manage")}
-        {renderMenuSection(accountMenuItems, "Account")}
-      </nav>
-
-      {/* Footer */}
-      <div className="border-t border-sidebar-border p-2">
-        <ThemeToggle collapsed={isCollapsed} />
-        <button
-          onClick={handleSignOut}
-          className={cn(
-            "w-full flex items-center rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
-            isCollapsed && "justify-center"
-          )}
-        >
-          <LogOut className={cn("w-[18px] h-[18px] flex-shrink-0", !isCollapsed && "mr-3")} strokeWidth={1.5} />
-          {!isCollapsed && <span className="text-[13px]">Sign out</span>}
-        </button>
-      </div>
+      {sidebarContent}
     </div>
   );
 };

@@ -44,6 +44,7 @@ from app.api.distillation_api import router as distillation_router
 from app.api.savings_api import router as savings_router
 from app.api.stripe_webhooks import router as stripe_webhook_router
 from app.api.billing_api import router as billing_router
+from app.api.admin_invoicing import router as admin_invoicing_router
 
 
 # Create FastAPI application
@@ -324,6 +325,17 @@ async def startup_event():
         logger.warning(f"Failed to schedule distillation monitor: {e}")
         degraded_services.append("distillation_monitor")
 
+    # Schedule monthly savings invoice generation (1st of each month, 00:05 UTC)
+    try:
+        from app.services.invoice_scheduler import invoice_scheduler_loop
+
+        app.state.invoice_scheduler_task = asyncio.create_task(invoice_scheduler_loop())
+        logger.info("Monthly invoice scheduler started")
+        healthy_services.append("invoice_scheduler")
+    except Exception as e:
+        logger.warning(f"Failed to start invoice scheduler: {e}")
+        degraded_services.append("invoice_scheduler")
+
     # Startup summary
     logger.info(
         f"Startup complete — healthy: [{', '.join(healthy_services)}], "
@@ -337,7 +349,7 @@ async def shutdown_event():
     logger.info("Shutdown initiated — cleaning up services...")
 
     # Cancel periodic background loops and wait for clean exit
-    for task_name in ("centroid_refresh_task", "routing_quality_task", "cluster_discovery_task", "health_snapshot_task", "distillation_monitor_task"):
+    for task_name in ("centroid_refresh_task", "routing_quality_task", "cluster_discovery_task", "health_snapshot_task", "distillation_monitor_task", "invoice_scheduler_task"):
         task = getattr(app.state, task_name, None)
         if task and not task.done():
             task.cancel()
@@ -392,6 +404,7 @@ app.include_router(distillation_router)              # Distillation API
 app.include_router(savings_router)                    # Savings tracking API
 app.include_router(stripe_webhook_router)             # Stripe webhooks
 app.include_router(billing_router)                     # Billing & subscription API
+app.include_router(admin_invoicing_router)              # Admin invoicing trigger
 
 
 # Root endpoint

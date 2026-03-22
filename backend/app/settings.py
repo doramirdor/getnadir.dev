@@ -136,6 +136,7 @@ class Settings:
         self.STRIPE_SECRET_KEY: Optional[str] = os.getenv("STRIPE_SECRET_KEY")
         self.STRIPE_WEBHOOK_SECRET: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")
         self.STRIPE_PRICE_ID_BASE: Optional[str] = os.getenv("STRIPE_PRICE_ID_BASE")  # $9/mo base plan
+        self.ADMIN_API_KEY: Optional[str] = os.getenv("ADMIN_API_KEY")  # Admin key for internal endpoints
 
     # API keys for authentication
         self.API_KEYS: Dict[str, str] = self._parse_api_keys()

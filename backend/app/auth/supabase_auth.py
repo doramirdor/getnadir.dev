@@ -7,12 +7,101 @@ import asyncio
 import base64
 import hashlib
 import logging
+import threading
+import time
 
 from fastapi import Depends, HTTPException, status, Header
 from supabase import create_client, Client
 from app.settings import settings
+from app.metrics import AUTH_CACHE_TOTAL, AUTH_CACHE_SIZE
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# In-memory TTL cache for API key authentication
+# ---------------------------------------------------------------------------
+class _AuthTTLCache:
+    """Thread-safe TTL cache for UserSession objects, keyed by SHA-256 hash.
+
+    No external dependencies — uses a plain dict + time.monotonic().
+    Expired entries are evicted lazily on access and eagerly on set.
+    """
+
+    def __init__(self, maxsize: int = 1000, ttl: float = 30.0):
+        self._store: Dict[str, tuple] = {}  # key_hash -> (UserSession, expiry)
+        self._maxsize = maxsize
+        self._ttl = ttl
+        self._lock = threading.Lock()
+
+    # -- public API ----------------------------------------------------------
+
+    def get(self, key_hash: str) -> Optional[Any]:
+        """Return cached UserSession or None (expired / missing)."""
+        now = time.monotonic()
+        with self._lock:
+            entry = self._store.get(key_hash)
+            if entry is None:
+                return None
+            session, expiry = entry
+            if now >= expiry:
+                del self._store[key_hash]
+                AUTH_CACHE_SIZE.set(len(self._store))
+                return None
+            return session
+
+    def set(self, key_hash: str, session: Any) -> None:
+        """Store a UserSession with the configured TTL."""
+        now = time.monotonic()
+        with self._lock:
+            # Lazy eviction of expired entries when we're at capacity
+            if len(self._store) >= self._maxsize:
+                expired = [k for k, (_, exp) in self._store.items() if now >= exp]
+                for k in expired:
+                    del self._store[k]
+                # If still at capacity after eviction, drop the oldest entry
+                if len(self._store) >= self._maxsize:
+                    oldest_key = min(self._store, key=lambda k: self._store[k][1])
+                    del self._store[oldest_key]
+            self._store[key_hash] = (session, now + self._ttl)
+            AUTH_CACHE_SIZE.set(len(self._store))
+
+    def invalidate(self, key_hash: str) -> None:
+        """Remove a single entry (e.g. when an API key is deleted)."""
+        with self._lock:
+            self._store.pop(key_hash, None)
+            AUTH_CACHE_SIZE.set(len(self._store))
+
+    def invalidate_user(self, user_id: str) -> int:
+        """Remove all cached sessions for a given user_id. Returns count removed."""
+        removed = 0
+        with self._lock:
+            to_remove = [
+                k for k, (sess, _) in self._store.items()
+                if getattr(sess, "id", None) == user_id
+            ]
+            for k in to_remove:
+                del self._store[k]
+                removed += 1
+            if removed:
+                AUTH_CACHE_SIZE.set(len(self._store))
+        return removed
+
+    def clear(self) -> None:
+        """Drop the entire cache."""
+        with self._lock:
+            self._store.clear()
+            AUTH_CACHE_SIZE.set(0)
+
+    @property
+    def size(self) -> int:
+        with self._lock:
+            return len(self._store)
+
+
+# Module-level singleton
+auth_cache = _AuthTTLCache(maxsize=1000, ttl=30.0)
+
 
 # Initialize Supabase client with validation
 if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
@@ -83,11 +172,17 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             detail="Missing API key",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    # Fast-path: check the in-memory TTL cache
+    api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+    cached = auth_cache.get(api_key_hash)
+    if cached is not None:
+        AUTH_CACHE_TOTAL.labels(result="hit").inc()
+        return cached
+    AUTH_CACHE_TOTAL.labels(result="miss").inc()
+
     try:
         # Primary lookup: SHA-256 hash (industry standard for high-entropy API keys)
-        api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
-
         response = await asyncio.to_thread(
             lambda: supabase.table("api_keys").select("*").eq("key_hash", api_key_hash).eq("is_active", True).execute()
         )
@@ -188,9 +283,14 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             "key_mode": key_mode,
             "provider_api_keys": user_provider_keys,
         }
-        
-        return UserSession(user_session_data)
-        
+
+        session = UserSession(user_session_data)
+
+        # Store in the TTL cache for subsequent requests with the same key
+        auth_cache.set(api_key_hash, session)
+
+        return session
+
     except HTTPException:
         raise
     except Exception as e:

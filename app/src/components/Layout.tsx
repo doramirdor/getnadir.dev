@@ -6,6 +6,8 @@ import Auth from "@/pages/Auth";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const AUTH_TIMEOUT_MS = 15_000;
 
@@ -14,6 +16,7 @@ const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [authTimedOut, setAuthTimedOut] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!loading) {
@@ -87,8 +90,8 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-background flex w-full">
       <Sidebar activeItem={getCurrentPage()} />
-      <main className="flex-1 min-w-0">
-        <div className="h-full max-w-6xl mx-auto px-8 py-8">
+      <main className={cn("flex-1 min-w-0", isMobile && "pt-14")}>
+        <div className="h-full max-w-6xl mx-auto px-4 md:px-8 py-8">
           <Outlet />
         </div>
       </main>

@@ -10,9 +10,11 @@ import {
   Receipt,
   Info,
   Check,
+  Loader2,
+  XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiKey } from "@/hooks/useApiKey";
 import { SavingsAPI } from "@/services/savingsApi";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,14 +29,59 @@ function calculateFee(totalSavings: number) {
   return { base, first2k, above2k, total: base + first2k + above2k };
 }
 
-// ── Component ────────────────────────────────────────────────────────────
+// ── API helper ───────────────────────────────────────────────────────────
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+async function billingRequest<T = any>(
+  path: string,
+  apiKey: string,
+  options: { method?: string; body?: Record<string, unknown> } = {}
+): Promise<T> {
+  const { method = "GET", body } = options;
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": apiKey,
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const errBody = await res.json();
+      if (errBody.detail) detail = errBody.detail;
+    } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+
+  return res.json();
+}
+
+// ── Types ────────────────────────────────────────────────────────────────
+
+interface InvoiceItem {
+  id: string;
+  billing_period_start: string;
+  billing_period_end: string;
+  total_savings_usd: number;
+  base_fee_usd: number;
+  savings_fee_usd: number;
+  total_invoice_usd: number;
+  status: string;
+  created_at: string;
+}
+
+// ── Component ────────────────────────────────────────────────────────────
+
 const Billing = () => {
   const [subscribing, setSubscribing] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const { toast } = useToast();
   const { apiKey } = useApiKey();
+  const queryClient = useQueryClient();
 
   // Fetch savings summary
   const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;
@@ -63,42 +110,80 @@ const Billing = () => {
     staleTime: 60_000,
   });
 
+  // Fetch invoice history
+  const { data: invoicesData } = useQuery({
+    queryKey: ["billing", "invoices", apiKey],
+    queryFn: () =>
+      billingRequest<{ invoices: InvoiceItem[] }>(
+        "/v1/billing/invoices",
+        apiKey!
+      ),
+    enabled: !!apiKey,
+    retry: 1,
+    staleTime: 60_000,
+  });
+
+  const invoices = invoicesData?.invoices ?? [];
   const currentSavings = savingsSummary?.total_savings_usd ?? 0;
   const fee = calculateFee(currentSavings);
   const isActive = subscription?.status === "active";
+  const isCanceling = subscription?.cancel_at_period_end === true;
 
   const handleSubscribe = async () => {
+    if (!apiKey) {
+      toast({ title: "Error", description: "API key is required to subscribe." });
+      return;
+    }
     setSubscribing(true);
     try {
-      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(apiKey ? { "X-API-Key": apiKey } : {}),
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.checkout_url) {
-          window.location.href = data.checkout_url;
-          return;
+      const data = await billingRequest<{ checkout_url: string }>(
+        "/v1/billing/checkout",
+        apiKey,
+        {
+          method: "POST",
+          body: {
+            plan_id: "pro",
+            success_url: `${window.location.origin}/dashboard/billing?status=success`,
+            cancel_url: `${window.location.origin}/dashboard/billing?status=cancelled`,
+          },
         }
-      }
-
-      toast({
-        title: "Checkout",
-        description: "Stripe checkout is being set up. Please check back shortly or contact support.",
-      });
-    } catch (error) {
+      );
+      window.location.href = data.checkout_url;
+    } catch (error: any) {
       logger.error("Error starting checkout:", error);
       toast({
-        title: "Checkout",
-        description: "Stripe checkout is being set up. Please check back shortly or contact support.",
+        title: "Checkout failed",
+        description: error?.message || "Something went wrong. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setSubscribing(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!apiKey) return;
+    setCanceling(true);
+    try {
+      const data = await billingRequest<{ status: string; message: string }>(
+        "/v1/billing/cancel",
+        apiKey,
+        { method: "POST" }
+      );
+      toast({
+        title: "Subscription canceled",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+    } catch (error: any) {
+      logger.error("Error canceling subscription:", error);
+      toast({
+        title: "Cancellation failed",
+        description: error?.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCanceling(false);
     }
   };
 
@@ -140,7 +225,7 @@ const Billing = () => {
                   : "text-muted-foreground"
               }
             >
-              {isActive ? "active" : "open source"}
+              {isActive ? (isCanceling ? "cancels at period end" : "active") : "open source"}
             </Badge>
           </CardContent>
         </Card>
@@ -221,7 +306,10 @@ const Billing = () => {
                 size="sm"
               >
                 {subscribing ? (
-                  "Loading..."
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Loading...
+                  </>
                 ) : (
                   <>
                     <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
@@ -230,9 +318,94 @@ const Billing = () => {
                 )}
               </Button>
             )}
+            {isActive && !isCanceling && (
+              <Button
+                onClick={handleCancel}
+                disabled={canceling}
+                variant="outline"
+                size="sm"
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                {canceling ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Canceling...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                    Cancel Subscription
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Invoice History */}
+      {invoices.length > 0 && (
+        <Card className="clean-card">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-foreground">Invoice History</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 pr-4 text-muted-foreground font-medium">Period</th>
+                    <th className="text-right py-2 px-4 text-muted-foreground font-medium">Savings</th>
+                    <th className="text-right py-2 px-4 text-muted-foreground font-medium">Base Fee</th>
+                    <th className="text-right py-2 px-4 text-muted-foreground font-medium">Savings Fee</th>
+                    <th className="text-right py-2 px-4 text-muted-foreground font-medium">Total</th>
+                    <th className="text-right py-2 pl-4 text-muted-foreground font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((inv) => (
+                    <tr key={inv.id} className="border-b last:border-0">
+                      <td className="py-2 pr-4 text-foreground">
+                        {new Date(inv.billing_period_start).toLocaleDateString()} &ndash;{" "}
+                        {new Date(inv.billing_period_end).toLocaleDateString()}
+                      </td>
+                      <td className="text-right py-2 px-4 text-emerald-600">
+                        ${inv.total_savings_usd.toFixed(2)}
+                      </td>
+                      <td className="text-right py-2 px-4 text-foreground">
+                        ${inv.base_fee_usd.toFixed(2)}
+                      </td>
+                      <td className="text-right py-2 px-4 text-foreground">
+                        ${inv.savings_fee_usd.toFixed(2)}
+                      </td>
+                      <td className="text-right py-2 px-4 font-medium text-foreground">
+                        ${inv.total_invoice_usd.toFixed(2)}
+                      </td>
+                      <td className="text-right py-2 pl-4">
+                        <Badge
+                          variant="outline"
+                          className={
+                            inv.status === "paid"
+                              ? "text-emerald-600 border-emerald-200 bg-emerald-50"
+                              : inv.status === "pending"
+                              ? "text-amber-600 border-amber-200 bg-amber-50"
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {inv.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* How Pricing Works */}
       <Card className="clean-card">
@@ -380,7 +553,16 @@ const Billing = () => {
                 disabled={isActive || subscribing}
                 onClick={handleSubscribe}
               >
-                {isActive ? "Current Plan" : subscribing ? "Loading..." : "Subscribe"}
+                {subscribing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : isActive ? (
+                  "Current Plan"
+                ) : (
+                  "Subscribe"
+                )}
               </Button>
             </CardContent>
           </Card>

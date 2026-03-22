@@ -105,3 +105,19 @@ EVENT_BATCHER_QUEUE_SIZE = Gauge(
     "Current event batcher queue depth",
     registry=REGISTRY,
 )
+
+# ---------------------------------------------------------------------------
+# Auth cache metrics (recorded in supabase_auth)
+# ---------------------------------------------------------------------------
+AUTH_CACHE_TOTAL = Counter(
+    "auth_cache_total",
+    "Auth cache lookups",
+    ["result"],  # "hit" or "miss"
+    registry=REGISTRY,
+)
+
+AUTH_CACHE_SIZE = Gauge(
+    "auth_cache_size",
+    "Current number of entries in the auth cache",
+    registry=REGISTRY,
+)
