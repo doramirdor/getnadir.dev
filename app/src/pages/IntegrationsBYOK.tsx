@@ -148,7 +148,7 @@ const ConfigureKeyDialog = ({ open, onOpenChange, provider, onSave }: ConfigureK
 // ── Main component ──────────────────────────────────────────────────────
 
 const IntegrationsBYOK = () => {
-  const [mode, setMode] = useState<IntegrationMode>("byok");
+  const [mode, setMode] = useState<IntegrationMode>("hosted");
   const [integrations, setIntegrations] = useState<ProviderIntegration[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -164,11 +164,35 @@ const IntegrationsBYOK = () => {
     { id: 'anthropic', provider: 'Anthropic', displayName: 'Anthropic' }
   ];
 
+  // Load initial mode from profile and detect BYOK keys
   useEffect(() => {
     if (user?.id) {
       fetchIntegrations();
+      // Load saved mode from profile
+      supabase.from('profiles').select('model_parameters').eq('id', user.id).single()
+        .then(({ data }) => {
+          const savedMode = data?.model_parameters?.key_mode;
+          if (savedMode === 'byok' || savedMode === 'hosted') {
+            setMode(savedMode);
+          }
+        });
     }
   }, [user]);
+
+  // Persist mode changes to profile so backend picks it up
+  const handleModeChange = async (newMode: IntegrationMode) => {
+    setMode(newMode);
+    if (!user?.id) return;
+    try {
+      const { data: profile } = await supabase.from('profiles').select('model_parameters').eq('id', user.id).single();
+      const existing = profile?.model_parameters || {};
+      await supabase.from('profiles').update({
+        model_parameters: { ...existing, key_mode: newMode },
+      }).eq('id', user.id);
+    } catch (e) {
+      logger.error('Failed to save mode:', e);
+    }
+  };
 
   const fetchIntegrations = async () => {
     if (!user?.id) {
@@ -287,7 +311,7 @@ const IntegrationsBYOK = () => {
       {/* Mode Toggle */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
-          onClick={() => setMode("byok")}
+          onClick={() => handleModeChange("byok")}
           className={`p-5 border-2 rounded-xl text-left transition-all ${
             mode === "byok"
               ? "border-primary bg-primary/5"
@@ -311,7 +335,7 @@ const IntegrationsBYOK = () => {
         </button>
 
         <button
-          onClick={() => setMode("hosted")}
+          onClick={() => handleModeChange("hosted")}
           className={`p-5 border-2 rounded-xl text-left transition-all ${
             mode === "hosted"
               ? "border-primary bg-primary/5"

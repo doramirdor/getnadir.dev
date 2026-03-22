@@ -166,8 +166,11 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
                 user_provider_keys[pk["provider"]] = pk["encrypted_key"]
 
         # Determine key mode: "byok" if user has provider keys configured, "hosted" otherwise
-        # Can also be explicitly set in api_key model_parameters
-        key_mode_override = (api_key_data.get("model_parameters") or {}).get("key_mode")
+        # Priority: api_key override > profile setting > auto-detect from provider_keys
+        key_mode_override = (
+            (api_key_data.get("model_parameters") or {}).get("key_mode")
+            or (profile_data.get("model_parameters") or {}).get("key_mode")
+        )
         key_mode = key_mode_override or ("byok" if user_provider_keys else "hosted")
 
         # Compile user session data using both API key config and profile data
