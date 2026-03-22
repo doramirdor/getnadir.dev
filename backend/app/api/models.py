@@ -332,4 +332,108 @@ async def get_model_info(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get model info: {str(e)}"
-        ) 
+        )
+
+
+@router.get("/v1/models/catalog")
+async def list_model_catalog(provider: Optional[str] = None):
+    """
+    Public endpoint — returns all supported models with real pricing from LiteLLM.
+
+    No auth required. Used by the API key configuration dialog to populate
+    the model picker with accurate, up-to-date pricing.
+    """
+    import litellm
+
+    # LiteLLM's cost map has per-model pricing
+    cost_map = getattr(litellm, "model_cost", {})
+
+    # Curated list of models we support for routing (provider/model pairs)
+    # This keeps the list clean — no internal/deprecated models
+    SUPPORTED = [
+        # OpenAI
+        ("openai", "gpt-4o-mini", "GPT-4o Mini"),
+        ("openai", "gpt-4o", "GPT-4o"),
+        ("openai", "gpt-4o-2024-11-20", "GPT-4o (Nov '24)"),
+        ("openai", "gpt-4.1", "GPT-4.1"),
+        ("openai", "gpt-4.1-mini", "GPT-4.1 Mini"),
+        ("openai", "gpt-4.1-nano", "GPT-4.1 Nano"),
+        ("openai", "o3", "OpenAI o3"),
+        ("openai", "o3-mini", "OpenAI o3-mini"),
+        ("openai", "o4-mini", "OpenAI o4-mini"),
+        # Anthropic
+        ("anthropic", "claude-opus-4-20250514", "Claude Opus 4"),
+        ("anthropic", "claude-sonnet-4-20250514", "Claude Sonnet 4"),
+        ("anthropic", "claude-3-5-haiku-20241022", "Claude 3.5 Haiku"),
+        ("anthropic", "claude-3-5-sonnet-20241022", "Claude 3.5 Sonnet"),
+        # Google
+        ("google", "gemini-2.5-pro", "Gemini 2.5 Pro"),
+        ("google", "gemini-2.5-flash", "Gemini 2.5 Flash"),
+        ("google", "gemini-2.0-flash", "Gemini 2.0 Flash"),
+        ("google", "gemini-1.5-pro", "Gemini 1.5 Pro"),
+        ("google", "gemini-1.5-flash", "Gemini 1.5 Flash"),
+        # AWS Bedrock
+        ("aws", "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0", "Claude 3.5 Sonnet (Bedrock)"),
+        ("aws", "bedrock/anthropic.claude-3-haiku-20240307-v1:0", "Claude 3 Haiku (Bedrock)"),
+        ("aws", "bedrock/amazon.nova-pro-v1:0", "Amazon Nova Pro"),
+        ("aws", "bedrock/amazon.nova-lite-v1:0", "Amazon Nova Lite"),
+        ("aws", "bedrock/amazon.nova-micro-v1:0", "Amazon Nova Micro"),
+        # XAI
+        ("xai", "xai/grok-2", "Grok 2"),
+        ("xai", "xai/grok-2-mini", "Grok 2 Mini"),
+        # Together AI
+        ("together_ai", "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "Llama 3.1 405B"),
+        ("together_ai", "together_ai/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", "Llama 3.1 70B"),
+        ("together_ai", "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", "Llama 3.1 8B"),
+        # Mistral
+        ("mistral", "mistral/mistral-large-latest", "Mistral Large"),
+        ("mistral", "mistral/mistral-small-latest", "Mistral Small"),
+        # Cohere
+        ("cohere", "command-r-plus", "Command R+"),
+        ("cohere", "command-r", "Command R"),
+    ]
+
+    result = []
+    for prov, model_id, display_name in SUPPORTED:
+        # Look up pricing from LiteLLM cost map (try multiple key formats)
+        cost_entry = cost_map.get(model_id, {})
+        if not cost_entry:
+            # Try with provider prefix (e.g. anthropic.claude-3-5-haiku-20241022-v1:0)
+            for variant in [
+                f"anthropic.{model_id}-v1:0",
+                f"anthropic.{model_id}",
+                model_id.replace("bedrock/", ""),
+            ]:
+                cost_entry = cost_map.get(variant, {})
+                if cost_entry:
+                    break
+        input_price = cost_entry.get("input_cost_per_token", 0) * 1_000_000  # per 1M tokens
+        output_price = cost_entry.get("output_cost_per_token", 0) * 1_000_000
+
+        # Determine tier based on blended cost
+        blended = input_price + output_price
+        if blended >= 20:
+            tier = 1  # Premium
+        elif blended >= 3:
+            tier = 2  # Mid-tier
+        else:
+            tier = 3  # Budget
+
+        entry = {
+            "id": model_id,
+            "name": display_name,
+            "provider": prov.replace("_", " ").title().replace("Openai", "OpenAI").replace("Xai", "xAI").replace("Aws", "AWS").replace("Together Ai", "Together AI"),
+            "input_price": round(input_price, 2),
+            "output_price": round(output_price, 2),
+            "tier": tier,
+        }
+        result.append(entry)
+
+    # Filter by provider if requested
+    if provider:
+        result = [m for m in result if m["provider"].lower() == provider.lower()]
+
+    # Sort by provider then by price
+    result.sort(key=lambda m: (m["provider"], m["input_price"] + m["output_price"]))
+
+    return {"models": result, "count": len(result)} 

@@ -139,19 +139,11 @@ export default function ApiKeyConfig({ open, onClose, onSave, initialConfig, key
       setLoadingModels(true);
       try {
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
-        const res = await fetch(`${apiUrl}/v1/models/detailed`);
+        const res = await fetch(`${apiUrl}/v1/models/catalog`);
         if (res.ok) {
           const data = await res.json();
           if (data.models && data.models.length > 0) {
-            const mapped: ModelInfo[] = data.models.map((m: any) => ({
-              id: m.id || m.api_id,
-              name: m.name || m.id,
-              provider: m.provider || "Unknown",
-              input_price: m.input_price || m.pricing?.input_price_usd1m_tokens || 0,
-              output_price: m.output_price || m.pricing?.output_price_usd1m_tokens || 0,
-              tier: m.tier || 3,
-            }));
-            setAvailableModels(mapped);
+            setAvailableModels(data.models as ModelInfo[]);
           }
         }
       } catch {
