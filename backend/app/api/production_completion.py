@@ -605,7 +605,7 @@ async def create_completion(
         # Build messages dicts once, preserving cache_control for prompt caching
         messages_dicts = [msg.dict(exclude_none=True) for msg in request.messages]
 
-        # LAYER: Context Optimize — apply truncation/minification
+        # LAYER: Context Optimize — apply optimization + truncation
         # Activated by: layer setting ("safe"/"aggressive") OR per-request transforms
         transforms_applied = False
         optimize_mode = layer_optimize
@@ -613,8 +613,16 @@ async def create_completion(
         if request.transforms and "middle-out" in request.transforms:
             optimize_mode = "safe"  # middle-out = safe mode
         if optimize_mode in ("safe", "aggressive"):
-            from app.services.context_truncation import truncate_middle_out
             original_count = len(messages_dicts)
+            # Step 1: Apply context optimization (safe or aggressive)
+            if optimize_mode == "safe":
+                from app.services.context_truncation import optimize_safe
+                messages_dicts = optimize_safe(messages_dicts)
+            elif optimize_mode == "aggressive":
+                from app.services.context_truncation import optimize_aggressive
+                messages_dicts = optimize_aggressive(messages_dicts)
+            # Step 2: Middle-out truncation if context is still too long
+            from app.services.context_truncation import truncate_middle_out
             messages_dicts = truncate_middle_out(messages_dicts, recommended_model)
             if len(messages_dicts) < original_count:
                 transforms_applied = True
