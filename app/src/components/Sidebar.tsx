@@ -12,6 +12,7 @@ import {
   ChevronRight,
   FileText,
   Zap,
+  HelpCircle,
   LogOut,
   Menu,
 } from "lucide-react";
@@ -39,6 +40,7 @@ const manageMenuItems = [
 const accountMenuItems = [
   { id: "logs", label: "Logs", icon: FileText, path: "/dashboard/logs" },
   { id: "billing", label: "Billing", icon: CreditCard, path: "/dashboard/billing" },
+  { id: "help", label: "Help", icon: HelpCircle, path: "/dashboard/help" },
   { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/settings" },
 ];
 

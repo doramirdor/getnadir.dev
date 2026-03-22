@@ -30,6 +30,7 @@ const Docs = lazy(() => import("./pages/Docs"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Auth = lazy(() => import("./pages/Auth"));
+const FAQ = lazy(() => import("./pages/FAQ"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="billing" element={<Billing />} />
               <Route path="logs" element={<Logs />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="help" element={<FAQ />} />
               <Route path="onboarding" element={<Onboarding />} />
             </Route>
 

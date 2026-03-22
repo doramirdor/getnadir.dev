@@ -45,6 +45,7 @@ from app.api.savings_api import router as savings_router
 from app.api.stripe_webhooks import router as stripe_webhook_router
 from app.api.billing_api import router as billing_router
 from app.api.admin_invoicing import router as admin_invoicing_router
+from app.api.support_api import router as support_router
 
 
 # Create FastAPI application
@@ -405,6 +406,7 @@ app.include_router(savings_router)                    # Savings tracking API
 app.include_router(stripe_webhook_router)             # Stripe webhooks
 app.include_router(billing_router)                     # Billing & subscription API
 app.include_router(admin_invoicing_router)              # Admin invoicing trigger
+app.include_router(support_router)                        # Support tickets API
 
 
 # Root endpoint
