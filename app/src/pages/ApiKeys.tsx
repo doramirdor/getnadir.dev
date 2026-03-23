@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { logger } from "@/utils/logger";
-import ApiKeyConfig, { type ApiKeyConfiguration } from "@/components/ApiKeyConfig";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 
 async function sha256(message: string): Promise<string> {
@@ -43,8 +42,7 @@ const ApiKeys = () => {
   const [loading, setLoading] = useState(true);
   const [showOnceKey, setShowOnceKey] = useState<string | null>(null);
   const [configKeyId, setConfigKeyId] = useState<string | null>(null);
-  const [configKeyName, setConfigKeyName] = useState("");
-  const [configInitial, setConfigInitial] = useState<Partial<ApiKeyConfiguration> | undefined>();
+  const [configEditData, setConfigEditData] = useState<any>(null);
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
 
@@ -159,15 +157,15 @@ const ApiKeys = () => {
 
   const handleOpenConfig = (key: ApiKey) => {
     setConfigKeyId(key.id);
-    setConfigKeyName(key.name);
-    setConfigInitial({
-      selected_models: key.selected_models || undefined,
-      benchmark_model: key.benchmark_model || undefined,
-      model_parameters: key.model_parameters || undefined,
+    setConfigEditData({
+      name: key.name,
+      selected_models: key.selected_models || [],
+      benchmark_model: key.benchmark_model || "",
+      model_parameters: key.model_parameters || {},
     });
   };
 
-  const handleSaveConfig = async (config: ApiKeyConfiguration) => {
+  const handleSaveConfig = async (config: { name: string; selected_models: string[]; benchmark_model: string; model_parameters: Record<string, any> }) => {
     if (!configKeyId) return;
     try {
       const { error } = await supabase
@@ -318,13 +316,12 @@ const ApiKeys = () => {
         onCreate={handleCreateKey}
       />
 
-      {/* API Key Configuration Dialog */}
-      <ApiKeyConfig
+      {/* API Key Configuration Dialog (reuses create wizard in edit mode) */}
+      <CreateApiKeyDialog
         open={!!configKeyId}
-        onClose={() => setConfigKeyId(null)}
-        onSave={handleSaveConfig}
-        initialConfig={configInitial}
-        keyName={configKeyName}
+        onClose={() => { setConfigKeyId(null); setConfigEditData(null); }}
+        onCreate={handleSaveConfig}
+        editConfig={configEditData}
       />
 
       {/* Show-Once Key Dialog */}

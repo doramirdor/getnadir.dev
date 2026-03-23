@@ -54,15 +54,19 @@ interface ModelDef {
   outputCost: number;
 }
 
+interface ApiKeyConfig {
+  name: string;
+  selected_models: string[];
+  benchmark_model: string;
+  model_parameters: Record<string, any>;
+}
+
 interface CreateApiKeyDialogProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (config: {
-    name: string;
-    selected_models: string[];
-    benchmark_model: string;
-    model_parameters: Record<string, any>;
-  }) => Promise<void>;
+  onCreate: (config: ApiKeyConfig) => Promise<void>;
+  /** When set, dialog opens in edit mode pre-populated with this config */
+  editConfig?: ApiKeyConfig;
 }
 
 // ── Model catalog ──────────────────────────────────────────────────────
@@ -117,7 +121,8 @@ function pricingLabel(m: ModelDef): string {
 
 // ── Component ──────────────────────────────────────────────────────────
 
-export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateApiKeyDialogProps) {
+export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig }: CreateApiKeyDialogProps) {
+  const isEdit = !!editConfig;
   const { user } = useAuth();
   const [step, setStep] = useState(0);
 
@@ -141,21 +146,40 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
   // Submitting
   const [submitting, setSubmitting] = useState(false);
 
-  // ── Reset ──
+  // ── Reset / pre-populate ──
   useEffect(() => {
     if (open) {
-      setStep(0);
-      setKeyName("");
+      setStep(isEdit ? 1 : 0); // Skip name step in edit mode
       setNameError("");
-      setSimpleModel("");
-      setMediumModel("");
-      setComplexModel("");
-      setRoutingEnabled(true);
-      setFallbackEnabled(true);
-      setFallbackChain([]);
       setSubmitting(false);
       fetchProviderKeys();
       fetchUserMode();
+
+      if (editConfig) {
+        // Pre-populate from existing config
+        setKeyName(editConfig.name);
+        const mp = editConfig.model_parameters || {};
+        const layers = mp.layers || {};
+        const tierModels = mp.tier_models || {};
+        setMode(mp.key_mode || "hosted");
+        setRoutingEnabled(layers.routing ?? true);
+        setFallbackEnabled(layers.fallback ?? true);
+        setOptimizeMode(layers.optimize || "off");
+        setSimpleModel(tierModels.simple || "");
+        setMediumModel(tierModels.medium || "");
+        setComplexModel(tierModels.complex || "");
+        setFallbackChain(mp.fallback_chain || []);
+      } else {
+        // Fresh create
+        setKeyName("");
+        setSimpleModel("");
+        setMediumModel("");
+        setComplexModel("");
+        setRoutingEnabled(true);
+        setFallbackEnabled(true);
+        setFallbackChain([]);
+        setOptimizeMode("off");
+      }
     }
   }, [open]);
 
@@ -330,7 +354,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create API Key</DialogTitle>
+          <DialogTitle>{isEdit ? "Configure API Key" : "Create API Key"}</DialogTitle>
           <DialogDescription>
             Step {step + 1} of {STEP_TITLES.length}: {STEP_TITLES[step]}
           </DialogDescription>
@@ -752,7 +776,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
               </Button>
             ) : (
               <Button onClick={handleCreate} disabled={submitting}>
-                {submitting ? "Creating..." : "Create API Key"}
+                {submitting ? "Saving..." : isEdit ? "Save Changes" : "Create API Key"}
               </Button>
             )}
           </div>
