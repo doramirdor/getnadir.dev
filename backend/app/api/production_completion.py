@@ -732,28 +732,29 @@ async def create_completion(
 
         # LAYER: Context Optimize — apply optimization + truncation
         # Activated by: layer setting ("safe"/"aggressive") OR per-request transforms
+        # Safe:       5 lossless transforms (whitespace, dedup, JSON minify, trim)
+        # Aggressive: Safe + semantic deduplication via sentence embeddings
         transforms_applied = False
+        optimize_result = None
         optimize_mode = layer_optimize
         # Per-request transforms override layer setting
         if request.transforms and "middle-out" in request.transforms:
             optimize_mode = "safe"  # middle-out = safe mode
         if optimize_mode in ("safe", "aggressive"):
-            original_count = len(messages_dicts)
-            # Step 1: Apply context optimization (safe or aggressive)
-            if optimize_mode == "safe":
-                from app.services.context_truncation import optimize_safe
-                messages_dicts = optimize_safe(messages_dicts)
-            elif optimize_mode == "aggressive":
-                from app.services.context_truncation import optimize_aggressive
-                messages_dicts = optimize_aggressive(messages_dicts)
-            # Step 2: Middle-out truncation if context is still too long
-            from app.services.context_truncation import truncate_middle_out
-            messages_dicts = truncate_middle_out(messages_dicts, recommended_model)
-            if len(messages_dicts) < original_count:
+            from app.services.context_optimizer import optimize_messages
+            original_tokens = sum(len(m.get("content", "")) // 4 for m in messages_dicts)
+            optimize_result = optimize_messages(messages_dicts, mode=optimize_mode)
+            messages_dicts = optimize_result.messages
+            if optimize_result.tokens_saved > 0:
                 transforms_applied = True
                 logger.info(
-                    "context optimize (%s): %d -> %d messages for model %s",
-                    optimize_mode, original_count, len(messages_dicts), recommended_model,
+                    "context optimize (%s): %d → %d tokens (-%d, %.1f%% saved) | transforms: %s",
+                    optimize_mode,
+                    optimize_result.original_tokens,
+                    optimize_result.optimized_tokens,
+                    optimize_result.tokens_saved,
+                    (optimize_result.tokens_saved / max(optimize_result.original_tokens, 1)) * 100,
+                    ", ".join(optimize_result.optimizations_applied),
                 )
 
         # Determine routing strategy
@@ -1031,6 +1032,15 @@ async def create_completion(
         if request.transforms:
             optional_metadata["transforms_applied"] = request.transforms
             optional_metadata["transforms_executed"] = transforms_applied
+        if optimize_result and optimize_result.tokens_saved > 0:
+            optional_metadata["context_optimize"] = {
+                "mode": optimize_result.mode,
+                "original_tokens": optimize_result.original_tokens,
+                "optimized_tokens": optimize_result.optimized_tokens,
+                "tokens_saved": optimize_result.tokens_saved,
+                "savings_pct": round((optimize_result.tokens_saved / max(optimize_result.original_tokens, 1)) * 100, 1),
+                "optimizations": optimize_result.optimizations_applied,
+            }
         if sticky_provider:
             optional_metadata["sticky_provider"] = sticky_provider
 
