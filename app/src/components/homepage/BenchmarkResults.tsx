@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 const BENCHMARK_DATA = [
   { label: "Baseline (Opus)", cost: 0.246, savings: 0, color: "#d4d4d4" },
@@ -237,25 +238,8 @@ export const BenchmarkResults = () => {
         </div>
 
         {/* CTA */}
-        <div className="max-w-[640px] mx-auto bg-gradient-to-r from-[#00a86b]/5 to-[#0066ff]/5 border border-[#e5e5e5] rounded-xl p-8 text-center mb-12">
-          <h3 className="text-lg font-semibold mb-2">Start saving today</h3>
-          <p className="text-sm text-[#666] mb-6">
-            Self-host for free with basic routing, or upgrade to Pro for advanced algorithms and aggressive context optimization.
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <a
-              href="https://github.com/doramirdor/NadirClaw"
-              className="px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
-            >
-              Self-host free
-            </a>
-            <a
-              href="/pricing"
-              className="px-6 py-3 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-[15px] font-semibold hover:-translate-y-px hover:shadow-lg transition-all no-underline"
-            >
-              Try Pro — better algorithms
-            </a>
-          </div>
+        <div className="max-w-[640px] mx-auto mb-12">
+          <WaitlistForm variant="card" source="benchmark" />
         </div>
 
         {/* Methodology */}

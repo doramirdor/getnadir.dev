@@ -71,12 +71,12 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
               >
                 Blog
               </Link>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="px-4 py-2 bg-[#0a0a0a] text-white rounded-md text-sm font-semibold hover:bg-[#333] transition-all"
+              <a
+                href="#quickstart"
+                className="px-4 py-2 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-sm font-semibold hover:-translate-y-px hover:shadow-md transition-all no-underline"
               >
-                Dashboard
-              </button>
+                Get Started
+              </a>
               <a
                 href="https://github.com/doramirdor/NadirClaw"
                 target="_blank"

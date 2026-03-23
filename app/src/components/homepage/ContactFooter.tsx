@@ -1,3 +1,5 @@
+import { WaitlistForm } from "@/components/WaitlistForm";
+
 export const ContactFooter = () => {
   return (
     <>
@@ -122,25 +124,11 @@ export const ContactFooter = () => {
             Stop overpaying for simple prompts
           </h2>
           <p className="text-[17px] text-[#666] mb-8 max-w-[480px] mx-auto">
-            Self-host for free, or let our Pro plan handle everything with smarter algorithms.
+            Self-host for free, or join the waitlist for our hosted Pro plan.
           </p>
-          <div className="flex gap-3 justify-center flex-wrap mb-4">
-            <a
-              href="https://github.com/doramirdor/NadirClaw"
-              className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
-            >
-              Self-host free
-            </a>
-            <a
-              href="/pricing"
-              className="inline-flex items-center gap-1.5 px-6 py-3 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-[15px] font-semibold hover:-translate-y-px hover:shadow-lg transition-all no-underline"
-            >
-              Try Pro — better algorithms &rarr;
-            </a>
+          <div className="max-w-[560px] mx-auto mb-4">
+            <WaitlistForm variant="card" source="footer-cta" />
           </div>
-          <p className="text-[13px] text-[#999]">
-            Free and open source. MIT licensed. Pro adds hosted proxy + advanced routing.
-          </p>
         </div>
       </section>
     </>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 const tiers = [
   {
@@ -35,8 +36,8 @@ const tiers = [
       "Up to 25% of savings (10% above $2K)",
       "Email support",
     ],
-    cta: "Start Free Trial",
-    ctaLink: "/dashboard/onboarding",
+    cta: "waitlist",
+    ctaLink: "",
     highlighted: true,
   },
   {
@@ -187,16 +188,22 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={tier.ctaLink}
-                className={`mt-8 block text-center py-3 px-6 rounded-lg font-medium text-sm transition ${
-                  tier.highlighted
-                    ? "bg-blue-600 text-white hover:bg-blue-500"
-                    : "bg-white text-gray-900 border border-gray-200 hover:border-gray-400"
-                }`}
-              >
-                {tier.cta}
-              </a>
+              {tier.cta === "waitlist" ? (
+                <div className="mt-8">
+                  <WaitlistForm variant="inline" source="pricing-pro" />
+                </div>
+              ) : (
+                <a
+                  href={tier.ctaLink}
+                  className={`mt-8 block text-center py-3 px-6 rounded-lg font-medium text-sm transition ${
+                    tier.highlighted
+                      ? "bg-blue-600 text-white hover:bg-blue-500"
+                      : "bg-white text-gray-900 border border-gray-200 hover:border-gray-400"
+                  }`}
+                >
+                  {tier.cta}
+                </a>
+              )}
             </div>
           ))}
         </div>

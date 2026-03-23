@@ -1,5 +1,6 @@
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 export default function Optimize() {
   return (
@@ -86,26 +87,7 @@ export default function Optimize() {
 
       {/* CTA */}
       <section className="max-w-4xl mx-auto px-6 pb-20">
-        <div className="bg-gradient-to-r from-[#00a86b]/5 to-[#0066ff]/5 border border-[#e5e5e5] rounded-xl p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Start optimizing today</h3>
-          <p className="text-[#666] text-sm mb-6">
-            Safe mode is free and open source. Upgrade to Pro for aggressive semantic dedup and the best savings.
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <a
-              href="https://github.com/doramirdor/NadirClaw"
-              className="px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
-            >
-              Self-host free (safe mode)
-            </a>
-            <a
-              href="/pricing"
-              className="px-6 py-3 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-[15px] font-semibold hover:-translate-y-px hover:shadow-lg transition-all no-underline"
-            >
-              Pro — unlock aggressive mode
-            </a>
-          </div>
-        </div>
+        <WaitlistForm variant="card" source="optimize-page" />
       </section>
     </MarketingLayout>
   );
