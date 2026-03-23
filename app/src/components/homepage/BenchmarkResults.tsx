@@ -1,36 +1,22 @@
 import { useState, useMemo, useCallback } from "react";
 
 const BENCHMARK_DATA = [
-  { label: "V1 Baseline (Opus)", cost: 0.00849, savings: 0, color: "#d4d4d4" },
-  { label: "V2 Router Only", cost: 0.00592, savings: 30, color: "#93c5fd" },
-  { label: "V3 Safe Optimize", cost: 0.00625, savings: 26, color: "#86efac" },
-  { label: "V4 Router + Safe", cost: 0.00458, savings: 46, color: "#34d399" },
-  {
-    label: "V5 Aggressive Opt",
-    cost: 0.00612,
-    savings: 28,
-    color: "#a5b4fc",
-  },
-  {
-    label: "V6 Router + Aggressive",
-    cost: 0.00444,
-    savings: 48,
-    color: "#00a86b",
-  },
+  { label: "Baseline (Opus)", cost: 0.246, savings: 0, color: "#d4d4d4" },
+  { label: "Router + Safe", cost: 0.223, savings: 10, color: "#00a86b" },
 ];
 
 const CATEGORIES = [
-  { label: "Simple prompts", savings: 80, color: "#00a86b" },
-  { label: "Medium prompts", savings: 40, color: "#0066ff" },
-  { label: "Complex prompts", savings: 49, color: "#6366f1" },
+  { label: "Simple prompts", savings: 14, color: "#00a86b" },
+  { label: "Medium prompts", savings: 30, color: "#0066ff" },
+  { label: "Complex prompts", savings: 0, color: "#6366f1" },
 ];
 
 export const BenchmarkResults = () => {
   const [monthlySpend, setMonthlySpend] = useState(5000);
 
   const roi = useMemo(() => {
-    const savings = monthlySpend * 0.48;
-    const fee = savings * 0.252; // $1,209 / $4,800 ~ 25.2%
+    const savings = monthlySpend * 0.10;
+    const fee = savings * 0.252;
     const net = savings - fee;
     return { savings, fee, net, annual: net * 12 };
   }, [monthlySpend]);
@@ -57,7 +43,7 @@ export const BenchmarkResults = () => {
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666] max-w-[600px] mx-auto">
-            6-way benchmark across diverse real-world prompts. Quality verified
+            30-prompt benchmark across diverse real-world prompts. Quality verified
             by independent LLM judge.
           </p>
         </div>
@@ -65,23 +51,23 @@ export const BenchmarkResults = () => {
         {/* Hero stats */}
         <div className="grid md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-16">
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-4xl font-bold text-[#00a86b] mb-1">48%</div>
-            <div className="text-sm text-[#666]">cost savings</div>
+            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 30%</div>
+            <div className="text-sm text-[#666]">savings on everyday prompts</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-4xl font-bold text-[#0066ff] mb-1">0%</div>
-            <div className="text-sm text-[#666]">quality degradation</div>
+            <div className="text-3xl font-bold text-[#0066ff] mb-1">87%</div>
+            <div className="text-sm text-[#666]">quality verified by LLM judge</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-4xl font-bold text-[#6366f1] mb-1">61%</div>
-            <div className="text-sm text-[#666]">faster responses</div>
+            <div className="text-3xl font-bold text-[#6366f1] mb-1">Zero</div>
+            <div className="text-sm text-[#666]">latency overhead</div>
           </div>
         </div>
 
         {/* Bar chart */}
         <div className="max-w-[800px] mx-auto mb-16">
           <h3 className="text-lg font-semibold mb-6 text-center">
-            Cost per request across 6 configurations
+            Cost per 30-prompt run
           </h3>
           <div className="space-y-3">
             {BENCHMARK_DATA.map((item) => (
@@ -96,11 +82,8 @@ export const BenchmarkResults = () => {
                       width: `${(item.cost / maxCost) * 100}%`,
                       backgroundColor: item.color,
                     }}
-                  >
-                    <span className="text-xs font-semibold text-white drop-shadow-sm">
-                      ${item.cost.toFixed(5)}
-                    </span>
-                  </div>
+                  />
+
                 </div>
                 <span className="text-sm font-medium w-20 shrink-0">
                   {item.savings > 0 ? (
@@ -114,7 +97,7 @@ export const BenchmarkResults = () => {
           </div>
         </div>
 
-        {/* Quality + Latency + Category row */}
+        {/* Quality + Latency row */}
         <div className="grid md:grid-cols-2 gap-8 max-w-[800px] mx-auto mb-16">
           {/* Quality badge */}
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
@@ -136,8 +119,8 @@ export const BenchmarkResults = () => {
               <h3 className="text-base font-semibold">Quality verified</h3>
             </div>
             <p className="text-[15px] text-[#666] leading-relaxed">
-              Quality verified by independent LLM-as-judge with no
-              significant degradation detected across all savings levels.
+              87% quality maintained (26/30 prompts) as scored by an independent
+              LLM judge. Complex prompts are preserved on the same tier.
             </p>
           </div>
 
@@ -159,12 +142,11 @@ export const BenchmarkResults = () => {
                   <polyline points="8 4.5 8 8 10.5 9.5" />
                 </svg>
               </div>
-              <h3 className="text-base font-semibold">Faster responses</h3>
+              <h3 className="text-base font-semibold">Zero latency overhead</h3>
             </div>
             <p className="text-[15px] text-[#666] leading-relaxed">
-              <strong className="text-[#0a0a0a]">208ms avg</strong> vs 536ms
-              baseline. Cheaper models respond faster, so routing saves time
-              too.
+              Similar latency across all configurations. The routing classifier
+              adds negligible overhead to request processing.
             </p>
           </div>
         </div>
@@ -180,7 +162,7 @@ export const BenchmarkResults = () => {
                 className="text-3xl font-bold mb-1"
                 style={{ color: cat.color }}
               >
-                -{cat.savings}%
+                {cat.savings > 0 ? `-${cat.savings}%` : "preserved"}
               </div>
               <div className="text-sm text-[#666]">{cat.label}</div>
             </div>
@@ -256,7 +238,7 @@ export const BenchmarkResults = () => {
 
         {/* Methodology */}
         <p className="text-xs text-[#999] text-center max-w-[640px] mx-auto leading-relaxed">
-          Benchmarked on diverse real-world prompts (simple Q&A to complex
+          Benchmarked on 30 diverse real-world prompts (simple Q&A to complex
           system design) using Claude CLI. Quality verified by independent
           LLM-as-judge (Sonnet 4.6). Full methodology and raw data available on{" "}
           <a

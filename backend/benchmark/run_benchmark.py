@@ -2,7 +2,7 @@
 """
 Nadir Benchmark Runner — 6-way comparison with LLM judge.
 
-Runs 30 diverse prompts across 6 configurations:
+Runs 40 diverse prompts (30 single-turn + 10 multi-turn) across 6 configurations:
   V1: Baseline (Opus only)
   V2: Router only
   V3: Safe optimize only
@@ -10,11 +10,19 @@ Runs 30 diverse prompts across 6 configurations:
   V5: Aggressive optimize only
   V6: Router + Aggressive optimize
 
+Context optimization modes:
+  safe       — normalize whitespace, collapse empty lines, strip markdown formatting noise
+  aggressive — all safe transforms PLUS truncate multi-turn conversation history to
+               system + last 2 user messages + last assistant message
+
+Multi-turn prompts (31-40) have 5+ turns of conversation history and are where
+aggressive context optimization delivers meaningful token savings.
+
 Results saved to JSON with timestamp for daily tracking.
 
 Usage:
   python benchmark/run_benchmark.py
-  python benchmark/run_benchmark.py --prompts 10  # quick run
+  python benchmark/run_benchmark.py --prompts 30  # skip multi-turn
   python benchmark/run_benchmark.py --output results/  # custom output dir
 """
 
@@ -71,6 +79,126 @@ PROMPTS = [
     {"id": 28, "cat": "complex", "prompt": "Design a machine learning pipeline for real-time fraud detection. Cover feature engineering, model selection, training/serving split, latency requirements, and handling concept drift."},
     {"id": 29, "cat": "complex", "prompt": "Implement a custom memory allocator in Python that supports malloc, free, realloc with coalescing. Include fragmentation tracking and a visualization of the heap state."},
     {"id": 30, "cat": "complex", "prompt": "Design a multi-region database replication strategy. Address consistency models, conflict resolution, failover, latency optimization, and compliance with data residency requirements."},
+
+    # Multi-turn conversations (10) — context optimization shows real value here
+    {"id": 31, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a helpful coding assistant specializing in Python."},
+        {"role": "user", "content": "How do I parse JSON in Python?"},
+        {"role": "assistant", "content": "You can use Python's built-in `json` module. Here's how:\n\n```python\nimport json\n\n# Parse a JSON string\ndata = json.loads('{\"name\": \"Alice\", \"age\": 30}')\nprint(data['name'])  # Alice\n\n# Parse from a file\nwith open('data.json') as f:\n    data = json.load(f)\n```\n\nThe key functions are `json.loads()` for strings and `json.load()` for file objects."},
+        {"role": "user", "content": "What about handling errors when the JSON is malformed?"},
+        {"role": "assistant", "content": "Use try/except with `json.JSONDecodeError`:\n\n```python\nimport json\n\ntry:\n    data = json.loads(invalid_json_string)\nexcept json.JSONDecodeError as e:\n    print(f'Invalid JSON at line {e.lineno}, col {e.colno}: {e.msg}')\n```\n\nYou can also catch `ValueError` which is the parent class, but `JSONDecodeError` gives you more specific error info including line number and column."},
+        {"role": "user", "content": "Can you show me how to validate JSON against a schema?"},
+        {"role": "assistant", "content": "Use the `jsonschema` library:\n\n```python\nfrom jsonschema import validate, ValidationError\n\nschema = {\n    'type': 'object',\n    'properties': {\n        'name': {'type': 'string'},\n        'age': {'type': 'integer', 'minimum': 0}\n    },\n    'required': ['name', 'age']\n}\n\ntry:\n    validate(instance={'name': 'Alice', 'age': 30}, schema=schema)\nexcept ValidationError as e:\n    print(f'Validation failed: {e.message}')\n```\n\nInstall with `pip install jsonschema`."},
+        {"role": "user", "content": "Now write a complete JSON parser class with validation, error handling, custom deserializers, and support for JSON5 comments."},
+    ]},
+    {"id": 32, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a senior DevOps engineer helping with Kubernetes deployments."},
+        {"role": "user", "content": "How do I create a basic deployment in Kubernetes?"},
+        {"role": "assistant", "content": "Create a deployment YAML like this:\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: my-app\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: my-app\n  template:\n    metadata:\n      labels:\n        app: my-app\n    spec:\n      containers:\n      - name: my-app\n        image: my-app:latest\n        ports:\n        - containerPort: 8080\n```\n\nApply with `kubectl apply -f deployment.yaml`."},
+        {"role": "user", "content": "How do I add health checks?"},
+        {"role": "assistant", "content": "Add liveness and readiness probes to your container spec:\n\n```yaml\nlivenessProbe:\n  httpGet:\n    path: /health\n    port: 8080\n  initialDelaySeconds: 30\n  periodSeconds: 10\nreadinessProbe:\n  httpGet:\n    path: /ready\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 5\n```\n\nLiveness restarts unhealthy pods. Readiness controls traffic routing."},
+        {"role": "user", "content": "What about resource limits?"},
+        {"role": "assistant", "content": "Add resources block:\n\n```yaml\nresources:\n  requests:\n    memory: '128Mi'\n    cpu: '250m'\n  limits:\n    memory: '256Mi'\n    cpu: '500m'\n```\n\nRequests are what the scheduler guarantees. Limits are the max. Set them based on actual usage metrics."},
+        {"role": "user", "content": "How do I set up horizontal pod autoscaling?"},
+        {"role": "assistant", "content": "Create an HPA:\n\n```yaml\napiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: my-app-hpa\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: my-app\n  minReplicas: 2\n  maxReplicas: 10\n  metrics:\n  - type: Resource\n    resource:\n      name: cpu\n      target:\n        type: Utilization\n        averageUtilization: 70\n```\n\nRequires metrics-server installed in the cluster."},
+        {"role": "user", "content": "Now design a complete production-ready Kubernetes deployment with blue-green deployments, canary releases, auto-scaling, pod disruption budgets, and network policies."},
+    ]},
+    {"id": 33, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a database expert helping with PostgreSQL optimization."},
+        {"role": "user", "content": "My query is slow. How do I analyze it?"},
+        {"role": "assistant", "content": "Use EXPLAIN ANALYZE:\n\n```sql\nEXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)\nSELECT * FROM orders WHERE customer_id = 123;\n```\n\nLook for sequential scans on large tables, high actual row counts vs estimates, and sort operations spilling to disk."},
+        {"role": "user", "content": "It shows a sequential scan. How do I add an index?"},
+        {"role": "assistant", "content": "Create an index on the filtered column:\n\n```sql\nCREATE INDEX CONCURRENTLY idx_orders_customer_id ON orders(customer_id);\n```\n\nUse CONCURRENTLY to avoid locking the table during creation. For composite queries, create multi-column indexes matching your WHERE clause order."},
+        {"role": "user", "content": "What about partial indexes?"},
+        {"role": "assistant", "content": "Partial indexes only index rows matching a condition, saving space and improving write performance:\n\n```sql\nCREATE INDEX idx_orders_active ON orders(customer_id)\nWHERE status = 'active';\n```\n\nGreat for queries that always filter on a specific condition."},
+        {"role": "user", "content": "My joins are still slow even with indexes."},
+        {"role": "assistant", "content": "Check these common issues:\n\n1. Ensure join columns have matching types (implicit casts prevent index use)\n2. Increase `work_mem` for complex joins: `SET work_mem = '256MB';`\n3. Consider materialized views for complex aggregations\n4. Use `pg_stat_user_tables` to check if tables need VACUUM/ANALYZE\n\n```sql\nSELECT relname, n_live_tup, n_dead_tup, last_analyze\nFROM pg_stat_user_tables WHERE schemaname = 'public';\n```"},
+        {"role": "user", "content": "Design a complete PostgreSQL optimization strategy for a high-traffic e-commerce database with 100M+ rows, covering indexing, partitioning, connection pooling, query optimization, and monitoring."},
+    ]},
+    {"id": 34, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a security engineer specializing in web application security."},
+        {"role": "user", "content": "What are the OWASP Top 10?"},
+        {"role": "assistant", "content": "The OWASP Top 10 (2021) are:\n1. Broken Access Control\n2. Cryptographic Failures\n3. Injection\n4. Insecure Design\n5. Security Misconfiguration\n6. Vulnerable Components\n7. Auth Failures\n8. Data Integrity Failures\n9. Logging Failures\n10. SSRF"},
+        {"role": "user", "content": "How do I prevent SQL injection in Python?"},
+        {"role": "assistant", "content": "Always use parameterized queries:\n\n```python\n# SAFE - parameterized\ncursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))\n\n# UNSAFE - string formatting\ncursor.execute(f'SELECT * FROM users WHERE id = {user_id}')  # NEVER DO THIS\n```\n\nWith SQLAlchemy, use bound parameters or the ORM which handles it automatically."},
+        {"role": "user", "content": "What about XSS prevention?"},
+        {"role": "assistant", "content": "Key XSS defenses:\n1. Output encoding - escape HTML entities\n2. Content Security Policy headers\n3. HttpOnly cookies\n4. Input validation\n\n```python\nfrom markupsafe import escape\nsafe_output = escape(user_input)\n```\n\nModern frameworks like React auto-escape by default."},
+        {"role": "user", "content": "How do I implement CSRF protection?"},
+        {"role": "assistant", "content": "Use CSRF tokens:\n\n```python\n# Flask example\nfrom flask_wtf.csrf import CSRFProtect\ncsrf = CSRFProtect(app)\n\n# In templates\n<form>\n    {{ csrf_token() }}\n    ...\n</form>\n```\n\nAlso set `SameSite=Strict` on cookies and verify the `Origin` header on state-changing requests."},
+        {"role": "user", "content": "Now design a comprehensive security audit checklist and automated testing pipeline for a financial services web application, covering authentication, authorization, encryption, API security, and compliance with SOC2 and PCI-DSS."},
+    ]},
+    {"id": 35, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are an expert React developer helping build a dashboard application."},
+        {"role": "user", "content": "How do I set up React Router for my dashboard?"},
+        {"role": "assistant", "content": "Install and configure React Router:\n\n```tsx\nimport { BrowserRouter, Routes, Route } from 'react-router-dom';\n\nfunction App() {\n  return (\n    <BrowserRouter>\n      <Routes>\n        <Route path='/' element={<Dashboard />} />\n        <Route path='/users' element={<Users />} />\n        <Route path='/settings' element={<Settings />} />\n      </Routes>\n    </BrowserRouter>\n  );\n}\n```"},
+        {"role": "user", "content": "How do I add protected routes with authentication?"},
+        {"role": "assistant", "content": "Create a ProtectedRoute wrapper:\n\n```tsx\nfunction ProtectedRoute({ children }: { children: React.ReactNode }) {\n  const { user } = useAuth();\n  if (!user) return <Navigate to='/login' />;\n  return <>{children}</>;\n}\n\n// Usage\n<Route path='/dashboard' element={\n  <ProtectedRoute><Dashboard /></ProtectedRoute>\n} />\n```"},
+        {"role": "user", "content": "What about data fetching with React Query?"},
+        {"role": "assistant", "content": "Use TanStack React Query:\n\n```tsx\nfunction Users() {\n  const { data, isLoading } = useQuery({\n    queryKey: ['users'],\n    queryFn: () => fetch('/api/users').then(r => r.json()),\n  });\n\n  if (isLoading) return <Spinner />;\n  return <UserTable data={data} />;\n}\n```\n\nWrap your app in `QueryClientProvider`."},
+        {"role": "user", "content": "How do I add real-time updates?"},
+        {"role": "assistant", "content": "Combine React Query with WebSockets:\n\n```tsx\nuseEffect(() => {\n  const ws = new WebSocket('ws://api/live');\n  ws.onmessage = (event) => {\n    queryClient.invalidateQueries({ queryKey: ['users'] });\n  };\n  return () => ws.close();\n}, []);\n```\n\nOr use React Query's `refetchInterval` for polling."},
+        {"role": "user", "content": "Now build a complete real-time analytics dashboard with charts, filterable data tables, role-based access control, dark mode, responsive layout, and WebSocket-driven live updates. Include the full component architecture."},
+    ]},
+    {"id": 36, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a machine learning engineer helping with model deployment."},
+        {"role": "user", "content": "How do I save a trained PyTorch model?"},
+        {"role": "assistant", "content": "Save the state dict (recommended):\n\n```python\ntorch.save(model.state_dict(), 'model.pth')\n\n# Load\nmodel = MyModel()\nmodel.load_state_dict(torch.load('model.pth'))\nmodel.eval()\n```"},
+        {"role": "user", "content": "How do I convert it to ONNX for production?"},
+        {"role": "assistant", "content": "Export to ONNX:\n\n```python\nimport torch.onnx\n\ndummy_input = torch.randn(1, 3, 224, 224)\ntorch.onnx.export(model, dummy_input, 'model.onnx',\n                  input_names=['input'],\n                  output_names=['output'],\n                  dynamic_axes={'input': {0: 'batch_size'}})\n```\n\nThen use ONNX Runtime for inference which is often 2-3x faster."},
+        {"role": "user", "content": "What about model versioning?"},
+        {"role": "assistant", "content": "Use MLflow for model registry:\n\n```python\nimport mlflow\n\nwith mlflow.start_run():\n    mlflow.log_params({'lr': 0.001, 'epochs': 50})\n    mlflow.log_metrics({'accuracy': 0.95})\n    mlflow.pytorch.log_model(model, 'model',\n                             registered_model_name='my-classifier')\n```\n\nMLflow tracks versions, stages (staging/production), and lineage."},
+        {"role": "user", "content": "How do I handle A/B testing between model versions?"},
+        {"role": "assistant", "content": "Use a traffic splitting approach:\n\n```python\nimport random\n\ndef predict(input_data):\n    if random.random() < 0.1:  # 10% to new model\n        result = model_v2.predict(input_data)\n        log_prediction('v2', input_data, result)\n    else:\n        result = model_v1.predict(input_data)\n        log_prediction('v1', input_data, result)\n    return result\n```\n\nBetter: use a feature flag service like LaunchDarkly or a service mesh like Istio for traffic splitting."},
+        {"role": "user", "content": "Design a complete ML model serving infrastructure with auto-scaling, A/B testing, model versioning, canary deployments, monitoring for data drift, and rollback capabilities. Include architecture diagram description and implementation details."},
+    ]},
+    {"id": 37, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are an API design expert helping build a RESTful API."},
+        {"role": "user", "content": "What are the best practices for REST API design?"},
+        {"role": "assistant", "content": "Key REST API best practices:\n1. Use nouns for resources: `/users`, `/orders`\n2. HTTP methods for actions: GET, POST, PUT, PATCH, DELETE\n3. Plural resource names: `/users/123` not `/user/123`\n4. Nest related resources: `/users/123/orders`\n5. Use query params for filtering: `/users?role=admin`\n6. Return proper HTTP status codes\n7. Version your API: `/v1/users`"},
+        {"role": "user", "content": "How should I handle pagination?"},
+        {"role": "assistant", "content": "Use cursor-based pagination for large datasets:\n\n```json\nGET /api/v1/users?limit=20&cursor=eyJpZCI6MTAwfQ\n\nResponse:\n{\n  \"data\": [...],\n  \"pagination\": {\n    \"next_cursor\": \"eyJpZCI6MTIwfQ\",\n    \"has_more\": true\n  }\n}\n```\n\nCursor pagination is more efficient than offset-based for large tables and handles real-time data changes correctly."},
+        {"role": "user", "content": "What about error handling?"},
+        {"role": "assistant", "content": "Use a consistent error format:\n\n```json\n{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid email format\",\n    \"details\": [\n      {\"field\": \"email\", \"message\": \"Must be a valid email address\"}\n    ],\n    \"request_id\": \"req_abc123\"\n  }\n}\n```\n\nMap to proper HTTP codes: 400 validation, 401 auth, 403 forbidden, 404 not found, 429 rate limit, 500 server error."},
+        {"role": "user", "content": "How do I implement rate limiting?"},
+        {"role": "assistant", "content": "Use token bucket or sliding window:\n\n```python\nfrom fastapi import Request\nfrom slowapi import Limiter\n\nlimiter = Limiter(key_func=get_remote_address)\n\n@app.get('/api/users')\n@limiter.limit('100/minute')\nasync def get_users(request: Request):\n    ...\n```\n\nReturn `429 Too Many Requests` with `Retry-After` header. Use Redis for distributed rate limiting across multiple instances."},
+        {"role": "user", "content": "Design a complete API gateway with authentication, rate limiting, request validation, response caching, circuit breaking, API versioning, OpenAPI documentation, and webhook support. Include the FastAPI implementation."},
+    ]},
+    {"id": 38, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a testing expert helping write comprehensive tests."},
+        {"role": "user", "content": "How do I structure tests in pytest?"},
+        {"role": "assistant", "content": "Follow this structure:\n\n```\ntests/\n  conftest.py          # shared fixtures\n  unit/\n    test_models.py\n    test_services.py\n  integration/\n    test_api.py\n    test_database.py\n```\n\nUse fixtures for setup, parametrize for multiple cases, and markers for categorization."},
+        {"role": "user", "content": "How do I mock external API calls?"},
+        {"role": "assistant", "content": "Use `unittest.mock` or `responses`:\n\n```python\nfrom unittest.mock import patch, MagicMock\n\n@patch('myapp.services.requests.get')\ndef test_fetch_user(mock_get):\n    mock_get.return_value.json.return_value = {'name': 'Alice'}\n    mock_get.return_value.status_code = 200\n    \n    result = fetch_user(123)\n    assert result['name'] == 'Alice'\n    mock_get.assert_called_once()\n```"},
+        {"role": "user", "content": "What about testing async code?"},
+        {"role": "assistant", "content": "Use `pytest-asyncio`:\n\n```python\nimport pytest\n\n@pytest.mark.asyncio\nasync def test_async_endpoint(async_client):\n    response = await async_client.get('/api/users')\n    assert response.status_code == 200\n\n@pytest.fixture\nasync def async_client():\n    async with AsyncClient(app=app, base_url='http://test') as client:\n        yield client\n```"},
+        {"role": "user", "content": "How do I test database interactions?"},
+        {"role": "assistant", "content": "Use a test database with transactions:\n\n```python\n@pytest.fixture\nasync def db_session():\n    async with engine.begin() as conn:\n        await conn.run_sync(Base.metadata.create_all)\n    async with AsyncSession(engine) as session:\n        yield session\n        await session.rollback()\n    async with engine.begin() as conn:\n        await conn.run_sync(Base.metadata.drop_all)\n```\n\nUse testcontainers for PostgreSQL to match production."},
+        {"role": "user", "content": "Now create a complete testing strategy and implementation for a FastAPI microservice with 90%+ coverage, including unit tests, integration tests, contract tests, load tests, and a CI/CD pipeline configuration."},
+    ]},
+    {"id": 39, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are an infrastructure engineer helping with CI/CD pipeline design."},
+        {"role": "user", "content": "What CI/CD tool should I use for a Python project?"},
+        {"role": "assistant", "content": "GitHub Actions is a great choice for most projects:\n- Free for public repos, generous free tier for private\n- Native GitHub integration\n- Huge marketplace of actions\n- Matrix builds for multiple Python versions\n\nAlternatives: GitLab CI (good if self-hosting), CircleCI (fast), Jenkins (maximum flexibility but high maintenance)."},
+        {"role": "user", "content": "Show me a basic GitHub Actions workflow."},
+        {"role": "assistant", "content": "```yaml\nname: CI\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        python-version: ['3.10', '3.11', '3.12']\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: ${{ matrix.python-version }}\n      - run: pip install -r requirements.txt\n      - run: pytest tests/ --cov=app\n```"},
+        {"role": "user", "content": "How do I add deployment stages?"},
+        {"role": "assistant", "content": "Add environment-based deployment jobs:\n\n```yaml\ndeploy-staging:\n  needs: test\n  if: github.ref == 'refs/heads/develop'\n  environment: staging\n  steps:\n    - run: ./deploy.sh staging\n\ndeploy-production:\n  needs: test\n  if: github.ref == 'refs/heads/main'\n  environment: production\n  steps:\n    - run: ./deploy.sh production\n```\n\nUse GitHub Environments for approval gates and secrets scoping."},
+        {"role": "user", "content": "What about secrets management?"},
+        {"role": "assistant", "content": "Use GitHub encrypted secrets:\n\n```yaml\nsteps:\n  - name: Deploy\n    env:\n      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}\n      DATABASE_URL: ${{ secrets.DATABASE_URL }}\n    run: ./deploy.sh\n```\n\nFor more complex setups, use HashiCorp Vault or AWS Secrets Manager. Rotate secrets regularly and use OIDC for cloud provider auth instead of long-lived keys."},
+        {"role": "user", "content": "Design a complete CI/CD pipeline for a microservices architecture with 5 services, including automated testing, security scanning, container building, multi-environment deployment, rollback strategy, and monitoring integration. Include the full GitHub Actions configuration."},
+    ]},
+    {"id": 40, "cat": "multi-turn", "messages": [
+        {"role": "system", "content": "You are a distributed systems architect."},
+        {"role": "user", "content": "What is the CAP theorem?"},
+        {"role": "assistant", "content": "The CAP theorem states that a distributed system can only guarantee two of three properties:\n- Consistency: every read gets the latest write\n- Availability: every request gets a response\n- Partition tolerance: system works despite network failures\n\nSince network partitions are inevitable, you really choose between CP (consistent but may reject requests) and AP (available but may serve stale data)."},
+        {"role": "user", "content": "How does eventual consistency work?"},
+        {"role": "assistant", "content": "Eventual consistency means replicas converge to the same state given enough time without new updates.\n\nMechanisms:\n1. Anti-entropy: background gossip protocol syncs replicas\n2. Read repair: fix stale reads on detection\n3. Vector clocks: track causality to resolve conflicts\n\nExample: DynamoDB uses last-writer-wins with vector clocks. Cassandra uses timestamp-based conflict resolution."},
+        {"role": "user", "content": "What about consensus algorithms?"},
+        {"role": "assistant", "content": "Main consensus algorithms:\n\n**Raft**: Leader-based, understandable. Used in etcd, Consul. Leader election + log replication.\n\n**Paxos**: More theoretical, harder to implement. Single-decree and Multi-Paxos variants.\n\n**PBFT**: Byzantine fault tolerant, handles malicious nodes. Used in some blockchain systems. Requires 3f+1 nodes for f failures.\n\nRaft is the practical choice for most systems."},
+        {"role": "user", "content": "How do I handle distributed transactions?"},
+        {"role": "assistant", "content": "Options:\n\n1. **Two-Phase Commit (2PC)**: Coordinator asks all participants to prepare, then commit. Blocking if coordinator fails.\n\n2. **Saga Pattern**: Chain of local transactions with compensating actions for rollback. Better for microservices.\n\n3. **Outbox Pattern**: Write events to an outbox table atomically, then publish asynchronously.\n\n```python\n# Saga example\nasync def create_order_saga():\n    order = await create_order()       # Step 1\n    try:\n        await reserve_inventory(order)  # Step 2\n        await charge_payment(order)     # Step 3\n    except Exception:\n        await compensate(order)         # Rollback\n```"},
+        {"role": "user", "content": "Design a complete distributed system architecture for a global e-commerce platform handling 1M concurrent users, covering data partitioning, replication strategy, consensus protocol selection, distributed caching, event sourcing, CQRS, and cross-region failover. Include implementation details and trade-off analysis."},
+    ]},
 ]
 
 # Model mapping
@@ -154,49 +282,122 @@ A verdict of EQUAL means both are acceptable. B_BETTER means the baseline (opus)
     return {"a": 0, "b": 0, "verdict": "ERROR"}
 
 
-def context_optimize(prompt: str, mode: str) -> str:
-    """Apply context optimization (simulated for benchmark)."""
+def format_messages_as_prompt(messages: List[Dict[str, str]]) -> str:
+    """Format a multi-turn conversation into a single prompt string for CLI."""
+    parts = []
+    for msg in messages:
+        role = msg["role"].capitalize()
+        parts.append(f"[{role}]: {msg['content']}")
+    return "\n".join(parts)
+
+
+def _safe_transforms(text: str) -> str:
+    """Safe context optimizations: whitespace normalization and markdown noise removal."""
+    # Normalize whitespace: collapse runs of spaces/tabs (not newlines) to single space
+    text = re.sub(r'[^\S\n]+', ' ', text)
+    # Collapse 3+ consecutive newlines to 2
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # Strip markdown formatting noise: bold, italic, inline code markers
+    text = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', text)  # **bold** / *italic*
+    text = re.sub(r'`([^`]+)`', r'\1', text)                # `inline code`
+    # Remove markdown heading markers (keep the text)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # Remove horizontal rules
+    text = re.sub(r'^[-*_]{3,}\s*$', '', text, flags=re.MULTILINE)
+    # Clean up any resulting double-blank lines again
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
+def _truncate_conversation(messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Truncate multi-turn conversation: keep system + last 2 user messages + last assistant message.
+
+    This simulates what the real aggressive optimizer does — drops the middle of
+    the conversation to save tokens while preserving context (system prompt) and
+    the most recent exchange.
+    """
+    system_msgs = [m for m in messages if m["role"] == "system"]
+    user_msgs = [m for m in messages if m["role"] == "user"]
+    assistant_msgs = [m for m in messages if m["role"] == "assistant"]
+
+    kept = list(system_msgs)  # always keep system messages
+    # Keep last assistant message (if any) for context continuity
+    if assistant_msgs:
+        kept.append(assistant_msgs[-1])
+    # Keep last 2 user messages
+    kept.extend(user_msgs[-2:] if len(user_msgs) >= 2 else user_msgs)
+
+    return kept
+
+
+def context_optimize(prompt_or_messages, mode: str):
+    """Apply context optimization for benchmark.
+
+    Accepts either a plain string (single-turn) or a list of message dicts (multi-turn).
+    Returns the optimized prompt string ready for CLI.
+
+    Modes:
+      safe       — normalize whitespace, collapse empty lines, strip markdown formatting
+      aggressive — all safe transforms PLUS truncate conversation history (multi-turn)
+    """
+    # Handle multi-turn conversations (list of message dicts)
+    if isinstance(prompt_or_messages, list):
+        messages = prompt_or_messages
+        if mode == "aggressive":
+            # Truncate conversation before formatting
+            messages = _truncate_conversation(messages)
+        # Apply safe text transforms to each message's content
+        cleaned = []
+        for msg in messages:
+            cleaned.append({
+                "role": msg["role"],
+                "content": _safe_transforms(msg["content"]),
+            })
+        return format_messages_as_prompt(cleaned)
+
+    # Handle single-turn string prompts
+    text = prompt_or_messages
     if mode == "safe":
-        # Safe: remove extra whitespace, normalize
-        return re.sub(r'\s+', ' ', prompt).strip()
+        return _safe_transforms(text)
     elif mode == "aggressive":
-        # Aggressive: safe + remove filler words
-        optimized = re.sub(r'\s+', ' ', prompt).strip()
-        fillers = ["please", "could you", "can you", "I would like you to", "kindly"]
-        for f in fillers:
-            optimized = re.sub(rf'\b{f}\b', '', optimized, flags=re.IGNORECASE)
-        return re.sub(r'\s+', ' ', optimized).strip()
-    return prompt
+        # For single-turn, aggressive is the same as safe (no conversation to truncate)
+        return _safe_transforms(text)
+    return text
 
 
 def run_variant(prompts: List[Dict], variant: str) -> List[Dict]:
     """Run a single variant across all prompts."""
     results = []
     for p in prompts:
-        prompt_text = p["prompt"]
+        is_multi_turn = "messages" in p
+        # For multi-turn prompts, build the raw prompt by formatting all messages
+        # For single-turn, use the prompt string directly
+        raw_prompt = format_messages_as_prompt(p["messages"]) if is_multi_turn else p["prompt"]
+        # For classification, use the last user message (multi-turn) or the prompt (single-turn)
+        classify_text = p["messages"][-1]["content"] if is_multi_turn else p["prompt"]
 
         # Determine model and optimization
         if variant == "V1":  # Baseline: always opus
             model = "opus"
-            prompt_text = p["prompt"]
+            prompt_text = raw_prompt
         elif variant == "V2":  # Router only
-            tier = classify_prompt(p["prompt"])
+            tier = classify_prompt(classify_text)
             model = TIER_TO_MODEL[tier]
-            prompt_text = p["prompt"]
+            prompt_text = raw_prompt
         elif variant == "V3":  # Safe optimize only
             model = "opus"
-            prompt_text = context_optimize(p["prompt"], "safe")
+            prompt_text = context_optimize(p["messages"] if is_multi_turn else p["prompt"], "safe")
         elif variant == "V4":  # Router + Safe
-            tier = classify_prompt(p["prompt"])
+            tier = classify_prompt(classify_text)
             model = TIER_TO_MODEL[tier]
-            prompt_text = context_optimize(p["prompt"], "safe")
+            prompt_text = context_optimize(p["messages"] if is_multi_turn else p["prompt"], "safe")
         elif variant == "V5":  # Aggressive optimize only
             model = "opus"
-            prompt_text = context_optimize(p["prompt"], "aggressive")
+            prompt_text = context_optimize(p["messages"] if is_multi_turn else p["prompt"], "aggressive")
         elif variant == "V6":  # Router + Aggressive
-            tier = classify_prompt(p["prompt"])
+            tier = classify_prompt(classify_text)
             model = TIER_TO_MODEL[tier]
-            prompt_text = context_optimize(p["prompt"], "aggressive")
+            prompt_text = context_optimize(p["messages"] if is_multi_turn else p["prompt"], "aggressive")
         else:
             raise ValueError(f"Unknown variant: {variant}")
 
@@ -205,10 +406,10 @@ def run_variant(prompts: List[Dict], variant: str) -> List[Dict]:
 
         results.append({
             "prompt_id": p["id"],
-            "category": p["cat"],
+            "category": p.get("cat", "multi-turn"),
             "variant": variant,
             "model": model,
-            "tier": classify_prompt(p["prompt"]) if "V2" in variant or "V4" in variant or "V6" in variant else "n/a",
+            "tier": classify_prompt(classify_text) if "V2" in variant or "V4" in variant or "V6" in variant else "n/a",
             "cost": round(cost, 6),
             "latency_ms": round(latency, 1),
             "response_length": len(response),
@@ -217,7 +418,8 @@ def run_variant(prompts: List[Dict], variant: str) -> List[Dict]:
             "optimize_mode": "safe" if variant in ("V3", "V4") else "aggressive" if variant in ("V5", "V6") else "none",
         })
 
-        print(f"  {variant} #{p['id']:2d} [{p['cat']:7s}] → {model:7s} ${cost:.6f} {latency:.0f}ms")
+        cat_label = p.get("cat", "multi-turn")
+        print(f"  {variant} #{p['id']:2d} [{cat_label:10s}] → {model:7s} ${cost:.6f} {latency:.0f}ms")
 
     return results
 
@@ -231,8 +433,11 @@ def run_judge(prompts: List[Dict], baseline: List[Dict], variant_results: List[D
             judgments.append({"a": 10, "b": 10, "verdict": "EQUAL"})
             continue
 
+        p = prompts[base["prompt_id"] - 1]
+        # For multi-turn prompts, use the last user message as the judge prompt
+        judge_p = p["messages"][-1]["content"] if "messages" in p else p["prompt"]
         j = judge_quality(
-            prompts[base["prompt_id"] - 1]["prompt"],
+            judge_p,
             var["response_preview"], var["model"],
             base["response_preview"], "opus",
         )
@@ -246,7 +451,7 @@ def run_judge(prompts: List[Dict], baseline: List[Dict], variant_results: List[D
 
 def main():
     parser = argparse.ArgumentParser(description="Nadir 6-way Benchmark")
-    parser.add_argument("--prompts", type=int, default=30, help="Number of prompts (default: 30)")
+    parser.add_argument("--prompts", type=int, default=40, help="Number of prompts (default: 40)")
     parser.add_argument("--output", type=str, default="benchmark/results", help="Output directory")
     parser.add_argument("--skip-judge", action="store_true", help="Skip LLM judge (faster)")
     parser.add_argument("--variants", nargs="+", default=["V1", "V2", "V3", "V4", "V5", "V6"])
@@ -348,7 +553,7 @@ def main():
     if baseline:
         print(f"\n  Per-category savings (Router+Aggressive):")
         v6 = all_results.get("V6", all_results.get("V4", []))
-        for cat in ["simple", "medium", "complex"]:
+        for cat in ["simple", "medium", "complex", "multi-turn"]:
             base_cat = sum(r["cost"] for r in baseline if r["category"] == cat)
             v6_cat = sum(r["cost"] for r in v6 if r["category"] == cat)
             sav = (1 - v6_cat / base_cat) * 100 if base_cat > 0 else 0

@@ -1,9 +1,9 @@
 const posts = [
   {
     date: "March 22, 2026",
-    title: "48% Savings Proven: Our 6-Way Routing Benchmark",
+    title: "10-30% Savings: Our Routing Benchmark Results",
     excerpt:
-      "We tested 6 configurations across diverse real-world prompts. Router + aggressive optimize hit 48% savings with quality verified by independent LLM-as-judge.",
+      "We tested routing configurations across 30 real-world prompts. Router + safe optimize saves 10% overall, up to 30% on medium-complexity prompts, with 87% quality maintained.",
     href: "/blog/6-way-routing-benchmark-results.html",
   },
   {

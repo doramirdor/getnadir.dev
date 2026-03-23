@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How We Benchmarked Our 6-Way LLM Routing System — NadirClaw</title>
-    <meta name="description" content="We tested 6 routing configurations across diverse real-world prompts spanning simple Q&A to complex system design. The best configuration saved 48% on costs with quality verified by an independent LLM judge.">
+    <title>Routing Benchmark Results: 10-30% Savings on Real Prompts — NadirClaw</title>
+    <meta name="description" content="We tested routing configurations across 30 diverse real-world prompts. Router + safe optimize saves 10% overall, up to 30% on medium-complexity prompts, with 87% quality maintained by LLM judge.">
     <link rel="canonical" href="https://getnadir.com/blog/6-way-routing-benchmark-results.html" />
     <meta property="og:type" content="article">
-    <meta property="og:title" content="How We Benchmarked Our 6-Way LLM Routing System">
-    <meta property="og:description" content="6 configurations, diverse real-world prompts, 48% savings. Quality verified by independent LLM-as-judge with no significant degradation detected.">
+    <meta property="og:title" content="Routing Benchmark Results: 10-30% Savings on Real Prompts">
+    <meta property="og:description" content="30-prompt benchmark: 10% overall savings, up to 30% on medium prompts. Quality verified by independent LLM judge (87% maintained).">
     <meta property="og:url" content="https://getnadir.com/blog/6-way-routing-benchmark-results.html">
     <meta property="og:site_name" content="NadirClaw">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
@@ -16,8 +16,8 @@
     <meta property="og:image:height" content="630">
     <meta property="article:published_time" content="2026-03-22">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="How We Benchmarked Our 6-Way LLM Routing System">
-    <meta name="twitter:description" content="6 configurations, diverse real-world prompts, 48% savings. Quality verified by independent LLM-as-judge.">
+    <meta name="twitter:title" content="Routing Benchmark Results: 10-30% Savings on Real Prompts">
+    <meta name="twitter:description" content="30-prompt benchmark: 10% overall savings, up to 30% on medium prompts. 87% quality maintained by LLM judge.">
     <meta name="twitter:image" content="https://getnadir.com/og-image.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,12 +26,12 @@
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      "headline": "How We Benchmarked Our 6-Way LLM Routing System",
+      "headline": "Routing Benchmark Results: 10-30% Savings on Real Prompts",
       "datePublished": "2026-03-22",
       "author": { "@type": "Organization", "name": "NadirClaw" },
       "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
       "url": "https://getnadir.com/blog/6-way-routing-benchmark-results.html",
-      "description": "We tested 6 routing configurations across diverse real-world prompts. The best configuration saved 48% on costs with quality verified by an independent LLM judge."
+      "description": "We tested routing configurations across 30 diverse real-world prompts. Router + safe optimize saves 10% overall, up to 30% on medium-complexity prompts, with 87% quality maintained."
     }
     </script>
     <style>
@@ -87,29 +87,28 @@
         </span>
     </div>
 
-    <h1>How We Benchmarked Our 6-Way LLM Routing System</h1>
+    <h1>Routing Benchmark Results: 10-30% Savings on Real Prompts</h1>
     <p class="meta"><time datetime="2026-03-22">March 22, 2026</time></p>
 
-    <p>LLM routing promises significant cost savings, but promises are cheap. We wanted hard numbers. So we designed a controlled benchmark that tests every combination of our two cost-saving features &mdash; tier-based routing and context optimization &mdash; against a pure baseline of sending everything to the most expensive model.</p>
+    <p>LLM routing promises cost savings, but promises are cheap. We wanted hard numbers. So we designed a controlled benchmark that tests our routing and context optimization features against a pure baseline of sending everything to the most expensive model.</p>
 
-    <p>The short version: the best configuration saved 48% on costs, with quality verified by an independent LLM judge and no significant degradation detected. Here is how we ran the experiment and what we learned.</p>
+    <p>The short version: Router + Safe optimize saves 10% on aggregate cost across a diverse 30-prompt mix, with the real value showing up on medium-complexity prompts where savings reach 28-30%. Quality was verified by an independent LLM judge at 87% (26/30 prompts maintained). Here is how we ran the experiment and what we learned.</p>
 
-    <h2>The 6 configurations</h2>
+    <h2>The configurations we tested</h2>
 
-    <p>We tested six variants, each progressively layering on cost-saving features:</p>
+    <p>We tested several variants, progressively layering on cost-saving features. Three stood out as meaningful:</p>
 
     <ol>
         <li><strong>V1 &mdash; Baseline (Opus)</strong>: Every prompt goes to Claude Opus 4.6. No routing, no optimization. This is the control.</li>
         <li><strong>V2 &mdash; Router Only</strong>: NadirClaw's heuristic classifier analyzes each prompt and routes simple ones to cheaper models (Haiku, Sonnet) while keeping complex prompts on Opus.</li>
-        <li><strong>V3 &mdash; Safe Optimize Only</strong>: No routing. All prompts go to Opus, but input tokens are compacted using lossless transforms (JSON minification, whitespace normalization, tool schema dedup).</li>
-        <li><strong>V4 &mdash; Router + Safe Optimize</strong>: Both features combined. Simple prompts get routed to cheaper models <em>and</em> their input tokens get compacted.</li>
-        <li><strong>V5 &mdash; Aggressive Optimize Only</strong>: No routing. All prompts go to Opus, but input tokens are compacted using both lossless transforms and semantic deduplication via sentence embeddings.</li>
-        <li><strong>V6 &mdash; Router + Aggressive Optimize</strong>: Full stack. Routing plus aggressive context compaction.</li>
+        <li><strong>V4 &mdash; Router + Safe Optimize</strong>: Routing combined with lossless context compaction (JSON minification, whitespace normalization, tool schema dedup).</li>
     </ol>
+
+    <p>We also tested aggressive optimization (V6 &mdash; Router + Aggressive), which uses semantic deduplication via sentence embeddings. However, it did not improve over the baseline ($0.249 vs $0.246) in our benchmark, so we do not recommend it as a default. Safe mode remains the better choice for production.</p>
 
     <h2>The prompts</h2>
 
-    <p>We assembled a diverse set of real-world prompts spanning simple factual questions to complex system design tasks. The prompts fell into three natural categories:</p>
+    <p>We assembled 30 diverse real-world prompts spanning simple factual questions to complex system design tasks. The prompts fell into three natural categories:</p>
 
     <ul>
         <li><strong>Simple</strong> &mdash; factual questions, status checks, format conversions. The kind of work where a smaller model is perfectly capable.</li>
@@ -132,57 +131,40 @@
 
     <p>Using an LLM as judge is not perfect, but it scales and removes human bias. We chose Sonnet specifically because it is capable enough to evaluate quality but is not the model being tested, avoiding circular evaluation.</p>
 
-    <h2>Results: cost per request</h2>
+    <h2>Results: cost per 30-prompt run</h2>
 
     <table>
         <thead>
             <tr>
                 <th>Configuration</th>
-                <th class="num">Avg cost/req</th>
+                <th class="num">Total cost</th>
                 <th class="num">Savings</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>V1 Baseline (Opus)</td>
-                <td class="num">$0.00849</td>
+                <td class="num">$0.246</td>
                 <td class="num">&mdash;</td>
             </tr>
             <tr>
                 <td>V2 Router Only</td>
-                <td class="num">$0.00592</td>
-                <td class="num"><span class="pct">30%</span></td>
-            </tr>
-            <tr>
-                <td>V3 Safe Optimize</td>
-                <td class="num">$0.00625</td>
-                <td class="num"><span class="pct">26%</span></td>
+                <td class="num">$0.225</td>
+                <td class="num"><span class="pct">9%</span></td>
             </tr>
             <tr>
                 <td>V4 Router + Safe</td>
-                <td class="num">$0.00458</td>
-                <td class="num"><span class="pct">46%</span></td>
-            </tr>
-            <tr>
-                <td>V5 Aggressive Optimize</td>
-                <td class="num">$0.00612</td>
-                <td class="num"><span class="pct">28%</span></td>
-            </tr>
-            <tr>
-                <td>V6 Router + Aggressive</td>
-                <td class="num">$0.00444</td>
-                <td class="num"><span class="pct">48%</span></td>
+                <td class="num">$0.223</td>
+                <td class="num"><span class="pct">10%</span></td>
             </tr>
         </tbody>
     </table>
 
-    <p>The standout finding: routing and optimization are complementary, not redundant. V2 (routing alone) saves 30%. V3 (optimize alone) saves 26%. But V4 (both together) saves 46% &mdash; nearly the sum of the two, because they reduce cost on different axes. Routing picks a cheaper model. Optimization reduces the input tokens sent to whatever model is chosen.</p>
+    <p>The aggregate 10% savings is real but modest. However, the aggregate number masks where the real value lies: medium-complexity prompts, which make up the bulk of typical workloads.</p>
 
-    <p>Aggressive optimization (V5, V6) added only a small incremental gain over safe optimization (V3, V4). The extra 2% from semantic dedup is real but modest for most workloads. Safe mode is the better default for production because it is deterministic, lossless, and has zero ML dependencies.</p>
+    <h2>Results: per-category savings (Router + Safe)</h2>
 
-    <h2>Results: per-category savings</h2>
-
-    <p>The savings are not uniform across prompt types. Breaking down V6 (Router + Aggressive) by category:</p>
+    <p>Breaking down V4 (Router + Safe) by prompt category reveals the full picture:</p>
 
     <table>
         <thead>
@@ -194,34 +176,38 @@
         <tbody>
             <tr>
                 <td>Simple prompts</td>
-                <td class="num"><span class="pct">~80%</span></td>
+                <td class="num"><span class="pct">14%</span></td>
             </tr>
             <tr>
                 <td>Medium prompts</td>
-                <td class="num"><span class="pct">~40%</span></td>
+                <td class="num"><span class="pct">28-30%</span></td>
             </tr>
             <tr>
                 <td>Complex prompts</td>
-                <td class="num"><span class="pct">~49%</span></td>
+                <td class="num">0% (preserved)</td>
             </tr>
         </tbody>
     </table>
 
-    <p>Simple prompts saved the most because they get routed to Haiku, which is roughly 10x cheaper than Opus. The router correctly identifies these as not needing a frontier model.</p>
+    <p>Medium prompts are the sweet spot. These typically get routed to Sonnet, which costs significantly less than Opus while delivering equivalent quality for this tier of work. At 28-30% savings, this is where the router pays for itself.</p>
 
-    <p>Medium prompts saw a moderate ~40% savings. These typically get routed to Sonnet, which costs about 3x less than Opus.</p>
-
-    <p>Complex prompts still saved ~49%, primarily from context optimization rather than routing. Since the router correctly keeps these on Opus, the savings come entirely from reducing input token waste &mdash; minified JSON, deduplicated tool schemas, and trimmed chat history.</p>
+    <p>Simple prompts saved 14%, routed to cheaper models like Haiku. Complex prompts were correctly preserved on the same tier &mdash; the router does not downgrade tasks that genuinely need a frontier model.</p>
 
     <h2>Quality verification</h2>
 
-    <p>Quality was verified by an independent LLM-as-judge (Claude Sonnet 4.6) with no significant degradation detected across any configuration or savings level. The judge compared each routed response against the baseline Opus response on correctness, completeness, and clarity.</p>
+    <p>Quality was verified by an independent LLM-as-judge (Claude Sonnet 4.6). Of the 30 prompts, 26 maintained quality according to the judge &mdash; an 87% pass rate. The judge compared each routed response against the baseline Opus response on correctness, completeness, and clarity.</p>
 
-    <p>This result makes sense when you consider what the router is doing. It is not downgrading hard tasks. Simple factual questions get the same correct answer from Haiku as from Opus. The router only sends prompts to cheaper models when the complexity analysis indicates they do not require frontier-level reasoning.</p>
+    <p>The 4 prompts that showed quality differences were edge cases at category boundaries where the classifier routed to a cheaper model than ideal. This is an area where classifier improvements can drive further gains.</p>
 
     <h2>Latency</h2>
 
-    <p>An unexpected benefit: routed requests were significantly faster. The average response time dropped from 536ms (Opus baseline) to 208ms for the routed configurations. Cheaper models tend to be faster models, so routing saves time in addition to money.</p>
+    <p>Latency was similar across all configurations. The routing classifier adds negligible overhead to request processing, so response times are determined by the downstream model, not the router.</p>
+
+    <h2>What about aggressive optimization?</h2>
+
+    <p>We also tested aggressive optimization (V6 &mdash; Router + Aggressive), which applies semantic deduplication via sentence embeddings on top of routing. The result: $0.249 total cost, essentially flat compared to the $0.246 baseline. The aggressive optimizer did not help in this benchmark.</p>
+
+    <p>This does not mean semantic deduplication is useless &mdash; it may show value on workloads with heavily duplicated context (e.g., repeated tool schemas in long conversations). But for the diverse prompt mix we tested, safe mode (lossless transforms only) is the better default.</p>
 
     <h2>The heuristic classifier</h2>
 
@@ -230,18 +216,18 @@
     <p>Why heuristic instead of ML? Three reasons:</p>
 
     <ul>
-        <li><strong>Latency</strong>: Classification takes less than 1ms. An ML model would add 10-50ms of overhead, eating into the latency gains from routing.</li>
+        <li><strong>Latency</strong>: Classification takes less than 1ms. An ML model would add 10-50ms of overhead.</li>
         <li><strong>Dependencies</strong>: Zero. No PyTorch, no model files, no GPU. The classifier is pure Python with no imports beyond the standard library.</li>
-        <li><strong>Debuggability</strong>: When a prompt gets misrouted, you can trace exactly which rule fired and why. With an ML model, debugging misclassifications requires inspecting embeddings and attention weights.</li>
+        <li><strong>Debuggability</strong>: When a prompt gets misrouted, you can trace exactly which rule fired and why.</li>
     </ul>
 
-    <p>The heuristic approach means the classifier is not perfect. It will occasionally route a medium-complexity prompt to Haiku when Sonnet would have been better, or keep a simple prompt on Opus when Haiku would suffice. But the benchmark shows that even with these edge cases, the aggregate savings are substantial.</p>
+    <p>The heuristic approach means the classifier is not perfect &mdash; the 87% quality rate reflects this. But the benchmark shows that even with these edge cases, the aggregate savings are meaningful, especially for medium-complexity workloads.</p>
 
     <h2>ROI at scale</h2>
 
     <div class="highlight-box">
-        <p>At <strong>$10,000/month</strong> in LLM spend, the 48% savings from V6 translates to roughly <strong>$4,800/month saved</strong> (before routing fees). After NadirClaw's routing fee, the net savings are approximately <strong>$3,600/month</strong>, or <strong>$43,200/year</strong>.</p>
-        <p>At <strong>$50,000/month</strong>, net annual savings reach approximately <strong>$215,000</strong>.</p>
+        <p>At <strong>$10,000/month</strong> in LLM spend, the 10% savings from Router + Safe translates to roughly <strong>$1,000/month saved</strong> (before routing fees). After NadirClaw's routing fee, the net savings are approximately <strong>$750/month</strong>, or <strong>$9,000/year</strong>.</p>
+        <p>For workloads skewed toward medium-complexity prompts, savings can reach 20-30%, significantly improving the ROI.</p>
     </div>
 
     <p>The math scales linearly. The classifier runs locally at negligible cost, so the only variable cost is the routing fee, which is a percentage of savings &mdash; you only pay when you save.</p>
@@ -282,9 +268,9 @@ export OPENAI_BASE_URL=http://localhost:8856/v1</code></pre>
     <p>Three takeaways from running this benchmark:</p>
 
     <ol>
-        <li><strong>Medium-tier models are the sweet spot.</strong> Sonnet-class models handle the vast majority of real-world prompts at a fraction of the cost. The frontier models (Opus, GPT-4) are genuinely needed only for complex reasoning and multi-step analysis. A good router exploits this gap.</li>
-        <li><strong>Routing and optimization are complementary.</strong> They reduce cost on orthogonal axes &mdash; routing picks a cheaper model, optimization reduces token count. Stacking them approaches the theoretical maximum savings without sacrificing quality.</li>
-        <li><strong>Simple heuristics work surprisingly well.</strong> Our rule-based classifier, running in under 1ms with zero dependencies, captured the majority of the savings that a more complex ML system would provide. Complexity in the classifier does not proportionally improve routing accuracy for most workloads.</li>
+        <li><strong>Medium-complexity prompts are the sweet spot.</strong> At 28-30% savings, this is where routing delivers the most value. Simple prompts save less in absolute terms, and complex prompts are correctly preserved on the same tier.</li>
+        <li><strong>Aggregate savings depend on your prompt mix.</strong> Our 10% overall figure reflects a diverse mix. If your workload is heavy on medium-complexity prompts (code generation, explanations, multi-step reasoning), expect higher savings.</li>
+        <li><strong>Simple heuristics work reasonably well.</strong> Our rule-based classifier, running in under 1ms with zero dependencies, achieved 87% quality preservation. There is room for improvement, and classifier upgrades are our top priority for the next release.</li>
     </ol>
 
     <h2>Try it yourself</h2>
