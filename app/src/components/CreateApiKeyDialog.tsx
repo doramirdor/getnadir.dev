@@ -511,26 +511,17 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
               <Switch checked={fallbackEnabled} onCheckedChange={setFallbackEnabled} />
             </div>
 
-            {fallbackEnabled && (
+            {fallbackEnabled && routingEnabled && (
               <div className="space-y-3">
-                {routingEnabled ? (
-                  <p className="text-xs text-muted-foreground">
-                    Complex model is primary. Reorder or add up to 3 fallback models.
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Choose your models in order. Primary is tried first; fallbacks used on failure. Up to 3 models.
-                  </p>
-                )}
-
-                {/* Current chain */}
+                <p className="text-xs text-muted-foreground">
+                  Complex model is primary. Reorder the fallback chain below.
+                </p>
                 {fallbackChain.map((id, idx) => {
                   const m = getModel(id);
                   return (
                     <div key={id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 group">
                       <span className="w-5 text-xs text-muted-foreground font-mono">{idx + 1}.</span>
                       <span className="text-sm flex-1 font-medium">{m?.name || id}</span>
-                      {m && <span className="text-[10px] text-muted-foreground">{pricingLabel(m)}</span>}
                       {idx === 0 && <Badge className="text-[10px] bg-primary/10 text-primary border-0">Primary</Badge>}
                       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={idx === 0} onClick={() => moveFallback(idx, "up")}>
@@ -539,29 +530,77 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={idx === fallbackChain.length - 1} onClick={() => moveFallback(idx, "down")}>
                           <ArrowDown className="w-3 h-3" />
                         </Button>
-                        {!routingEnabled && (
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500" onClick={() => removeFromFallback(id)}>
-                            ✕
-                          </Button>
-                        )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
 
-                {/* Add model (when routing is off) */}
-                {!routingEnabled && fallbackChain.length < 3 && (
-                  <Select onValueChange={addToFallback}>
-                    <SelectTrigger className="border-dashed"><SelectValue placeholder="+ Add model to chain..." /></SelectTrigger>
+            {fallbackEnabled && !routingEnabled && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Choose your models. Primary is tried first; fallbacks on failure.
+                </p>
+
+                {/* Slot 1: Primary (required) */}
+                <div className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center font-bold">1</span>
+                    <span className="text-sm font-medium">Primary Model</span>
+                    <span className="text-xs text-muted-foreground">Required</span>
+                  </div>
+                  <Select value={fallbackChain[0] || ""} onValueChange={(v) => {
+                    const c = [...fallbackChain]; c[0] = v; setFallbackChain(c.filter(Boolean));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Select primary model..." /></SelectTrigger>
                     <SelectContent>
-                      {sortedModels
-                        .filter((m) => !fallbackChain.includes(m.id))
-                        .map((m) => (
-                          <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
-                        ))}
+                      {sortedModels.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                )}
+                </div>
+
+                {/* Slot 2: First fallback (required) */}
+                <div className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center font-bold">2</span>
+                    <span className="text-sm font-medium">First Fallback</span>
+                    <span className="text-xs text-muted-foreground">Required</span>
+                  </div>
+                  <Select value={fallbackChain[1] || ""} onValueChange={(v) => {
+                    const c = [...fallbackChain]; c[1] = v; setFallbackChain(c.filter(Boolean));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Select fallback model..." /></SelectTrigger>
+                    <SelectContent>
+                      {sortedModels.filter((m) => m.id !== fallbackChain[0]).map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Slot 3: Second fallback (optional) */}
+                <div className="border border-dashed rounded-lg p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center font-bold">3</span>
+                    <span className="text-sm font-medium">Second Fallback</span>
+                    <span className="text-xs text-muted-foreground">Optional</span>
+                  </div>
+                  <Select value={fallbackChain[2] || "__none__"} onValueChange={(v) => {
+                    if (v === "__none__") { setFallbackChain(fallbackChain.slice(0, 2)); return; }
+                    const c = [...fallbackChain]; c[2] = v; setFallbackChain(c.filter(Boolean));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="None (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No third model</SelectItem>
+                      {sortedModels.filter((m) => !fallbackChain.slice(0, 2).includes(m.id)).map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
 
@@ -570,6 +609,46 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
                 Fallback disabled. If the model fails, the request returns an error.
               </div>
             )}
+
+            {/* Context Optimize */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded-lg bg-green-50">
+                  <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 12.5-6-3-6 3"/><path d="m18 18-6-3-6 3"/><path d="m18 7-6-3-6 3"/></svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Context Optimize</p>
+                  <p className="text-xs text-muted-foreground">Reduce input tokens before sending to the model</p>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-11">
+                {(["off", "safe", "aggressive"] as const).map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setOptimizeMode(opt)}
+                    className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      optimizeMode === opt
+                        ? opt === "off"
+                          ? "bg-gray-900 text-white"
+                          : opt === "safe"
+                          ? "bg-green-600 text-white"
+                          : "bg-orange-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                  </button>
+                ))}
+              </div>
+              {optimizeMode !== "off" && (
+                <p className="text-xs text-muted-foreground ml-11 mt-2">
+                  {optimizeMode === "safe"
+                    ? "Lossless transforms: whitespace, empty messages, duplicate system prompts"
+                    : "Safe + semantic dedup using sentence embeddings"}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -635,11 +714,21 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
                 )}
               </div>
 
+              {/* Context Optimize */}
+              <div className="p-3 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Context Optimize</span>
+                <Badge variant={optimizeMode !== "off" ? "default" : "outline"} className={`text-xs ${
+                  optimizeMode === "safe" ? "bg-green-600" : optimizeMode === "aggressive" ? "bg-orange-600" : ""
+                }`}>
+                  {optimizeMode.charAt(0).toUpperCase() + optimizeMode.slice(1)}
+                </Badge>
+              </div>
+
               {/* Benchmark */}
               <div className="p-3 flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Benchmark (auto)</span>
                 <span className="text-xs font-medium">
-                  {getModel(complexModel || sortedModels[sortedModels.length - 1]?.id)?.name || "—"}
+                  {getModel(complexModel || fallbackChain[0] || sortedModels[sortedModels.length - 1]?.id)?.name || "—"}
                 </span>
               </div>
             </div>
