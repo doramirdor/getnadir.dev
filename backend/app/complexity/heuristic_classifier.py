@@ -2,13 +2,17 @@
 Zero-dependency heuristic prompt complexity classifier.
 
 Pure rule-based scoring with <1ms latency, no ML models needed.
-Designed to correctly route ~80% of prompts as a reliable fallback
-when ML-based classifiers are unavailable.
+Outputs ABSTRACT TIERS only — no model knowledge.
+The tier_model_selector maps tiers to the user's configured models by price.
 
-Scores prompts on simple/complex indicators and maps to three tiers:
-  score <= -2  -> SIMPLE  (tier 1) -> cheapest model
-  score -1..1  -> MEDIUM  (tier 2) -> mid-tier model
-  score >= 2   -> COMPLEX (tier 3) -> premium model
+Scoring thresholds (tuned for quality preservation):
+  score <= -3  -> SIMPLE  (tier 1) -> cheapest model
+  score -2..2  -> MEDIUM  (tier 2) -> mid-tier model (safe default)
+  score >= 3   -> COMPLEX (tier 3) -> premium model
+
+Design principle: MEDIUM is the default. Only clearly trivial prompts
+go to SIMPLE, only clearly complex prompts go to COMPLEX. When in doubt,
+route to MEDIUM — it's the quality-cost sweet spot.
 """
 
 import json
@@ -191,11 +195,32 @@ class HeuristicClassifier:
             score -= 1
             reasons.append("definition_request")
 
-        # --- COMPLEX indicators (score +1 each) ---
+        # --- MEDIUM indicators (score +1 each) ---
+        # These push prompts from simple toward medium but not complex.
+        # "write a function", "explain X", "summarize" need mid-tier quality.
+        lower = stripped.lower()
+
+        if re.search(r"\b(write a|write an|create a|build a|make a)\b", lower) and not re.search(r"\b(story|poem|essay|novel)\b", lower):
+            score += 1
+            reasons.append("code_generation_request")
+
+        if re.search(r"\b(explain|describe|summarize|outline|overview)\b", lower):
+            score += 1
+            reasons.append("explanation_request")
+
+        if re.search(r"\b(pros and cons|advantages|disadvantages|difference between|vs\.?|versus)\b", lower):
+            score += 1
+            reasons.append("comparison_request")
+
+        # --- COMPLEX indicators (score +1 each, need 2+ to reach threshold) ---
+
+        if token_count > 100 or char_count > 400:
+            score += 1
+            reasons.append("long_prompt")
 
         if token_count > 200 or char_count > 800:
             score += 1
-            reasons.append("long_prompt")
+            reasons.append("very_long_prompt")
 
         if _CODE_BLOCK_PATTERN.search(prompt):
             score += 1
@@ -222,7 +247,7 @@ class HeuristicClassifier:
             reasons.append("heavy_analysis_keywords")
 
         # System prompt present and substantial
-        if system_message and len(system_message.strip()) > 100:
+        if system_message and len(system_message.strip()) > 200:
             score += 1
             reasons.append("substantial_system_prompt")
 
@@ -243,13 +268,13 @@ class HeuristicClassifier:
             score += 1
             reasons.append("heavy_technical_jargon")
 
-        # Creative writing
+        # Creative writing (longer-form)
         if _CREATIVE_WRITING_PATTERNS.search(stripped):
             score += 1
             reasons.append("creative_writing")
 
         # Multi-turn conversation
-        if messages and len(messages) > 4:
+        if messages and len(messages) > 6:
             score += 1
             reasons.append("multi_turn_conversation")
 
@@ -278,6 +303,10 @@ class HeuristicClassifier:
         """
         score, reasons = self._score_prompt(prompt, system_message, messages)
 
+        # Thresholds tuned for quality preservation:
+        # Only clearly trivial → simple (saves most money, lowest quality)
+        # Only clearly complex → complex (highest quality, most expensive)
+        # Everything else → medium (safe default, good quality-cost balance)
         if score <= -2:
             tier_name = "simple"
         elif score >= 2:
