@@ -3,8 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Copy, Trash2, Key, Settings2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { logger } from "@/utils/logger";
 import ApiKeyConfig, { type ApiKeyConfiguration } from "@/components/ApiKeyConfig";
+import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -39,11 +38,9 @@ interface ApiKey {
 }
 
 const ApiKeys = () => {
-  const [newKeyName, setNewKeyName] = useState("");
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
-  const [validationErrors, setValidationErrors] = useState<{ name?: string }>({});
   const [showOnceKey, setShowOnceKey] = useState<string | null>(null);
   const [configKeyId, setConfigKeyId] = useState<string | null>(null);
   const [configKeyName, setConfigKeyName] = useState("");
@@ -77,20 +74,12 @@ const ApiKeys = () => {
     }
   };
 
-  const validateKeyForm = (): boolean => {
-    const errs: { name?: string } = {};
-    const trimmed = newKeyName.trim();
-    if (trimmed.length < 1 || trimmed.length > 50) {
-      errs.name = "Name must be 1-50 characters";
-    } else if (!/^[a-zA-Z0-9 _-]+$/.test(trimmed)) {
-      errs.name = "Only letters, numbers, spaces, dashes, and underscores";
-    }
-    setValidationErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleCreateKey = async () => {
-    if (!validateKeyForm()) return;
+  const handleCreateKey = async (config: {
+    name: string;
+    selected_models: string[];
+    benchmark_model: string;
+    model_parameters: Record<string, any>;
+  }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -100,15 +89,18 @@ const ApiKeys = () => {
       const apiKey = `sk-${Array.from(randomBytes, b => b.toString(36).padStart(2, '0')).join('').substring(0, 32)}`;
       const prefix = apiKey.substring(0, 8);
 
-      // Hash with SHA-256 (one-way — key cannot be recovered from DB)
+      // Hash with SHA-256 (one-way -- key cannot be recovered from DB)
       const keyHash = await sha256(apiKey);
 
       const insertData = {
         user_id: user.id,
-        name: newKeyName,
+        name: config.name,
         key_hash: keyHash,
         prefix: prefix,
         is_active: true,
+        selected_models: config.selected_models,
+        benchmark_model: config.benchmark_model,
+        model_parameters: config.model_parameters,
       };
 
       const { error } = await supabase
@@ -123,8 +115,6 @@ const ApiKeys = () => {
       // Show the key once before clearing
       setShowOnceKey(apiKey);
 
-      setNewKeyName("");
-      setShowCreateForm(false);
       fetchApiKeys();
     } catch (error: unknown) {
       logger.error('Create key error:', error);
@@ -134,6 +124,7 @@ const ApiKeys = () => {
         title: "Error",
         description: errorMessage,
       });
+      throw error; // re-throw so dialog knows it failed
     }
   };
 
@@ -225,64 +216,15 @@ const ApiKeys = () => {
           <h1 className="page-title">API Keys</h1>
           <p className="page-description">Manage your API keys to access all models from Nadir</p>
         </div>
-        {apiKeys.length > 0 && (
-          <Button
-            onClick={() => setShowCreateForm(true)}
-            size="sm"
-            className="focus-ring shrink-0"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create API Key
-          </Button>
-        )}
+        <Button
+          onClick={() => setShowCreateDialog(true)}
+          size="sm"
+          className="focus-ring shrink-0"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Create API Key
+        </Button>
       </div>
-
-      {/* Create New API Key Form */}
-      {(apiKeys.length === 0 || showCreateForm) && (
-        <Card className="clean-card">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Create API Key</CardTitle>
-            {apiKeys.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setNewKeyName("");
-                }}
-              >
-                ✕
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 p-6">
-          <div className="space-y-2">
-            <Label htmlFor="key-name" className="text-sm font-medium">Name</Label>
-            <Input
-              id="key-name"
-              placeholder='e.g. "My Chatbot Key"'
-              value={newKeyName}
-              onChange={(e) => { setNewKeyName(e.target.value); setValidationErrors(prev => ({ ...prev, name: undefined })); }}
-              className={`focus-ring ${validationErrors.name ? 'border-red-400' : ''}`}
-              maxLength={50}
-            />
-            {validationErrors.name && <p className="text-sm text-red-500">{validationErrors.name}</p>}
-          </div>
-
-          <Button
-            onClick={() => handleCreateKey()}
-            disabled={!newKeyName.trim()}
-            className="w-full focus-ring"
-            size="lg"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create API Key
-          </Button>
-        </CardContent>
-      </Card>
-      )}
 
       {/* Existing API Keys */}
       <Card className="clean-card">
@@ -297,7 +239,11 @@ const ApiKeys = () => {
                   <Key className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">No API keys yet</h3>
-                <p className="text-muted-foreground">Create your first API key above to get started.</p>
+                <p className="text-muted-foreground mb-4">Create your first API key to get started.</p>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create API Key
+                </Button>
               </div>
             ) : (
               apiKeys.map((apiKey) => (
@@ -364,6 +310,13 @@ const ApiKeys = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create API Key Dialog (multi-step wizard) */}
+      <CreateApiKeyDialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onCreate={handleCreateKey}
+      />
 
       {/* API Key Configuration Dialog */}
       <ApiKeyConfig

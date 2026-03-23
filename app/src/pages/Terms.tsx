@@ -1,15 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { StickyCtaBar } from "@/components/homepage/StickyCtaBar";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
 
 export default function Terms() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background">
-      <StickyCtaBar />
-      <div className="container mx-auto px-6 py-8 pt-20 max-w-3xl">
+    <MarketingLayout>
+      <div className="container mx-auto px-6 py-8 max-w-3xl">
         <Button
           variant="ghost"
           className="mb-8 hover:bg-muted"
@@ -75,6 +74,6 @@ export default function Terms() {
           </section>
         </div>
       </div>
-    </div>
+    </MarketingLayout>
   );
 }
