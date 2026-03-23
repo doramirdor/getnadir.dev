@@ -2347,6 +2347,134 @@
             </div>
         </section>
 
+        <section id="benchmark" style="padding: 80px 0;">
+            <div class="container">
+                <div class="section-header" data-anim="fade-up">
+                    <h2>Proven results</h2>
+                    <p>6-way benchmark on 17 real-world prompts. Every configuration maintained 100% quality.</p>
+                </div>
+
+                <!-- Hero stats -->
+                <div data-anim="fade-up" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 800px; margin: 0 auto 48px;">
+                    <div style="text-align: center; padding: 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+                        <div style="font-size: 36px; font-weight: 700; color: #00a86b;">48%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">cost savings</div>
+                    </div>
+                    <div style="text-align: center; padding: 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+                        <div style="font-size: 36px; font-weight: 700; color: #0066ff;">100%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">quality maintained</div>
+                    </div>
+                    <div style="text-align: center; padding: 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+                        <div style="font-size: 36px; font-weight: 700; color: #6366f1;">61%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">faster responses</div>
+                    </div>
+                </div>
+
+                <!-- Bar chart -->
+                <div data-anim="fade-up" style="max-width: 800px; margin: 0 auto 48px;">
+                    <h3 style="font-size: 18px; font-weight: 600; text-align: center; margin-bottom: 24px;">Cost per request across 6 configurations</h3>
+                    <div style="display: grid; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); width: 190px; text-align: right; flex-shrink: 0;">V1 Baseline (Opus)</span>
+                            <div style="flex: 1; height: 32px; background: #f5f5f5; border-radius: 6px; overflow: hidden;">
+                                <div style="width: 100%; height: 100%; background: #d4d4d4; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: white;">$0.00849</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 14px; color: #999; width: 70px;">baseline</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); width: 190px; text-align: right; flex-shrink: 0;">V2 Router Only</span>
+                            <div style="flex: 1; height: 32px; background: #f5f5f5; border-radius: 6px; overflow: hidden;">
+                                <div style="width: 69.7%; height: 100%; background: #93c5fd; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: white;">$0.00592</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 500; color: #00a86b; width: 70px;">-30%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); width: 190px; text-align: right; flex-shrink: 0;">V3 Safe Optimize</span>
+                            <div style="flex: 1; height: 32px; background: #f5f5f5; border-radius: 6px; overflow: hidden;">
+                                <div style="width: 73.6%; height: 100%; background: #86efac; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: white;">$0.00625</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 500; color: #00a86b; width: 70px;">-26%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); width: 190px; text-align: right; flex-shrink: 0;">V4 Router + Safe</span>
+                            <div style="flex: 1; height: 32px; background: #f5f5f5; border-radius: 6px; overflow: hidden;">
+                                <div style="width: 53.9%; height: 100%; background: #34d399; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: white;">$0.00458</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 500; color: #00a86b; width: 70px;">-46%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); width: 190px; text-align: right; flex-shrink: 0;">V5 Aggressive Opt</span>
+                            <div style="flex: 1; height: 32px; background: #f5f5f5; border-radius: 6px; overflow: hidden;">
+                                <div style="width: 72.1%; height: 100%; background: #a5b4fc; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: white;">$0.00612</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 500; color: #00a86b; width: 70px;">-28%</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 14px; color: var(--text-secondary); width: 190px; text-align: right; flex-shrink: 0;">V6 Router + Aggressive</span>
+                            <div style="flex: 1; height: 32px; background: #f5f5f5; border-radius: 6px; overflow: hidden;">
+                                <div style="width: 52.3%; height: 100%; background: #00a86b; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: white;">$0.00444</span>
+                                </div>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 500; color: #00a86b; width: 70px;">-48%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quality + Latency row -->
+                <div data-anim="fade-up" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 800px; margin: 0 auto 48px;">
+                    <div style="padding: 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(0,168,107,0.1); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#00a86b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8.5 6 12.5 14 3.5"/></svg>
+                            </div>
+                            <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Quality verified</h3>
+                        </div>
+                        <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin: 0;"><strong style="color: var(--text);">17/17 prompts</strong> judged EQUAL by independent LLM-as-judge. No quality degradation at any savings level.</p>
+                    </div>
+                    <div style="padding: 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><polyline points="8 4.5 8 8 10.5 9.5"/></svg>
+                            </div>
+                            <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Faster responses</h3>
+                        </div>
+                        <p style="font-size: 15px; color: var(--text-secondary); line-height: 1.6; margin: 0;"><strong style="color: var(--text);">208ms avg</strong> vs 536ms baseline. Cheaper models respond faster, so routing saves time too.</p>
+                    </div>
+                </div>
+
+                <!-- Per-category cards -->
+                <div data-anim="fade-up" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 800px; margin: 0 auto 48px;">
+                    <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); text-align: center;">
+                        <div style="font-size: 28px; font-weight: 700; color: #00a86b; margin-bottom: 4px;">-80%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Simple prompts</div>
+                    </div>
+                    <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); text-align: center;">
+                        <div style="font-size: 28px; font-weight: 700; color: #0066ff; margin-bottom: 4px;">-40%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Medium prompts</div>
+                    </div>
+                    <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); text-align: center;">
+                        <div style="font-size: 28px; font-weight: 700; color: #6366f1; margin-bottom: 4px;">-49%</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Complex prompts</div>
+                    </div>
+                </div>
+
+                <p data-anim="fade-up" style="font-size: 12px; color: var(--text-tertiary); text-align: center; max-width: 640px; margin: 0 auto; line-height: 1.6;">
+                    Benchmarked on 17 diverse prompts (simple Q&amp;A to complex system design) using Claude CLI. Quality verified by independent LLM-as-judge (Sonnet 4.6). Full methodology and raw data available on <a href="https://github.com/doramirdor/NadirClaw" style="color: var(--accent);">GitHub</a>.
+                </p>
+            </div>
+        </section>
+
         <section id="calculator" style="padding: 80px 0; background: linear-gradient(180deg, var(--bg) 0%, var(--bg-subtle) 8%, var(--bg-subtle) 92%, var(--bg) 100%);">
             <div class="container">
                 <div class="section-header" data-anim="fade-up">
