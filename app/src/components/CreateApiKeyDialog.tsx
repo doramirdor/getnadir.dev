@@ -89,18 +89,15 @@ const MODELS_BY_PROVIDER: Record<string, ModelDef[]> = {
   ],
 };
 
-// Bedrock mirrors Anthropic models
-const BEDROCK_MODELS: ModelDef[] = [
-  { id: "bedrock/claude-haiku-4-5", name: "Bedrock Claude Haiku 4.5", inputCost: 1, outputCost: 5 },
-  { id: "bedrock/claude-sonnet-4-6", name: "Bedrock Claude Sonnet 4.6", inputCost: 3, outputCost: 15 },
-  { id: "bedrock/claude-opus-4-6", name: "Bedrock Claude Opus 4.6", inputCost: 5, outputCost: 25 },
+// Hosted mode: only Bedrock models (what Nadir currently supports)
+const HOSTED_MODELS: ModelDef[] = [
+  { id: "claude-haiku-4-5", name: "Claude Haiku 4.5", inputCost: 1, outputCost: 5 },
+  { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", inputCost: 3, outputCost: 15 },
+  { id: "claude-opus-4-6", name: "Claude Opus 4.6", inputCost: 5, outputCost: 25 },
 ];
 
-const ALL_HOSTED_MODELS: ModelDef[] = [
-  ...MODELS_BY_PROVIDER.anthropic,
-  ...MODELS_BY_PROVIDER.openai,
-  ...MODELS_BY_PROVIDER.google,
-];
+// For backwards compat
+const ALL_HOSTED_MODELS = HOSTED_MODELS;
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -162,6 +159,10 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
   const [fallbackEnabled, setFallbackEnabled] = useState(true);
   const [fallbackChain, setFallbackChain] = useState<string[]>([]);
 
+  // Layers
+  const [routingEnabled, setRoutingEnabled] = useState(true);
+  const [optimizeMode, setOptimizeMode] = useState<"off" | "safe" | "aggressive">("off");
+
   // Submitting
   const [submitting, setSubmitting] = useState(false);
 
@@ -175,6 +176,8 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
       setTierModels({ simple: "", medium: "", complex: "" });
       setFallbackEnabled(true);
       setFallbackChain([]);
+      setRoutingEnabled(true);
+      setOptimizeMode("off");
       setSubmitting(false);
       fetchProviderKeys();
       fetchUserMode();
@@ -363,7 +366,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
         selected_models: selectedModelIds,
         benchmark_model: complexModel,
         model_parameters: {
-          layers: { routing: true, fallback: fallbackEnabled, optimize: "off" as const },
+          layers: { routing: routingEnabled, fallback: fallbackEnabled, optimize: optimizeMode },
           tier_models: {
             simple: tierModels.simple,
             ...(tierModels.medium ? { medium: tierModels.medium } : {}),
@@ -463,7 +466,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
                     <span className="font-semibold text-sm">Hosted</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Use Nadir's keys, pay per token
+                    Use Nadir's Bedrock keys, pay per token
                   </p>
                 </button>
               </div>
@@ -496,8 +499,14 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
               Select at least 2 models.{" "}
               {mode === "byok"
                 ? "Showing models for your configured providers."
-                : "Showing all hosted models."}
+                : "Nadir hosted mode runs on AWS Bedrock — currently supporting Anthropic Claude models."}
             </p>
+            {mode === "hosted" && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Powered by AWS Bedrock. More providers coming soon.
+              </div>
+            )}
 
             {availableModels.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
@@ -784,18 +793,60 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate }: CreateAp
                   <p className="text-xs text-muted-foreground mt-1">Disabled</p>
                 )}
               </div>
-              {/* Layers */}
-              <div className="p-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Layers</span>
-                <div className="flex gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    <Brain className="w-3 h-3 mr-1" /> Routing
-                  </Badge>
-                  {fallbackEnabled && (
-                    <Badge variant="outline" className="text-xs">
-                      <Shield className="w-3 h-3 mr-1" /> Fallback
-                    </Badge>
-                  )}
+              {/* Layers — interactive toggles */}
+              <div className="p-3 space-y-3">
+                <span className="text-sm text-muted-foreground">Feature Layers</span>
+
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium">Intelligent Routing</p>
+                      <p className="text-xs text-muted-foreground">Auto-route by complexity</p>
+                    </div>
+                  </div>
+                  <Switch checked={routingEnabled} onCheckedChange={setRoutingEnabled} />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-amber-600" />
+                    <div>
+                      <p className="text-sm font-medium">Fallback Chains</p>
+                      <p className="text-xs text-muted-foreground">Auto-retry on failure</p>
+                    </div>
+                  </div>
+                  <Switch checked={fallbackEnabled} onCheckedChange={setFallbackEnabled} />
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h4m5 0h9M5.6 5.6l2.8 2.8m7.2 7.2l2.8 2.8M5.6 18.4l2.8-2.8m7.2-7.2l2.8-2.8"/></svg>
+                    <div>
+                      <p className="text-sm font-medium">Context Optimize</p>
+                      <p className="text-xs text-muted-foreground">Reduce input tokens</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-6">
+                    {(["off", "safe", "aggressive"] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setOptimizeMode(opt)}
+                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                          optimizeMode === opt
+                            ? opt === "off"
+                              ? "bg-gray-900 text-white"
+                              : opt === "safe"
+                              ? "bg-green-600 text-white"
+                              : "bg-orange-600 text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
