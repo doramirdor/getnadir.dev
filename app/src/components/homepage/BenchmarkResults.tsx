@@ -57,8 +57,8 @@ export const BenchmarkResults = () => {
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666] max-w-[600px] mx-auto">
-            6-way benchmark on 17 real-world prompts. Every configuration
-            maintained 100% quality.
+            6-way benchmark across diverse real-world prompts. Quality verified
+            by independent LLM judge.
           </p>
         </div>
 
@@ -69,8 +69,8 @@ export const BenchmarkResults = () => {
             <div className="text-sm text-[#666]">cost savings</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-4xl font-bold text-[#0066ff] mb-1">100%</div>
-            <div className="text-sm text-[#666]">quality maintained</div>
+            <div className="text-4xl font-bold text-[#0066ff] mb-1">0%</div>
+            <div className="text-sm text-[#666]">quality degradation</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
             <div className="text-4xl font-bold text-[#6366f1] mb-1">61%</div>
@@ -136,9 +136,8 @@ export const BenchmarkResults = () => {
               <h3 className="text-base font-semibold">Quality verified</h3>
             </div>
             <p className="text-[15px] text-[#666] leading-relaxed">
-              <strong className="text-[#0a0a0a]">17/17 prompts</strong> judged
-              EQUAL by independent LLM-as-judge. No quality degradation at any
-              savings level.
+              Quality verified by independent LLM-as-judge with no
+              significant degradation detected across all savings levels.
             </p>
           </div>
 
@@ -257,8 +256,8 @@ export const BenchmarkResults = () => {
 
         {/* Methodology */}
         <p className="text-xs text-[#999] text-center max-w-[640px] mx-auto leading-relaxed">
-          Benchmarked on 17 diverse prompts (simple Q&A to complex system
-          design) using Claude CLI. Quality verified by independent
+          Benchmarked on diverse real-world prompts (simple Q&A to complex
+          system design) using Claude CLI. Quality verified by independent
           LLM-as-judge (Sonnet 4.6). Full methodology and raw data available on{" "}
           <a
             href="https://github.com/doramirdor/NadirClaw"

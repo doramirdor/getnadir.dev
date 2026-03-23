@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { StickyCtaBar } from "@/components/homepage/StickyCtaBar";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { DocsSidebar } from "@/components/docs/DocsSidebar";
 import { PrevNextNav } from "@/components/docs/PrevNextNav";
 import { docsContentMap } from "@/data/docsContent";
@@ -32,10 +32,8 @@ export default function Docs() {
   const ContentComponent = docsContentMap[activeSection];
 
   return (
-    <div className="min-h-screen bg-background">
-      <StickyCtaBar />
-
-      <div className="container mx-auto px-6 pt-20 pb-16 max-w-7xl">
+    <MarketingLayout>
+      <div className="container mx-auto px-6 pt-8 pb-16 max-w-7xl">
         <Button
           variant="ghost"
           className="mb-6 hover:bg-muted"
@@ -54,6 +52,6 @@ export default function Docs() {
           </main>
         </div>
       </div>
-    </div>
+    </MarketingLayout>
   );
 }

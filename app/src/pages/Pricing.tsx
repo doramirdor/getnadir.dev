@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
 
 const tiers = [
   {
@@ -115,24 +116,7 @@ function SavingsCalculator() {
 
 export default function Pricing() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
-            Nadir
-          </Link>
-          <nav className="flex items-center gap-6 text-sm text-gray-600">
-            <Link to="/docs" className="hover:text-gray-900">Docs</Link>
-            <Link to="/pricing" className="text-blue-600 font-medium">Pricing</Link>
-            <Link to="/blog" className="hover:text-gray-900">Blog</Link>
-            <Link to="/dashboard" className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
-              Dashboard
-            </Link>
-          </nav>
-        </div>
-      </header>
-
+    <MarketingLayout>
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
@@ -140,6 +124,30 @@ export default function Pricing() {
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto">
           $9/month base. 25% of savings, capped then 10%. If we don't save you money, you just pay $9.
+        </p>
+      </section>
+
+      {/* Benchmark social proof */}
+      <section className="max-w-6xl mx-auto px-6 pb-16">
+        <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+          <div className="text-center p-6 bg-gray-50 rounded-xl">
+            <div className="text-4xl font-bold text-[#00a86b] mb-1">48%</div>
+            <div className="text-sm text-gray-500">cost savings</div>
+          </div>
+          <div className="text-center p-6 bg-gray-50 rounded-xl">
+            <div className="text-4xl font-bold text-blue-600 mb-1">0%</div>
+            <div className="text-sm text-gray-500">quality degradation</div>
+          </div>
+          <div className="text-center p-6 bg-gray-50 rounded-xl">
+            <div className="text-4xl font-bold text-indigo-500 mb-1">61%</div>
+            <div className="text-sm text-gray-500">faster responses</div>
+          </div>
+        </div>
+        <p className="text-center text-sm text-gray-400 mt-4">
+          Benchmarked on real-world prompts with quality verified by LLM judge.{" "}
+          <Link to="/blog/benchmark-results" className="text-blue-600 hover:underline">
+            See full benchmark &rarr;
+          </Link>
         </p>
       </section>
 
@@ -228,17 +236,6 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap gap-6 justify-center text-sm text-gray-500">
-          <Link to="/">Home</Link>
-          <Link to="/docs">Docs</Link>
-          <Link to="/blog">Blog</Link>
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Terms</Link>
-          <a href="https://github.com/doramirdor/NadirClaw" target="_blank" rel="noopener noreferrer">GitHub</a>
-        </div>
-      </footer>
-    </div>
+    </MarketingLayout>
   );
 }

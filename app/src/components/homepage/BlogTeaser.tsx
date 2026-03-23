@@ -3,7 +3,7 @@ const posts = [
     date: "March 22, 2026",
     title: "48% Savings Proven: Our 6-Way Routing Benchmark",
     excerpt:
-      "We tested 6 configurations across 17 real-world prompts. Router + aggressive optimize hit 48% savings with zero quality loss, verified by LLM-as-judge.",
+      "We tested 6 configurations across diverse real-world prompts. Router + aggressive optimize hit 48% savings with quality verified by independent LLM-as-judge.",
     href: "/blog/6-way-routing-benchmark-results.html",
   },
   {

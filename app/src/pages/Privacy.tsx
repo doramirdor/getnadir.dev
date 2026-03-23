@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { StickyCtaBar } from "@/components/homepage/StickyCtaBar";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
 
 export default function Privacy() {
   const navigate = useNavigate();

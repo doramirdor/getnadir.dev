@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Calendar, User, Tag } from "lucide-react";
 import { useEffect } from "react";
 import { BlogService } from "@/services/blogService";
-import { StickyCtaBar } from "@/components/homepage/StickyCtaBar";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -17,8 +17,7 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-background">
-        <StickyCtaBar />
+      <MarketingLayout>
         <div className="container mx-auto px-6 py-24 text-center">
           <h1 className="text-2xl font-semibold text-foreground mb-4">
             Post not found
@@ -28,7 +27,7 @@ export default function BlogPost() {
             Back to Home
           </Button>
         </div>
-      </div>
+      </MarketingLayout>
     );
   }
 
@@ -194,9 +193,8 @@ export default function BlogPost() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <StickyCtaBar />
-      <div className="container mx-auto px-6 py-8 pt-20">
+    <MarketingLayout>
+      <div className="container mx-auto px-6 py-8">
         <Button
           variant="ghost"
           className="mb-8 hover:bg-muted"
@@ -268,6 +266,6 @@ export default function BlogPost() {
           </div>
         </article>
       </div>
-    </div>
+    </MarketingLayout>
   );
 }

@@ -2,16 +2,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { BlogService } from "@/services/blogService";
-import { StickyCtaBar } from "@/components/homepage/StickyCtaBar";
+import MarketingLayout from "@/components/marketing/MarketingLayout";
 
 export default function Blog() {
   const navigate = useNavigate();
   const posts = BlogService.getAllPosts();
 
   return (
-    <div className="min-h-screen bg-background">
-      <StickyCtaBar />
-      <div className="container mx-auto px-6 py-8 pt-20">
+    <MarketingLayout>
+      <div className="container mx-auto px-6 py-8">
         <div className="text-center space-y-4 mb-12">
           <h1 className="text-4xl font-semibold text-foreground">Blog</h1>
           <p className="text-xl text-muted-foreground">
@@ -62,6 +61,6 @@ export default function Blog() {
           </div>
         </div>
       </div>
-    </div>
+    </MarketingLayout>
   );
 }

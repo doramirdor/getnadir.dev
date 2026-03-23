@@ -126,6 +126,12 @@ export const ContactFooter = () => {
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-4">
             <a
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-6 py-3 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-[15px] font-semibold hover:-translate-y-px hover:shadow-lg transition-all no-underline"
+            >
+              Start Saving &rarr;
+            </a>
+            <a
               href="https://github.com/doramirdor/NadirClaw"
               className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
             >
