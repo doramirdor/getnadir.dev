@@ -53,7 +53,7 @@ export const FeaturesGrid = () => {
               {
                 step: "STEP 1",
                 title: "Start the router",
-                desc: "Run NadirClaw locally. It sits between your app and OpenAI's API. No cloud services, no signup, no tracking.",
+                desc: "Run Nadir locally. It sits between your app and OpenAI's API. No cloud services, no signup, no tracking.",
               },
               {
                 step: "STEP 2",
@@ -63,7 +63,7 @@ export const FeaturesGrid = () => {
               {
                 step: "STEP 3",
                 title: "Watch costs drop",
-                desc: "NadirClaw classifies every prompt and routes it to the cheapest model that can handle it. Check the dashboard to see where you're actually spending.",
+                desc: "Nadir classifies every prompt and routes it to the cheapest model that can handle it. Check the dashboard to see where you're actually spending.",
               },
               {
                 step: "STEP 4",
@@ -153,7 +153,7 @@ client = openai.OpenAI(`}
               <p className="text-[13px] text-[#999] mt-2">
                 Run{" "}
                 <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  nadirclaw report
+                  nadir report
                 </code>{" "}
                 to see your real savings breakdown.
               </p>
@@ -172,9 +172,7 @@ client = openai.OpenAI(`}
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
             <p className="text-lg text-[#666] max-w-[560px] mx-auto">
               Every request through{" "}
-              <code className="text-sm bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
-                nadirclaw
-              </code>{" "}
+              <strong>Nadir</strong>{" "}
               is logged automatically. No SDK changes, no decorators, no
               instrumentation.
             </p>
@@ -204,7 +202,7 @@ client = openai.OpenAI(`}
               },
               {
                 title: "Zero instrumentation",
-                desc: "Other tools require decorators, SDK wrappers, or OpenTelemetry setup. nadirclaw logs everything at the proxy layer. Point your app at it and you're done.",
+                desc: "Other tools require decorators, SDK wrappers, or OpenTelemetry setup. Nadir logs everything at the proxy layer. Point your app at it and you're done.",
               },
             ].map((item) => (
               <div key={item.title} className="p-4">

@@ -121,7 +121,7 @@ export const ComparisonTable = () => {
                   Feature
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-semibold bg-[#0066ff]/5 text-[#0066ff] rounded-t-lg">
-                  <code className="text-[13px]">nadirclaw</code>
+                  Nadir
                 </th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
                   LiteLLM + rules

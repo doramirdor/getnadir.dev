@@ -31,6 +31,8 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Auth = lazy(() => import("./pages/Auth"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const OpenClaw = lazy(() => import("./pages/OpenClaw"));
+const Optimize = lazy(() => import("./pages/Optimize"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -95,6 +97,8 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/openclaw" element={<OpenClaw />} />
+            <Route path="/optimize" element={<Optimize />} />
 
             {/* Dashboard (authenticated) */}
             <Route path="/dashboard" element={<Layout />}>

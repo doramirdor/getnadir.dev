@@ -15,14 +15,14 @@ export const ContactFooter = () => {
           <div className="max-w-[640px] mx-auto bg-[#0a0a0a] rounded-xl p-6 font-mono text-sm text-white">
             <div className="mb-1">
               <span className="text-[#666]">$</span>{" "}
-              <span className="text-white">pip install nadirclaw</span>
+              <span className="text-white">pip install nadir</span>
             </div>
             <div className="text-[#999] mb-4">
-              Successfully installed nadirclaw-0.7.0
+              Successfully installed nadir-0.7.0
             </div>
             <div className="mb-1">
               <span className="text-[#666]">$</span>{" "}
-              <span className="text-white">nadirclaw serve</span>
+              <span className="text-white">nadir serve</span>
             </div>
             <div className="text-[#00a86b]">
               &#10003; Router running on http://localhost:8856
@@ -63,7 +63,7 @@ export const ContactFooter = () => {
           <h2 className="text-4xl font-bold tracking-tight">About</h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-8" />
           <p className="text-[15px] text-[#666] leading-relaxed mb-4">
-            NadirClaw is built by{" "}
+            Nadir is built by{" "}
             <a
               href="https://github.com/doramirdor"
               className="text-[#0066ff] hover:underline"
@@ -72,7 +72,7 @@ export const ContactFooter = () => {
             </a>
             , a software engineer frustrated with overpaying for simple LLM
             requests. Every basic query was hitting the most expensive model when
-            a budget model could handle it just fine. NadirClaw was born to fix
+            a budget model could handle it just fine. Nadir was born to fix
             that.
           </p>
           <p className="text-[15px] text-[#666] leading-relaxed mb-4">
@@ -122,38 +122,24 @@ export const ContactFooter = () => {
             Stop overpaying for simple prompts
           </h2>
           <p className="text-[17px] text-[#666] mb-8 max-w-[480px] mx-auto">
-            Star the repo to bookmark it, or get started in 30 seconds flat.
+            Self-host for free, or let our Pro plan handle everything with smarter algorithms.
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-4">
-            <a
-              href="/pricing"
-              className="inline-flex items-center gap-1.5 px-6 py-3 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-[15px] font-semibold hover:-translate-y-px hover:shadow-lg transition-all no-underline"
-            >
-              Start Saving &rarr;
-            </a>
             <a
               href="https://github.com/doramirdor/NadirClaw"
               className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-              >
-                <polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63" />
-              </svg>
-              Star on GitHub
+              Self-host free
             </a>
             <a
-              href="#quickstart"
-              className="inline-flex items-center px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] hover:border-[#666] hover:-translate-y-px transition-all no-underline"
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-6 py-3 bg-gradient-to-r from-[#00a86b] to-[#0066ff] text-white rounded-md text-[15px] font-semibold hover:-translate-y-px hover:shadow-lg transition-all no-underline"
             >
-              pip install nadirclaw
+              Try Pro — better algorithms &rarr;
             </a>
           </div>
           <p className="text-[13px] text-[#999]">
-            Free and open source. MIT licensed. No signup required.
+            Free and open source. MIT licensed. Pro adds hosted proxy + advanced routing.
           </p>
         </div>
       </section>

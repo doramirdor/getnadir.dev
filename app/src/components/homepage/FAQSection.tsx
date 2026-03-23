@@ -1,35 +1,35 @@
 const faqs = [
   {
-    q: "What is NadirClaw?",
-    a: "NadirClaw is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 40-70% on API costs without changing any code.",
+    q: "What is Nadir?",
+    a: "Nadir is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 40-70% on API costs without changing any code.",
   },
   {
-    q: "How does NadirClaw reduce costs?",
-    a: "NadirClaw classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget-tier models. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average — without sacrificing quality where it matters.",
+    q: "How does Nadir reduce costs?",
+    a: "Nadir classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget-tier models. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average — without sacrificing quality where it matters.",
   },
   {
-    q: "Does NadirClaw require code changes?",
-    a: "No. NadirClaw is a drop-in proxy. Point your LLM client's base URL to NadirClaw instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client.",
+    q: "Does Nadir require code changes?",
+    a: "No. Nadir is a drop-in proxy. Point your LLM client's base URL to Nadir instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client.",
   },
   {
-    q: "Is NadirClaw free?",
-    a: "Yes. NadirClaw is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost.",
+    q: "Is Nadir free?",
+    a: "Yes. Nadir is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost.",
   },
   {
-    q: "What LLM providers does NadirClaw support?",
-    a: "NadirClaw supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider.",
+    q: "What LLM providers does Nadir support?",
+    a: "Nadir supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider.",
   },
   {
-    q: "How do I install NadirClaw?",
-    a: "Run pip install nadirclaw or use Docker: docker run -p 8000:8000 nadirclaw/nadirclaw. Configuration is done through environment variables or a config file.",
+    q: "How do I install Nadir?",
+    a: "Run pip install nadir or use Docker: docker run -p 8000:8000 nadir/nadir. Configuration is done through environment variables or a config file.",
   },
   {
     q: "How does the classifier work?",
-    a: 'NadirClaw uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes ~10ms. It also detects agentic workflows (tool calls), reasoning chains ("step by step"), and vision content (images) as separate routing signals.',
+    a: 'Nadir uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes ~10ms. It also detects agentic workflows (tool calls), reasoning chains ("step by step"), and vision content (images) as separate routing signals.',
   },
   {
     q: "What happens when the classifier is wrong?",
-    a: "NadirClaw biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadirclaw classify \"your prompt\" and tune the threshold via NADIRCLAW_CONFIDENCE_THRESHOLD.",
+    a: "Nadir biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadir classify \"your prompt\" and tune the threshold via NADIR_CONFIDENCE_THRESHOLD.",
   },
   {
     q: "How much latency does routing add?",
@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     q: 'Where does the "40-70% savings" claim come from?',
-    a: "In typical coding sessions, 60-70% of prompts are simple (file reads, formatting, basic questions, docstrings). If those route to models that cost 10-20x less per token, your blended cost drops 40-70%. Your actual savings depend on your prompt mix. Run nadirclaw report to see your real breakdown after a day of use.",
+    a: "In typical coding sessions, 60-70% of prompts are simple (file reads, formatting, basic questions, docstrings). If those route to models that cost 10-20x less per token, your blended cost drops 40-70%. Your actual savings depend on your prompt mix. Run nadir report to see your real breakdown after a day of use.",
   },
 ];
 
@@ -51,7 +51,7 @@ export const FAQSection = () => {
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666]">
-            Everything you need to know about NadirClaw.
+            Everything you need to know about Nadir.
           </p>
         </div>
 

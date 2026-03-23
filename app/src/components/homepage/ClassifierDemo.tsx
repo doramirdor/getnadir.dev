@@ -135,7 +135,7 @@ export const ClassifierDemo = () => {
           <p className="mt-2 text-[13px] text-[#999] text-center">
             Test any prompt yourself:{" "}
             <code className="text-xs bg-[#f8f8f8] px-1.5 py-0.5 rounded border border-[#e5e5e5] font-mono">
-              nadirclaw classify "your prompt here"
+              nadir classify "your prompt here"
             </code>
           </p>
         </div>

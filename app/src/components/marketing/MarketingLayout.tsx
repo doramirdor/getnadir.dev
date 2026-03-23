@@ -29,18 +29,18 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
             >
               <img
                 src="/logo.png"
-                alt="NadirClaw"
+                alt="Nadir"
                 className="h-8 w-auto"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <span className="font-semibold text-[15px] font-mono">
-                nadirclaw
+              <span className="font-semibold text-[15px]">
+                Nadir
               </span>
             </Link>
 
-            <nav className="flex items-center gap-6">
+            <nav aria-label="Main navigation" className="flex items-center gap-6">
               <Link
                 to="/docs"
                 className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"
@@ -65,12 +65,12 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
               >
                 Optimize
               </Link>
-              <a
-                href="#blog"
+              <Link
+                to="/blog"
                 className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"
               >
                 Blog
-              </a>
+              </Link>
               <button
                 onClick={() => navigate("/dashboard")}
                 className="px-4 py-2 bg-[#0a0a0a] text-white rounded-md text-sm font-semibold hover:bg-[#333] transition-all"
@@ -93,14 +93,13 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main>{children}</main>
+      <main role="main">{children}</main>
 
       {/* Footer */}
       <footer className="border-t border-[#e5e5e5] py-12 mt-0">
         <div className="max-w-[1120px] mx-auto px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <nav className="flex flex-wrap items-center gap-6 text-sm">
+            <nav aria-label="Footer navigation" className="flex flex-wrap items-center gap-6 text-sm">
               <Link
                 to="/"
                 className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline"

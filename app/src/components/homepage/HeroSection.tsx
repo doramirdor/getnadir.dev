@@ -8,9 +8,7 @@ export const HeroSection = () => {
 
         <p className="text-lg md:text-xl text-[#666] mb-10 max-w-[640px] mx-auto leading-relaxed">
           Every "write a test" or "fix this typo" burns premium LLM credits.{" "}
-          <code className="text-sm bg-[#f8f8f8] px-1.5 py-0.5 rounded border border-[#e5e5e5] font-mono">
-            nadirclaw
-          </code>{" "}
+          <strong>Nadir</strong>{" "}
           routes simple prompts to cheaper models automatically. Save on every
           call that doesn't need your most expensive model.
         </p>
@@ -71,13 +69,13 @@ export const HeroSection = () => {
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
               </div>
-              <span className="text-xs text-[#999]">nadirclaw serve</span>
+              <span className="text-xs text-[#999]">nadir serve</span>
             </div>
 
             {/* Terminal body */}
             <div className="p-5">
               <div className="mb-1 leading-[1.8]">
-                <span className="text-[#999]">$</span> nadirclaw serve
+                <span className="text-[#999]">$</span> nadir serve
               </div>
               <div className="mb-1 leading-[1.8]">
                 <span className="text-[#00a86b]">&#10003;</span> Classifier
@@ -169,7 +167,7 @@ export const HeroSection = () => {
                   },
                   {
                     value: "$0.549",
-                    label: "with nadirclaw",
+                    label: "with Nadir",
                     green: true,
                   },
                   { value: "$1.37", label: "without routing" },

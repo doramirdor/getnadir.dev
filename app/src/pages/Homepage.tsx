@@ -1,4 +1,5 @@
 import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/homepage/HeroSection";
 import { FeaturesGrid } from "@/components/homepage/FeaturesGrid";
 import { ClassifierDemo } from "@/components/homepage/ClassifierDemo";
@@ -13,6 +14,11 @@ import { ContactFooter } from "@/components/homepage/ContactFooter";
 const Homepage = () => {
   return (
     <MarketingLayout>
+      <SEO
+        title="Nadir — Cut LLM API Costs Up to 30% | Open-Source LLM Router"
+        description="Open-source LLM router that routes simple prompts to cheaper models automatically. Save up to 30% on Claude, GPT, and Gemini API costs without changing code."
+        path="/"
+      />
       <HeroSection />
       <FeaturesGrid />
       <ClassifierDemo />

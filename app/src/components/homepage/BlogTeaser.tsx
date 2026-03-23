@@ -15,14 +15,14 @@ const posts = [
   },
   {
     date: "March 10, 2026",
-    title: "How NadirClaw Saves 40-70% on LLM API Costs",
+    title: "How Nadir Saves 40-70% on LLM API Costs",
     excerpt:
-      "Most LLM API costs are wasted on simple requests. NadirClaw analyzes prompt complexity in real-time and routes simple prompts to cheaper models.",
+      "Most LLM API costs are wasted on simple requests. Nadir analyzes prompt complexity in real-time and routes simple prompts to cheaper models.",
     href: "/blog/how-nadirclaw-saves-40-70-percent-on-llm-api-costs.html",
   },
   {
     date: "March 7, 2026",
-    title: "NadirClaw + Claude Code: A Cost Optimization Guide",
+    title: "Nadir + Claude Code: A Cost Optimization Guide",
     excerpt:
       "Claude Code generates thousands of API calls per session. Without routing, every call hits the same expensive model.",
     href: "/blog/nadirclaw-claude-code-cost-optimization-guide.html",

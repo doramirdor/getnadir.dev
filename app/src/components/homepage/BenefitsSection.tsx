@@ -40,7 +40,7 @@ export const BenefitsSection = () => {
               <p className="text-[15px] text-[#666] leading-relaxed">
                 LiteLLM gives you multi-provider access. But you still write the
                 routing logic, the classifier, the fallback chains, the cost
-                tracking, the dashboard. NadirClaw ships all of that.{" "}
+                tracking, the dashboard. Nadir ships all of that.{" "}
                 <code className="text-xs bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
                   pip install
                 </code>{" "}
@@ -49,7 +49,7 @@ export const BenefitsSection = () => {
             </div>
             <div className="p-6 rounded-xl hover:-translate-y-0.5 hover:shadow-lg transition-all">
               <div className="text-xs font-semibold text-[#999] uppercase tracking-wider mb-3">
-                NadirClaw
+                Nadir
               </div>
               <h3 className="text-lg font-semibold mb-2">
                 Semantic understanding
@@ -82,11 +82,11 @@ export const BenefitsSection = () => {
             {[
               {
                 title: "Docker + Compose",
-                desc: "docker compose up gives you NadirClaw + Ollama for a fully local stack. Mount your .env for API keys.",
+                desc: "docker compose up gives you Nadir + Ollama for a fully local stack. Mount your .env for API keys.",
               },
               {
                 title: "Fallback chains",
-                desc: "When a provider returns 429 or 5xx, NadirClaw cascades through your fallback chain. Configure per-tier or use the global default.",
+                desc: "When a provider returns 429 or 5xx, Nadir cascades through your fallback chain. Configure per-tier or use the global default.",
               },
               {
                 title: "Prometheus metrics",
@@ -94,7 +94,7 @@ export const BenefitsSection = () => {
               },
               {
                 title: "Budget controls",
-                desc: "Set daily and monthly spending limits. Get alerts before you hit them. nadirclaw budget shows real-time status.",
+                desc: "Set daily and monthly spending limits. Get alerts before you hit them. nadir budget shows real-time status.",
               },
               {
                 title: "Session persistence",
@@ -120,7 +120,7 @@ export const BenefitsSection = () => {
           <p className="mt-8 text-sm text-[#666] text-center max-w-[640px] mx-auto">
             All credentials stay on your machine in{" "}
             <code className="text-xs bg-[#f8f8f8] px-1.5 py-0.5 rounded border border-[#e5e5e5]">
-              ~/.nadirclaw/credentials.json
+              ~/.nadir/credentials.json
             </code>
             . No telemetry. No data leaves your network. Your API keys never
             touch our servers because there are no servers.
@@ -228,7 +228,7 @@ export const BenefitsSection = () => {
               <div className="bg-[#f8f8f8] border border-[#e5e5e5] rounded-lg p-4 font-mono text-sm leading-relaxed">
                 <span className="text-[#999]"># enable on your server</span>
                 <br />
-                nadirclaw serve --optimize safe
+                nadir serve --optimize safe
                 <br />
                 <br />
                 <span className="text-[#999]"># or per-request</span>
@@ -238,7 +238,7 @@ export const BenefitsSection = () => {
                 <br />
                 <span className="text-[#999]"># dry-run on any file</span>
                 <br />
-                nadirclaw optimize payload.json
+                nadir optimize payload.json
               </div>
 
               <p className="text-xs text-[#999] mt-3">

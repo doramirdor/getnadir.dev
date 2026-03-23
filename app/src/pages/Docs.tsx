@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { SEO } from "@/components/SEO";
 import { DocsSidebar } from "@/components/docs/DocsSidebar";
 import { PrevNextNav } from "@/components/docs/PrevNextNav";
 import { docsContentMap } from "@/data/docsContent";
@@ -33,6 +34,11 @@ export default function Docs() {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Documentation — Nadir | Setup, Config & API Reference"
+        description="Get started with Nadir in 2 commands. Full docs for routing, context optimization, and CLI."
+        path="/docs"
+      />
       <div className="container mx-auto px-6 pt-8 pb-16 max-w-7xl">
         <Button
           variant="ghost"

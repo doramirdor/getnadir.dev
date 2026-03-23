@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { SEO } from "@/components/SEO";
 
 const tiers = [
   {
     name: "Open Source",
     price: "Free",
     subtitle: "Self-hosted",
-    description: "Run NadirClaw on your own infrastructure. Full routing + optimization.",
+    description: "Run Nadir on your own infrastructure. Full routing + optimization.",
     features: [
       "Intelligent 4-tier routing",
       "Context Optimize (safe mode)",
@@ -117,6 +118,11 @@ function SavingsCalculator() {
 export default function Pricing() {
   return (
     <MarketingLayout>
+      <SEO
+        title="Pricing — Nadir | Free Self-Hosted + Pro Plans"
+        description="Self-host Nadir free or upgrade to Pro with advanced routing algorithms. Pay only when we save you money."
+        path="/pricing"
+      />
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">

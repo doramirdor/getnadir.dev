@@ -68,7 +68,7 @@ export const OnboardingSteps = () => {
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666]">
-            See exactly how much NadirClaw saves your setup.
+            See exactly how much Nadir saves your setup.
           </p>
         </div>
 
@@ -141,7 +141,7 @@ export const OnboardingSteps = () => {
               <div className="grid grid-cols-2 gap-4 mb-5">
                 <div>
                   <div className="text-xs text-[#999] uppercase tracking-wider mb-1">
-                    Without NadirClaw
+                    Without Nadir
                   </div>
                   <div className="text-2xl font-bold text-[#0a0a0a]">
                     ${calc.before.toFixed(2)}
@@ -152,7 +152,7 @@ export const OnboardingSteps = () => {
                 </div>
                 <div>
                   <div className="text-xs text-[#999] uppercase tracking-wider mb-1">
-                    With NadirClaw
+                    With Nadir
                   </div>
                   <div className="text-2xl font-bold text-[#00a86b]">
                     ${calc.after.toFixed(2)}
@@ -195,7 +195,7 @@ export const OnboardingSteps = () => {
                 href="#quickstart"
                 className="flex-1 min-w-[160px] text-center py-3 px-6 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md font-semibold text-[15px] no-underline hover:bg-[#f5f5f5] transition-colors"
               >
-                pip install nadirclaw
+                pip install nadir
               </a>
             </div>
           </div>

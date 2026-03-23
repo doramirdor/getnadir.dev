@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { SEO } from "@/components/SEO";
 
 export default function Blog() {
   const navigate = useNavigate();
@@ -10,6 +11,11 @@ export default function Blog() {
 
   return (
     <MarketingLayout>
+      <SEO
+        title="Blog — Nadir | LLM Cost Optimization Guides"
+        description="Practical guides to cutting LLM API costs with intelligent routing and context optimization."
+        path="/blog"
+      />
       <div className="container mx-auto px-6 py-8">
         <div className="text-center space-y-4 mb-12">
           <h1 className="text-4xl font-semibold text-foreground">Blog</h1>

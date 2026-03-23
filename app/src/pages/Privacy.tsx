@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { SEO } from "@/components/SEO";
 
 export default function Privacy() {
   const navigate = useNavigate();
 
   return (
     <MarketingLayout>
+      <SEO title="Privacy Policy — Nadir" description="Privacy policy for getnadir.com." path="/privacy" />
       <div className="container mx-auto px-6 py-8 max-w-3xl">
         <Button
           variant="ghost"
