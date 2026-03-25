@@ -4,6 +4,8 @@ import { ArrowLeft, Clock, Calendar, User, Tag } from "lucide-react";
 import { useEffect } from "react";
 import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { SEO } from "@/components/SEO";
+import { trackBlogRead } from "@/utils/analytics";
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ export default function BlogPost() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (post) trackBlogRead(post.id, post.title);
   }, [id]);
 
   if (!post) {
@@ -194,6 +197,11 @@ export default function BlogPost() {
 
   return (
     <MarketingLayout>
+      <SEO
+        title={`${post.title} - Nadir Blog`}
+        description={post.excerpt}
+        path={`/blog/${post.id}`}
+      />
       <div className="container mx-auto px-6 py-8">
         <Button
           variant="ghost"
@@ -207,7 +215,9 @@ export default function BlogPost() {
         <article className="max-w-4xl mx-auto">
           {/* Header */}
           <header className="text-center mb-12 border-b border-border pb-8">
-            <div className="text-6xl mb-6">{post.thumbnail}</div>
+            <div className="inline-block px-3 py-1 bg-[#0a0a0a] text-white text-sm font-mono rounded mb-6">
+              {post.thumbnail}
+            </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight">
               {post.title}
             </h1>

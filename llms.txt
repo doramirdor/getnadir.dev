@@ -45,7 +45,7 @@ Free and open-source (MIT License)
 
 ## Links
 
-- [GitHub Repository](https://github.com/doramirdor/NadirClaw)
+- [GitHub Repository](https://github.com/NadirRouter/NadirClaw)
 - [Dev.to Articles](https://dev.to/doramirdor)
 
 ## Contact

@@ -35,7 +35,7 @@ export default function Docs() {
   return (
     <MarketingLayout>
       <SEO
-        title="Documentation — Nadir | Setup, Config & API Reference"
+        title="Documentation - Nadir | Setup, Config & API Reference"
         description="Get started with Nadir in 2 commands. Full docs for routing, context optimization, and CLI."
         path="/docs"
       />

@@ -1,8 +1,10 @@
+import { trackGitHubClick } from "@/utils/analytics";
+
 export const HeroSection = () => {
   return (
-    <section className="py-24 md:py-32 text-center">
-      <div className="max-w-[1120px] mx-auto px-8">
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-5 max-w-[900px] mx-auto bg-gradient-to-br from-[#0a0a0a] via-[#0a0a0a] to-[#0066ff] bg-clip-text text-transparent">
+    <section className="py-10 md:py-16 text-center">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+        <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-5 max-w-[900px] mx-auto bg-gradient-to-br from-[#0a0a0a] via-[#0a0a0a] to-[#0066ff] bg-clip-text text-transparent">
           Your simple prompts are burning premium tokens
         </h1>
 
@@ -15,7 +17,8 @@ export const HeroSection = () => {
 
         <div className="flex gap-3 justify-center flex-wrap mb-4">
           <a
-            href="https://github.com/doramirdor/NadirClaw"
+            href="https://github.com/NadirRouter/NadirClaw"
+            onClick={() => trackGitHubClick("hero")}
             className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
           >
             <svg
@@ -29,7 +32,7 @@ export const HeroSection = () => {
             Star on GitHub
           </a>
           <a
-            href="#quickstart"
+            href="#calculator"
             className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] hover:border-[#666] hover:-translate-y-px hover:shadow-md transition-all no-underline"
           >
             Quick Start

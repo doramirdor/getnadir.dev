@@ -411,7 +411,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
             {mode === "hosted" && (
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
                 <Zap className="w-3.5 h-3.5 flex-shrink-0" />
-                Powered by AWS Bedrock — currently supporting Anthropic Claude models.
+                Powered by AWS Bedrock - currently supporting Anthropic Claude models.
               </div>
             )}
 
@@ -459,13 +459,13 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                 <div className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-green-50 text-green-700 border-green-200 text-xs">Simple</Badge>
-                    <span className="text-xs text-muted-foreground">Required — for trivial prompts</span>
+                    <span className="text-xs text-muted-foreground">Required - for trivial prompts</span>
                   </div>
                   <Select value={simpleModel} onValueChange={setSimpleModel}>
                     <SelectTrigger><SelectValue placeholder="Select model..." /></SelectTrigger>
                     <SelectContent>
                       {sortedModels.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} - {pricingLabel(m)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -475,14 +475,14 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                 <div className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-xs">Medium</Badge>
-                    <span className="text-xs text-muted-foreground">Optional — if empty, complex handles medium</span>
+                    <span className="text-xs text-muted-foreground">Optional - if empty, complex handles medium</span>
                   </div>
                   <Select value={mediumModel || "__none__"} onValueChange={(v) => setMediumModel(v === "__none__" ? "" : v)}>
                     <SelectTrigger><SelectValue placeholder="None (optional)" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__none__">No medium tier</SelectItem>
                       {sortedModels.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} - {pricingLabel(m)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -492,13 +492,13 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                 <div className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs">Complex</Badge>
-                    <span className="text-xs text-muted-foreground">Required — most capable model</span>
+                    <span className="text-xs text-muted-foreground">Required - most capable model</span>
                   </div>
                   <Select value={complexModel} onValueChange={setComplexModel}>
                     <SelectTrigger><SelectValue placeholder="Select model..." /></SelectTrigger>
                     <SelectContent>
                       {sortedModels.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} - {pricingLabel(m)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -580,7 +580,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                     <SelectTrigger><SelectValue placeholder="Select primary model..." /></SelectTrigger>
                     <SelectContent>
                       {sortedModels.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} - {pricingLabel(m)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -599,7 +599,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                     <SelectTrigger><SelectValue placeholder="Select fallback model..." /></SelectTrigger>
                     <SelectContent>
                       {sortedModels.filter((m) => m.id !== fallbackChain[0]).map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} - {pricingLabel(m)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -620,7 +620,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                     <SelectContent>
                       <SelectItem value="__none__">No third model</SelectItem>
                       {sortedModels.filter((m) => !fallbackChain.slice(0, 2).includes(m.id)).map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name} — {pricingLabel(m)}</SelectItem>
+                        <SelectItem key={m.id} value={m.id}>{m.name} - {pricingLabel(m)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

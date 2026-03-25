@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { BatchVisualization } from "@/components/BatchVisualization";
 
 interface WaitlistFormProps {
   variant?: "inline" | "card";
@@ -30,20 +31,27 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
   const processedRef = useRef(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Handle OAuth redirect on mount
+  // Add user to waitlist after OAuth sign-in or on any authenticated visit
   useEffect(() => {
-    async function handleOAuthReturn() {
-      if (!window.location.hash && !window.location.search.includes("code=")) return;
-      if (processedRef.current) return;
+    if (processedRef.current) return;
+
+    async function addToWaitlistIfNeeded() {
+      // Check if we're returning from an OAuth waitlist flow
+      const pendingWaitlist = sessionStorage.getItem("nadir-waitlist-pending");
+      const hasAuthTokens = window.location.hash.includes("access_token") || window.location.search.includes("code=");
+
+      if (!pendingWaitlist && !hasAuthTokens) return;
+
       processedRef.current = true;
+      sessionStorage.removeItem("nadir-waitlist-pending");
 
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error || !session) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.email) return;
 
         const userEmail = session.user.email;
-        if (!userEmail) return;
 
+        // Check if already on list
         const { data: existing } = await supabase
           .from("waitlist_entries")
           .select("position")
@@ -51,7 +59,7 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
           .maybeSingle();
 
         if (existing) {
-          setMsg(`You're already #${existing.position} on the list!`);
+          setMsg("You're already on the list!");
           setDone(true);
           setShowBanner(true);
           return;
@@ -68,19 +76,32 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
         const position = (count ?? 0) + 1;
         const batch_number = Math.floor((position - 1) / 100) + 1;
 
-        const { error: insertError } = await supabase.from("waitlist_entries").insert({
+        const insertData: Record<string, any> = {
           email: userEmail,
           position,
           batch_number,
           display_name: displayName,
           source,
-        });
+        };
+        // Only include avatar_url if column exists (graceful handling)
+        if (avatarUrl) insertData.avatar_url = avatarUrl;
 
-        if (insertError) throw insertError;
+        const { error: insertError } = await supabase.from("waitlist_entries").insert(insertData);
 
-        setMsg(`You're #${position} on the waitlist!`);
+        if (insertError) {
+          // If avatar_url column doesn't exist, retry without it
+          if (insertError.message?.includes("avatar_url")) {
+            delete insertData.avatar_url;
+            await supabase.from("waitlist_entries").insert(insertData);
+          } else {
+            throw insertError;
+          }
+        }
+
+        setMsg("You're on the waitlist!");
         setDone(true);
         setShowBanner(true);
+        (await import("@/utils/analytics")).trackWaitlistSignup("google", source);
 
         window.history.replaceState(null, "", window.location.pathname);
       } catch (err) {
@@ -88,7 +109,17 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
       }
     }
 
-    handleOAuthReturn();
+    // Listen for auth state change (catches OAuth return reliably)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" && sessionStorage.getItem("nadir-waitlist-pending")) {
+        addToWaitlistIfNeeded();
+      }
+    });
+
+    // Also try immediately (for page reload after redirect)
+    addToWaitlistIfNeeded();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Auto-dismiss banner
@@ -99,6 +130,8 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
   }, [showBanner]);
 
   async function signInWith(provider: "google" | "github") {
+    // Flag that user came from waitlist — picked up after OAuth redirect
+    sessionStorage.setItem("nadir-waitlist-pending", source);
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -106,6 +139,7 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
       },
     });
     if (error) {
+      sessionStorage.removeItem("nadir-waitlist-pending");
       console.error("OAuth error:", error);
       setMsg("Something went wrong. Try the email option instead.");
     }
@@ -140,11 +174,12 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
           throw error;
         }
       } else {
-        setMsg(`You're #${position} on the waitlist!`);
+        setMsg("You're on the waitlist!");
       }
 
       setDone(true);
       setShowBanner(true);
+      import("@/utils/analytics").then(a => a.trackWaitlistSignup("email", source));
     } catch (err) {
       console.error("Waitlist error:", err);
       const existing = JSON.parse(localStorage.getItem("nadir-waitlist") || "[]");
@@ -247,17 +282,36 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
     return (
       <>
         {banner}
-        <div ref={sectionRef} className="bg-gradient-to-r from-[#00a86b]/5 to-[#0066ff]/5 border border-[#e5e5e5] rounded-xl p-8 text-center">
-          <h3 className="text-lg font-semibold mb-2">Get early access to Nadir Pro</h3>
-          <p className="text-sm text-[#666] mb-5">
-            Hosted proxy with advanced routing algorithms, aggressive context optimization, and web dashboard.
-          </p>
-          <div className="max-w-md mx-auto">{formContent}</div>
-          {!done && (
-            <p className="text-xs text-[#999] mt-3">
-              Free and open source stays free. Pro adds hosted proxy + advanced algorithms.
+        <div id="waitlist" ref={sectionRef}>
+          {/* Form section */}
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <h3 className="text-2xl font-bold mb-2">Join the waitlist for hosted Pro</h3>
+            <p className="text-sm text-[#666] mb-6">
+              Get notified when the hosted version launches. You only pay a share of what we save you. No savings, no charge.
             </p>
-          )}
+            <div className="max-w-lg mx-auto">{formContent}</div>
+            {!done && (
+              <p className="text-xs text-[#999] mt-3">
+                Free and open source stays free. Pro adds hosted proxy + advanced algorithms.
+              </p>
+            )}
+          </div>
+
+          {/* Full-width batch visualization */}
+          <BatchVisualization />
+
+          {/* Self-host quickstart */}
+          <div className="mt-10 text-center max-w-[640px] mx-auto">
+            <h3 className="text-lg font-semibold tracking-tight mb-2 text-[#666]">Or self-host the free version</h3>
+            <p className="text-[#999] text-xs mb-4">Two commands. No signup required.</p>
+            <div className="bg-[#0a0a0a] rounded-xl p-5 font-mono text-sm text-white text-left">
+              <div className="mb-1"><span className="text-[#666]">$</span> <span className="text-white">pip install nadir</span></div>
+              <div className="text-[#999] mb-3">Successfully installed nadir-0.7.0</div>
+              <div className="mb-1"><span className="text-[#666]">$</span> <span className="text-white">nadir serve</span></div>
+              <div className="text-[#00a86b]">&#10003; Router running on http://localhost:8856</div>
+              <div className="text-[#00a86b]">&#10003; Dashboard at http://localhost:8856/dashboard</div>
+            </div>
+          </div>
         </div>
       </>
     );

@@ -59,7 +59,7 @@ export function QuickstartContent() {
         <P>
           Nadir is an OpenAI-compatible LLM gateway that automatically routes
           each request to the best model for the job. Get started in under a
-          minute — just swap your base URL and add your API key.
+          minute - just swap your base URL and add your API key.
         </P>
       </div>
 
@@ -67,7 +67,7 @@ export function QuickstartContent() {
         <H2>1. Get your API key</H2>
         <P>
           Sign up at the dashboard, navigate to <strong className="text-foreground">API Keys</strong>,
-          and create a new key. Copy it — you won't be able to see it again.
+          and create a new key. Copy it - you won't be able to see it again.
         </P>
       </div>
 
@@ -189,8 +189,7 @@ export function AuthenticationContent() {
         <h1 className="text-3xl font-semibold text-foreground">Authentication</h1>
         <P>
           Every request to Nadir must include a valid API key in the{" "}
-          <InlineCode>X-API-Key</InlineCode> header. You can also use the
-          standard <InlineCode>Authorization: Bearer</InlineCode> header.
+          <InlineCode>X-API-Key</InlineCode> header.
         </P>
       </div>
 
@@ -205,7 +204,7 @@ export function AuthenticationContent() {
         <div className="rounded-lg border border-border p-5 space-y-3">
           <h3 className="font-semibold text-foreground text-sm">Key features</h3>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <BulletItem>Keys are hashed before storage — they cannot be retrieved after creation.</BulletItem>
+            <BulletItem>Keys are hashed before storage - they cannot be retrieved after creation.</BulletItem>
             <BulletItem>Each key can be linked to a preset for automatic routing configuration.</BulletItem>
             <BulletItem>Keys can be scoped to specific organizations for team management.</BulletItem>
             <BulletItem>Revoke a key instantly from the dashboard if compromised.</BulletItem>
@@ -243,12 +242,6 @@ response = requests.post(
               code: `# Using X-API-Key header
 curl https://api.nadir.dev/v1/chat/completions \\
   -H "X-API-Key: YOUR_NADIR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"messages": [{"role": "user", "content": "Hello"}]}'
-
-# Or using Bearer token
-curl https://api.nadir.dev/v1/chat/completions \\
-  -H "Authorization: Bearer YOUR_NADIR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"messages": [{"role": "user", "content": "Hello"}]}'`,
             },
@@ -375,11 +368,11 @@ data.data.forEach(model => console.log(model.id));`,
       </div>
 
       <div className="space-y-4">
-        <H2>BYOK — Bring Your Own Key</H2>
+        <H2>BYOK - Bring Your Own Key</H2>
         <P>
           Connect your own API keys from any supported provider via the{" "}
           <strong className="text-foreground">Integrations</strong> page. BYOK
-          models are billed directly by the provider — Nadir only charges the
+          models are billed directly by the provider - Nadir only charges the
           routing fee.
         </P>
       </div>
@@ -419,7 +412,7 @@ export function SmartRoutingContent() {
           />
           <FeatureCard
             title="2. Tier Assignment"
-            desc="The prompt is assigned a complexity tier — simple, moderate, complex, or expert — which determines the model pool."
+            desc="The prompt is assigned a complexity tier - simple, moderate, complex, or expert - which determines the model pool."
           />
           <FeatureCard
             title="3. Model Ranking"
@@ -505,23 +498,23 @@ export function PresetsContent() {
         <div className="rounded-lg border border-border p-5 space-y-3">
           <ul className="space-y-2 text-sm text-muted-foreground">
             <BulletItem>
-              <strong className="text-foreground">System prompt</strong> — injected
+              <strong className="text-foreground">System prompt</strong> - injected
               automatically if the request doesn't include one.
             </BulletItem>
             <BulletItem>
-              <strong className="text-foreground">Allowed models</strong> — restricts
+              <strong className="text-foreground">Allowed models</strong> - restricts
               routing to a curated set of models.
             </BulletItem>
             <BulletItem>
-              <strong className="text-foreground">Parameter defaults</strong> —
+              <strong className="text-foreground">Parameter defaults</strong> -
               temperature, max_tokens, top_p, and penalties.
             </BulletItem>
             <BulletItem>
-              <strong className="text-foreground">Routing strategy</strong> — smart
+              <strong className="text-foreground">Routing strategy</strong> - smart
               routing, load-balanced, or pinned model.
             </BulletItem>
             <BulletItem>
-              <strong className="text-foreground">Budget limits</strong> — per-request
+              <strong className="text-foreground">Budget limits</strong> - per-request
               and monthly cost caps.
             </BulletItem>
           </ul>
@@ -557,7 +550,7 @@ curl https://api.nadir.dev/v1/chat/completions \\
       </div>
 
       <Callout type="tip">
-        Create separate presets for different use cases — one for customer
+        Create separate presets for different use cases - one for customer
         support (conservative models, low temperature) and another for creative
         writing (capable models, high temperature).
       </Callout>
@@ -578,7 +571,7 @@ export function FallbacksContent() {
         </h1>
         <P>
           Nadir provides automatic fallback and load balancing across models and
-          providers — no client-side retry logic needed.
+          providers - no client-side retry logic needed.
         </P>
       </div>
 
@@ -587,7 +580,7 @@ export function FallbacksContent() {
         <P>
           When a model returns an error (5xx, rate limit, timeout), Nadir
           automatically retries with the next-ranked model for the same
-          complexity tier. This happens transparently — the client receives a
+          complexity tier. This happens transparently - the client receives a
           successful response.
         </P>
 
@@ -693,7 +686,7 @@ export function ClusteringContent() {
         <H2>Classify a prompt</H2>
         <P>
           Use the clustering classify endpoint to see which cluster a prompt
-          belongs to — without making an LLM call.
+          belongs to - without making an LLM call.
         </P>
 
         <CodeTabs
@@ -798,23 +791,20 @@ export function SmartExportContent() {
           clusters, complexity tiers, or manual flag), and activate.
         </P>
         <P>
-          Smart Export is checked early in the routing pipeline — before
+          Smart Export is checked early in the routing pipeline - before
           complexity analysis and cluster routing. If a request matches the
           Smart Export criteria, it's routed directly to the expert model.
         </P>
       </div>
 
       <div className="space-y-4">
-        <H2>Manual trigger via API</H2>
+        <H2>How it's triggered</H2>
         <P>
-          You can also force Smart Export routing by including the{" "}
-          <InlineCode>smart_export</InlineCode> flag in the request body.
+          Smart Export activates automatically when a request matches a cluster
+          with a trained expert model. No special request parameters needed.
+          The routing decision appears in the response metadata under{" "}
+          <InlineCode>model_selection_type: "smart_export"</InlineCode>.
         </P>
-
-        <CodeBlock label="Triggering Smart Export">{`{
-  "messages": [{"role": "user", "content": "Review this contract..."}],
-  "smart_export": true
-}`}</CodeBlock>
       </div>
 
       <Callout type="info">
@@ -891,7 +881,7 @@ export function DistillationContent() {
         <div className="grid gap-4 sm:grid-cols-2">
           <FeatureCard
             title="OpenAI fine-tuning"
-            desc="Uses OpenAI's fine-tuning API to create a distilled model hosted on OpenAI's infrastructure. Best for production workloads — no GPU needed."
+            desc="Uses OpenAI's fine-tuning API to create a distilled model hosted on OpenAI's infrastructure. Best for production workloads - no GPU needed."
           />
           <FeatureCard
             title="Local LoRA training"
@@ -931,7 +921,7 @@ export function DistillationContent() {
       <div className="space-y-4">
         <H2>Triggering training</H2>
         <P>
-          Training is manual by default — use the API or dashboard to trigger
+          Training is manual by default - use the API or dashboard to trigger
           it for a specific cluster. You can also enable auto-training so Nadir
           automatically trains when a cluster reaches the sample threshold.
         </P>
@@ -1224,7 +1214,7 @@ export function ApiCompletionsContent() {
         </h1>
         <P>
           The primary endpoint for generating responses. Fully compatible with
-          the OpenAI chat completions format — existing SDKs and tools work
+          the OpenAI chat completions format - existing SDKs and tools work
           without modification.
         </P>
       </div>
@@ -1264,9 +1254,6 @@ export function ApiCompletionsContent() {
             </Param>
             <Param name="presence_penalty" type="float">
               Presence penalty (-2 to 2).
-            </Param>
-            <Param name="smart_export" type="boolean">
-              Force Smart Export routing to the expert model.
             </Param>
             <Param name="response_format" type="object">
               Request structured output. Use{" "}
@@ -1547,7 +1534,7 @@ export function ApiClusteringContent() {
           Clustering API
         </h1>
         <P>
-          Programmatic access to prompt clustering — classify prompts, list
+          Programmatic access to prompt clustering - classify prompts, list
           clusters, and manage routing policies.
         </P>
       </div>
@@ -1674,7 +1661,7 @@ export function ApiRecommendationContent() {
         </P>
       </div>
 
-      <EndpointHeader method="POST" path="/v1/chat/recommendation" />
+      <EndpointHeader method="POST" path="/v1/custom_recommendation" />
 
       <div className="space-y-4">
         <H2>Request body</H2>
@@ -1701,7 +1688,7 @@ export function ApiRecommendationContent() {
               code: `import requests
 
 response = requests.post(
-    "https://api.nadir.dev/v1/chat/recommendation",
+    "https://api.nadir.dev/v1/custom_recommendation",
     headers={"X-API-Key": "YOUR_NADIR_API_KEY"},
     json={
         "messages": [
@@ -1718,7 +1705,7 @@ print(f"Estimated cost: \${rec['estimated_cost_usd']}")`,
             {
               label: "cURL",
               language: "curl",
-              code: `curl https://api.nadir.dev/v1/chat/recommendation \\
+              code: `curl https://api.nadir.dev/v1/custom_recommendation \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: YOUR_NADIR_API_KEY" \\
   -d '{
@@ -1730,7 +1717,7 @@ print(f"Estimated cost: \${rec['estimated_cost_usd']}")`,
             {
               label: "JavaScript",
               language: "javascript",
-              code: `const response = await fetch("https://api.nadir.dev/v1/chat/recommendation", {
+              code: `const response = await fetch("https://api.nadir.dev/v1/custom_recommendation", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -1776,7 +1763,7 @@ console.log(\`Recommended: \${rec.model} (tier: \${rec.complexity_tier})\`);`,
       </div>
 
       <Callout type="tip">
-        The recommendation endpoint is free — no tokens are consumed. Use it
+        The recommendation endpoint is free - no tokens are consumed. Use it
         to build custom routing logic or to preview decisions in your
         application.
       </Callout>
@@ -1796,7 +1783,7 @@ export function ApiDistillationContent() {
           Distillation API
         </h1>
         <P>
-          Manage the full distillation lifecycle — check readiness, trigger
+          Manage the full distillation lifecycle - check readiness, trigger
           training, monitor jobs, and control distilled models.
         </P>
       </div>
@@ -2064,7 +2051,7 @@ clusters.forEach(c =>
       <Callout type="info">
         All distillation endpoints require authentication via{" "}
         <InlineCode>X-API-Key</InlineCode>. Jobs and models are scoped to
-        your account — you can only access your own resources.
+        your account - you can only access your own resources.
       </Callout>
     </div>
   );
@@ -2141,9 +2128,6 @@ export function ParametersContent() {
         <H2>Nadir-specific parameters</H2>
         <div className="rounded-lg border border-border p-5">
           <div className="divide-y divide-border">
-            <Param name="smart_export" type="boolean">
-              Force routing to the Smart Export expert model.
-            </Param>
             <Param name="fallback" type="boolean">
               Enable/disable automatic fallback. Default: true.
             </Param>
@@ -2295,17 +2279,17 @@ export function ErrorsContent() {
             </thead>
             <tbody className="divide-y divide-border">
               {[
-                ["200", "Success — the request was processed successfully."],
-                ["400", "Bad request — check your request body format and required fields."],
-                ["401", "Unauthorized — invalid or missing API key."],
-                ["403", "Forbidden — key is valid but lacks permission for this action."],
-                ["404", "Not found — the endpoint or resource doesn't exist."],
-                ["409", "Conflict — the request conflicts with current state (e.g., duplicate key name)."],
-                ["422", "Unprocessable — request was valid JSON but failed validation."],
-                ["429", "Rate limited — slow down and retry after the indicated delay."],
-                ["500", "Server error — an unexpected error occurred. Retry or contact support."],
-                ["502", "Bad gateway — the upstream LLM provider returned an error."],
-                ["503", "Service unavailable — the service is temporarily overloaded."],
+                ["200", "Success - the request was processed successfully."],
+                ["400", "Bad request - check your request body format and required fields."],
+                ["401", "Unauthorized - invalid or missing API key."],
+                ["403", "Forbidden - key is valid but lacks permission for this action."],
+                ["404", "Not found - the endpoint or resource doesn't exist."],
+                ["409", "Conflict - the request conflicts with current state (e.g., duplicate key name)."],
+                ["422", "Unprocessable - request was valid JSON but failed validation."],
+                ["429", "Rate limited - slow down and retry after the indicated delay."],
+                ["500", "Server error - an unexpected error occurred. Retry or contact support."],
+                ["502", "Bad gateway - the upstream LLM provider returned an error."],
+                ["503", "Service unavailable - the service is temporarily overloaded."],
               ].map(([code, desc]) => (
                 <tr key={code}>
                   <td className="px-4 py-3 font-mono font-semibold text-foreground">{code}</td>
@@ -2367,7 +2351,7 @@ try:
 except openai.AuthenticationError:
     print("Invalid API key")
 except openai.RateLimitError:
-    print("Rate limited — retry after backoff")
+    print("Rate limited - retry after backoff")
 except openai.APIStatusError as e:
     print(f"API error {e.status_code}: {e.message}")`,
             },

@@ -2,8 +2,8 @@ export const FeaturesGrid = () => {
   return (
     <>
       {/* Pain Points */}
-      <section className="py-24 bg-gradient-to-b from-white via-[#fafafa] to-white">
-        <div className="max-w-[960px] mx-auto px-8">
+      <section className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white">
+        <div className="max-w-[960px] mx-auto px-4 sm:px-8">
           <div className="grid md:grid-cols-3 gap-12">
             <div className="p-6 rounded-xl hover:-translate-y-0.5 hover:shadow-lg hover:bg-white/80 transition-all">
               <h3 className="text-lg font-semibold mb-2 tracking-tight">
@@ -11,7 +11,7 @@ export const FeaturesGrid = () => {
               </h3>
               <p className="text-[15px] text-[#666] leading-relaxed">
                 Code formatting, basic questions, simple edits. They don't need
-                your most expensive model — but that's what you're paying for
+                your most expensive model - but that's what you're paying for
                 on every call.
               </p>
             </div>
@@ -38,10 +38,10 @@ export const FeaturesGrid = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-24">
-        <div className="max-w-[1120px] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <section className="py-6 md:py-10">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
               How it works
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
@@ -91,10 +91,10 @@ export const FeaturesGrid = () => {
       </section>
 
       {/* Code Swap Section */}
-      <section className="py-24 bg-gradient-to-b from-white via-[#fafafa] to-white">
-        <div className="max-w-[1120px] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <section className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
               One line changes everything
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
@@ -163,10 +163,10 @@ client = openai.OpenAI(`}
       </section>
 
       {/* Observability */}
-      <section className="py-24">
-        <div className="max-w-[1120px] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <section className="py-6 md:py-10">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
               Observability built in
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />

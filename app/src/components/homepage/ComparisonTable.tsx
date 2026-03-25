@@ -64,7 +64,7 @@ const features = [
   },
   {
     name: "Pricing",
-    nadirclaw: { icon: "none", text: "Free (MIT)", bold: true },
+    nadirclaw: { icon: "check", text: "Free self-host (MIT)", bold: true },
     litellm: { icon: "none", text: "Free (your time)" },
     openrouter: { icon: "none", text: "Per-token markup" },
     helicone: { icon: "none", text: "Free 10K, Pro $79/mo" },
@@ -99,12 +99,12 @@ const CellContent = ({ cell }: { cell: CellData }) => (
 export const ComparisonTable = () => {
   return (
     <section
-      className="py-24 bg-gradient-to-b from-white via-[#fafafa] to-white"
+      className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white"
       id="compare"
     >
-      <div className="max-w-[1120px] mx-auto px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
             How we compare
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />

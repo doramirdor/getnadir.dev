@@ -59,11 +59,11 @@ export const OnboardingSteps = () => {
   return (
     <section
       id="calculator"
-      className="py-20 bg-gradient-to-b from-white via-[#fafafa] to-white"
+      className="py-8 md:py-14 bg-gradient-to-b from-white via-[#fafafa] to-white"
     >
-      <div className="max-w-[1120px] mx-auto px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
             Calculate your savings
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
@@ -178,7 +178,7 @@ export const OnboardingSteps = () => {
             {/* CTAs */}
             <div className="flex gap-2.5 flex-wrap">
               <a
-                href="https://github.com/doramirdor/NadirClaw"
+                href="https://github.com/NadirRouter/NadirClaw"
                 className="flex-1 min-w-[200px] text-center py-3 px-6 bg-[#0a0a0a] text-white rounded-md font-semibold text-[15px] no-underline inline-flex items-center justify-center gap-1.5 hover:bg-[#333] transition-colors"
               >
                 <svg
@@ -192,7 +192,7 @@ export const OnboardingSteps = () => {
                 Star & start saving
               </a>
               <a
-                href="#quickstart"
+                href="#calculator"
                 className="flex-1 min-w-[160px] text-center py-3 px-6 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md font-semibold text-[15px] no-underline hover:bg-[#f5f5f5] transition-colors"
               >
                 pip install nadir

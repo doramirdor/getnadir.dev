@@ -6,7 +6,7 @@ export default function OpenClaw() {
   return (
     <MarketingLayout>
       <SEO
-        title="OpenClaw — Nadir | Shared API Keys for Hosted Proxy"
+        title="OpenClaw - Nadir | Shared API Keys for Hosted Proxy"
         description="Use pre-configured provider keys with Nadir's hosted proxy. No need to bring your own keys."
         path="/openclaw"
       />

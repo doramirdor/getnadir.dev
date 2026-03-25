@@ -1,9 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 const tiers = [
   {
@@ -19,12 +32,12 @@ const tiers = [
       "MIT licensed",
     ],
     cta: "Get Started",
-    ctaLink: "https://github.com/doramirdor/NadirClaw",
+    ctaLink: "https://github.com/NadirRouter/NadirClaw",
     highlighted: false,
   },
   {
     name: "Pro",
-    price: "Up to $9",
+    price: "$9",
     subtitle: "/month + up to 25% of savings",
     description: "Hosted proxy with zero setup. We only earn when we save you money.",
     features: [
@@ -54,15 +67,104 @@ const tiers = [
       "Priority support",
       "Audit logs & compliance",
     ],
-    cta: "Contact Us",
-    ctaLink: "mailto:amirdor@gmail.com",
+    cta: "contact",
+    ctaLink: "",
     highlighted: false,
   },
 ];
 
+function ContactFormDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("contact_submissions").insert({
+        name: name.trim(),
+        email: email.trim(),
+        company: company.trim() || null,
+        message: message.trim(),
+      });
+      if (error) throw error;
+      setSent(true);
+      toast({ title: "Sent", description: "We'll be in touch shortly." });
+      import("@/utils/analytics").then(a => a.trackContactSubmit());
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "Something went wrong. Please try again." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = (v: boolean) => {
+    if (!v) {
+      setSent(false);
+      setName("");
+      setEmail("");
+      setCompany("");
+      setMessage("");
+    }
+    onOpenChange(v);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Contact our team</DialogTitle>
+          <DialogDescription>
+            Tell us about your use case and we'll get back to you within 24 hours.
+          </DialogDescription>
+        </DialogHeader>
+        {sent ? (
+          <div className="py-8 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Check className="w-6 h-6 text-green-600" />
+            </div>
+            <p className="font-semibold text-lg">Message sent!</p>
+            <p className="text-sm text-muted-foreground mt-1">We'll be in touch shortly.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="contact-name">Name</Label>
+                <Input id="contact-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="contact-company">Company</Label>
+                <Input id="contact-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Acme Inc." />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="contact-email">Email</Label>
+              <Input id="contact-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="contact-message">How can we help?</Label>
+              <Textarea id="contact-message" required value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Tell us about your team size, monthly LLM spend, and what you're looking for..." rows={4} />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Send Message
+            </Button>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SavingsCalculator() {
   const [spend, setSpend] = useState(5000);
-  const savingsRate = 0.10;
+  const savingsRate = 0.38;
   const savings = spend * savingsRate;
   const feeOnFirst2K = Math.min(savings, 2000) * 0.25;
   const feeAbove2K = Math.max(savings - 2000, 0) * 0.10;
@@ -74,7 +176,7 @@ function SavingsCalculator() {
     <div className="max-w-2xl mx-auto mt-20 p-8 bg-gray-50 rounded-2xl">
       <h3 className="text-2xl font-bold text-center mb-2">Calculate your savings</h3>
       <p className="text-gray-500 text-center mb-8">
-        Based on 10% average cost reduction from intelligent routing (up to 30% on medium-complexity prompts)
+        Based on 38% average cost reduction from intelligent routing benchmark
       </p>
 
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -117,33 +219,35 @@ function SavingsCalculator() {
 }
 
 export default function Pricing() {
+  const [contactOpen, setContactOpen] = useState(false);
+
   return (
     <MarketingLayout>
       <SEO
-        title="Pricing — Nadir | Free Self-Hosted + Pro Plans"
+        title="Pricing - Nadir | Free Self-Hosted + Pro Plans"
         description="Self-host Nadir free or upgrade to Pro with advanced routing algorithms. Pay only when we save you money."
         path="/pricing"
       />
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Pay only when we save you money
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-10 sm:pb-16 text-center">
+        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
+          Free to self-host. Pro when you need it.
         </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-          Up to $9/month base. Up to 25% of savings, capped then 10%. If we don't save you money, you just pay up to $9.
+        <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
+          Self-host Nadir for free with full routing and optimization. Or use our hosted Pro plan - you only pay when we save you money.
         </p>
       </section>
 
       {/* Benchmark social proof */}
-      <section className="max-w-6xl mx-auto px-6 pb-16">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
         <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
           <div className="text-center p-6 bg-gray-50 rounded-xl">
-            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 30%</div>
-            <div className="text-sm text-gray-500">savings on everyday prompts</div>
+            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 38%</div>
+            <div className="text-sm text-gray-500">overall cost savings</div>
           </div>
           <div className="text-center p-6 bg-gray-50 rounded-xl">
-            <div className="text-4xl font-bold text-blue-600 mb-1">87%</div>
-            <div className="text-sm text-gray-500">quality verified by LLM judge</div>
+            <div className="text-4xl font-bold text-blue-600 mb-1">96%</div>
+            <div className="text-sm text-gray-500">routing accuracy</div>
           </div>
           <div className="text-center p-6 bg-gray-50 rounded-xl">
             <div className="text-4xl font-bold text-indigo-500 mb-1">Zero</div>
@@ -151,15 +255,12 @@ export default function Pricing() {
           </div>
         </div>
         <p className="text-center text-sm text-gray-400 mt-4">
-          Benchmarked on real-world prompts with quality verified by LLM judge.{" "}
-          <Link to="/blog/benchmark-results" className="text-blue-600 hover:underline">
-            See full benchmark &rarr;
-          </Link>
+          Benchmarked on real-world prompts with quality verified by LLM judge.
         </p>
       </section>
 
       {/* Tiers */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
         <div className="grid md:grid-cols-3 gap-8">
           {tiers.map((tier) => (
             <div
@@ -189,9 +290,19 @@ export default function Pricing() {
                 ))}
               </ul>
               {tier.cta === "waitlist" ? (
-                <div className="mt-8">
-                  <WaitlistForm variant="inline" source="pricing-pro" />
-                </div>
+                <a
+                  href="#waitlist"
+                  className="mt-8 block text-center py-3 px-6 rounded-lg font-medium text-sm transition bg-blue-600 text-white hover:bg-blue-500"
+                >
+                  Join the Waitlist
+                </a>
+              ) : tier.cta === "contact" ? (
+                <button
+                  onClick={() => setContactOpen(true)}
+                  className="mt-8 w-full text-center py-3 px-6 rounded-lg font-medium text-sm transition bg-white text-gray-900 border border-gray-200 hover:border-gray-400"
+                >
+                  Contact Us
+                </button>
               ) : (
                 <a
                   href={tier.ctaLink}
@@ -209,13 +320,18 @@ export default function Pricing() {
         </div>
       </section>
 
+      {/* Waitlist */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+        <WaitlistForm variant="card" source="pricing" />
+      </section>
+
       {/* Calculator */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
         <SavingsCalculator />
       </section>
 
       {/* How it works */}
-      <section className="max-w-4xl mx-auto px-6 pb-20">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 pb-20">
         <h2 className="text-2xl font-bold text-center mb-12">How savings-based pricing works</h2>
         <div className="space-y-6 text-gray-700">
           <div className="flex gap-4">
@@ -249,6 +365,7 @@ export default function Pricing() {
         </div>
       </section>
 
+      <ContactFormDialog open={contactOpen} onOpenChange={setContactOpen} />
     </MarketingLayout>
   );
 }

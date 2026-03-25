@@ -12,7 +12,7 @@ export default function Blog() {
   return (
     <MarketingLayout>
       <SEO
-        title="Blog — Nadir | LLM Cost Optimization Guides"
+        title="Blog - Nadir | LLM Cost Optimization Guides"
         description="Practical guides to cutting LLM API costs with intelligent routing and context optimization."
         path="/blog"
       />
@@ -29,7 +29,9 @@ export default function Blog() {
             {posts.map((post) => (
               <Card key={post.id} className="hover-lift border-0 shadow-sm h-full">
                 <CardContent className="p-6 space-y-4 h-full flex flex-col">
-                  <div className="text-4xl">{post.thumbnail}</div>
+                  <div className="inline-block px-2.5 py-1 bg-[#0a0a0a] text-white text-xs font-mono rounded">
+                    {post.thumbnail}
+                  </div>
                   <div className="space-y-2 flex-1">
                     <h3 className="font-semibold text-foreground text-lg leading-tight">
                       {post.title}

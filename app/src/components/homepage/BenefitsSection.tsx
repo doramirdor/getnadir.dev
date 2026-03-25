@@ -2,10 +2,10 @@ export const BenefitsSection = () => {
   return (
     <>
       {/* Why Not Rules */}
-      <section className="py-24 bg-gradient-to-b from-white via-[#fafafa] to-white">
-        <div className="max-w-[1120px] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <section className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
               Why not just use rules?
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
@@ -66,10 +66,10 @@ export const BenefitsSection = () => {
       </section>
 
       {/* Built for Production */}
-      <section className="py-20">
-        <div className="max-w-[1120px] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <section className="py-8 md:py-14">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
               Built for production
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
@@ -129,10 +129,10 @@ export const BenefitsSection = () => {
       </section>
 
       {/* Context Optimize */}
-      <section className="py-24 bg-gradient-to-b from-white via-[#fafafa] to-white">
-        <div className="max-w-[1120px] mx-auto px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-3">
+      <section className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
               Context Optimize
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
@@ -142,11 +142,11 @@ export const BenefitsSection = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 max-w-[960px] mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-[960px] mx-auto">
             {/* Bars */}
-            <div>
+            <div className="md:col-span-1">
               <p className="text-[13px] text-[#666] mb-3">
-                Benchmarked on premium models — safe mode (lossless)
+                Benchmarked on premium models - safe mode (lossless)
               </p>
               <div className="space-y-4">
                 {[
@@ -186,7 +186,7 @@ export const BenefitsSection = () => {
             </div>
 
             {/* Details */}
-            <div>
+            <div className="md:col-span-2">
               <div className="mb-6">
                 <h3 className="text-base font-semibold mb-3">
                   Safe mode transforms

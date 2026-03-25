@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { useAuth } from "@/hooks/useAuth";
+import { trackOnboardingStep, trackApiKeyCreated } from "@/utils/analytics";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -96,6 +97,7 @@ const Onboarding = () => {
       if (error) throw error;
       setCreatedApiKey(keyValue);
       setSessionApiKey(keyValue);
+      trackApiKeyCreated("onboarding");
       toast({
         title: "API Key Created",
         description: "Your API key is ready to use.",
@@ -399,7 +401,7 @@ console.log(response.choices[0].message.content);`;
             </div>
           )}
 
-          {/* Step 2: Configure — BYOK */}
+          {/* Step 2: Configure - BYOK */}
           {currentStep === 1 && mode === "byok" && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">
@@ -476,7 +478,7 @@ console.log(response.choices[0].message.content);`;
             </div>
           )}
 
-          {/* Step 2: Configure — Hosted */}
+          {/* Step 2: Configure - Hosted */}
           {currentStep === 1 && mode === "hosted" && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-foreground">

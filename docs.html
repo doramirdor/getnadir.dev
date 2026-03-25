@@ -370,7 +370,7 @@
         <div class="container">
             <div class="header-content">
                 <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
-                    <img src="logo.png" alt="NadirClaw" style="height:32px;width:auto;">
+                    <img src="/logo.png" alt="NadirClaw" style="height:32px;width:auto;">
                     <span style="color:var(--text);font-weight:600;font-size:15px;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;">nadirclaw</span>
                 </a>
                 <div class="nav-links">
@@ -379,7 +379,7 @@
                     <a href="/#blog">Blog</a>
                     <a href="/openclaw">OpenClaw</a>
                     <a href="/optimize">Optimize</a>
-                    <a href="https://github.com/doramirdor/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
+                    <a href="https://github.com/NadirRouter/NadirClaw" class="github-link" target="_blank" rel="noopener noreferrer">
                         <span>★</span>
                         <span class="star-count" id="star-count">Loading stars...</span>
                       </a>
@@ -387,7 +387,7 @@
                       <script>
                         async function loadGitHubStars() {
                           try {
-                            const res = await fetch("https://api.github.com/repos/doramirdor/NadirClaw");
+                            const res = await fetch("https://api.github.com/repos/NadirRouter/NadirClaw");
                             if (!res.ok) throw new Error("Failed to fetch GitHub repo data");
                       
                             const data = await res.json();
@@ -467,18 +467,18 @@
 <pre><code>pip install nadirclaw</code></pre>
 
             <h3>One-line install script</h3>
-<pre><code>curl -fsSL https://raw.githubusercontent.com/doramirdor/NadirClaw/main/install.sh | sh</code></pre>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/NadirRouter/NadirClaw/main/install.sh | sh</code></pre>
             <p>This clones to <code>~/.nadirclaw</code>, creates a venv, installs deps, and adds <code>nadirclaw</code> to your PATH. Run it again to update.</p>
 
             <h3>From source</h3>
-<pre><code>git clone https://github.com/doramirdor/NadirClaw.git
+<pre><code>git clone https://github.com/NadirRouter/NadirClaw.git
 cd NadirClaw
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .</code></pre>
 
             <h3>Docker</h3>
-<pre><code>git clone https://github.com/doramirdor/NadirClaw.git && cd NadirClaw
+<pre><code>git clone https://github.com/NadirRouter/NadirClaw.git && cd NadirClaw
 docker compose up</code></pre>
 
             <h3>Uninstall</h3>
@@ -1041,7 +1041,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 nadirclaw serve</code></pre>
             <h2 id="docker">Docker</h2>
 
             <h3>NadirClaw + Ollama (fully local, zero cost)</h3>
-<pre><code>git clone https://github.com/doramirdor/NadirClaw.git && cd NadirClaw
+<pre><code>git clone https://github.com/NadirRouter/NadirClaw.git && cd NadirClaw
 docker compose up</code></pre>
 
             <p>This starts Ollama and NadirClaw on port <code>8856</code>. Pull a model:</p>
@@ -1163,7 +1163,7 @@ nadirclaw serve --log-raw
 nadirclaw report --since 24h</code></pre>
 
             <div class="callout" style="margin-top:48px;">
-                <p><strong>Need help?</strong> Open an issue on <a href="https://github.com/doramirdor/NadirClaw/issues">GitHub</a> or check the <a href="https://github.com/doramirdor/NadirClaw#readme">README</a> for the latest info.</p>
+                <p><strong>Need help?</strong> Open an issue on <a href="https://github.com/NadirRouter/NadirClaw/issues">GitHub</a> or check the <a href="https://github.com/NadirRouter/NadirClaw#readme">README</a> for the latest info.</p>
             </div>
         </main>
     </div>
@@ -1199,9 +1199,9 @@ nadirclaw report --since 24h</code></pre>
             <div class="footer-links">
                 <a href="/">Home</a>
                 <a href="/docs.html">Docs</a>
-                <a href="https://github.com/doramirdor/NadirClaw">GitHub</a>
-                <a href="https://github.com/doramirdor/NadirClaw/issues">Issues</a>
-                <a href="https://github.com/doramirdor/NadirClaw/blob/main/LICENSE">MIT License</a>
+                <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a>
+                <a href="https://github.com/NadirRouter/NadirClaw/issues">Issues</a>
+                <a href="https://github.com/NadirRouter/NadirClaw/blob/main/LICENSE">MIT License</a>
                 <a href="/terms.html">Terms</a>
                 <a href="/privacy.html">Privacy</a>
             </div>

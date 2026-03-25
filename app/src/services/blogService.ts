@@ -15,390 +15,257 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
-    id: "gpt5-routing-architecture",
-    title: "GPT-5's Routing Architecture: The Next Leap in Efficient and Intelligent AI",
-    date: "2025-06-15",
-    author: "Nadir AI Team",
-    excerpt: "OpenAI's upcoming GPT-5 introduces revolutionary Mixture-of-Experts routing architecture that could redefine how large language models balance intelligence, speed, and efficiency.",
-    thumbnail: "🚀",
-    tags: ["GPT-5", "MoE", "Routing"],
-    readingTime: "12 min read",
+    id: "50-prompt-benchmark",
+    title: "Routing benchmark: 96% accuracy, 38% cost savings",
+    date: "2026-03-24",
+    author: "Dor Amir",
+    excerpt: "We ran 50 real-world prompts through Nadir's binary classifier. Simple prompts went to Gemini Flash, complex stayed on Sonnet. Here are the raw numbers.",
+    thumbnail: "Benchmark",
+    tags: ["Benchmark", "Cost Savings"],
+    readingTime: "5 min read",
   },
   {
-    id: "advanced-llm-routing-strategies",
-    title: "Advanced LLM Routing Strategies: Context, Load, and Quality Optimization",
-    date: "2025-06-30",
-    author: "Nadir AI Team",
-    excerpt: "Explore sophisticated routing strategies that consider context, user intent, system load, and quality requirements to optimize LLM performance.",
-    thumbnail: "🧠",
-    tags: ["LLM", "Routing", "Optimization"],
-    readingTime: "10 min read",
+    id: "context-optimize-savings",
+    title: "Context Optimize saved 61% of input tokens on Claude Opus",
+    date: "2026-03-20",
+    author: "Dor Amir",
+    excerpt: "Agentic sessions bloat context with repeated tool schemas and pretty-printed JSON. We benchmarked lossless compression across 5 real scenarios.",
+    thumbnail: "Deep Dive",
+    tags: ["Context Optimize", "Tokens"],
+    readingTime: "4 min read",
   },
   {
-    id: "dynamic-llm-router-implementation",
-    title: "Implementing a Dynamic LLM Router: Maximizing Efficiency and Performance",
-    date: "2025-06-25",
-    author: "Nadir AI Team",
-    excerpt: "Learn how to build an intelligent LLM router that optimizes cost and performance by dynamically routing queries based on complexity.",
-    thumbnail: "⚡",
-    tags: ["LLM", "Router", "Performance"],
-    readingTime: "9 min read",
+    id: "why-we-built-nadir",
+    title: "Why we built Nadir: the $0.45 docstring problem",
+    date: "2026-03-15",
+    author: "Dor Amir",
+    excerpt: "We were paying Claude Opus prices for 'write a docstring'. That's when we decided to build an intelligent router that sends simple prompts to cheaper models.",
+    thumbnail: "Story",
+    tags: ["Origin", "Open Source"],
+    readingTime: "3 min read",
   },
   {
-    id: "selecting-right-llm-guide",
-    title: "Selecting the Right LLM: A Practical Guide for Real-World Applications",
-    date: "2025-06-20",
-    author: "Nadir AI Team",
-    excerpt: "A comprehensive guide to choosing the optimal LLM for your business needs, covering model selection, use cases, and production deployment strategies.",
-    thumbnail: "🎯",
-    tags: ["LLM", "Guide", "Production"],
-    readingTime: "8 min read",
+    id: "how-binary-classifier-works",
+    title: "How our binary classifier routes prompts in 50ms",
+    date: "2026-03-10",
+    author: "Dor Amir",
+    excerpt: "Under the hood: DistilBERT embeddings, centroid matching, and a 3-tier system that decides if your prompt needs a premium model or not.",
+    thumbnail: "Technical",
+    tags: ["Classifier", "ML", "Architecture"],
+    readingTime: "6 min read",
   },
   {
-    id: "complexity-analysis-of-prompt",
-    title: "Prompt Engineering Gets a Theory: What the New Complexity Analysis Paper Means for LLM Builders",
-    date: "2025-07-14",
-    author: "Nadir AI Team",
-    excerpt: "A new complexity-theoretic lens turns prompt engineering from trial-and-error into a systematic search.",
-    thumbnail: "🛠️",
-    tags: ["Prompt Engineering", "Research"],
-    readingTime: "7 min read",
+    id: "nadir-vs-always-premium",
+    title: "Nadir vs always-premium: when to use which",
+    date: "2026-03-05",
+    author: "Dor Amir",
+    excerpt: "Not every workload benefits from routing. We break down which use cases save the most, and when you should just stick with one model.",
+    thumbnail: "Guide",
+    tags: ["Guide", "Cost"],
+    readingTime: "4 min read",
   },
 ];
 
 const blogContent: Record<string, string> = {
-  "gpt5-routing-architecture": `## Introduction
+  "50-prompt-benchmark": `## Setup
 
-OpenAI's upcoming GPT-5 is generating a lot of excitement, and for good reason. While many anticipate bigger context windows and richer multimodal inputs, one of the most significant technical breakthroughs lies under the hood: an advanced routing system based on Mixture-of-Experts (MoE) architecture. This innovation could redefine how large language models balance intelligence, speed, and efficiency.
+We ran 50 diverse prompts through Nadir's binary classifier with these settings:
 
-## What Is Mixture-of-Experts Routing?
+- **Benchmark model:** Claude Sonnet 4 ($3/1M input, $15/1M output)
+- **Available models:** Claude Sonnet, Claude Haiku, GPT-4o, GPT-4o-mini, Gemini 2.0 Flash
+- **Analyzer:** Binary classifier (DistilBERT-based)
 
-At its core, Mixture-of-Experts (MoE) divides the model into multiple specialized "expert" subnetworks. Instead of activating the entire massive network for every query — which is costly and inefficient — MoE selectively routes input through only a small subset of these experts tailored for the task at hand. Think of it as an AI brain with many specialists, each excelling in different reasoning, language, or modality tasks. The routing system decides on the fly which experts to activate, based on the input and context.
+The prompts were split into three categories: 17 simple, 17 medium, 16 complex.
 
-## Why Is This a Game-Changer for GPT-5?
+## Results
 
-### 1. Efficiency Without Compromise
+| Metric | Value |
+|--------|-------|
+| Routing accuracy | 96% (48/50 correct) |
+| Average latency | 107ms per classification |
+| Overall savings | 38% |
 
-Previous generations, like GPT-4, had huge parameter counts but had to activate most of the model for every request. GPT-5's MoE approach activates only about 10-30% of the network per query. This means:
+### Per-tier breakdown
 
-- Faster inference times
-- Lower computational cost
-- Ability to scale parameters massively without linear cost increase
+**Simple prompts (17/17 correct):** All routed to Gemini Flash. 97% savings vs benchmark.
 
-### 2. Adaptive and Context-Aware Reasoning
+Examples: "What is Python?", "Convert 72F to Celsius", "Is 7 a prime number?"
 
-GPT-5's routing isn't random. It intelligently selects experts based on the problem type and user needs, enabling:
+**Medium prompts (17/17 correct):** Routed to Gemini Flash. 97% savings.
 
-- Specialized reasoning modes: logic, creativity, math, code, etc.
-- Dynamic "thinking modes" that switch between shallow or deep reasoning
-- Multimodal fusion by routing visual, audio, and textual input through appropriate experts
+Examples: "Write a Python palindrome checker", "Explain JWT auth step by step", "Write a SQL query for second highest salary"
 
-This adaptivity allows GPT-5 to be smarter and more accurate per token, tailoring its response style internally without user input.
+**Complex prompts (14/16 correct):** 14 stayed on Sonnet, 2 were mis-routed to Flash. Complex prompts stay on the premium model by design, but Context Optimize still compacts their input tokens (minifying JSON, deduplicating tool schemas, normalizing whitespace) before sending to the provider. That's where the 12% savings on this tier comes from.
 
-### 3. Scaling to New Heights
+Examples: "Design a distributed rate limiter", "Architect a real-time collaborative editor", "Implement a B+ tree with insert/delete"
 
-With the ability to scale to 1.5 to 3 trillion parameters without proportional cost increases, GPT-5 can explore much larger models. The routing layer manages the model's internal complexity, allowing:
+### What got mis-classified
 
-- Context windows exceeding 1 million tokens
-- Seamless integration of multimodal inputs
-- Persistent memory across sessions handled by specialized experts
+Two complex prompts scored as medium:
+- "Implement a garbage collector in Python" - uses familiar keywords ("implement", "Python") without architectural framing
+- "Write a compiler frontend for a simple expression language" - "simple" in the prompt text confused the classifier
 
-### 4. Enabling Autonomous Agents and Complex Pipelines
+Both are edge cases where the prompt sounds simpler than the task actually is. We're tuning the classifier to weigh task-type keywords more heavily.
 
-By combining expert subnetworks with persistent memory and tool integration, GPT-5 provides a solid foundation for autonomous AI agents. These agents require:
+## Raw cost comparison
 
-- Task tracking and planning over long horizons
-- Switching between cognitive strategies dynamically
-- Efficient computation even when handling complex multi-step tasks
+| Tier | Baseline (all Sonnet) | Routed | Savings | How |
+|------|----------------------|--------|---------|-----|
+| Simple | $0.0209 | $0.0006 | 97.3% | Routed to Flash |
+| Medium | $0.0212 | $0.0006 | 97.3% | Routed to Flash |
+| Complex | $0.0978 | $0.0859 | 12.1% | Stayed on Sonnet + Context Optimize |
+| **Total** | **$0.1399** | **$0.0871** | **37.7%** | **Routing + Context Optimize** |
 
-The routing system is central to meeting these demanding requirements.
+## What this means
 
-## How Does This Compare to Previous Models?
+If you spend $5,000/month on LLM APIs and your prompt mix is roughly 1/3 simple, 1/3 medium, 1/3 complex, Nadir saves you around $1,900/month. Complex prompts stay on premium. You don't lose quality where it matters.`,
 
-- **GPT-3** used a dense model with all parameters active for each request.
-- **GPT-4** introduced some efficient architectures but still relied largely on dense activation.
-- **GPT-4 Turbo / GPT-4o** optimized speed and context but didn't fully adopt MoE routing.
-- **GPT-5** takes the next step by fully integrating MoE routing, allowing for specialization and scalable growth without compromising latency or cost.
+  "context-optimize-savings": `## The problem
 
-## What Does This Mean for Users?
+Agentic coding sessions are expensive because of bloated context. Every turn in a conversation accumulates:
+- Repeated tool schemas (the same function definitions sent every time)
+- Pretty-printed JSON (indented with whitespace that costs tokens)
+- Duplicate system prompts across turns
+- Old conversation history that's no longer relevant
 
-End users might not explicitly see "routing" in action, but the benefits will be clear:
+With Claude Opus at $15/1M input tokens, this adds up fast.
 
-- Responses that better match the nature of the request (e.g., creative writing vs. technical code)
-- Faster and more cost-effective performance, especially on complex or long-context queries
-- More reliable multimodal understanding with unified reasoning over text, images, audio, and video
-- Smarter AI agents capable of long-term memory and adaptive workflows
+## What Context Optimize does
 
-## Looking Ahead
+All transforms are lossless. Zero semantic degradation. The LLM receives the same information, just compacted:
 
-OpenAI's focus on routing in GPT-5 signals a shift from brute-force scaling to intelligent scaling — building models that are not just bigger, but also fundamentally smarter in how they use their internal resources.
+| Transform | What it does |
+|-----------|-------------|
+| JSON minification | Removes whitespace, newlines from JSON values |
+| Tool schema dedup | Replaces repeated tool definitions with references |
+| System prompt dedup | Removes duplicated instructions across turns |
+| Whitespace normalization | Collapses blanks, preserves code indentation |
+| Chat history trimming | Keeps system + first + last N turns |
 
-As GPT-5 rolls out, expect this architectural innovation to enable new classes of AI applications that are more efficient, context-aware, and capable of tackling real-world complexity with grace.`,
+## Benchmark results (Claude Opus)
 
-  "advanced-llm-routing-strategies": `## Introduction
+| Scenario | Before (tokens) | After | Saved | $/1K requests |
+|----------|---------------:|------:|------:|---------------:|
+| Agentic coding (8 turns, 5 tools) | 3,657 | 1,573 | 57.0% | $31.26 |
+| RAG pipeline (6 chunks) | 544 | 386 | 29.0% | $2.37 |
+| API response analysis (nested JSON) | 1,634 | 616 | 62.3% | $15.27 |
+| Long debug session (50 turns) | 3,856 | 1,414 | 63.3% | $36.63 |
+| OpenAPI spec context (5 endpoints) | 2,649 | 762 | 71.2% | $28.30 |
+| **Total** | **12,340** | **4,751** | **61.5%** | **$113.84** |
 
-While basic LLM routing focuses on query complexity, truly intelligent routing systems consider multiple dimensions: context awareness, user intent, system load, quality requirements, and historical performance patterns. This comprehensive approach enables organizations to maximize both efficiency and user satisfaction while maintaining cost-effectiveness.
+The biggest wins come from agentic sessions with repeated tool schemas and long debug sessions with JSON logs.
 
-## Beyond Query Complexity: Multi-Dimensional Routing
+## How to enable it
 
-### Context-Aware Routing
+Context Optimize runs in safe mode by default. Add it to your API key config or enable it globally:
 
-Context-aware routing analyzes not just the query itself, but the broader context in which it operates:
+\`\`\`yaml
+layers:
+  optimize: safe  # lossless transforms only
+\`\`\`
 
-**Session Context:** Understanding previous interactions in a conversation to maintain consistency and leverage established context.
+The aggressive mode (semantic dedup, embedding-based redundancy removal) is available on the Pro plan.`,
 
-**User Profile Context:** Adapting routing based on user preferences, expertise level, and historical interaction patterns.
+  "why-we-built-nadir": `## The $0.45 docstring
 
-**Domain Context:** Recognizing specialized domains (legal, medical, technical) that may require specific model expertise.
+Last year I was using Claude Opus for a coding project. Great model. But then I looked at my API bill and noticed something: a significant chunk of my spend was on prompts like:
 
-**Temporal Context:** Considering time-sensitive queries that require faster response times or more current information.
+- "Write a docstring for this function"
+- "What does HTTP 404 mean?"
+- "Convert this to TypeScript"
 
-### Intent-Based Routing
+These prompts were hitting Opus at $15/1M input tokens. They could have been handled by Haiku at $0.80/1M or Gemini Flash at $0.075/1M. Same quality output, 20-200x cheaper.
 
-Advanced routing systems classify queries by intent rather than complexity alone:
+## The manual approach doesn't work
 
-- **Creative Tasks:** Route to models optimized for creative writing, brainstorming, and artistic endeavors
-- **Analytical Tasks:** Direct complex reasoning and data analysis to models with strong logical capabilities
-- **Conversational Tasks:** Use models optimized for natural dialogue and social interaction
-- **Code Generation:** Route programming queries to models specifically trained on code repositories
-- **Factual Queries:** Direct information retrieval to models with strong factual accuracy
+I tried switching models manually. The problem: you don't know the complexity of a prompt until you've read it. And in agentic workflows (Claude Code, Cursor, Aider), the model is called hundreds of times automatically. You can't manually pick the model for each call.
 
-## System Load and Performance Optimization
+## What we built
 
-### Dynamic Load Balancing
+Nadir sits between your app and the LLM providers. It classifies each prompt in ~50ms using a DistilBERT-based classifier, then routes to the cheapest model that can handle it:
 
-Intelligent routing systems monitor real-time system performance and adapt accordingly:
+- **Simple** (status checks, formatting, basic Q&A) - Gemini Flash / Haiku
+- **Medium** (code generation, explanations) - GPT-4o-mini / Haiku
+- **Complex** (architecture, debugging, reasoning) - stays on your premium model
 
-**Queue Management:** Distribute queries across available models based on current queue lengths and processing times.
+The classifier runs locally. Your API keys never leave your machine. No third-party proxy.
 
-**Resource Utilization:** Monitor GPU utilization, memory usage, and network latency to optimize resource allocation.
+## Why open source
 
-**Predictive Scaling:** Anticipate load spikes and pre-allocate resources based on historical patterns and scheduled events.
+We're MIT licensed because we think model routing should be infrastructure, not a service that can pull the plug on you. Self-host it, fork it, contribute to it. If you want a hosted version with extra features, that's what the Pro plan is for.`,
 
-**Failover Mechanisms:** Implement seamless failover to alternative models when primary options are unavailable or overloaded.
+  "how-binary-classifier-works": `## Architecture overview
 
-### Latency-Optimized Routing
+Nadir's binary classifier has three stages:
 
-Different use cases have varying latency requirements:
+1. **Embedding** - DistilBERT encodes the prompt into a 384-dim vector (~10ms)
+2. **Centroid matching** - Compare against learned centroids for simple/medium/complex (~1ms)
+3. **Tier assignment** - Map complexity tier to model selection (~0ms)
 
-- **Real-time Applications:** Prioritize fastest-responding models for live chat and interactive applications
-- **Batch Processing:** Optimize for throughput over latency for non-interactive workloads
-- **Hybrid Approaches:** Balance latency and quality based on user-defined service level agreements
+Total: ~50-100ms classification overhead.
 
-## Best Practices for Advanced Routing
+## Stage 1: Embedding
 
-### Design Principles
+We use \`sentence-transformers/all-MiniLM-L6-v2\` to encode prompts. It runs locally on CPU, no GPU needed. The model is 22MB and loads in ~2 seconds on startup.
 
-1. **Modularity:** Build routing systems as modular, composable components
-2. **Observability:** Implement comprehensive logging and monitoring
-3. **Flexibility:** Design systems that can adapt to new models and requirements
-4. **Scalability:** Plan for growth in both query volume and model diversity
-5. **Reliability:** Implement robust error handling and failover mechanisms
+Why not a larger model? Because the embedding is just for classification, not generation. MiniLM-L6 captures enough semantic signal to distinguish "what is 2+2" from "design a distributed system" reliably.
 
-## Conclusion
+## Stage 2: Centroid matching
 
-Advanced LLM routing represents a significant evolution beyond simple complexity-based routing. By considering context, intent, system load, and quality requirements, organizations can create sophisticated routing systems that maximize both efficiency and user satisfaction.
+During training, we compute centroid embeddings for each complexity tier from labeled examples. At inference time, we compute cosine similarity between the prompt embedding and each centroid.
 
-The future of LLM routing lies in intelligent, adaptive systems that learn from user interactions, system performance, and changing requirements.`,
+The classifier outputs:
+- **Tier probabilities:** e.g., simple=0.99, medium=0.003, complex=0.003
+- **Confidence score:** 0.0 (simple) to 1.0 (complex)
+- **Tier name:** simple / medium / complex
 
-  "dynamic-llm-router-implementation": `## Introduction
+## Stage 3: Model selection
 
-In the rapidly evolving landscape of AI applications, deploying Large Language Models (LLMs) often presents a significant trade-off between performance and cost. Premium models like GPT-4 deliver unmatched quality but at a substantial cost. Meanwhile, open-source alternatives like Mixtral-8x7B offer budget-friendly solutions but might compromise on complex tasks. An optimal strategy involves a dynamic LLM router, intelligently directing queries based on their complexity.
+The tier maps to a model selection strategy:
 
-## The Need for Dynamic Routing
+| Tier | Strategy | Example models |
+|------|----------|----------------|
+| Simple (score < 0.2) | Cheapest available | Gemini Flash, GPT-3.5 |
+| Medium (0.2 - 0.7) | Mid-tier | GPT-4o-mini, Haiku |
+| Complex (score > 0.7) | Premium (benchmark model) | Sonnet, GPT-4o, Opus |
 
-Deploying an LLM router addresses two crucial business challenges:
+The ranker filters available models by the user's allowed list, then sorts by cost within the tier.
 
-**Cost Management:** Reducing expenses by delegating simpler tasks to less costly models.
+## Accuracy
 
-**Performance Optimization:** Maintaining response quality by routing complex queries to high-performance models.
+On our 50-prompt benchmark: 96% accuracy. The two errors were complex prompts that used simple-sounding language. We're working on a heuristic layer that detects task-type keywords (implement, design, architect) to catch these edge cases.
 
-A dynamic router thus becomes essential, enabling a smart, adaptive approach to resource allocation.
+## What's next
 
-## Framework for Building a Dynamic LLM Router
+We're training a confidence-aware analyzer that escalates uncertain classifications to a secondary check. If the primary classifier scores between 0.3-0.7, it runs a lightweight keyword analysis before committing to a tier. This should push accuracy above 98%.`,
 
-### Phase 1: Curating and Labeling Data
+  "nadir-vs-always-premium": `## When Nadir helps most
 
-The foundation of an efficient router is high-quality labeled data. A refined scoring system was implemented:
+**High volume, mixed complexity:** If you're making 1000+ API calls/day and many are simple lookups, formatting, or basic Q&A, routing saves the most. Typical savings: 30-40%.
 
-- **Scores 4-5:** Ideal for open-source LLM routing; answers demonstrate thoroughness and accuracy.
-- **Score 3:** Adequate responses but may need oversight or a premium LLM.
-- **Scores 1-2:** Best suited for high-performance closed models due to query complexity.
+**Agentic workflows:** Claude Code, Cursor, Aider - these tools make hundreds of calls per session. Many are simple (read file, check status). Routing + context optimization can cut costs 50%+.
 
-This nuanced rating facilitates robust model training.
+**BYOK setups:** When you bring your own API keys, Nadir just routes. You pay provider prices directly with zero markup.
 
-### Phase 2: Training a Predictive Router Model
+## When to stick with one model
 
-A causal classifier model (such as Llama3-8B) is fine-tuned using the labeled dataset. The router predicts response quality solely based on the query, making real-time routing decisions efficient and streamlined.
+**All-complex workloads:** If every prompt is a complex reasoning task (legal analysis, medical diagnosis), routing won't help. Everything stays on premium anyway.
 
-Key practices in training:
+**Latency-critical paths:** The 50-100ms classification overhead matters if you're in a real-time pipeline where every millisecond counts. For most use cases, this is negligible.
 
-- Ensuring balanced data distribution to prevent model bias
-- Clear API-based fine-tuning workflows to simplify deployment
-- Leveraging GPU acceleration to optimize training times
+**Small volume:** If you're spending <$50/month on LLM APIs, the operational overhead of running Nadir isn't worth the savings.
 
-### Phase 3: Comprehensive Performance Evaluation
+## The math
 
-Evaluating the router's effectiveness involves rigorous benchmarking against established standards like GSM8K and MT Bench. A dynamic router typically outperforms random allocation significantly through enhanced routing efficiency and consistent performance improvements.
+| Monthly spend | Prompt mix | Savings | Net after Nadir fee |
+|---------------|-----------|---------|---------------------|
+| $500 | 60% simple, 30% medium, 10% complex | ~$180 | ~$135 |
+| $2,000 | 40% simple, 40% medium, 20% complex | ~$640 | ~$480 |
+| $10,000 | 30% simple, 40% medium, 30% complex | ~$2,800 | ~$2,100 |
 
-## Key Benefits and Results
+## Bottom line
 
-Dynamic LLM gateway delivers measurable business value:
-
-- **Cost Reduction:** Achieve significant cost savings on standard benchmarks
-- **Performance Maintenance:** Preserve response quality for complex queries
-- **Scalability:** Handle varying workloads efficiently
-- **Flexibility:** Adapt to different model capabilities and pricing structures
-
-## Best Practices for Implementation
-
-1. **Start with Quality Data:** Invest in comprehensive data labeling and curation
-2. **Balanced Training:** Ensure your training data represents diverse query types
-3. **Continuous Monitoring:** Regularly evaluate and adjust routing decisions
-4. **Performance Benchmarking:** Use established benchmarks to validate effectiveness
-5. **Iterative Improvement:** Continuously refine the router based on real-world performance
-
-## Conclusion
-
-Dynamic LLM routing provides an intelligent approach to managing cost and performance simultaneously. By understanding query complexity and routing accordingly, businesses can achieve substantial cost reductions without compromising on the quality of AI-driven interactions.`,
-
-  "selecting-right-llm-guide": `## Introduction
-
-Choosing the right Large Language Model (LLM) for your specific business use-case is critical to achieving accuracy, cost efficiency, and optimal performance. With multiple models available from providers like OpenAI, making informed decisions can become complex. This guide simplifies that choice by providing actionable insights into selecting, prompting, and deploying the right LLM for your workloads.
-
-## Understanding Different Model Categories
-
-Modern LLMs fall into distinct categories, each optimized for different use cases:
-
-**GPT Models:** Ideal for general-purpose tasks with strong instruction-following capabilities. These models excel in processing long contexts and handling diverse conversational scenarios.
-
-**Reasoning Models:** Specialized for deep reasoning, multi-step problem-solving, and tool integration. These are optimal for scenarios demanding logical precision and detailed analysis.
-
-## Quick Model Selection Matrix
-
-| Model Type | Core Strength | Ideal Use-Case | Considerations |
-| ---------- | ------------- | -------------- | -------------- |
-| GPT-4o | Real-time multimodal tasks | Live voice and vision agents | Slightly lower text accuracy |
-| GPT-4.1 | Exceptional text accuracy | Long-document analytics, code review | Higher cost |
-| Reasoning Models | Advanced reasoning and logic | Complex, high-stakes tasks | Higher latency and cost |
-| Mini Models | Fast, affordable processing | High-volume standard tasks | Lower capability depth |
-
-## Model Selection Framework
-
-### 1. Define Your Requirements
-
-**Quality Needs:** Determine acceptable accuracy levels for your specific use case.
-
-**Latency Requirements:** Establish response time expectations based on user experience needs.
-
-**Cost Constraints:** Set budget parameters that align with business objectives.
-
-**Scale Considerations:** Plan for current and projected usage volumes.
-
-### 2. Match Models to Use Cases
-
-- **Creative Tasks:** Models optimized for creative writing and ideation
-- **Analytical Work:** Models specialized in reasoning and data analysis
-- **Customer Service:** Models focused on natural conversation and helpfulness
-- **Technical Documentation:** Models trained extensively on code and technical content
-
-### 3. Test and Validate
-
-**Benchmark Performance:** Use relevant benchmarks to compare model effectiveness.
-
-**Real-world Testing:** Validate performance with actual use case scenarios.
-
-**Cost Analysis:** Monitor actual costs against projected budgets.
-
-**User Feedback:** Collect and analyze user satisfaction metrics.
-
-## Cost Optimization Strategies
-
-**Tiered Routing:** Use appropriate models for different complexity levels.
-
-**Caching:** Implement response caching for frequently asked questions.
-
-**Batch Processing:** Group similar queries to optimize processing efficiency.
-
-**Load Balancing:** Distribute requests across multiple models based on availability and cost.
-
-## Conclusion
-
-Selecting the right LLM requires careful consideration of your specific requirements, constraints, and objectives. By understanding model capabilities, implementing proper evaluation frameworks, and following best practices, organizations can maximize the value of their AI investments.
-
-The key to success lies in matching model capabilities to actual needs rather than simply choosing the most advanced option available.`,
-
-  "complexity-analysis-of-prompt": `## Introduction
-
-Prompt engineering has long felt like more art than science — a process of intuitive tweaking, trial-and-error experimentation, and hoping for the best. But a groundbreaking new paper, "Complexity Analysis of Prompt Search Space," changes that narrative by introducing a theoretical framework that treats prompt optimization as a systematic search problem with measurable complexity bounds.
-
-This research doesn't just offer academic insights; it provides practical frameworks that can improve LLM performance by 50+ percentage points while reducing the computational overhead of prompt design.
-
-## The Core Insight: Prompts as Search Spaces
-
-The paper's fundamental breakthrough is viewing prompt engineering through the lens of computational complexity theory. Instead of treating prompts as static strings, the researchers model them as positions in a multi-dimensional search space where:
-
-- **Dimensions** represent different prompt components (instructions, examples, context, format specifiers)
-- **Distance** measures how different prompts are in their computational requirements
-- **Neighborhoods** group prompts that produce similar reasoning patterns
-- **Optima** represent prompt configurations that minimize cognitive load while maximizing accuracy
-
-This framework reveals why some prompts work better than others: they guide the model to more efficient regions of its internal reasoning space.
-
-## Template Design: The Architecture of Thought
-
-One of the paper's most actionable findings relates to template design. The researchers show that well-structured prompt templates can reduce reasoning complexity from exponential to polynomial time for certain task classes.
-
-### The Template Hierarchy
-
-**Level 1: Basic Instructions** — Simple directive prompts with minimal structure. Complexity: O(n^2) for reasoning chains of length n.
-
-**Level 2: Structured Templates** — Prompts with clear sections, examples, and format specifications. Complexity: O(n log n) with proper template design.
-
-**Level 3: Cognitive Templates** — Templates that align with the model's internal reasoning patterns. Complexity: O(n) for many common tasks.
-
-### Practical Template Optimization
-
-The research identifies several template patterns that consistently reduce cognitive load:
-
-1. **Hierarchical Decomposition:** Breaking complex tasks into clearly defined subtasks
-2. **Constraint Specification:** Explicitly stating boundaries and requirements upfront
-3. **Example Alignment:** Choosing examples that span the optimal regions of the search space
-4. **Format Priming:** Using output format specifications that match internal model representations
-
-## Chain-of-Thought: From Linear to Strategic
-
-The paper provides the first rigorous analysis of why Chain-of-Thought (CoT) prompting works and, more importantly, how to optimize it systematically.
-
-### Optimized CoT Design
-
-The complexity analysis reveals that strategic CoT design can maintain linear complexity by:
-
-**1. Reasoning Path Pruning** — Using templates that guide the model toward solution-relevant reasoning paths rather than exhaustive exploration.
-
-**2. Checkpoint Validation** — Introducing intermediate validation points that prevent the model from pursuing unproductive reasoning branches.
-
-**3. Abstraction Layering** — Structuring reasoning at multiple levels of abstraction to avoid getting lost in details.
-
-## Real-World Applications
-
-### Customer Support Automation
-
-Before optimization:
-- Average reasoning depth: 12-15 steps
-- Success rate: 67%
-- Processing time: 3.2 seconds
-
-After complexity-optimized templates:
-- Average reasoning depth: 4-6 steps
-- Success rate: 89%
-- Processing time: 1.1 seconds
-
-## Conclusion
-
-The complexity analysis of prompt search space transforms prompt engineering from craft to science. By understanding prompts as positions in a complex search space and optimizing for cognitive efficiency, we can achieve dramatic improvements in both performance and resource utilization.
-
-The era of systematic prompt engineering has begun, and the results speak for themselves: better accuracy, lower costs, and more predictable AI behavior.`,
+If your workload has a mix of simple and complex prompts, Nadir pays for itself from day one. If everything you do needs premium reasoning, save yourself the setup.`,
 };
 
 export class BlogService {

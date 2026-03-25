@@ -9,7 +9,7 @@ export default function Terms() {
 
   return (
     <MarketingLayout>
-      <SEO title="Terms of Service — Nadir" description="Terms of service for getnadir.com." path="/terms" />
+      <SEO title="Terms of Service - Nadir" description="Terms of service for getnadir.com." path="/terms" />
       <div className="container mx-auto px-6 py-8 max-w-3xl">
         <Button
           variant="ghost"

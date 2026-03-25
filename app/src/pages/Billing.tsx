@@ -203,7 +203,7 @@ const Billing = () => {
       <div>
         <h1 className="page-title">Billing</h1>
         <p className="page-description">
-          Savings-based pricing — we only earn when we save you money
+          Savings-based pricing - we only earn when we save you money
         </p>
       </div>
 
@@ -505,7 +505,7 @@ const Billing = () => {
                 </li>
               </ul>
               <Button variant="outline" className="w-full" asChild>
-                <a href="https://github.com/doramirdor/NadirClaw" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/NadirRouter/NadirClaw" target="_blank" rel="noopener noreferrer">
                   View on GitHub
                 </a>
               </Button>

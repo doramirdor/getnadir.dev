@@ -9,7 +9,7 @@ export default function Privacy() {
 
   return (
     <MarketingLayout>
-      <SEO title="Privacy Policy — Nadir" description="Privacy policy for getnadir.com." path="/privacy" />
+      <SEO title="Privacy Policy - Nadir" description="Privacy policy for getnadir.com." path="/privacy" />
       <div className="container mx-auto px-6 py-8 max-w-3xl">
         <Button
           variant="ghost"

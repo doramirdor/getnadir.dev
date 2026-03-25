@@ -1,5 +1,6 @@
 
 import { Suspense, lazy, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +31,7 @@ const Docs = lazy(() => import("./pages/Docs"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Auth = lazy(() => import("./pages/Auth"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const OpenClaw = lazy(() => import("./pages/OpenClaw"));
 const Optimize = lazy(() => import("./pages/Optimize"));
@@ -75,6 +77,14 @@ const GlobalAsyncErrorHandler = () => {
   return null;
 };
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -86,6 +96,7 @@ const App = () => (
         <Sonner />
         <GlobalAsyncErrorHandler />
         <BrowserRouter>
+          <ScrollToTop />
           <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public pages */}
@@ -97,6 +108,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/openclaw" element={<OpenClaw />} />
             <Route path="/optimize" element={<Optimize />} />
 

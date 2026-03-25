@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight } from "lucide-react";
+import { trackAuthAttempt, trackAuthSuccess } from "@/utils/analytics";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
@@ -45,11 +46,12 @@ const Auth = () => {
 
   const handleOAuthSignIn = async (provider: "google" | "github") => {
     setOauthLoading(provider);
+    trackAuthAttempt(provider, mode === "signup" ? "signup" : "signin");
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) throw error;
@@ -111,6 +113,7 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        trackAuthSuccess("email", data.user.id);
         toast({
           title: "Welcome back",
           description: "Successfully signed in.",

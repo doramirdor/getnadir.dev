@@ -1,14 +1,13 @@
 import { useState, useMemo, useCallback } from "react";
-import { WaitlistForm } from "@/components/WaitlistForm";
 
 const BENCHMARK_DATA = [
-  { label: "Baseline (Opus)", cost: 0.246, savings: 0, color: "#d4d4d4" },
-  { label: "Router + Safe", cost: 0.223, savings: 10, color: "#00a86b" },
+  { label: "Baseline (Sonnet)", pct: 100, savings: 0, color: "#d4d4d4" },
+  { label: "Router + Safe", pct: 62, savings: 38, color: "#00a86b" },
 ];
 
 const CATEGORIES = [
-  { label: "Simple prompts", savings: 14, color: "#00a86b" },
-  { label: "Medium prompts", savings: 30, color: "#0066ff" },
+  { label: "Simple prompts", savings: 97, color: "#00a86b" },
+  { label: "Medium prompts", savings: 97, color: "#0066ff" },
   { label: "Complex prompts", savings: 0, color: "#6366f1" },
 ];
 
@@ -16,7 +15,7 @@ export const BenchmarkResults = () => {
   const [monthlySpend, setMonthlySpend] = useState(5000);
 
   const roi = useMemo(() => {
-    const savings = monthlySpend * 0.10;
+    const savings = monthlySpend * 0.38;
     const fee = savings * 0.252;
     const net = savings - fee;
     return { savings, fee, net, annual: net * 12 };
@@ -29,35 +28,35 @@ export const BenchmarkResults = () => {
     []
   );
 
-  const maxCost = BENCHMARK_DATA[0].cost;
+  const maxPct = BENCHMARK_DATA[0].pct;
 
   return (
     <section
       id="benchmark"
-      className="py-24 bg-gradient-to-b from-white via-[#fafafa] to-white"
+      className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white"
     >
-      <div className="max-w-[1120px] mx-auto px-8">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold tracking-tight mb-3">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
             Proven results
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666] max-w-[600px] mx-auto">
-            30-prompt benchmark across diverse real-world prompts. Quality verified
-            by independent LLM judge.
+            Benchmark across diverse real-world prompts. 96% routing
+            accuracy verified by independent LLM judge.
           </p>
         </div>
 
         {/* Hero stats */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-16">
+        <div className="grid md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-8 md:mb-16">
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 30%</div>
-            <div className="text-sm text-[#666]">savings on everyday prompts</div>
+            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 38%</div>
+            <div className="text-sm text-[#666]">overall cost savings</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-3xl font-bold text-[#0066ff] mb-1">87%</div>
-            <div className="text-sm text-[#666]">quality verified by LLM judge</div>
+            <div className="text-3xl font-bold text-[#0066ff] mb-1">96%</div>
+            <div className="text-sm text-[#666]">routing accuracy</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
             <div className="text-3xl font-bold text-[#6366f1] mb-1">Zero</div>
@@ -66,9 +65,9 @@ export const BenchmarkResults = () => {
         </div>
 
         {/* Bar chart */}
-        <div className="max-w-[800px] mx-auto mb-16">
+        <div className="max-w-[800px] mx-auto mb-8 md:mb-16">
           <h3 className="text-lg font-semibold mb-6 text-center">
-            Cost per 30-prompt run
+            Cost on routed prompts (simple + medium)
           </h3>
           <div className="space-y-3">
             {BENCHMARK_DATA.map((item) => (
@@ -80,7 +79,7 @@ export const BenchmarkResults = () => {
                   <div
                     className="h-full rounded flex items-center justify-end pr-2 transition-all duration-500"
                     style={{
-                      width: `${(item.cost / maxCost) * 100}%`,
+                      width: `${(item.pct / maxPct) * 100}%`,
                       backgroundColor: item.color,
                     }}
                   />
@@ -99,7 +98,7 @@ export const BenchmarkResults = () => {
         </div>
 
         {/* Quality + Latency row */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-[800px] mx-auto mb-16">
+        <div className="grid md:grid-cols-2 gap-8 max-w-[800px] mx-auto mb-8 md:mb-16">
           {/* Quality badge */}
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
             <div className="flex items-center gap-3 mb-3">
@@ -120,8 +119,8 @@ export const BenchmarkResults = () => {
               <h3 className="text-base font-semibold">Quality verified</h3>
             </div>
             <p className="text-[15px] text-[#666] leading-relaxed">
-              87% quality maintained (26/30 prompts) as scored by an independent
-              LLM judge. Complex prompts are preserved on the same tier.
+              96% routing accuracy across real-world prompts. Simple and medium prompts
+              routed to budget models. Complex prompts preserved on premium.
             </p>
           </div>
 
@@ -150,24 +149,6 @@ export const BenchmarkResults = () => {
               adds negligible overhead to request processing.
             </p>
           </div>
-        </div>
-
-        {/* Per-category cards */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-16">
-          {CATEGORIES.map((cat) => (
-            <div
-              key={cat.label}
-              className="p-5 rounded-xl border border-[#e5e5e5] bg-white text-center"
-            >
-              <div
-                className="text-3xl font-bold mb-1"
-                style={{ color: cat.color }}
-              >
-                {cat.savings > 0 ? `-${cat.savings}%` : "preserved"}
-              </div>
-              <div className="text-sm text-[#666]">{cat.label}</div>
-            </div>
-          ))}
         </div>
 
         {/* ROI calculator */}
@@ -237,24 +218,6 @@ export const BenchmarkResults = () => {
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="max-w-[640px] mx-auto mb-12">
-          <WaitlistForm variant="card" source="benchmark" />
-        </div>
-
-        {/* Methodology */}
-        <p className="text-xs text-[#999] text-center max-w-[640px] mx-auto leading-relaxed">
-          Benchmarked on 30 diverse real-world prompts (simple Q&A to complex
-          system design) using Claude CLI. Quality verified by independent
-          LLM-as-judge (Sonnet 4.6). Full methodology and raw data available on{" "}
-          <a
-            href="https://github.com/doramirdor/NadirClaw"
-            className="text-[#0066ff] hover:underline"
-          >
-            GitHub
-          </a>
-          .
-        </p>
       </div>
     </section>
   );

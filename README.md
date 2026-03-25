@@ -1,6 +1,6 @@
 # getnadir.dev
 
-Landing page for [NadirClaw](https://github.com/doramirdor/NadirClaw), an open-source LLM router with built-in observability.
+Landing page for [NadirClaw](https://github.com/NadirRouter/NadirClaw), an open-source LLM router with built-in observability.
 
 ## Deploy
 

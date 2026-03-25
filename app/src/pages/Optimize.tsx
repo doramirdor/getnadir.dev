@@ -6,7 +6,7 @@ export default function Optimize() {
   return (
     <MarketingLayout>
       <SEO
-        title="Context Optimize — Nadir | Cut LLM Input Tokens 30-70%"
+        title="Context Optimize - Nadir | Cut LLM Input Tokens 30-70%"
         description="Lossless context optimization that trims bloated LLM payloads before they hit your bill. Safe mode free, aggressive mode on Pro."
         path="/optimize"
       />
@@ -23,15 +23,15 @@ export default function Optimize() {
       {/* Modes */}
       <section className="max-w-4xl mx-auto px-6 pb-16">
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
+          <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl flex flex-col">
             <h3 className="text-lg font-semibold mb-2">Safe mode</h3>
             <p className="text-sm text-[#666] mb-4">Lossless transforms only. Zero risk to output quality.</p>
-            <ul className="space-y-2 text-sm text-[#666]">
-              <li><strong className="text-[#0a0a0a]">JSON minification</strong> — compact without changing values</li>
-              <li><strong className="text-[#0a0a0a]">Tool schema dedup</strong> — repeated schemas replaced with references</li>
-              <li><strong className="text-[#0a0a0a]">System prompt dedup</strong> — duplicated text removed</li>
-              <li><strong className="text-[#0a0a0a]">Whitespace normalization</strong> — collapse blanks, skip code</li>
-              <li><strong className="text-[#0a0a0a]">Chat history trimming</strong> — keep system + first + last N turns</li>
+            <ul className="space-y-2 text-sm text-[#666] flex-1">
+              <li><strong className="text-[#0a0a0a]">JSON minification</strong> - compact without changing values</li>
+              <li><strong className="text-[#0a0a0a]">Tool schema dedup</strong> - repeated schemas replaced with references</li>
+              <li><strong className="text-[#0a0a0a]">System prompt dedup</strong> - duplicated text removed</li>
+              <li><strong className="text-[#0a0a0a]">Whitespace normalization</strong> - collapse blanks, skip code</li>
+              <li><strong className="text-[#0a0a0a]">Chat history trimming</strong> - keep system + first + last N turns</li>
             </ul>
             <div className="mt-4 bg-[#f8f8f8] border border-[#e5e5e5] rounded-lg p-3 font-mono text-xs">
               <span className="text-[#999]">$</span> nadir serve --optimize safe
@@ -39,19 +39,20 @@ export default function Optimize() {
             <p className="text-xs text-[#999] mt-2">Available in open source (free)</p>
           </div>
 
-          <div className="p-6 bg-gray-900 text-white rounded-xl ring-2 ring-blue-500">
+          <div className="p-6 bg-[#0a0a0a] text-white rounded-xl ring-2 ring-[#0066ff] flex flex-col">
             <h3 className="text-lg font-semibold mb-2">Aggressive mode</h3>
             <p className="text-sm text-gray-300 mb-4">Everything in safe + semantic deduplication for maximum savings.</p>
-            <ul className="space-y-2 text-sm text-gray-300">
-              <li><strong className="text-white">All safe transforms</strong> — lossless baseline included</li>
-              <li><strong className="text-white">Semantic dedup</strong> — embedding-based redundancy removal</li>
-              <li><strong className="text-white">Diff-preserving</strong> — maintains output correctness</li>
-              <li><strong className="text-white">Up to 70% reduction</strong> — on structured payloads</li>
+            <ul className="space-y-2 text-sm text-gray-300 flex-1">
+              <li><strong className="text-white">All safe transforms</strong> - lossless baseline included</li>
+              <li><strong className="text-white">Semantic dedup</strong> - embedding-based redundancy removal</li>
+              <li><strong className="text-white">Diff-preserving</strong> - maintains output correctness</li>
+              <li><strong className="text-white">Up to 70% reduction</strong> - on structured payloads</li>
+              <li><strong className="text-white">Auto-calibrated</strong> - adapts to your content type</li>
             </ul>
             <div className="mt-4 bg-gray-800 border border-gray-700 rounded-lg p-3 font-mono text-xs">
               <span className="text-gray-500">$</span> nadir serve --optimize aggressive
             </div>
-            <p className="text-xs text-blue-400 mt-2">Pro plan only — advanced algorithms</p>
+            <p className="text-xs text-[#0066ff] mt-2">Pro plan only - advanced algorithms</p>
           </div>
         </div>
       </section>

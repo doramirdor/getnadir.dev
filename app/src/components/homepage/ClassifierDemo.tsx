@@ -71,10 +71,10 @@ const badgeColors: Record<string, string> = {
 
 export const ClassifierDemo = () => {
   return (
-    <section id="routing-examples" className="py-24">
-      <div className="max-w-[1120px] mx-auto px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold tracking-tight mb-3">
+    <section id="routing-examples" className="py-6 md:py-10">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
             See the classifier decide
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
