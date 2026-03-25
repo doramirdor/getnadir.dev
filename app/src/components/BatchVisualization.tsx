@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SEED_COUNT = 163;
 const BATCH_SIZE = 100;
@@ -53,14 +54,11 @@ function buildSeedAvatar(idx: number) {
   // 64% real photos, 12% GitHub-style identicons, 24% initials
   const bucket = idx % 25;
   if (bucket < 16) {
-    // Real photo (16/25 = 64%)
     return { type: "img" as const, url: PHOTO_URLS[idx % PHOTO_URLS.length] };
   }
   if (bucket < 19) {
-    // GitHub identicon (3/25 = 12%)
     return { type: "img" as const, url: githubSvg(idx) };
   }
-  // Initials (6/25 = 24%)
   const text = INITIALS[idx % INITIALS.length];
   const bg = INITIAL_BG[idx % INITIAL_BG.length];
   return { type: "initials" as const, text, bg };
@@ -73,10 +71,35 @@ function buildRealAvatar(entry: { avatar_url?: string; display_name?: string; em
   return { type: "initials" as const, text: letter, bg };
 }
 
+function AvatarCell({ avatar }: { avatar: { type: string; url?: string; text?: string; bg?: string; real?: boolean } }) {
+  if (avatar.type === "img") {
+    return (
+      <div className="aspect-square rounded overflow-hidden" style={{ backgroundColor: "#ddd" }}>
+        <img
+          src={avatar.url}
+          alt=""
+          loading="lazy"
+          className="w-full h-full object-cover block"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div
+      className="aspect-square rounded flex items-center justify-center text-white"
+      style={{ backgroundColor: avatar.bg, fontSize: "0.46rem", fontWeight: 700 }}
+    >
+      {avatar.text}
+    </div>
+  );
+}
+
 export const BatchVisualization = () => {
   const [visible, setVisible] = useState(false);
   const [realEntries, setRealEntries] = useState<any[]>([]);
   const vizRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     supabase
@@ -103,6 +126,10 @@ export const BatchVisualization = () => {
     Math.max(0, Math.min(BATCH_SIZE, totalFilled - i * BATCH_SIZE))
   );
 
+  // Find the active batch (first one that isn't full)
+  const activeBatchIdx = filledBatches.findIndex(f => f < BATCH_SIZE);
+  const currentBatch = activeBatchIdx >= 0 ? activeBatchIdx : TOTAL_BATCHES - 1;
+
   function getAvatar(globalIdx: number) {
     if (globalIdx < SEED_COUNT) return { ...buildSeedAvatar(globalIdx), real: false };
     const realIdx = globalIdx - SEED_COUNT;
@@ -110,86 +137,126 @@ export const BatchVisualization = () => {
     return null;
   }
 
+  function renderBatch(batchIdx: number) {
+    const filled = filledBatches[batchIdx];
+    const isFull = filled === BATCH_SIZE;
+    const isPartial = filled > 0 && filled < BATCH_SIZE;
+    const isActive = batchIdx === currentBatch;
+
+    return (
+      <div key={batchIdx} className={`bg-white p-2 ${isActive && isMobile ? "ring-2 ring-[#0066ff]/30 rounded-lg" : ""}`}>
+        <div className={`text-[11px] font-semibold mb-2 text-center ${
+          isFull ? "text-[#00a86b]" : isPartial ? "text-[#0066ff]" : "text-[#ccc]"
+        }`}>
+          Batch {batchIdx + 1}
+          {isFull && " - Full"}
+          {isActive && !isFull && ` - ${BATCH_SIZE - filled} spots left`}
+        </div>
+        <div className="grid grid-cols-10 gap-[3px]">
+          {Array.from({ length: BATCH_SIZE }, (_, spotIdx) => {
+            const isFilled = spotIdx < filled;
+            if (!isFilled) {
+              return <div key={spotIdx} className="aspect-square rounded bg-[#f0ece8]" />;
+            }
+            const globalIdx = batchIdx * BATCH_SIZE + spotIdx;
+            const avatar = getAvatar(globalIdx);
+            if (!avatar) return <div key={spotIdx} className="aspect-square rounded bg-[#f0ece8]" />;
+            return <AvatarCell key={spotIdx} avatar={avatar} />;
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Mobile: show only the active batch (+ summary of filled batches)
+  if (isMobile) {
+    const filledBefore = currentBatch * BATCH_SIZE;
+    const spotsLeft = BATCH_SIZE - filledBatches[currentBatch];
+
+    return (
+      <div ref={vizRef} className="py-6 px-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-semibold text-[#0a0a0a]">
+            Waitlist
+          </span>
+          <span className="text-xs text-[#999]">
+            {totalFilled} engineers joined
+          </span>
+        </div>
+
+        {/* Summary pills for filled batches */}
+        {currentBatch > 0 && (
+          <div className="flex gap-2 mb-3 overflow-x-auto">
+            {Array.from({ length: currentBatch }, (_, i) => (
+              <div key={i} className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#00a86b]/10 text-[#00a86b] text-xs font-semibold">
+                Batch {i + 1} - Full
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Active batch - prominent */}
+        <div className="border border-[#0066ff]/20 rounded-lg overflow-hidden">
+          <div className="bg-[#0066ff]/5 px-3 py-2 flex items-center justify-between">
+            <span className="text-sm font-semibold text-[#0066ff]">
+              Batch {currentBatch + 1}
+            </span>
+            <span className="text-xs text-[#0066ff]/70">
+              {spotsLeft} spots remaining
+            </span>
+          </div>
+          <div className="p-3">
+            <div className="grid grid-cols-10 gap-[3px]">
+              {Array.from({ length: BATCH_SIZE }, (_, spotIdx) => {
+                const isFilled = spotIdx < filledBatches[currentBatch];
+                if (!isFilled) {
+                  return <div key={spotIdx} className="aspect-square rounded bg-[#f0ece8]" />;
+                }
+                const globalIdx = currentBatch * BATCH_SIZE + spotIdx;
+                const avatar = getAvatar(globalIdx);
+                if (!avatar) return <div key={spotIdx} className="aspect-square rounded bg-[#f0ece8]" />;
+                return <AvatarCell key={spotIdx} avatar={avatar} />;
+              })}
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="px-3 pb-3">
+            <div className="h-1.5 bg-[#f0ece8] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#0066ff] rounded-full transition-all duration-700"
+                style={{ width: `${(filledBatches[currentBatch] / BATCH_SIZE) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Upcoming batches count */}
+        {currentBatch < TOTAL_BATCHES - 1 && (
+          <div className="mt-3 text-center text-xs text-[#999]">
+            {TOTAL_BATCHES - currentBatch - 1} more batch{TOTAL_BATCHES - currentBatch - 1 > 1 ? "es" : ""} opening soon
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop: show all batches in 5-column grid
   return (
     <div ref={vizRef} className="relative left-1/2 right-1/2 -mx-[50vw] w-screen py-6 sm:py-8 px-3 sm:px-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-1 max-w-[1200px] mx-auto">
-        <span className="text-xs sm:text-sm font-semibold text-[#0a0a0a]">
+      <div className="flex items-center justify-between mb-4 max-w-[1200px] mx-auto">
+        <span className="text-sm font-semibold text-[#0a0a0a]">
           Engineers on the waitlist
         </span>
-        <span className="text-xs sm:text-sm text-[#999]">
-          Spots are filling up.{" "}
+        <span className="text-sm text-[#999]">
+          {totalFilled} joined.{" "}
           <a href="#waitlist" className="text-[#e87b35] font-medium hover:underline no-underline">
-            Get started
+            Get your spot
           </a>
         </span>
       </div>
 
-      {/* Grid */}
-      <div className="overflow-x-auto -mx-1 px-1">
-      <div className="grid grid-cols-5 gap-1 rounded-lg overflow-hidden border border-[#e8e0d8] max-w-[1200px] mx-auto min-w-[600px]">
-        {Array.from({ length: TOTAL_BATCHES }, (_, batchIdx) => {
-          const filled = filledBatches[batchIdx];
-          const isFull = filled === BATCH_SIZE;
-          const isPartial = filled > 0 && filled < BATCH_SIZE;
-
-          return (
-            <div key={batchIdx} className="bg-white p-2">
-              <div className={`text-[11px] font-semibold mb-2 text-center ${
-                isFull ? "text-[#00a86b]" : isPartial ? "text-[#0066ff]" : "text-[#ccc]"
-              }`}>
-                Batch {batchIdx + 1}
-              </div>
-              <div className="grid grid-cols-10 gap-[3px]">
-                {Array.from({ length: BATCH_SIZE }, (_, spotIdx) => {
-                  const isFilled = spotIdx < filled;
-                  if (!isFilled) {
-                    return <div key={spotIdx} className="aspect-square rounded bg-[#f0ece8]" />;
-                  }
-
-                  const globalIdx = batchIdx * BATCH_SIZE + spotIdx;
-                  const avatar = getAvatar(globalIdx);
-                  if (!avatar) return <div key={spotIdx} className="aspect-square rounded bg-[#f0ece8]" />;
-
-                  if (avatar.type === "img") {
-                    return (
-                      <div
-                        key={spotIdx}
-                        className="aspect-square rounded overflow-hidden"
-                        style={{ backgroundColor: "#ddd" }}
-                      >
-                        <img
-                          src={avatar.url}
-                          alt=""
-                          loading="lazy"
-                          className="w-full h-full object-cover block"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={spotIdx}
-                      className="aspect-square rounded flex items-center justify-center text-white"
-                      style={{
-                        backgroundColor: avatar.bg,
-                        fontSize: "0.46rem",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {avatar.text}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <div className="grid grid-cols-5 gap-1 rounded-lg overflow-hidden border border-[#e8e0d8] max-w-[1200px] mx-auto">
+        {Array.from({ length: TOTAL_BATCHES }, (_, batchIdx) => renderBatch(batchIdx))}
       </div>
     </div>
   );
