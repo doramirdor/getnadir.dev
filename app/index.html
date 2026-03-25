@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src  'self';
+        style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
+        img-src     'self' data: https:;
+        font-src    'self' data: https://fonts.gstatic.com;
+        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.github.com;
+        frame-src   'none';
+        object-src  'none';
+        base-uri    'self';
+      "
+    />
+
+    <title>Nadir — Cut LLM API Costs Up to 30% | Open-Source LLM Router</title>
+    <meta name="description" content="Nadir is a free, open-source LLM router that automatically classifies prompt complexity and routes simple requests to cheaper models. Save up to 38% on Claude, GPT, and Gemini API costs without changing code. Works with Claude Code, Cursor, Aider, and any OpenAI-compatible client." />
+    <meta name="keywords" content="Nadir, nadir LLM router, LLM router, AI cost optimization, Claude API savings, GPT API costs, open-source LLM proxy, prompt routing, model routing, AI gateway, reduce LLM costs, Claude Code cost savings, Cursor cost optimization, LLM cost reduction, API cost management, intelligent model selection" />
+    <meta name="author" content="Nadir" />
+    <link rel="canonical" href="https://getnadir.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://getnadir.com/" />
+    <meta property="og:title" content="Nadir — Cut LLM API Costs Up to 30% | Open-Source LLM Router" />
+    <meta property="og:description" content="Free, open-source LLM router that classifies prompt complexity and routes simple requests to cheaper models. Save up to 38% on API costs without changing code." />
+    <meta property="og:image" content="https://getnadir.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Nadir" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Nadir — Cut LLM API Costs Up to 30%" />
+    <meta name="twitter:description" content="Open-source LLM router that classifies prompt complexity and routes simple requests to cheaper models. Save up to 38% on API costs." />
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!-- Analytics (PostHog - free up to 1M events/month) -->
+    <!-- To activate: sign up at https://us.posthog.com, create a project, replace YOUR_POSTHOG_KEY -->
+    <script>
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+      posthog.init('phc_OK7tEfer6lcaiok8bcsssUGcqi4Sapsx57wOl6VsI4x',{api_host:'https://us.i.posthog.com', person_profiles: 'identified_only'})
+    </script>
+
+    <!-- Google Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "Nadir",
+          "alternateName": "NadirClaw",
+          "description": "Open-source LLM router that classifies prompt complexity and routes simple requests to cheaper models, saving up to 38% on API costs.",
+          "url": "https://getnadir.com",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Cross-platform",
+          "offers": [
+            {
+              "@type": "Offer",
+              "name": "Open Source",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Self-hosted with intelligent routing, context optimization (safe mode), CLI dashboard, and unlimited requests."
+            },
+            {
+              "@type": "Offer",
+              "name": "Pro",
+              "price": "9",
+              "priceCurrency": "USD",
+              "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": "9",
+                "priceCurrency": "USD",
+                "billingDuration": "P1M"
+              },
+              "description": "Hosted proxy with advanced routing algorithms, aggressive semantic dedup, web dashboard, and analytics."
+            }
+          ],
+          "license": "https://opensource.org/licenses/MIT",
+          "downloadUrl": "https://pypi.org/project/nadirclaw/",
+          "softwareVersion": "0.13.0",
+          "author": {
+            "@type": "Person",
+            "name": "Dor Amir",
+            "url": "https://github.com/NadirRouter"
+          }
+        },
+        {
+          "@type": "Organization",
+          "name": "Nadir",
+          "url": "https://getnadir.com",
+          "logo": "https://getnadir.com/logo.png",
+          "sameAs": [
+            "https://github.com/NadirRouter/NadirClaw"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "name": "Nadir",
+          "url": "https://getnadir.com",
+          "description": "Open-source LLM router for cutting AI API costs up to 38%",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://getnadir.com/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://getnadir.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Pricing", "item": "https://getnadir.com/pricing" },
+            { "@type": "ListItem", "position": 3, "name": "Optimize", "item": "https://getnadir.com/optimize" },
+            { "@type": "ListItem", "position": 4, "name": "Docs", "item": "https://getnadir.com/docs" },
+            { "@type": "ListItem", "position": 5, "name": "Blog", "item": "https://getnadir.com/blog" }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Nadir?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nadir is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving up to 38% on API costs without changing any code."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does Nadir reduce costs?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nadir classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget-tier models. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average — without sacrificing quality where it matters."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does Nadir require code changes?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Nadir is a drop-in proxy. Point your LLM client's base URL to Nadir instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is Nadir free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Nadir is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost. A hosted Pro plan is also available with advanced algorithms."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What LLM providers does Nadir support?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nadir supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I install Nadir?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Run pip install nadirclaw and then nadirclaw serve. Configuration is done through environment variables or a config file. Two commands, zero configuration."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the classifier work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nadir uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes ~10ms. It also detects agentic workflows (tool calls), reasoning chains, and vision content (images) as separate routing signals."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What happens when the classifier is wrong?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Nadir biases toward the complex model on low-confidence classifications. This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadir classify and tune the confidence threshold."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How much latency does routing add?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "~10ms for the sentence embedding classification. The router runs locally on your machine, so there is no network hop. For comparison, a typical LLM API call takes 500ms-5s. The routing overhead is less than 1% of total request time."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the benchmark results?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In a 50-prompt benchmark across diverse real-world prompts, Nadir achieved 38% overall savings with 96% routing accuracy. Simple and medium prompts are routed to cheaper models, complex prompts stay on premium with context optimization."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+venv/
+.venv/
+.env
+node_modules/
+dist/
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.safetensors
+*.npy
+app/templates/
+app/static/

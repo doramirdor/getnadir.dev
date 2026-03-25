@@ -35,6 +35,7 @@ pip install nadirclaw
 - [Blog: Cost Savings](https://getnadir.com/blog/how-nadirclaw-saves-40-70-percent-on-llm-api-costs.html): How NadirClaw saves 40-70% on LLM API costs
 - [Blog: Claude Code Guide](https://getnadir.com/blog/nadirclaw-claude-code-cost-optimization-guide.html): NadirClaw + Claude Code cost optimization guide
 - [Blog: Open Source Routing](https://getnadir.com/blog/why-open-source-llm-routing-matters.html): Why open-source LLM routing matters
+- [Blog: 6-Way Benchmark](https://getnadir.com/blog/6-way-routing-benchmark-results.html): How we benchmarked our 6-way LLM routing system — 48% savings with quality verified by independent LLM judge
 - [Terms of Service](https://getnadir.com/terms.html)
 - [Privacy Policy](https://getnadir.com/privacy.html)
 
@@ -44,7 +45,7 @@ Free and open-source (MIT License)
 
 ## Links
 
-- [GitHub Repository](https://github.com/doramirdor/NadirClaw)
+- [GitHub Repository](https://github.com/NadirRouter/NadirClaw)
 - [Dev.to Articles](https://dev.to/doramirdor)
 
 ## Contact
