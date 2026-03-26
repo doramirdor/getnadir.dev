@@ -305,9 +305,9 @@ export const WaitlistForm = ({ variant = "inline", source = "website" }: Waitlis
             <h3 className="text-lg font-semibold tracking-tight mb-2 text-[#666]">Or self-host the free version</h3>
             <p className="text-[#999] text-xs mb-4">Two commands. No signup required.</p>
             <div className="bg-[#0a0a0a] rounded-xl p-5 font-mono text-sm text-white text-left">
-              <div className="mb-1"><span className="text-[#666]">$</span> <span className="text-white">pip install nadir</span></div>
+              <div className="mb-1"><span className="text-[#666]">$</span> <span className="text-white">pip install nadirClaw</span></div>
               <div className="text-[#999] mb-3">Successfully installed nadir-0.7.0</div>
-              <div className="mb-1"><span className="text-[#666]">$</span> <span className="text-white">nadir serve</span></div>
+              <div className="mb-1"><span className="text-[#666]">$</span> <span className="text-white">nadirclaw serve</span></div>
               <div className="text-[#00a86b]">&#10003; Router running on http://localhost:8856</div>
               <div className="text-[#00a86b]">&#10003; Dashboard at http://localhost:8856/dashboard</div>
             </div>

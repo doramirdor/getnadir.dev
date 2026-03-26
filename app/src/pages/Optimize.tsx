@@ -34,7 +34,7 @@ export default function Optimize() {
               <li><strong className="text-[#0a0a0a]">Chat history trimming</strong> - keep system + first + last N turns</li>
             </ul>
             <div className="mt-4 bg-[#f8f8f8] border border-[#e5e5e5] rounded-lg p-3 font-mono text-xs">
-              <span className="text-[#999]">$</span> nadir serve --optimize safe
+              <span className="text-[#999]">$</span> nadirclaw serve --optimize safe
             </div>
             <p className="text-xs text-[#999] mt-2">Available in open source (free)</p>
           </div>
@@ -50,7 +50,7 @@ export default function Optimize() {
               <li><strong className="text-white">Auto-calibrated</strong> - adapts to your content type</li>
             </ul>
             <div className="mt-4 bg-gray-800 border border-gray-700 rounded-lg p-3 font-mono text-xs">
-              <span className="text-gray-500">$</span> nadir serve --optimize aggressive
+              <span className="text-gray-500">$</span> nadirclaw serve --optimize aggressive
             </div>
             <p className="text-xs text-[#0066ff] mt-2">Pro plan only - advanced algorithms</p>
           </div>

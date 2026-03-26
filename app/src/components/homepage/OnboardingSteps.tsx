@@ -195,7 +195,7 @@ export const OnboardingSteps = () => {
                 href="#calculator"
                 className="flex-1 min-w-[160px] text-center py-3 px-6 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md font-semibold text-[15px] no-underline hover:bg-[#f5f5f5] transition-colors"
               >
-                pip install nadir
+                pip install nadirClaw
               </a>
             </div>
           </div>

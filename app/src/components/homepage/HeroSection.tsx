@@ -72,13 +72,13 @@ export const HeroSection = () => {
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
               </div>
-              <span className="text-xs text-[#999]">nadir serve</span>
+              <span className="text-xs text-[#999]">nadirclaw serve</span>
             </div>
 
             {/* Terminal body */}
             <div className="p-5">
               <div className="mb-1 leading-[1.8]">
-                <span className="text-[#999]">$</span> nadir serve
+                <span className="text-[#999]">$</span> nadirclaw serve
               </div>
               <div className="mb-1 leading-[1.8]">
                 <span className="text-[#00a86b]">&#10003;</span> Classifier

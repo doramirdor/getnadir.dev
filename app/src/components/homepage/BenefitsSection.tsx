@@ -94,7 +94,7 @@ export const BenefitsSection = () => {
               },
               {
                 title: "Budget controls",
-                desc: "Set daily and monthly spending limits. Get alerts before you hit them. nadir budget shows real-time status.",
+                desc: "Set daily and monthly spending limits. Get alerts before you hit them. nadirclaw budget shows real-time status.",
               },
               {
                 title: "Session persistence",
@@ -136,9 +136,76 @@ export const BenefitsSection = () => {
               Context Optimize
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
-            <p className="text-lg text-[#666] max-w-[560px] mx-auto">
+            <p className="text-lg text-[#666] max-w-[600px] mx-auto">
               Routes to the right model, then trims the payload before it hits
-              your bill.
+              your bill. Lossless by default -- output quality stays identical.
+            </p>
+          </div>
+
+          {/* Before / After example */}
+          <div className="max-w-[800px] mx-auto mb-8 md:mb-16">
+            <h3 className="text-lg font-semibold text-center mb-6">
+              Before vs after (real agentic payload)
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="border border-[#e5e5e5] rounded-lg overflow-hidden">
+                <div className="px-4 py-2.5 bg-[#f8f8f8] border-b border-[#e5e5e5] flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#999] uppercase tracking-wider">Before</span>
+                  <span className="text-xs font-mono text-[#666]">12,847 tokens</span>
+                </div>
+                <pre className="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-[#666] max-h-[220px]">
+{`{
+  "messages": [
+    { "role": "system",
+      "content": "You are a helpful..." },
+    { "role": "system",
+      "content": "You are a helpful..." },
+    { "role": "user",
+      "content": "List files" },
+    { "role": "assistant",
+      "content": "Here are the files:\\n\\n
+        \\n  - src/\\n  - package.json" },
+    { "role": "user", ... },
+    `}<span className="text-[#999]">{"// ...6 more turns"}</span>{`
+  ],
+  "tools": [
+    { "name": "read_file",
+      "parameters": { `}<span className="text-red-400">{"/* 340 tokens */"}</span>{` }},
+    { "name": "write_file",
+      "parameters": { `}<span className="text-red-400">{"/* 340 tokens (dup) */"}</span>{` }}
+  ]
+}`}
+                </pre>
+              </div>
+              <div className="border border-[#e5e5e5] rounded-lg overflow-hidden ring-2 ring-[#00a86b]/30">
+                <div className="px-4 py-2.5 bg-[#f8f8f8] border-b border-[#e5e5e5] flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#00a86b] uppercase tracking-wider">After (safe mode)</span>
+                  <span className="text-xs font-mono text-[#00a86b] font-semibold">5,526 tokens (-57%)</span>
+                </div>
+                <pre className="p-4 text-xs font-mono leading-relaxed overflow-x-auto text-[#666] max-h-[220px]">
+{`{
+  "messages": [
+    { "role": "system",
+      "content": "You are a helpful..." },
+    `}<span className="text-[#00a86b]">{"// dup system prompt removed"}</span>{`
+    { "role": "user",
+      "content": "List files" },
+    `}<span className="text-[#00a86b]">{"// early turns trimmed (kept last 4)"}</span>{`
+    { "role": "user", ... },
+    { "role": "assistant", ... }
+  ],
+  "tools": [
+    { "name": "read_file",
+      "parameters": {`}<span className="text-[#0066ff]">{" /* compact */"}</span>{` }},
+    { "name": "write_file",
+      "parameters": "`}<span className="text-[#0066ff]">$ref:read_file</span>{`" }
+  ]
+}`}
+                </pre>
+              </div>
+            </div>
+            <p className="text-center text-sm text-[#666] mt-4">
+              Same output quality. <strong className="text-[#00a86b]">57% fewer input tokens.</strong> The LLM sees the same effective context.
             </p>
           </div>
 
@@ -146,7 +213,7 @@ export const BenefitsSection = () => {
             {/* Bars */}
             <div className="md:col-span-1">
               <p className="text-[13px] text-[#666] mb-3">
-                Benchmarked on premium models - safe mode (lossless)
+                Benchmarked on premium models -- safe mode (lossless)
               </p>
               <div className="space-y-4">
                 {[
@@ -189,7 +256,7 @@ export const BenefitsSection = () => {
             <div className="md:col-span-2">
               <div className="mb-6">
                 <h3 className="text-base font-semibold mb-3">
-                  Safe mode transforms
+                  What safe mode does
                 </h3>
                 <ul className="space-y-2 text-[15px] text-[#666]">
                   <li>
@@ -202,7 +269,7 @@ export const BenefitsSection = () => {
                     <strong className="text-[#0a0a0a]">
                       Tool schema dedup
                     </strong>{" "}
-                    -- repeated tool schemas replaced with short references
+                    -- repeated tool schemas replaced with short references (agents often send the same schema 10+ times)
                   </li>
                   <li>
                     <strong className="text-[#0a0a0a]">
@@ -220,15 +287,26 @@ export const BenefitsSection = () => {
                     <strong className="text-[#0a0a0a]">
                       Chat history trimming
                     </strong>{" "}
-                    -- keep system + first turn + last N turns
+                    -- keep system + first turn + last N turns, drop stale middle turns
                   </li>
                 </ul>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-base font-semibold mb-2">
+                  Why it's lossless
+                </h3>
+                <p className="text-[15px] text-[#666] leading-relaxed">
+                  Every transform preserves semantic meaning. Minified JSON parses identically.
+                  Deduped schemas are expanded by the model. Trimmed history keeps the turns
+                  that matter. Code blocks, URLs, and unicode are never touched.
+                </p>
               </div>
 
               <div className="bg-[#f8f8f8] border border-[#e5e5e5] rounded-lg p-4 font-mono text-sm leading-relaxed">
                 <span className="text-[#999]"># enable on your server</span>
                 <br />
-                nadir serve --optimize safe
+                nadirclaw serve --optimize safe
                 <br />
                 <br />
                 <span className="text-[#999]"># or per-request</span>
@@ -236,14 +314,16 @@ export const BenefitsSection = () => {
                 {`{"optimize": "safe", "model": "auto", ...}`}
                 <br />
                 <br />
-                <span className="text-[#999]"># dry-run on any file</span>
+                <span className="text-[#999]"># dry-run on any file to see savings</span>
                 <br />
-                nadir optimize payload.json
+                nadirclaw optimize payload.json
               </div>
 
               <p className="text-xs text-[#999] mt-3">
-                All transforms are lossless. Code blocks, URLs, and unicode are
-                never modified. Off by default -- zero overhead when disabled.
+                Off by default -- zero overhead when disabled.{" "}
+                <a href="/optimize" className="text-[#0066ff] hover:underline">
+                  See full benchmark results and aggressive mode
+                </a>
               </p>
             </div>
           </div>

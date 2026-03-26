@@ -1,6 +1,73 @@
 import { useNavigate, Link } from "react-router-dom";
-import { Github, Menu, X } from "lucide-react";
+import { Github, Menu, X, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
+
+function NewsletterSignup() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setStatus("loading");
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/newsletter_subscribers`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+      if (res.ok || res.status === 201 || res.status === 409) {
+        setStatus("success");
+        setEmail("");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <h3 className="text-sm font-semibold text-[#0a0a0a] mb-1">Stay in the loop</h3>
+        <p className="text-sm text-[#666]">Product updates, cost-saving tips, and new features. No spam.</p>
+      </div>
+      {status === "success" ? (
+        <p className="text-sm text-[#00a86b] font-medium">Thanks! You're subscribed.</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex gap-2 w-full sm:w-auto">
+          <input
+            type="email"
+            required
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="px-3 py-2 text-sm border border-[#e5e5e5] rounded-md bg-white focus:outline-none focus:border-[#0a0a0a] transition-colors w-full sm:w-64"
+          />
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="inline-flex items-center gap-1 px-4 py-2 bg-[#0a0a0a] text-white text-sm font-medium rounded-md hover:bg-[#333] transition-colors disabled:opacity-50 whitespace-nowrap"
+          >
+            Subscribe
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </form>
+      )}
+      {status === "error" && (
+        <p className="text-sm text-red-500">Something went wrong. Try again.</p>
+      )}
+    </div>
+  );
+}
 
 const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
@@ -23,10 +90,10 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
     setMobileMenuOpen(false);
   }, [navigate]);
 
-  const navLinks = [
+  const navLinks: { to: string; label: string; title?: string }[] = [
     { to: "/pricing", label: "Pricing" },
     { to: "/docs", label: "Docs" },
-    { to: "/openclaw", label: "OpenClaw" },
+    { to: "/openclaw", label: "OpenClaw", title: "Smart LLM routing for OpenClaw agents" },
     { to: "/optimize", label: "Optimize" },
     { to: "/blog", label: "Blog" },
   ];
@@ -55,6 +122,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
                 <Link
                   key={link.to}
                   to={link.to}
+                  title={link.title}
                   className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"
                 >
                   {link.label}
@@ -129,20 +197,30 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
 
       <main role="main">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#e5e5e5] py-8 sm:py-12 mt-0">
-        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
-            <nav aria-label="Footer navigation" className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
-              <Link to="/" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Home</Link>
-              <Link to="/docs" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Docs</Link>
-              <a href="https://github.com/NadirRouter/NadirClaw" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">GitHub</a>
-              <a href="https://github.com/NadirRouter/NadirClaw/issues" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">Issues</a>
-              <a href="https://github.com/NadirRouter/NadirClaw/blob/main/LICENSE" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">MIT License</a>
-              <Link to="/terms" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Terms</Link>
-              <Link to="/privacy" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Privacy</Link>
-            </nav>
-            <p className="text-sm text-[#999]">Built by developers tired of overpaying</p>
+      {/* Newsletter + Footer */}
+      <footer className="border-t border-[#e5e5e5] mt-0">
+        {/* Newsletter signup */}
+        <div className="border-b border-[#e5e5e5] py-8 sm:py-10">
+          <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+            <NewsletterSignup />
+          </div>
+        </div>
+
+        {/* Footer links */}
+        <div className="py-8 sm:py-10">
+          <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
+              <nav aria-label="Footer navigation" className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
+                <Link to="/" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Home</Link>
+                <Link to="/docs" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Docs</Link>
+                <a href="https://github.com/NadirRouter/NadirClaw" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="https://github.com/NadirRouter/NadirClaw/issues" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">Issues</a>
+                <a href="https://github.com/NadirRouter/NadirClaw/blob/main/LICENSE" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">MIT License</a>
+                <Link to="/terms" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Terms</Link>
+                <Link to="/privacy" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Privacy</Link>
+              </nav>
+              <p className="text-sm text-[#999]">Built by developers tired of overpaying</p>
+            </div>
           </div>
         </div>
       </footer>

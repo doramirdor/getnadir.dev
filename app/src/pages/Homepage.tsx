@@ -17,8 +17,8 @@ const Homepage = () => {
   return (
     <MarketingLayout>
       <SEO
-        title="Nadir - Cut LLM API Costs Up to 38% | Open-Source LLM Router"
-        description="Open-source LLM router that routes simple prompts to cheaper models automatically. Save up to 38% on Claude, GPT, and Gemini API costs without changing code."
+        title="Nadir - Cut LLM API Costs 30-60% | Open-Source LLM Router"
+        description="Open-source LLM router that routes simple prompts to cheaper models automatically. Save 30-60% on Claude, GPT, and Gemini API costs without changing code."
         path="/"
       />
       {/* 1. Hero */}

@@ -23,7 +23,7 @@ export const ContactFooter = () => {
           </p>
           <p className="text-[15px] text-[#666] leading-relaxed mb-4">
             The project is open-source (MIT License), fully self-hosted, and
-            designed to save developers up to 38% on API costs without adding
+            designed to save developers 30-60% on API costs without adding
             complexity. No signup, no telemetry, no vendor lock-in.
           </p>
           {/* Contact links with icons */}

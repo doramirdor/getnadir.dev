@@ -153,7 +153,7 @@ client = openai.OpenAI(`}
               <p className="text-[13px] text-[#999] mt-2">
                 Run{" "}
                 <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  nadir report
+                  nadirclaw report
                 </code>{" "}
                 to see your real savings breakdown.
               </p>

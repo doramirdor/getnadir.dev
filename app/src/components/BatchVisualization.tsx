@@ -180,7 +180,7 @@ export const BatchVisualization = () => {
             Waitlist
           </span>
           <span className="text-xs text-[#999]">
-            {totalFilled} engineers joined
+            Engineers on the waiting list
           </span>
         </div>
 
@@ -248,7 +248,6 @@ export const BatchVisualization = () => {
           Engineers on the waitlist
         </span>
         <span className="text-sm text-[#999]">
-          {totalFilled} joined.{" "}
           <a href="#waitlist" className="text-[#e87b35] font-medium hover:underline no-underline">
             Get your spot
           </a>

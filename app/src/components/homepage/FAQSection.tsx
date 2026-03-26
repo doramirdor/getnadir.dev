@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 const faqs = [
   {
     q: "What is Nadir?",
-    a: "Nadir is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving up to 38% on API costs without changing any code.",
+    a: "Nadir is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 30-60% on API costs without changing any code.",
   },
   {
     q: "How does Nadir reduce costs?",
@@ -28,15 +28,15 @@ const faqs = [
   },
   {
     q: "What happens when the classifier is wrong?",
-    a: "Nadir biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadir classify \"your prompt\" and tune the threshold.",
+    a: "Nadir biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadirclaw classify \"your prompt\" and tune the threshold.",
   },
   {
     q: "How much latency does routing add?",
     a: "~10ms for the sentence embedding classification. The router runs locally on your machine, so there is no network hop. For comparison, a typical LLM API call takes 500ms-5s. The routing overhead is less than 1% of total request time.",
   },
   {
-    q: 'Where does the "38% savings" claim come from?',
-    a: "We benchmarked 50 real-world prompts across simple, medium, and complex tiers. Simple and medium prompts routed to Gemini Flash saved 97%. Complex prompts stayed on Sonnet but saved 12% via Context Optimize. Blended savings: 38%. Your actual savings depend on your prompt mix.",
+    q: 'Where does the "30-60% savings" claim come from?',
+    a: "We benchmarked 50 real-world prompts across simple, medium, and complex tiers. Simple and medium prompts routed to Gemini Flash saved 97%. Complex prompts stayed on Sonnet but saved 12% via Context Optimize. Blended average: 38%. Workloads with more simple prompts see 50-60% savings; complex-heavy workloads see 30%. Your actual savings depend on your prompt mix.",
   },
 ];
 

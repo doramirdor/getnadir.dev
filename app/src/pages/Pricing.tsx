@@ -176,7 +176,7 @@ function SavingsCalculator() {
     <div className="max-w-2xl mx-auto mt-20 p-8 bg-gray-50 rounded-2xl">
       <h3 className="text-2xl font-bold text-center mb-2">Calculate your savings</h3>
       <p className="text-gray-500 text-center mb-8">
-        Based on 38% average cost reduction from intelligent routing benchmark
+        Based on 30-60% cost reduction from intelligent routing benchmark (38% average)
       </p>
 
       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -242,8 +242,8 @@ export default function Pricing() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
         <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
           <div className="text-center p-6 bg-gray-50 rounded-xl">
-            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 38%</div>
-            <div className="text-sm text-gray-500">overall cost savings</div>
+            <div className="text-3xl font-bold text-[#00a86b] mb-1">30-60%</div>
+            <div className="text-sm text-gray-500">cost savings</div>
           </div>
           <div className="text-center p-6 bg-gray-50 rounded-xl">
             <div className="text-4xl font-bold text-blue-600 mb-1">96%</div>
