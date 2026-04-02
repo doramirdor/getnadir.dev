@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   CreditCard,
   TrendingDown,
@@ -12,6 +13,7 @@ import {
   Check,
   Loader2,
   XCircle,
+  Tag,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -79,6 +81,7 @@ interface InvoiceItem {
 const Billing = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
   const { toast } = useToast();
   const { apiKey } = useApiKey();
   const queryClient = useQueryClient();
@@ -136,17 +139,18 @@ const Billing = () => {
     }
     setSubscribing(true);
     try {
+      const checkoutBody: Record<string, unknown> = {
+        plan_id: "pro",
+        success_url: `${window.location.origin}/dashboard/billing?status=success`,
+        cancel_url: `${window.location.origin}/dashboard/billing?status=cancelled`,
+      };
+      if (promoCode.trim()) {
+        checkoutBody.promo_code = promoCode.trim();
+      }
       const data = await billingRequest<{ checkout_url: string }>(
         "/v1/billing/checkout",
         apiKey,
-        {
-          method: "POST",
-          body: {
-            plan_id: "pro",
-            success_url: `${window.location.origin}/dashboard/billing?status=success`,
-            cancel_url: `${window.location.origin}/dashboard/billing?status=cancelled`,
-          },
-        }
+        { method: "POST", body: checkoutBody }
       );
       window.location.href = data.checkout_url;
     } catch (error: any) {
@@ -300,23 +304,34 @@ const Billing = () => {
               </p>
             </div>
             {!isActive && (
-              <Button
-                onClick={handleSubscribe}
-                disabled={subscribing}
-                size="sm"
-              >
-                {subscribing ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                    Subscribe
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Promo code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    className="h-8 pl-7 text-xs w-28"
+                  />
+                </div>
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={subscribing}
+                  size="sm"
+                >
+                  {subscribing ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                      Subscribe
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
             {isActive && !isCanceling && (
               <Button
@@ -548,6 +563,19 @@ const Billing = () => {
                   <Check className="w-4 h-4 text-blue-600" /> BYOK or use our keys
                 </li>
               </ul>
+              {!isActive && (
+                <div className="flex gap-2 mb-3">
+                  <div className="relative flex-1">
+                    <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Promo code"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      className="h-9 pl-8 text-sm"
+                    />
+                  </div>
+                </div>
+              )}
               <Button
                 className="w-full"
                 disabled={isActive || subscribing}

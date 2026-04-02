@@ -1,4 +1,4 @@
-import { WaitlistForm } from "@/components/WaitlistForm";
+import { Link } from "react-router-dom";
 
 export const ContactFooter = () => {
   return (
@@ -69,9 +69,9 @@ export const ContactFooter = () => {
           </h2>
           <p className="text-[17px] text-[#666] mb-8 max-w-[480px] mx-auto">
             Self-host for free, or{" "}
-            <a href="#waitlist" className="text-[#0066ff] hover:underline font-semibold">
-              join the waitlist
-            </a>{" "}
+            <Link to="/auth?mode=signup" className="text-[#0066ff] hover:underline font-semibold">
+              sign up
+            </Link>{" "}
             for our hosted Pro plan.
           </p>
           <div className="flex gap-3 justify-center">
@@ -81,12 +81,12 @@ export const ContactFooter = () => {
             >
               Self-host free
             </a>
-            <a
-              href="#waitlist"
+            <Link
+              to="/auth?mode=signup"
               className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] transition-all no-underline"
             >
-              Join waitlist
-            </a>
+              Sign up
+            </Link>
           </div>
         </div>
       </section>

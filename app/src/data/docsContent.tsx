@@ -1588,10 +1588,10 @@ export function ProFeaturesContent() {
           pricing page
         </a>{" "}
         or{" "}
-        <a href="/#waitlist" className="text-primary underline underline-offset-2">
-          join the waitlist
+        <a href="/auth?mode=signup" className="text-primary underline underline-offset-2">
+          sign up
         </a>{" "}
-        to get early access.
+        to get started.
       </Callout>
     </div>
   );

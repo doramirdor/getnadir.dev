@@ -1,6 +1,6 @@
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
-import { WaitlistForm } from "@/components/WaitlistForm";
+import { Link } from "react-router-dom";
 
 export default function OpenClaw() {
   return (
@@ -121,7 +121,12 @@ openclaw gateway restart
             Nadir Pro gives you a managed proxy with team dashboards, savings tracking,
             and priority support — still works seamlessly with OpenClaw.
           </p>
-          <WaitlistForm variant="card" source="openclaw-page" />
+          <Link
+            to="/auth?mode=signup"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
+          >
+            Sign Up for Pro
+          </Link>
         </div>
       </section>
     </MarketingLayout>

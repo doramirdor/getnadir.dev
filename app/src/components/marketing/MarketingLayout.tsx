@@ -128,12 +128,12 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
                   {link.label}
                 </Link>
               ))}
-              <a
-                href="#waitlist"
+              <Link
+                to="/auth?mode=signup"
                 className="px-4 py-2 bg-[#0a0a0a] text-white rounded-md text-sm font-semibold hover:bg-[#333] transition-all no-underline"
               >
-                Join Waitlist
-              </a>
+                Sign Up
+              </Link>
               <a
                 href="https://github.com/NadirRouter/NadirClaw"
                 target="_blank"
@@ -149,12 +149,12 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
 
             {/* Mobile: CTA + hamburger */}
             <div className="flex md:hidden items-center gap-3">
-              <a
-                href="#waitlist"
+              <Link
+                to="/auth?mode=signup"
                 className="px-3 py-1.5 bg-[#0a0a0a] text-white rounded-md text-xs font-semibold hover:bg-[#333] transition-all no-underline"
               >
-                Join Waitlist
-              </a>
+                Sign Up
+              </Link>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
