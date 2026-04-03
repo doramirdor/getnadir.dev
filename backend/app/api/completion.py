@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, Request, HTTPException, Header
 from pydantic import BaseModel, Field
 
 from app.auth.supabase_auth import get_current_user, UserSession, check_user_budget, check_rate_limit
+from app.middleware.subscription_guard import require_active_subscription
 from app.schemas.completion import (
     CompletionRequest, CompletionResponse, PlaygroundRequest,
     RecommendationRequest, RecommendationResponse,
@@ -58,10 +59,10 @@ class EnhancedCompletionRequest(BaseModel):
     tools: Optional[List[Dict[str, Any]]] = Field(None, description="Tool definitions for function calling")
 
 
-@router.post("/chat/completions", response_model=CompletionResponse)
+@router.post("/chat/completions", response_model=CompletionResponse, dependencies=[Depends(check_rate_limit)])
 async def chat_completion(
     request: CompletionRequest,
-    current_user: UserSession = Depends(get_current_user),
+    current_user: UserSession = Depends(require_active_subscription),
     http_request: Request = None,
     x_nadir_mode: Optional[str] = Header(None, alias="X-Nadir-Mode"),
     x_nadir_max_models: Optional[int] = Header(3, alias="X-Nadir-Max-Models"),
@@ -435,10 +436,10 @@ async def chat_completion(
             raise HTTPException(status_code=500, detail=f"Completion failed: {type(e).__name__}. Please try again.")
 
 
-@router.post("/enhanced/completions")
+@router.post("/enhanced/completions", dependencies=[Depends(check_rate_limit)])
 async def enhanced_completion(
     request: EnhancedCompletionRequest,
-    current_user: UserSession = Depends(get_current_user)
+    current_user: UserSession = Depends(require_active_subscription),
 ) -> Dict[str, Any]:
     """Enhanced completion endpoint with full control over the flow."""
     # Check rate limit

@@ -379,8 +379,8 @@ JSON OUTPUT ONLY:
             if self.llm is None:
                 raise RuntimeError("Gemma-3-270m model not loaded")
             
-            logger.info(f"🔍 Router prompt length: {len(router_prompt)} chars")
-            logger.info(f"🔍 Router prompt preview: {router_prompt[:200]}...")
+            logger.debug(f"Router prompt length: {len(router_prompt)} chars")
+            logger.debug(f"Router prompt preview (first 200 chars elided for privacy)")
                 
             # Adjusted settings for Gemma-3 to force text generation
             max_tokens = 150 if use_fast_routing else 300  # Conservative token limit

@@ -27,12 +27,11 @@ def _get_fernet():
     _fernet_initialised = True
     secret = os.getenv("ENCRYPTION_SECRET", "")
     if not secret:
-        logger.warning(
-            "ENCRYPTION_SECRET is not set – provider keys will be stored/read "
-            "as base64 only (NOT encrypted). Set ENCRYPTION_SECRET to enable "
-            "real encryption."
+        raise RuntimeError(
+            "ENCRYPTION_SECRET is required but not set. "
+            "Provider API keys cannot be stored without encryption. "
+            "Generate a key with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
         )
-        return None
 
     from cryptography.fernet import Fernet
 
@@ -56,16 +55,11 @@ def _get_fernet():
 # ---------------------------------------------------------------------------
 
 def encrypt_key(plaintext: str) -> str:
-    """Encrypt a provider API key. Returns a base64-encoded ciphertext string.
+    """Encrypt a provider API key. Returns a Fernet-encrypted ciphertext string.
 
-    If ENCRYPTION_SECRET is not configured, returns a base64-encoded version
-    (matching legacy behaviour) with a warning.
+    ENCRYPTION_SECRET must be configured — raises RuntimeError otherwise.
     """
     f = _get_fernet()
-    if f is None:
-        logger.warning("encrypt_key called without ENCRYPTION_SECRET – using base64 only")
-        return base64.b64encode(plaintext.encode()).decode()
-
     token = f.encrypt(plaintext.encode())
     return token.decode()  # Fernet tokens are already url-safe base64
 

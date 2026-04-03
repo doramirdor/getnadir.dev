@@ -1,12 +1,14 @@
 """
 API routes for health check.
 
-Returns overall service status and dependency health for load balancers.
+Returns minimal status for unauthenticated callers (load balancers).
+Returns detailed checks only with a valid HEALTH_CHECK_SECRET token.
 """
 import logging
-from typing import Dict, Any
+import os
+from typing import Dict, Any, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 
 from app.settings import settings
 
@@ -14,14 +16,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_HEALTH_SECRET = os.getenv("HEALTH_CHECK_SECRET", "")
+
 
 @router.get("/health")
-async def health_check() -> Dict[str, Any]:
+async def health_check(
+    x_health_token: Optional[str] = Header(None, alias="X-Health-Token"),
+) -> Dict[str, Any]:
     """
     Health check endpoint.
 
     Returns 200 if the service can handle requests (core dependencies healthy).
     Returns 503 if critical dependencies are down.
+
+    Detailed checks (version, service topology) are only returned when
+    a valid X-Health-Token header is provided matching HEALTH_CHECK_SECRET.
     """
     checks: Dict[str, str] = {}
     degraded = False
@@ -73,13 +82,23 @@ async def health_check() -> Dict[str, Any]:
     overall = "unhealthy" if critical_down else ("degraded" if degraded else "ok")
     status_code = 503 if critical_down else 200
 
+    # Only expose detailed checks if the caller provides the correct secret
+    is_authorized = _HEALTH_SECRET and x_health_token == _HEALTH_SECRET
+
     from fastapi.responses import JSONResponse
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "status": overall,
-            "service": "nadir-api",
-            "version": settings.APP_VERSION,
-            "checks": checks,
-        },
-    )
+    if is_authorized:
+        return JSONResponse(
+            status_code=status_code,
+            content={
+                "status": overall,
+                "service": "nadir-api",
+                "version": settings.APP_VERSION,
+                "checks": checks,
+            },
+        )
+    else:
+        # Minimal response for load balancers and unauthenticated callers
+        return JSONResponse(
+            status_code=status_code,
+            content={"status": overall},
+        )

@@ -1,13 +1,17 @@
 """
 Prometheus /metrics endpoint.
 
-Unauthenticated — intended for internal scraping by Prometheus/Grafana.
+Protected by a bearer token (METRICS_TOKEN env var) to prevent public access
+to internal operational data. Intended for scraping by Prometheus/Grafana.
 Dynamic gauges (circuit breaker state, batcher queue size) are snapshotted
 on each scrape so they reflect the current system state.
 """
 
 import logging
-from fastapi import APIRouter, Response
+import os
+
+from fastapi import APIRouter, Response, HTTPException, Header
+from typing import Optional
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from app.metrics import (
@@ -21,6 +25,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["monitoring"])
 
 _CB_STATE_MAP = {"closed": 0, "half_open": 1, "open": 2}
+
+_METRICS_TOKEN = os.getenv("METRICS_TOKEN", "")
 
 
 def _collect_dynamic_gauges():
@@ -44,8 +50,17 @@ def _collect_dynamic_gauges():
 
 
 @router.get("/metrics", include_in_schema=False)
-async def prometheus_metrics():
-    """Return Prometheus-formatted metrics."""
+async def prometheus_metrics(authorization: Optional[str] = Header(None)):
+    """Return Prometheus-formatted metrics. Requires METRICS_TOKEN bearer auth."""
+    if _METRICS_TOKEN:
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing metrics authorization token")
+        token = authorization.removeprefix("Bearer ").strip()
+        if token != _METRICS_TOKEN:
+            raise HTTPException(status_code=403, detail="Invalid metrics token")
+    else:
+        logger.warning("METRICS_TOKEN not set — /metrics endpoint is unprotected")
+
     _collect_dynamic_gauges()
     return Response(
         content=generate_latest(REGISTRY),

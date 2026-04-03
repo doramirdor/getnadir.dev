@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.pricing.pricing_manager import get_model_tier
+from app.auth.supabase_auth import get_current_user, UserSession, check_rate_limit
 
 
 router = APIRouter()
@@ -25,11 +26,12 @@ async def custom_recommendation_ui(request: Request):
     return templates.TemplateResponse("custom_recommendation.html", {"request": request})
 
 
-@router.post("/v1/custom_recommendation")
+@router.post("/v1/custom_recommendation", dependencies=[Depends(check_rate_limit)])
 async def custom_recommendation(
-    request: Request
+    request: Request,
+    current_user: UserSession = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Custom model recommendation endpoint."""
+    """Custom model recommendation endpoint. Requires authentication."""
     try:
         data = await request.json()
         
@@ -227,11 +229,12 @@ async def custom_recommendation(
         }
 
 
-@router.post("/v1/recommendation/benchmark")
+@router.post("/v1/recommendation/benchmark", dependencies=[Depends(check_rate_limit)])
 async def recommendation_benchmark(
-    request: Request
+    request: Request,
+    current_user: UserSession = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Benchmark-based model recommendation endpoint."""
+    """Benchmark-based model recommendation endpoint. Requires authentication."""
     try:
         data = await request.json()
         
@@ -282,11 +285,12 @@ async def recommendation_benchmark(
         }
 
 
-@router.post("/v1/public/recommendation")
+@router.post("/v1/public/recommendation", dependencies=[Depends(check_rate_limit)])
 async def public_recommendation(
-    request: Request
+    request: Request,
+    current_user: UserSession = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Public recommendation endpoint that doesn't require authentication."""
+    """Public recommendation endpoint. Now requires authentication to prevent abuse."""
     try:
         data = await request.json()
         
@@ -409,11 +413,12 @@ async def public_recommendation(
         }
 
 
-@router.post("/v1/recommendation/compare")
+@router.post("/v1/recommendation/compare", dependencies=[Depends(check_rate_limit)])
 async def compare_recommendation(
-    request: Request
+    request: Request,
+    current_user: UserSession = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Compare a top-ranked model with a benchmark model."""
+    """Compare a top-ranked model with a benchmark model. Requires authentication."""
     try:
         data = await request.json()
         
@@ -464,11 +469,12 @@ async def compare_recommendation(
             "error": f"Error generating comparison: {str(e)}"
         }
 
-@router.post("/v1/tool_recommendation")
+@router.post("/v1/tool_recommendation", dependencies=[Depends(check_rate_limit)])
 async def tool_recommendation(
-    request: Request
+    request: Request,
+    current_user: UserSession = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Recommendation endpoint that detects and handles tool/function formats."""
+    """Recommendation endpoint that detects and handles tool/function formats. Requires authentication."""
     try:
         data = await request.json()
         

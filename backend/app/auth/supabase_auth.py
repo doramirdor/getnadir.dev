@@ -100,7 +100,7 @@ class _AuthTTLCache:
 
 
 # Module-level singleton
-auth_cache = _AuthTTLCache(maxsize=1000, ttl=30.0)
+auth_cache = _AuthTTLCache(maxsize=1000, ttl=5.0)
 
 
 # Initialize Supabase client with validation
@@ -501,7 +501,13 @@ async def check_user_budget(user_session: UserSession, estimated_cost: float) ->
 
     except Exception as e:
         logger.error(f"Budget check error for user {user_session.id}: {str(e)}")
-        return True  # Fail open — budget enforcement is best-effort; don't block traffic
+        # Fail closed for hosted-mode users (Nadir bears the cost).
+        # Fail open for BYOK users (user's own provider key is charged).
+        is_hosted = getattr(user_session, "is_hosted", False)
+        if is_hosted:
+            logger.warning("Budget check failed for HOSTED user %s — blocking request to prevent unbounded cost", user_session.id)
+            return False
+        return True  # BYOK: fail open — user's own key is charged
 
 
 async def update_user_preference(
