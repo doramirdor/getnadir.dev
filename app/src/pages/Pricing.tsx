@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Check, Loader2 } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -41,13 +42,15 @@ const tiers = [
     description: "Hosted proxy with zero setup. We only earn when we save you money.",
     features: [
       "Everything in Open Source",
-      "Hosted proxy (zero setup)",
-      "Semantic cache & dedup",
+      "Hosted proxy (api.getnadir.com)",
+      "Aggressive semantic dedup",
       "Web dashboard & analytics",
       "BYOK or use our keys",
+      "Up to 25% of savings (10% above $2K)",
+      "Email support",
     ],
-    cta: "signup",
-    ctaLink: "/auth?mode=signup",
+    cta: "waitlist",
+    ctaLink: "",
     highlighted: true,
   },
   {
@@ -286,13 +289,13 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              {tier.cta === "signup" ? (
-                <Link
-                  to="/auth?mode=signup"
-                  className="mt-8 block text-center py-3 px-6 rounded-lg font-medium text-sm transition bg-blue-600 text-white hover:bg-blue-500 no-underline"
+              {tier.cta === "waitlist" ? (
+                <a
+                  href="#waitlist"
+                  className="mt-8 block text-center py-3 px-6 rounded-lg font-medium text-sm transition bg-blue-600 text-white hover:bg-blue-500"
                 >
-                  Sign Up
-                </Link>
+                  Join the Waitlist
+                </a>
               ) : tier.cta === "contact" ? (
                 <button
                   onClick={() => setContactOpen(true)}
@@ -315,6 +318,11 @@ export default function Pricing() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Waitlist */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+        <WaitlistForm variant="card" source="pricing" />
       </section>
 
       {/* Calculator */}

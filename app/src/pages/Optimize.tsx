@@ -1,6 +1,6 @@
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
-import { Link } from "react-router-dom";
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 export default function Optimize() {
   return (
@@ -87,15 +87,8 @@ export default function Optimize() {
       </section>
 
       {/* CTA */}
-      <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
-        <h3 className="text-2xl font-bold mb-2">Ready to optimize?</h3>
-        <p className="text-[#666] mb-6">Sign up for Nadir Pro and start cutting your LLM costs.</p>
-        <Link
-          to="/auth?mode=signup"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
-        >
-          Sign Up
-        </Link>
+      <section className="max-w-4xl mx-auto px-6 pb-20">
+        <WaitlistForm variant="card" source="optimize-page" />
       </section>
     </MarketingLayout>
   );

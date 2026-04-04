@@ -8,7 +8,7 @@ import { BenefitsSection } from "@/components/homepage/BenefitsSection";
 import { BenchmarkResults } from "@/components/homepage/BenchmarkResults";
 import { OnboardingSteps } from "@/components/homepage/OnboardingSteps";
 import { PricingSection } from "@/components/homepage/PricingSection";
-import { Link } from "react-router-dom";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import { FAQSection } from "@/components/homepage/FAQSection";
 import { BlogTeaser } from "@/components/homepage/BlogTeaser";
 import { ContactFooter } from "@/components/homepage/ContactFooter";
@@ -29,18 +29,11 @@ const Homepage = () => {
       <OnboardingSteps />
       {/* 4. How we compare */}
       <ComparisonTable />
-      {/* 5. Pricing + Sign Up */}
+      {/* 5. Pricing + Waitlist */}
       <PricingSection />
-      <section className="py-8 md:py-14 text-center">
+      <section className="py-8 md:py-14">
         <div className="max-w-[560px] mx-auto px-4 sm:px-8">
-          <h3 className="text-2xl font-bold mb-2">Ready to start saving?</h3>
-          <p className="text-[#666] mb-6">Sign up for the hosted Pro plan and cut your LLM costs today.</p>
-          <Link
-            to="/auth?mode=signup"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
-          >
-            Sign Up
-          </Link>
+          <WaitlistForm variant="card" source="homepage" />
         </div>
       </section>
       {/* 6. The rest */}
