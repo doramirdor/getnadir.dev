@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "ocr-closed-loop-routing",
+    title: "OCR: our new closed-loop routing algorithm (NeurIPS 2026 submission)",
+    date: "2026-04-04",
+    author: "Dor Amir",
+    excerpt: "Static routers plateau at 88-93% accuracy. We built a closed-loop algorithm that learns from every response, adapts to model changes, and cuts costs 43% with zero quality loss.",
+    thumbnail: "Research",
+    tags: ["Research", "ML", "Routing"],
+    readingTime: "8 min read",
+  },
+  {
     id: "50-prompt-benchmark",
     title: "Routing benchmark: 96% accuracy, 38% cost savings",
     date: "2026-03-24",
@@ -67,6 +77,89 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "ocr-closed-loop-routing": `## The problem with static routing
+
+Every LLM router today works the same way: train a classifier, deploy it, and hope the world doesn't change. The best static routers reach 88-93% accuracy on standard benchmarks. That sounds good until you realize it means 7-12% of your requests are either wasting money (routed to an expensive model unnecessarily) or sacrificing quality (routed to a cheap model that can't handle the task).
+
+We call this ceiling the **Static Routing Ceiling (SRC)**, and we show in our paper that it's structural, not a tuning problem. It comes from two sources:
+
+- **Model non-stationarity:** Providers push updates that shift capability boundaries. Your classifier was trained on last month's models.
+- **Monotone capability violations:** Sometimes a cheaper model outperforms an expensive one on specific tasks. A code-specialized small model can beat a generalist large model on programming prompts.
+
+No amount of classifier tuning fixes this. The router needs to learn from what actually happens.
+
+## What OCR does
+
+**Outcome-Conditioned Routing (OCR)** wraps any static classifier with a feedback loop. After every request, it observes the response (was it valid? what did it cost? how long did it take?) and updates its understanding of each model's capabilities.
+
+The key insight is that these feedback signals decompose into two channels with very different properties:
+
+**Channel 1 — Quality failures (fast, binary).** When a model returns an empty, malformed, or truncated response, that's an unambiguous signal it was overloaded. These are rare (1-5% of requests) but highly informative. OCR applies a fast downward correction to the model's capacity estimate.
+
+**Channel 2 — Cost efficiency (slow, continuous).** The difference between expected and actual cost is available for every successful request, but it's noisy. OCR applies a slow bidirectional update, gradually tuning the cost-quality boundary over thousands of requests.
+
+The 10:1 learning rate ratio between these channels isn't arbitrary — it's derived from matching the expected update magnitude per unit time, given that quality failures are rare but unambiguous while cost signals are common but noisy.
+
+## The asymmetric recovery problem
+
+Here's something we discovered in simulation that, to our knowledge, hasn't been reported before: **dual-channel updates have an asymmetric recovery problem.**
+
+When a model gets worse, Channel 1 catches it fast (within ~800 requests). But when a model gets better — say, after a provider silently upgrades it — neither channel recovers:
+
+- Channel 1 never fires because the model succeeds on everything at its underestimated boundary
+- Channel 2 is too slow and noisy to close the gap
+
+In our Monte Carlo simulations, OCR without calibration **never converged** from underestimated initial capacities, even after 10,000 requests. The estimates got stuck.
+
+## Cross-tier calibration probes
+
+We solve this with **cross-tier calibration probes**: periodic shadow requests that test whether a cheaper model can handle traffic currently routed to an expensive one.
+
+When OCR routes a request to tier j, it occasionally also sends the same request to tier j-1 (the next cheaper tier). The user always gets the response from tier j. But if the cheaper tier succeeds, OCR boosts its capacity estimate upward.
+
+The probe frequency adapts: starting at every 50 requests during uncertain periods and relaxing to every 200 once estimates stabilize. Total overhead: **2.16% additional API calls**.
+
+The results from simulation are striking:
+
+| Scenario | Without calibration | With calibration | Improvement |
+|----------|-------------------|-----------------|-------------|
+| Sonnet capacity error (perturbed-low) | 0.600 (stuck) | 0.086 | 7x better |
+| Haiku capacity error (perturbed-low) | 0.288 | 0.148 | 2x better |
+| Model improvement detection | Not detected | Detected at t=9,300 | From blind to aware |
+
+## Live benchmark results
+
+We evaluated OCR on 50 prompts spanning 8 commercial domains (e-commerce, SaaS, developer tools, healthcare, fintech, edtech, logistics, HR) routed across 3 pricing tiers:
+
+| Metric | Value |
+|--------|-------|
+| Cost savings vs. all-Opus baseline | 43.3% |
+| Quality preservation | 50/50 responses valid |
+| Oracle alignment | 96% |
+| Calibration overhead | 2.16% |
+
+OCR correctly routed 23 of 25 simple prompts to the cheapest tier (Haiku), kept all 10 complex prompts on the most expensive tier (Opus), and distributed medium prompts across the middle tiers. The two "misrouted" simple prompts went to Sonnet — conservative but defensible, since they scored near the capacity boundary.
+
+## How it fits into Nadir
+
+OCR is the next evolution of Nadir's routing engine. The current binary classifier is a static router — it's fast and accurate, but it doesn't learn. OCR wraps around it:
+
+- **Static classifier** (what Nadir has today): classifies prompt complexity in ~50ms
+- **OCR layer** (what we're adding): adjusts routing based on real response outcomes
+- **Thompson Sampling bandit**: selects between models within the same tier based on contextual features
+
+The static classifier doesn't go away. It provides the initial complexity estimate. OCR refines the routing decision by maintaining live capacity estimates for each model, updated from every response.
+
+## What's next
+
+The paper is submitted to NeurIPS 2026. We're integrating OCR into Nadir's hosted platform and open-source router. Key areas we're still working on:
+
+- **Richer quality signals:** OCR currently uses binary valid/invalid. LLM-as-judge scoring could accelerate convergence but adds $0.01-0.05 per evaluation
+- **Multi-turn routing:** OCR routes single requests independently. Conversation-level complexity aggregation is a natural extension
+- **Top-tier estimation:** The most expensive model can't benefit from calibration probes (nothing cheaper to compare against). We're exploring alternative estimation strategies for the top tier
+
+Read the full paper: **OCR: Closed-Loop LLM Routing via Matched-Timescale Implicit Feedback and Cross-Tier Calibration Probes** (Dor Amir, submitted to NeurIPS 2026).`,
+
   "50-prompt-benchmark": `## Setup
 
 We ran 50 diverse prompts through Nadir's binary classifier with these settings:

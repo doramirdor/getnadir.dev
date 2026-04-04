@@ -1,5 +1,13 @@
 const posts = [
   {
+    date: "April 4, 2026",
+    tag: "Research",
+    title: "OCR: our new closed-loop routing algorithm (NeurIPS 2026)",
+    excerpt:
+      "Static routers plateau at 88-93% accuracy. We built a closed-loop algorithm that learns from every response, adapts to model changes, and cuts costs 43% with zero quality loss.",
+    href: "/blog/ocr-closed-loop-routing",
+  },
+  {
     date: "March 24, 2026",
     tag: "Benchmark",
     title: "Routing benchmark: 96% accuracy, 38% savings",
@@ -22,14 +30,6 @@ const posts = [
     excerpt:
       "We were paying Claude Opus prices for 'write a docstring'. That's when we decided to route simple prompts to cheaper models.",
     href: "/blog/why-we-built-nadir",
-  },
-  {
-    date: "March 10, 2026",
-    tag: "Technical",
-    title: "How our binary classifier routes prompts in 50ms",
-    excerpt:
-      "DistilBERT embeddings, centroid matching, and a 3-tier system that decides if your prompt needs a premium model or not.",
-    href: "/blog/how-binary-classifier-works",
   },
 ];
 
