@@ -20,27 +20,18 @@ logger = logging.getLogger(__name__)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.clusters.supabase_clustering import clustering_service
 from app.database.supabase_db import supabase_db
 from app.settings import settings
 
 # Import API routers
-from app.api.completion import router as completion_router
 from app.api.models import router as models_router
 from app.api.logs import router as logs_router
 from app.api.health import router as health_router
-from app.api.recommendation import router as recommendation_router
 from app.api.user_profile import router as user_profile_router
-from app.api.enhanced_router import router as enhanced_router
 from app.api.playground import router as playground_router
 from app.api.production_completion import router as production_completion_router
-from app.api.clustering_api import router as clustering_api_router
 from app.api.organizations import router as organizations_router
-from app.api.classifier_analytics import router as classifier_analytics_router
-from app.api.routing_analytics import router as routing_analytics_router
-from app.api.cost_anomaly_api import router as cost_anomaly_router
 from app.api.metrics_endpoint import router as metrics_router
-from app.api.distillation_api import router as distillation_router
 from app.api.savings_api import router as savings_router
 from app.api.stripe_webhooks import router as stripe_webhook_router
 from app.api.billing_api import router as billing_router
@@ -143,25 +134,6 @@ async def startup_event():
     else:
         healthy_services.append("provider_keys")
 
-    # Initialize predefined clusters in Supabase
-    try:
-        await clustering_service.initialize_clusters()
-        logger.info("Clustering service initialized")
-        healthy_services.append("clustering")
-    except Exception as e:
-        logger.warning(f"Failed to initialize clustering service: {e}")
-        degraded_services.append("clustering")
-
-    # Initialize local embedding clustering for fast classification
-    try:
-        from app.clusters.supabase_clustering import local_clustering_service
-        await local_clustering_service.load_clusters()
-        logger.info("Local embedding clustering initialized")
-        healthy_services.append("local_clustering")
-    except Exception as e:
-        logger.warning(f"Failed to initialize local clustering: {e}")
-        degraded_services.append("local_clustering")
-
     # Preload Gemma-3-270m model for fast routing
     try:
         from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
@@ -218,50 +190,6 @@ async def startup_event():
         logger.warning(f"Failed to schedule centroid refresh: {e}")
         degraded_services.append("centroid_refresh")
 
-    # Schedule adaptive cluster discovery (daily)
-    try:
-        from app.services.adaptive_cluster_discovery import get_cluster_discovery
-
-        async def _cluster_discovery_loop():
-            await asyncio.sleep(3600)  # first run 1h after startup
-            while True:
-                try:
-                    discovery = get_cluster_discovery()
-                    saved = await discovery.run_and_save()
-                    if saved:
-                        logger.info("Cluster discovery: %d new suggestions", saved)
-                except Exception as e:
-                    logger.warning("Cluster discovery failed: %s", e)
-                await asyncio.sleep(86400)  # 24 hours
-
-        app.state.cluster_discovery_task = asyncio.create_task(_cluster_discovery_loop())
-        logger.info("Adaptive cluster discovery scheduled (daily)")
-        healthy_services.append("cluster_discovery")
-    except Exception as e:
-        logger.warning(f"Failed to schedule cluster discovery: {e}")
-        degraded_services.append("cluster_discovery")
-
-    # Schedule routing quality tracker (every 30 min)
-    try:
-        from app.services.routing_quality_tracker import get_routing_quality_tracker
-
-        async def _routing_quality_loop():
-            await asyncio.sleep(120)  # first run 2 min after startup
-            while True:
-                try:
-                    tracker = get_routing_quality_tracker()
-                    await tracker.run_periodic_check()
-                except Exception as e:
-                    logger.warning("Routing quality check failed: %s", e)
-                await asyncio.sleep(1800)  # 30 minutes
-
-        app.state.routing_quality_task = asyncio.create_task(_routing_quality_loop())
-        logger.info("Routing quality tracker scheduled (every 30min)")
-        healthy_services.append("routing_quality")
-    except Exception as e:
-        logger.warning(f"Failed to schedule routing quality tracker: {e}")
-        degraded_services.append("routing_quality")
-
     # Start analytics event batcher
     try:
         from app.services.event_batcher import analytics_batcher
@@ -298,34 +226,6 @@ async def startup_event():
         logger.warning(f"Failed to schedule health monitor: {e}")
         degraded_services.append("health_monitor")
 
-    # Schedule distillation monitor (polls training jobs, runs quality checks)
-    try:
-        if settings.DISTILLATION_ENABLED:
-            from app.services.distillation_monitor import DistillationMonitor
-
-            async def _distillation_monitor_loop():
-                monitor = DistillationMonitor()
-                interval = settings.DISTILLATION_MONITOR_INTERVAL_MINUTES * 60
-                await asyncio.sleep(300)  # first run 5 min after startup
-                while True:
-                    try:
-                        await monitor.run_poll_cycle()
-                    except Exception as e:
-                        logger.warning("Distillation monitor cycle failed: %s", e)
-                    await asyncio.sleep(interval)
-
-            app.state.distillation_monitor_task = asyncio.create_task(_distillation_monitor_loop())
-            logger.info(
-                "Distillation monitor scheduled (every %d min)",
-                settings.DISTILLATION_MONITOR_INTERVAL_MINUTES,
-            )
-            healthy_services.append("distillation_monitor")
-        else:
-            logger.info("Distillation monitor disabled (DISTILLATION_ENABLED=False)")
-    except Exception as e:
-        logger.warning(f"Failed to schedule distillation monitor: {e}")
-        degraded_services.append("distillation_monitor")
-
     # Schedule monthly savings invoice generation (1st of each month, 00:05 UTC)
     try:
         from app.services.invoice_scheduler import invoice_scheduler_loop
@@ -350,7 +250,7 @@ async def shutdown_event():
     logger.info("Shutdown initiated — cleaning up services...")
 
     # Cancel periodic background loops and wait for clean exit
-    for task_name in ("centroid_refresh_task", "routing_quality_task", "cluster_discovery_task", "health_snapshot_task", "distillation_monitor_task", "invoice_scheduler_task"):
+    for task_name in ("centroid_refresh_task", "health_snapshot_task", "invoice_scheduler_task"):
         task = getattr(app.state, task_name, None)
         if task and not task.done():
             task.cancel()
@@ -387,21 +287,13 @@ async def shutdown_event():
 
 # Include API routers
 app.include_router(production_completion_router)  # Production API endpoints
-app.include_router(completion_router)
 app.include_router(models_router)
 app.include_router(logs_router)
 app.include_router(health_router)
-app.include_router(recommendation_router)
 app.include_router(user_profile_router)
-app.include_router(enhanced_router)             # Enhanced router API
 app.include_router(playground_router)
-app.include_router(clustering_api_router)         # Clustering API
 app.include_router(organizations_router)          # Organizations API
-app.include_router(classifier_analytics_router)    # Classifier Analytics API
-app.include_router(routing_analytics_router)        # Routing Analytics API
-app.include_router(cost_anomaly_router)             # Cost Anomaly Detection API
 app.include_router(metrics_router)                   # Prometheus metrics
-app.include_router(distillation_router)              # Distillation API
 app.include_router(savings_router)                    # Savings tracking API
 app.include_router(stripe_webhook_router)             # Stripe webhooks
 app.include_router(billing_router)                     # Billing & subscription API
