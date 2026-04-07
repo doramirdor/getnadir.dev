@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Check, Loader2 } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { trackPricingView } from "@/utils/analytics";
 
 const tiers = [
   {
@@ -220,6 +221,8 @@ function SavingsCalculator() {
 
 export default function Pricing() {
   const [contactOpen, setContactOpen] = useState(false);
+
+  useEffect(() => { trackPricingView(); }, []);
 
   return (
     <MarketingLayout>

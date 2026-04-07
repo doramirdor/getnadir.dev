@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { logger } from "@/utils/logger";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
+import { trackPageView, trackApiKeyCreated, trackApiKeyDeleted } from "@/utils/analytics";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -47,6 +48,7 @@ const ApiKeys = () => {
   const { setApiKey: setSessionApiKey } = useApiKey();
 
   useEffect(() => {
+    trackPageView("api_keys");
     fetchApiKeys();
   }, []);
 
@@ -109,6 +111,7 @@ const ApiKeys = () => {
 
       // Store key in session so user doesn't have to re-enter it
       setSessionApiKey(apiKey);
+      trackApiKeyCreated("dashboard");
 
       // Show the key once before clearing
       setShowOnceKey(apiKey);
@@ -139,6 +142,7 @@ const ApiKeys = () => {
 
       if (error) throw error;
 
+      trackApiKeyDeleted();
       toast({
         title: "Success",
         description: "API key deleted successfully",

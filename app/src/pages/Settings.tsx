@@ -10,6 +10,7 @@ import { Save, LogOut, Brain, DollarSign, Settings as SettingsIcon, Shield, Key 
 import { Separator } from "@/components/ui/separator";
 import { logger } from "@/utils/logger";
 import LayerConfig, { type Layers } from "@/components/LayerConfig";
+import { trackPageView } from "@/utils/analytics";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -19,6 +20,8 @@ const Settings = () => {
   const [benchmarkModel, setBenchmarkModel] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [layers, setLayers] = useState<Layers>({ routing: true, fallback: true, optimize: "off" });
+
+  useEffect(() => { trackPageView("settings"); }, []);
 
   useEffect(() => {
     if (user) {

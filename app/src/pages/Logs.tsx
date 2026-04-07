@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
+import { trackPageView } from "@/utils/analytics";
 
 interface LogEntry {
   id: string;
@@ -40,6 +41,8 @@ const Logs = () => {
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableProviders, setAvailableProviders] = useState<string[]>([]);
+
+  useEffect(() => { trackPageView("logs"); }, []);
 
   useEffect(() => {
     if (user?.id) {

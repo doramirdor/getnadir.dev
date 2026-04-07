@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { trackPageView } from "@/utils/analytics";
 import {
   Dialog,
   DialogContent,
@@ -114,6 +115,7 @@ const Support = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    trackPageView("support");
     fetchTickets();
   }, []);
 

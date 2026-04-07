@@ -21,6 +21,10 @@ function identify(userId: string, properties?: Record<string, unknown>) {
   window.posthog?.identify(userId, properties);
 }
 
+// -- Page view (generic) --
+export const trackPageView = (page: string, properties?: Record<string, unknown>) =>
+  capture("$pageview", { page, ...properties });
+
 // -- Waitlist events --
 export const trackWaitlistSignup = (method: "email" | "google" | "github", source: string) =>
   capture("waitlist_signup", { method, source });
@@ -38,8 +42,14 @@ export const trackAuthSuccess = (method: string, userId: string) => {
 export const trackOnboardingStep = (step: number, stepName: string) =>
   capture("onboarding_step", { step, step_name: stepName });
 
+export const trackOnboardingComplete = (mode: string) =>
+  capture("onboarding_complete", { mode });
+
 export const trackApiKeyCreated = (source: "onboarding" | "dashboard") =>
   capture("api_key_created", { source });
+
+export const trackApiKeyDeleted = () =>
+  capture("api_key_deleted");
 
 // -- Pricing / contact events --
 export const trackPricingView = (tier?: string) =>
@@ -47,6 +57,14 @@ export const trackPricingView = (tier?: string) =>
 
 export const trackContactSubmit = () =>
   capture("contact_submit");
+
+// -- Billing events --
+export const trackBillingView = () =>
+  capture("billing_view");
+
+// -- Playground events --
+export const trackPlaygroundSend = (mode: string) =>
+  capture("playground_send", { mode });
 
 // -- GitHub events --
 export const trackGitHubClick = (location: string) =>

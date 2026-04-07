@@ -1,11 +1,14 @@
+import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
+import { trackPageView } from "@/utils/analytics";
 
 export default function Blog() {
+  useEffect(() => { trackPageView("blog"); }, []);
   const navigate = useNavigate();
   const posts = BlogService.getAllPosts();
 

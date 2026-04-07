@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { useApiKey } from "@/hooks/useApiKey";
 import { SavingsAPI } from "@/services/savingsApi";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+import { trackBillingView } from "@/utils/analytics";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
@@ -82,6 +83,8 @@ const Billing = () => {
   const { toast } = useToast();
   const { apiKey } = useApiKey();
   const queryClient = useQueryClient();
+
+  useEffect(() => { trackBillingView(); }, []);
 
   // Fetch savings summary
   const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;

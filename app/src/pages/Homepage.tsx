@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/homepage/HeroSection";
@@ -12,8 +13,10 @@ import { WaitlistForm } from "@/components/WaitlistForm";
 import { FAQSection } from "@/components/homepage/FAQSection";
 import { BlogTeaser } from "@/components/homepage/BlogTeaser";
 import { ContactFooter } from "@/components/homepage/ContactFooter";
+import { trackPageView } from "@/utils/analytics";
 
 const Homepage = () => {
+  useEffect(() => { trackPageView("homepage"); }, []);
   return (
     <MarketingLayout>
       <SEO

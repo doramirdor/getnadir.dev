@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { trackPageView } from "@/utils/analytics";
 
 export default function Optimize() {
+  useEffect(() => { trackPageView("optimize"); }, []);
   return (
     <MarketingLayout>
       <SEO

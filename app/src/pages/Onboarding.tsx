@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { useAuth } from "@/hooks/useAuth";
-import { trackOnboardingStep, trackApiKeyCreated } from "@/utils/analytics";
+import { trackOnboardingStep, trackOnboardingComplete, trackApiKeyCreated } from "@/utils/analytics";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -151,16 +151,20 @@ const Onboarding = () => {
       const keysToSave = Object.entries(providerKeys).filter(([_, v]) => v.trim());
       if (keysToSave.length > 0) {
         try {
+          const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
           for (const [provider, key] of keysToSave) {
-            await supabase.from("provider_keys").upsert(
-              {
-                user_id: user.id,
-                provider,
-                encrypted_key: btoa(key),
-                is_active: true,
+            const resp = await fetch(`${apiBase}/v1/provider-keys`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                ...(createdApiKey ? { "X-API-Key": createdApiKey } : {}),
               },
-              { onConflict: "user_id,provider" }
-            );
+              body: JSON.stringify({ provider, api_key: key }),
+            });
+            if (!resp.ok) {
+              const err = await resp.json().catch(() => ({}));
+              throw new Error(err.detail || `Failed to save ${provider} key`);
+            }
           }
           toast({
             title: "Provider keys saved",
@@ -176,7 +180,9 @@ const Onboarding = () => {
       }
     }
     if (currentStep < STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      trackOnboardingStep(nextStep, STEPS[nextStep].id);
     }
   };
 
@@ -187,6 +193,7 @@ const Onboarding = () => {
   };
 
   const handleFinish = () => {
+    trackOnboardingComplete(mode);
     setShowCelebration(true);
   };
 

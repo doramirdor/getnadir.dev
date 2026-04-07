@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { HelpCircle, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { trackPageView } from "@/utils/analytics";
 import {
   Accordion,
   AccordionContent,
@@ -246,6 +248,7 @@ const faqItems = [
 
 const FAQ = () => {
   const navigate = useNavigate();
+  useEffect(() => { trackPageView("faq"); }, []);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

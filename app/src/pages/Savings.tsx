@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { TrendingDown, DollarSign, Percent, Zap } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { useApiKey } from "@/hooks/useApiKey";
 import { SavingsAPI } from "@/services/savingsApi";
+import { trackPageView } from "@/utils/analytics";
 import type { SavingsSummary, DailySaving, TierBreakdown } from "@/services/savingsApi";
 
 function calculateFee(totalSavings: number): number {
@@ -84,6 +86,7 @@ function StatCard({ icon: Icon, label, value, subtext, color = "blue" }: {
 // ── Main component ──────────────────────────────────────────────────────
 
 export default function Savings() {
+  useEffect(() => { trackPageView("savings"); }, []);
   const { apiKey } = useApiKey();
 
   const api = apiKey ? new SavingsAPI(apiKey) : null;

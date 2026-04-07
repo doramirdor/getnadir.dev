@@ -8,6 +8,7 @@ import { DocsSidebar } from "@/components/docs/DocsSidebar";
 import { PrevNextNav } from "@/components/docs/PrevNextNav";
 import { docsContentMap } from "@/data/docsContent";
 import { validSlugs } from "@/data/docsNavigation";
+import { trackDocsView } from "@/utils/analytics";
 
 const DEFAULT_SECTION = "quickstart";
 
@@ -25,9 +26,10 @@ export default function Docs() {
     }
   }, [section, navigate]);
 
-  // Scroll to top on section change
+  // Scroll to top on section change & track
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    trackDocsView(activeSection);
   }, [activeSection]);
 
   const ContentComponent = docsContentMap[activeSection];

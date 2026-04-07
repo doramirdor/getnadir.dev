@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
 import FetchError from "@/components/FetchError";
 import ClassifierAnalytics from "@/components/ClassifierAnalytics";
+import { trackPageView } from "@/utils/analytics";
 
 const CHART_GRID_STROKE = "hsl(220, 13%, 91%)";
 const CHART_AXIS_STROKE = "hsl(220, 9%, 46%)";
@@ -60,6 +61,8 @@ const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<{ overview?: string; cost?: string; performance?: string; complexity?: string }>({});
   const { toast } = useToast();
+
+  useEffect(() => { trackPageView("analytics"); }, []);
 
   useEffect(() => {
     loadAnalytics();
