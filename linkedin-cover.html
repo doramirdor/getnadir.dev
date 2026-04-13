@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedIn Cover - Nadir</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  .banner {
+    width: 1584px;
+    height: 396px;
+    position: relative;
+    overflow: hidden;
+  }
+  canvas { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div class="banner">
+  <canvas id="c" width="1584" height="396"></canvas>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1584, H = 396;
+
+// Background gradient
+const bgGrad = ctx.createRadialGradient(W * 0.35, H * 0.5, 0, W * 0.35, H * 0.5, W * 0.7);
+bgGrad.addColorStop(0, '#0f1628');
+bgGrad.addColorStop(1, '#080c18');
+ctx.fillStyle = bgGrad;
+ctx.fillRect(0, 0, W, H);
+
+// Subtle grid
+ctx.strokeStyle = 'rgba(100, 180, 220, 0.04)';
+ctx.lineWidth = 0.5;
+for (let x = 0; x < W; x += 80) {
+  ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+}
+for (let y = 0; y < H; y += 80) {
+  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+}
+
+// Dotted crosshairs
+ctx.setLineDash([2, 8]);
+ctx.strokeStyle = 'rgba(100, 180, 220, 0.08)';
+ctx.lineWidth = 1;
+// Vertical
+ctx.beginPath(); ctx.moveTo(W * 0.33, 0); ctx.lineTo(W * 0.33, H); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(W * 0.66, 0); ctx.lineTo(W * 0.66, H); ctx.stroke();
+// Horizontal
+ctx.beginPath(); ctx.moveTo(0, H * 0.5); ctx.lineTo(W, H * 0.5); ctx.stroke();
+ctx.setLineDash([]);
+
+// Source node position
+const srcX = W * 0.22, srcY = H * 0.48;
+
+// Target nodes
+const targets = [
+  { x: W * 0.72, y: H * 0.14, r: 8, active: false },
+  { x: W * 0.65, y: H * 0.30, r: 10, active: false },
+  { x: W * 0.78, y: H * 0.38, r: 14, active: true },  // optimal
+  { x: W * 0.68, y: H * 0.58, r: 7, active: false },
+  { x: W * 0.73, y: H * 0.74, r: 9, active: false },
+  { x: W * 0.80, y: H * 0.82, r: 6, active: false },
+];
+
+// Draw curves from source to targets
+function drawCurve(sx, sy, tx, ty, active) {
+  const cpx1 = sx + (tx - sx) * 0.4;
+  const cpy1 = sy;
+  const cpx2 = sx + (tx - sx) * 0.6;
+  const cpy2 = ty;
+
+  if (active) {
+    // Glow layers
+    for (let i = 3; i >= 0; i--) {
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, tx, ty);
+      ctx.strokeStyle = `rgba(0, 230, 210, ${0.03 + i * 0.02})`;
+      ctx.lineWidth = 12 - i * 2;
+      ctx.stroke();
+    }
+    // Core bright line
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, tx, ty);
+    const grad = ctx.createLinearGradient(sx, sy, tx, ty);
+    grad.addColorStop(0, 'rgba(180, 255, 250, 0.9)');
+    grad.addColorStop(0.5, 'rgba(0, 230, 210, 1)');
+    grad.addColorStop(1, 'rgba(0, 210, 190, 1)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Particles along the active path
+    for (let t = 0.15; t < 1; t += 0.08 + Math.random() * 0.06) {
+      const mt = 1 - t;
+      const px = mt*mt*mt*sx + 3*mt*mt*t*cpx1 + 3*mt*t*t*cpx2 + t*t*t*tx;
+      const py = mt*mt*mt*sy + 3*mt*mt*t*cpy1 + 3*mt*t*t*cpy2 + t*t*t*ty;
+      const size = 1 + Math.random() * 2.5;
+      const alpha = 0.3 + Math.random() * 0.5;
+      ctx.beginPath();
+      ctx.arc(px + (Math.random() - 0.5) * 8, py + (Math.random() - 0.5) * 8, size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(150, 255, 245, ${alpha})`;
+      ctx.fill();
+    }
+  } else {
+    // Inactive lines
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, tx, ty);
+    ctx.strokeStyle = 'rgba(120, 150, 180, 0.18)';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  }
+}
+
+// Draw all curves
+targets.forEach(t => drawCurve(srcX, srcY, t.x, t.y, t.active));
+
+// Draw concentric rings for nodes
+function drawNode(x, y, r, active) {
+  for (let i = 3; i >= 0; i--) {
+    ctx.beginPath();
+    ctx.arc(x, y, r + i * 8 + 8, 0, Math.PI * 2);
+    if (active) {
+      ctx.strokeStyle = `rgba(0, 230, 210, ${0.06 - i * 0.015})`;
+    } else {
+      ctx.strokeStyle = `rgba(120, 160, 200, ${0.06 - i * 0.015})`;
+    }
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Node glow
+  if (active) {
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+    glow.addColorStop(0, 'rgba(0, 230, 210, 0.3)');
+    glow.addColorStop(1, 'rgba(0, 230, 210, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Core dot
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (active) {
+    const coreGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    coreGrad.addColorStop(0, '#ffffff');
+    coreGrad.addColorStop(0.5, 'rgba(0, 230, 210, 1)');
+    coreGrad.addColorStop(1, 'rgba(0, 200, 180, 0.8)');
+    ctx.fillStyle = coreGrad;
+  } else {
+    const coreGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    coreGrad.addColorStop(0, 'rgba(180, 200, 220, 0.7)');
+    coreGrad.addColorStop(1, 'rgba(100, 130, 160, 0.4)');
+    ctx.fillStyle = coreGrad;
+  }
+  ctx.fill();
+}
+
+// Source node (bright white)
+function drawSourceNode(x, y) {
+  // Outer glow
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, 50);
+  glow.addColorStop(0, 'rgba(200, 240, 255, 0.25)');
+  glow.addColorStop(0.5, 'rgba(100, 200, 230, 0.08)');
+  glow.addColorStop(1, 'rgba(100, 200, 230, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, 50, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rings
+  for (let i = 3; i >= 0; i--) {
+    ctx.beginPath();
+    ctx.arc(x, y, 14 + i * 10, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(180, 220, 240, ${0.08 - i * 0.02})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Core
+  const coreGrad = ctx.createRadialGradient(x, y, 0, x, y, 12);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.6, 'rgba(200, 240, 255, 0.9)');
+  coreGrad.addColorStop(1, 'rgba(100, 200, 230, 0.5)');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Draw all nodes
+targets.forEach(t => drawNode(t.x, t.y, t.r, t.active));
+drawSourceNode(srcX, srcY);
+
+// "Nadir" text — lower right
+ctx.save();
+ctx.font = '300 28px "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+ctx.letterSpacing = '6px';
+ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+ctx.textAlign = 'right';
+ctx.textBaseline = 'middle';
+ctx.fillText('N A D I R', W - 60, H - 45);
+
+// Subtle glow on text
+ctx.shadowColor = 'rgba(0, 230, 210, 0.3)';
+ctx.shadowBlur = 20;
+ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+ctx.fillText('N A D I R', W - 60, H - 45);
+ctx.restore();
+
+// Four-pointed star near text
+function drawStar(cx, cy, size) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 230, 210, 0.7)';
+  ctx.shadowColor = 'rgba(0, 230, 210, 0.5)';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - size);
+  ctx.quadraticCurveTo(cx + size * 0.15, cy - size * 0.15, cx + size, cy);
+  ctx.quadraticCurveTo(cx + size * 0.15, cy + size * 0.15, cx, cy + size);
+  ctx.quadraticCurveTo(cx - size * 0.15, cy + size * 0.15, cx - size, cy);
+  ctx.quadraticCurveTo(cx - size * 0.15, cy - size * 0.15, cx, cy - size);
+  ctx.fill();
+  ctx.restore();
+}
+drawStar(W - 275, H - 45, 7);
+
+// Ambient floating particles
+for (let i = 0; i < 40; i++) {
+  const px = Math.random() * W;
+  const py = Math.random() * H;
+  const ps = 0.5 + Math.random() * 1.2;
+  const pa = 0.03 + Math.random() * 0.08;
+  ctx.beginPath();
+  ctx.arc(px, py, ps, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(150, 200, 230, ${pa})`;
+  ctx.fill();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to ECR...
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 037049058808.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo Building backend-only Docker image...
+      - docker build -f Dockerfile.backend -t nadir-backend:latest .
+      - docker tag nadir-backend:latest 037049058808.dkr.ecr.us-east-1.amazonaws.com/nadir-backend:latest
+  post_build:
+    commands:
+      - echo Pushing to ECR...
+      - docker push 037049058808.dkr.ecr.us-east-1.amazonaws.com/nadir-backend:latest
+      - echo Done!

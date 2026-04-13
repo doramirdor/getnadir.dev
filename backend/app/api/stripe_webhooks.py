@@ -67,7 +67,7 @@ async def _handle_checkout_session_completed(data: dict) -> None:
         return
 
     # Upsert subscription record
-    await _db(lambda: supabase.table("user_subscriptions").upsert(
+    await _db(lambda: supabase.table("subscriptions").upsert(
         {
             "user_id": user_id,
             "stripe_customer_id": customer_id,
@@ -100,7 +100,7 @@ async def _handle_subscription_created(data: dict) -> None:
 
     user_id = customer_row.data[0]["user_id"]
 
-    await _db(lambda: supabase.table("user_subscriptions").upsert(
+    await _db(lambda: supabase.table("subscriptions").upsert(
         {
             "user_id": user_id, "stripe_customer_id": customer_id,
             "stripe_subscription_id": subscription_id, "status": sub_status,
@@ -129,7 +129,7 @@ async def _handle_subscription_deleted(data: dict) -> None:
 
     user_id = customer_row.data[0]["user_id"]
 
-    await _db(lambda: supabase.table("user_subscriptions").update(
+    await _db(lambda: supabase.table("subscriptions").update(
         {"status": "canceled", "updated_at": datetime.now(timezone.utc).isoformat()}
     ).eq("stripe_subscription_id", subscription_id).execute())
 
@@ -163,7 +163,7 @@ async def _handle_invoice_paid(data: dict) -> None:
 
     # Update subscription status if applicable
     if subscription_id:
-        await _db(lambda: supabase.table("user_subscriptions").update(
+        await _db(lambda: supabase.table("subscriptions").update(
             {"status": "active", "updated_at": datetime.now(timezone.utc).isoformat()}
         ).eq("stripe_subscription_id", subscription_id).execute())
 
@@ -194,7 +194,7 @@ async def _handle_subscription_updated(data: dict) -> None:
 
     user_id = customer_row.data[0]["user_id"]
 
-    await _db(lambda: supabase.table("user_subscriptions").upsert(
+    await _db(lambda: supabase.table("subscriptions").upsert(
         {
             "user_id": user_id, "stripe_customer_id": customer_id,
             "stripe_subscription_id": subscription_id, "status": sub_status,
@@ -230,7 +230,7 @@ async def _handle_invoice_payment_failed(data: dict) -> None:
 
     user_id = customer_row.data[0]["user_id"]
 
-    await _db(lambda: supabase.table("user_subscriptions").update(
+    await _db(lambda: supabase.table("subscriptions").update(
         {"status": "past_due", "updated_at": datetime.now(timezone.utc).isoformat()}
     ).eq("stripe_subscription_id", subscription_id).execute())
 

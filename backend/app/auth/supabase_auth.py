@@ -226,7 +226,7 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
         )
         subscription_future = asyncio.to_thread(
-            lambda: supabase.table("user_subscriptions").select("status").eq("user_id", user_id).execute()
+            lambda: supabase.table("subscriptions").select("status").eq("user_id", user_id).execute()
         )
         provider_keys_future = asyncio.to_thread(
             lambda: supabase.table("provider_keys").select("provider, encrypted_key").eq("user_id", user_id).execute()
@@ -301,6 +301,50 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during authentication",
+        )
+
+
+async def validate_jwt(authorization: str = Header(alias="Authorization")) -> UserSession:
+    """
+    Validate a Supabase JWT (Bearer token) and return a lightweight UserSession.
+
+    Use this for endpoints that should be callable *before* the user has an API key
+    (e.g. billing checkout during onboarding).
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+        )
+    token = authorization.removeprefix("Bearer ").strip()
+
+    try:
+        # Supabase client validates the JWT and returns the user
+        user_response = await asyncio.to_thread(
+            lambda: supabase.auth.get_user(token)
+        )
+        user = user_response.user
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+            )
+
+        return UserSession({
+            "id": user.id,
+            "email": user.email,
+            "name": (user.user_metadata or {}).get("full_name"),
+            "subscription_status": "inactive",
+            "subscription_plan": "free",
+            "key_mode": "hosted",
+        })
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("JWT validation error: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token validation failed",
         )
 
 

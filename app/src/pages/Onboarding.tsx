@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   Loader2,
   CircleCheck,
   Sparkles,
+  Gift,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { useAuth } from "@/hooks/useAuth";
 import { trackOnboardingStep, trackOnboardingComplete, trackApiKeyCreated } from "@/utils/analytics";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
@@ -35,13 +38,12 @@ type Mode = "byok" | "hosted";
 
 const STEPS = [
   { id: "mode", label: "Choose Mode", icon: Zap },
-  { id: "configure", label: "Configure", icon: CreditCard },
+  { id: "subscribe", label: "Subscribe", icon: Gift },
   { id: "api-key", label: "Get API Key", icon: Key },
 ];
 
 const NADIR_API_HOST = "api.getnadir.com";
 
-/** Check if a provider key looks like a valid format. */
 function isKeyFormatValid(provider: string, key: string): boolean {
   if (!key.trim()) return false;
   switch (provider) {
@@ -51,6 +53,10 @@ function isKeyFormatValid(provider: string, key: string): boolean {
       return key.startsWith("sk-ant-") && key.length > 20;
     case "google":
       return key.length > 10;
+    case "openrouter":
+      return key.startsWith("sk-or-") && key.length > 20;
+    case "groq":
+      return key.startsWith("gsk_") && key.length > 20;
     default:
       return key.length > 10;
   }
@@ -66,10 +72,13 @@ const Onboarding = () => {
     openai: "",
     anthropic: "",
     google: "",
+    openrouter: "",
+    groq: "",
   });
   const [showCelebration, setShowCelebration] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
   const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
+  const [subscribing, setSubscribing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
@@ -84,14 +93,48 @@ const Onboarding = () => {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Save BYOK provider keys first (via JWT — no API key needed)
+      if (mode === "byok") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("Not authenticated");
+
+        const keysToSave = Object.entries(providerKeys).filter(([_, v]) => v.trim());
+        for (const [provider, key] of keysToSave) {
+          const resp = await fetch(`${API_BASE}/v1/provider-keys/setup`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ provider, api_key: key }),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Failed to save ${provider} key`);
+          }
+        }
+        if (keysToSave.length > 0) {
+          toast({
+            title: "Provider keys saved",
+            description: `${keysToSave.length} provider key(s) configured.`,
+          });
+        }
+      }
+
+      // Create Nadir API key
       const keyValue = `ndr_${crypto.randomUUID().replace(/-/g, "").slice(0, 32)}`;
       const keyHash = await sha256(keyValue);
+
       const { error } = await supabase.from("api_keys").insert({
         user_id: user.id,
         name: apiKeyName,
         key_hash: keyHash,
         prefix: keyValue.slice(0, 8),
         is_active: true,
+        model_parameters: {
+          key_mode: mode,
+          layers: { routing: true, fallback: true, optimize: "off" },
+        },
       });
 
       if (error) throw error;
@@ -126,70 +169,74 @@ const Onboarding = () => {
         toast({ title: "Connection successful", description: "Your key is working." });
       } else {
         setTestResult("error");
-        toast({
-          variant: "destructive",
-          title: "Connection failed",
-          description: `Server returned ${res.status}. Your key may still be valid -- the health endpoint does not require auth.`,
-        });
       }
     } catch {
-      // Network errors are expected in local dev; treat health endpoint as reachable-only check
       setTestResult("error");
-      toast({
-        variant: "destructive",
-        title: "Could not reach server",
-        description: "Check your connection. Your API key has been saved and will work once the server is reachable.",
-      });
     } finally {
       setTestingKey(false);
     }
   };
 
-  const nextStep = async () => {
-    // Save BYOK provider keys when leaving step 2 (Configure)
-    if (currentStep === 1 && mode === "byok" && user) {
-      const keysToSave = Object.entries(providerKeys).filter(([_, v]) => v.trim());
-      if (keysToSave.length > 0) {
-        try {
-          const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
-          for (const [provider, key] of keysToSave) {
-            const resp = await fetch(`${apiBase}/v1/provider-keys`, {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                ...(createdApiKey ? { "X-API-Key": createdApiKey } : {}),
-              },
-              body: JSON.stringify({ provider, api_key: key }),
-            });
-            if (!resp.ok) {
-              const err = await resp.json().catch(() => ({}));
-              throw new Error(err.detail || `Failed to save ${provider} key`);
-            }
-          }
-          toast({
-            title: "Provider keys saved",
-            description: `${keysToSave.length} provider key(s) configured.`,
-          });
-        } catch (e: any) {
-          toast({
-            variant: "destructive",
-            title: "Error saving keys",
-            description: e.message,
-          });
-        }
-      }
+  const handleSubscribe = async () => {
+    setSubscribing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      // Use Supabase JWT to call billing — no API key needed yet
+      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          plan_id: "pro",
+          promo_code: "FIRST1",
+          success_url: `${window.location.origin}/dashboard/onboarding?subscribed=true`,
+          cancel_url: `${window.location.origin}/dashboard/onboarding?step=1`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Checkout failed");
+
+      // Redirect to Stripe checkout
+      window.location.href = data.checkout_url;
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Error", description: e.message });
+    } finally {
+      setSubscribing(false);
     }
+  };
+
+  // Handle return from Stripe checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribed") === "true") {
+      // User just came back from successful checkout, advance past subscribe step
+      setCurrentStep(2); // Go to Configure step
+      toast({ title: "Subscription active!", description: "First month is free. Let's finish setting up." });
+      // Clean URL
+      window.history.replaceState({}, "", "/dashboard/onboarding");
+    }
+    const stepParam = params.get("step");
+    if (stepParam) {
+      setCurrentStep(parseInt(stepParam, 10));
+      window.history.replaceState({}, "", "/dashboard/onboarding");
+    }
+  }, []);
+
+  const nextStep = async () => {
     if (currentStep < STEPS.length - 1) {
-      const nextStep = currentStep + 1;
-      setCurrentStep(nextStep);
-      trackOnboardingStep(nextStep, STEPS[nextStep].id);
+      const next = currentStep + 1;
+      setCurrentStep(next);
+      trackOnboardingStep(next, STEPS[next].id);
     }
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   const handleFinish = () => {
@@ -197,7 +244,6 @@ const Onboarding = () => {
     setShowCelebration(true);
   };
 
-  // Auto-redirect after celebration
   useEffect(() => {
     if (!showCelebration) return;
     const timer = setTimeout(() => {
@@ -237,7 +283,6 @@ const response = await client.chat.completions.create({
 });
 console.log(response.choices[0].message.content);`;
     }
-    // curl
     return `curl https://${NADIR_API_HOST}/v1/chat/completions \\
   -H "Authorization: Bearer ${key}" \\
   -H "Content-Type: application/json" \\
@@ -260,9 +305,7 @@ console.log(response.choices[0].message.content);`;
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">You're all set!</h1>
-            <p className="text-muted-foreground mt-1">
-              Redirecting you to the dashboard...
-            </p>
+            <p className="text-muted-foreground mt-1">Redirecting you to the dashboard...</p>
           </div>
           <div className="flex justify-center gap-1">
             {[0, 1, 2].map((i) => (
@@ -286,17 +329,13 @@ console.log(response.choices[0].message.content);`;
           <Sparkles className="w-5 h-5 text-primary" />
           <h1 className="page-title">Welcome to Nadir</h1>
         </div>
-        <p className="page-description">
-          Let's get you set up in under 2 minutes
-        </p>
+        <p className="page-description">Let's get you set up in under 2 minutes</p>
       </div>
 
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>
-            Step {currentStep + 1} of {STEPS.length}
-          </span>
+          <span>Step {currentStep + 1} of {STEPS.length}</span>
           <span>{STEPS[currentStep].label}</span>
         </div>
         <Progress value={progress} className="h-1.5" />
@@ -307,9 +346,7 @@ console.log(response.choices[0].message.content);`;
               <div
                 key={step.id}
                 className={`flex flex-col items-center gap-1 ${
-                  i <= currentStep
-                    ? "text-primary"
-                    : "text-muted-foreground/30"
+                  i <= currentStep ? "text-primary" : "text-muted-foreground/30"
                 }`}
               >
                 <div
@@ -321,11 +358,7 @@ console.log(response.choices[0].message.content);`;
                         : "bg-muted"
                   }`}
                 >
-                  {i < currentStep ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    <Icon className="w-4 h-4" />
-                  )}
+                  {i < currentStep ? <CheckCircle className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                 </div>
                 <span className="text-[10px] font-medium">{step.label}</span>
               </div>
@@ -337,218 +370,179 @@ console.log(response.choices[0].message.content);`;
       {/* Step Content */}
       <Card className="clean-card">
         <CardContent className="pt-6 space-y-4">
-          {/* Step 1: Choose Mode */}
+          {/* ═══ STEP 1: Choose Mode ═══ */}
           {currentStep === 0 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                How do you want to use Nadir?
-              </h2>
+              <h2 className="text-lg font-semibold text-foreground">How do you want to use Nadir?</h2>
               <p className="text-sm text-muted-foreground">
-                Choose how you want to connect to LLM providers. You can change
-                this anytime.
+                Choose how you want to connect to LLM providers. You can change this anytime.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => setMode("byok")}
                   className={`p-5 border-2 rounded-xl text-left transition-all ${
-                    mode === "byok"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-border/80"
+                    mode === "byok" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Key className="w-5 h-5 text-primary" />
-                    <p className="font-semibold text-foreground">
-                      Bring Your Own Keys
-                    </p>
+                    <p className="font-semibold text-foreground">Bring Your Own Keys</p>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Use your existing provider API keys (OpenAI, Anthropic,
-                    Google). You pay providers directly at your own rate.
+                    Use your existing provider API keys (OpenAI, Anthropic, Google). You pay providers directly.
                   </p>
-                  <div className="mt-3 p-2.5 bg-muted/50 rounded-lg">
-                    <p className="text-xs font-medium text-foreground">
-                      Pricing
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      $9/mo base + savings fee (25% of first $2K saved, 10%
-                      above). No markup on provider costs.
-                    </p>
-                  </div>
                 </button>
                 <button
                   onClick={() => setMode("hosted")}
                   className={`p-5 border-2 rounded-xl text-left transition-all ${
-                    mode === "hosted"
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-border/80"
+                    mode === "hosted" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <CreditCard className="w-5 h-5 text-primary" />
-                    <p className="font-semibold text-foreground">
-                      Use Nadir Keys
-                    </p>
+                    <p className="font-semibold text-foreground">Use Nadir Keys</p>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    No provider accounts needed. Nadir provides shared keys so
-                    you can start immediately with zero setup.
+                    No provider accounts needed. Start immediately with zero setup.
                   </p>
-                  <div className="mt-3 p-2.5 bg-muted/50 rounded-lg">
-                    <p className="text-xs font-medium text-foreground">
-                      Pricing
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Pass-through token costs + $9/mo base + savings fee (25%
-                      of first $2K saved, 10% above).
-                    </p>
-                  </div>
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 2: Configure - BYOK */}
-          {currentStep === 1 && mode === "byok" && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Connect your providers
-              </h2>
+          {/* ═══ STEP 2: Subscribe ═══ */}
+          {currentStep === 1 && (
+            <div className="space-y-5">
+              <h2 className="text-lg font-semibold text-foreground">Activate your account</h2>
               <p className="text-sm text-muted-foreground">
-                Add at least one provider key. You can add more later from the
-                Provider Keys page.
+                Subscribe to start routing. Your first month is free.
               </p>
-              <div className="space-y-3">
+
+              {/* Promo highlight */}
+              <div className="p-5 bg-primary/5 border-2 border-primary/20 rounded-xl text-center space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
+                  <Gift className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-primary">First month free</span>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-foreground">
+                    <span className="line-through text-muted-foreground text-lg mr-2">$9/mo</span>
+                    $0
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    for your first month. Only pay for what we save you.
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <code className="bg-muted px-2 py-0.5 rounded font-mono font-bold">FIRST1</code>
+                  <span>applied automatically</span>
+                </div>
+              </div>
+
+              {/* What's included */}
+              <div className="space-y-2">
                 {[
-                  {
-                    key: "openai",
-                    label: "OpenAI API Key",
-                    placeholder: "sk-...",
-                  },
-                  {
-                    key: "anthropic",
-                    label: "Anthropic API Key",
-                    placeholder: "sk-ant-...",
-                  },
-                  {
-                    key: "google",
-                    label: "Google AI API Key",
-                    placeholder: "AI...",
-                  },
-                ].map((provider) => {
-                  const value =
-                    providerKeys[provider.key as keyof typeof providerKeys];
-                  const valid = isKeyFormatValid(provider.key, value);
-                  const showValidation = value.trim().length > 0;
-                  return (
-                    <div key={provider.key} className="space-y-1">
-                      <Label>{provider.label}</Label>
-                      <div className="relative">
-                        <Input
-                          type="password"
-                          placeholder={provider.placeholder}
-                          value={value}
-                          onChange={(e) =>
-                            setProviderKeys({
-                              ...providerKeys,
-                              [provider.key]: e.target.value,
-                            })
-                          }
-                          className={
-                            showValidation
-                              ? valid
-                                ? "pr-9 border-green-400 focus-visible:ring-green-400"
-                                : "pr-9 border-orange-300 focus-visible:ring-orange-300"
-                              : ""
-                          }
-                        />
-                        {showValidation && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            {valid ? (
-                              <CircleCheck className="w-4 h-4 text-green-500" />
-                            ) : (
-                              <span className="text-xs text-orange-400">
-                                check format
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                  "Intelligent routing across all major LLM providers",
+                  "Web dashboard with real-time analytics",
+                  "Context optimization to reduce token costs",
+                  "Automatic fallback chains for reliability",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Check className="w-4 h-4 text-primary shrink-0" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Keys are encrypted at rest. You can skip this and configure
-                later.
-              </p>
-            </div>
-          )}
 
-          {/* Step 2: Configure - Hosted */}
-          {currentStep === 1 && mode === "hosted" && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Set up payment
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Add a payment method to get started. You will only be charged
-                for what you use.
-              </p>
-              <div className="p-6 bg-muted rounded-xl text-center space-y-3">
-                <CreditCard className="w-10 h-10 mx-auto text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Payment methods can be managed from the Billing page.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/dashboard/billing")}
+              {/* Subscribe CTA */}
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={handleSubscribe}
+                disabled={subscribing}
+              >
+                {subscribing ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Redirecting to checkout...</>
+                ) : (
+                  "Start Free Month"
+                )}
+              </Button>
+
+              {/* Skip */}
+              <div className="text-center">
+                <button
+                  onClick={nextStep}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
                 >
-                  Go to Billing
-                </Button>
-              </div>
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
-                  How pricing works
-                </p>
-                <ul className="text-sm text-blue-700 dark:text-blue-400 mt-2 space-y-1.5">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 block w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                    <span>
-                      <strong>Pass-through costs</strong> -- You pay exactly what
-                      providers charge per token, with no markup.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 block w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                    <span>
-                      <strong>$9/mo base fee</strong> -- Covers dashboard,
-                      analytics, and routing infrastructure.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 block w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                    <span>
-                      <strong>25% of first $2K saved</strong>, then{" "}
-                      <strong>10% above $2K</strong> -- You only pay when Nadir
-                      actually saves you money.
-                    </span>
-                  </li>
-                </ul>
+                  Skip for now
+                </button>
               </div>
             </div>
           )}
 
-          {/* Step 3: Create API Key + Integration Snippet */}
+          {/* ═══ STEP 3: Create API Key ═══ */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Create your Nadir API key
-              </h2>
+              <h2 className="text-lg font-semibold text-foreground">Create your Nadir API key</h2>
               <p className="text-sm text-muted-foreground">
-                This key authenticates your requests to the Nadir router at{" "}
-                {NADIR_API_HOST}.
+                This key authenticates your requests to the Nadir router at {NADIR_API_HOST}.
               </p>
+
+              {/* BYOK: Provider key inputs */}
+              {mode === "byok" && !createdApiKey && (
+                <div className="space-y-3 p-4 bg-muted/30 border border-border rounded-xl">
+                  <p className="text-sm font-medium text-foreground">Connect your providers</p>
+                  <p className="text-xs text-muted-foreground">
+                    Add at least one provider key. You can add more later from Integrations.
+                  </p>
+                  {[
+                    { key: "openai", label: "OpenAI API Key", placeholder: "sk-..." },
+                    { key: "anthropic", label: "Anthropic API Key", placeholder: "sk-ant-..." },
+                    { key: "google", label: "Google AI API Key", placeholder: "AI..." },
+                    { key: "openrouter", label: "OpenRouter API Key", placeholder: "sk-or-..." },
+                    { key: "groq", label: "Groq API Key", placeholder: "gsk_..." },
+                  ].map((provider) => {
+                    const value = providerKeys[provider.key as keyof typeof providerKeys];
+                    const valid = isKeyFormatValid(provider.key, value);
+                    const showValidation = value.trim().length > 0;
+                    return (
+                      <div key={provider.key} className="space-y-1">
+                        <Label className="text-xs">{provider.label}</Label>
+                        <div className="relative">
+                          <Input
+                            type="password"
+                            placeholder={provider.placeholder}
+                            value={value}
+                            onChange={(e) =>
+                              setProviderKeys({ ...providerKeys, [provider.key]: e.target.value })
+                            }
+                            className={
+                              showValidation
+                                ? valid
+                                  ? "pr-9 border-green-400 focus-visible:ring-green-400"
+                                  : "pr-9 border-orange-300 focus-visible:ring-orange-300"
+                                : ""
+                            }
+                          />
+                          {showValidation && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {valid ? (
+                                <CircleCheck className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <span className="text-xs text-orange-400">check format</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="text-xs text-muted-foreground">
+                    Keys are encrypted at rest.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>Key Name</Label>
                 <Input
@@ -561,34 +555,20 @@ console.log(response.choices[0].message.content);`;
                 <div className="space-y-4">
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
                     <p className="text-sm text-primary font-medium mb-2">
-                      Your API Key (copy it now -- it will not be shown again):
+                      Your API Key (copy it now, it won't be shown again):
                     </p>
                     <div className="flex items-center gap-2">
                       <code className="text-sm flex-1 p-2 bg-background rounded border border-border break-all">
                         {createdApiKey}
                       </code>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCopy(createdApiKey)}
-                      >
-                        {copied ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
+                      <Button size="sm" variant="outline" onClick={() => handleCopy(createdApiKey)}>
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
 
-                  {/* Test key button */}
                   <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleTestKey}
-                      disabled={testingKey}
-                    >
+                    <Button variant="outline" size="sm" onClick={handleTestKey} disabled={testingKey}>
                       {testingKey ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : testResult === "success" ? (
@@ -596,20 +576,10 @@ console.log(response.choices[0].message.content);`;
                       ) : (
                         <Zap className="w-4 h-4 mr-2" />
                       )}
-                      {testingKey
-                        ? "Testing..."
-                        : testResult === "success"
-                          ? "Connected"
-                          : "Test your key"}
+                      {testingKey ? "Testing..." : testResult === "success" ? "Connected" : "Test your key"}
                     </Button>
-                    {testResult === "error" && (
-                      <span className="text-xs text-muted-foreground">
-                        Could not reach server -- your key is still saved.
-                      </span>
-                    )}
                   </div>
 
-                  {/* Multi-language integration snippets */}
                   <div className="space-y-2">
                     <Label>Integration snippet</Label>
                     <Tabs defaultValue="python" className="w-full">
@@ -637,8 +607,7 @@ console.log(response.choices[0].message.content);`;
                       ))}
                     </Tabs>
                     <p className="text-xs text-muted-foreground">
-                      Works with any OpenAI-compatible SDK. Just change the base
-                      URL to https://{NADIR_API_HOST}/v1.
+                      Works with any OpenAI-compatible SDK. Just change the base URL to https://{NADIR_API_HOST}/v1.
                     </p>
                   </div>
                 </div>
@@ -661,6 +630,9 @@ console.log(response.choices[0].message.content);`;
           <Button onClick={handleFinish} disabled={!createdApiKey}>
             Finish Setup
           </Button>
+        ) : currentStep === 1 ? (
+          // Subscribe step - main CTA is inside the card, just show a subtle skip
+          <div />
         ) : (
           <Button onClick={nextStep}>
             Continue <ChevronRight className="w-4 h-4 ml-1" />

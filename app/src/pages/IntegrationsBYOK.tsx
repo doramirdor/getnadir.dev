@@ -10,6 +10,7 @@ import { AlertCircle, Settings, Key, Eye, EyeOff, Check, CreditCard, Zap } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useApiKey } from "@/hooks/useApiKey";
 import { logger } from "@/utils/logger";
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -156,12 +157,15 @@ const IntegrationsBYOK = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { apiKey: sessionApiKey } = useApiKey();
 
   const providerList = [
     { id: 'openai', provider: 'OpenAI', displayName: 'OpenAI' },
     { id: 'google', provider: 'Google', displayName: 'Google' },
     { id: 'amazon-bedrock', provider: 'Amazon Bedrock', displayName: 'Amazon Bedrock' },
-    { id: 'anthropic', provider: 'Anthropic', displayName: 'Anthropic' }
+    { id: 'anthropic', provider: 'Anthropic', displayName: 'Anthropic' },
+    { id: 'openrouter', provider: 'OpenRouter', displayName: 'OpenRouter' },
+    { id: 'groq', provider: 'Groq', displayName: 'Groq' },
   ];
 
   // Load initial mode from profile and detect BYOK keys
@@ -247,17 +251,19 @@ const IntegrationsBYOK = () => {
     if (!selectedProvider || !user?.id) return;
 
     try {
-      const { error } = await supabase
-        .from('provider_keys')
-        .upsert({
-          user_id: user.id,
-          provider: selectedProvider.id,
-          encrypted_key: btoa(apiKey),
-          is_active: true,
-        }, { onConflict: 'user_id,provider' });
-
-      if (error) {
-        logger.error('Save error:', error);
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      const resp = await fetch(`${apiBase}/v1/provider-keys`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionApiKey ? { "X-API-Key": sessionApiKey } : {}),
+        },
+        body: JSON.stringify({ provider: selectedProvider.id, api_key: apiKey }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        logger.error('Save error:', err);
+        throw new Error(err.detail || "Failed to save provider key");
       }
 
       setIntegrations(prev => prev.map(integration =>

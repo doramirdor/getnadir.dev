@@ -35,6 +35,7 @@ const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const OpenClaw = lazy(() => import("./pages/OpenClaw"));
 const Optimize = lazy(() => import("./pages/Optimize"));
+const Playground = lazy(() => import("./pages/Playground"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -122,6 +123,7 @@ const App = () => (
               <Route path="billing" element={<Billing />} />
               <Route path="logs" element={<Logs />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="playground" element={<Playground />} />
               <Route path="help" element={<FAQ />} />
               <Route path="onboarding" element={<Onboarding />} />
             </Route>

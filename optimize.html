@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Context Optimize — Cut LLM Input Tokens 30-70% | NadirClaw</title>
+    <title>Context Optimize | Cut LLM Input Tokens 30-70% | NadirClaw</title>
     <meta name="description" content="NadirClaw Context Optimize compacts bloated context (JSON, tool schemas, chat history) before LLM dispatch. Lossless transforms save 30-70% on input tokens. Benchmarked on Claude Opus 4.6.">
     <link rel="canonical" href="https://getnadir.com/optimize.html" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -11,20 +11,20 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getnadir.com/optimize.html">
-    <meta property="og:title" content="Context Optimize — Cut Input Tokens 30-70% Without Losing Accuracy">
+    <meta property="og:title" content="Context Optimize | Cut Input Tokens 30-70% Without Losing Accuracy">
     <meta property="og:description" content="NadirClaw compacts bloated context before LLM dispatch. Lossless transforms save 30-70% on input tokens with zero semantic degradation.">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Context Optimize — Cut Input Tokens 30-70%">
+    <meta name="twitter:title" content="Context Optimize | Cut Input Tokens 30-70%">
     <meta name="twitter:description" content="Lossless context compaction for agents, RAG, and structured payloads. Benchmarked on Claude Opus 4.6.">
     <meta name="twitter:image" content="https://getnadir.com/og-image.png">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "TechArticle",
-      "headline": "Context Optimize — Cut LLM Input Tokens 30-70%",
+      "headline": "Context Optimize | Cut LLM Input Tokens 30-70%",
       "description": "NadirClaw Context Optimize compacts bloated context (JSON, tool schemas, chat history) before LLM dispatch. Lossless transforms save 30-70% on input tokens.",
       "url": "https://getnadir.com/optimize.html",
       "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
@@ -594,7 +594,7 @@
 
                 <div class="ba-grid" data-anim>
                     <div class="ba-card">
-                        <div class="ba-card-header before">Before &mdash; raw agent context</div>
+                        <div class="ba-card-header before">Before: raw agent context</div>
 <pre><span class="dim">// Tool schema sent every turn (turn 4 of 8)</span>
 {
   "name": "web_search",
@@ -623,7 +623,7 @@
                     </div>
 
                     <div class="ba-card">
-                        <div class="ba-card-header after">After &mdash; safe mode</div>
+                        <div class="ba-card-header after">After: safe mode</div>
 <pre><span class="dim">// First turn: full schema preserved</span>
 {"name":"web_search","parameters":{"type":"object",
 "properties":{"query":{"type":"string","description":
@@ -779,7 +779,7 @@
 
                 <div style="max-width: 640px; margin: 48px auto 0; padding: 20px 24px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg);" data-anim>
                     <p style="font-size: 14px; color: var(--text); line-height: 1.7;">
-                        <strong>Why lossless matters:</strong> Lossy compression (semantic summarization) risks changing meaning. An LLM might answer differently if a nuance is lost. Safe mode avoids this entirely &mdash; it only removes formatting redundancy that carries zero semantic weight. Aggressive mode goes further with semantic dedup, but preserves every unique phrase via word-level diff extraction. Both are backed by <strong>60 automated tests</strong> covering accuracy, edge cases, and roundtrip integrity.
+                        <strong>Why lossless matters:</strong> Lossy compression (semantic summarization) risks changing meaning. An LLM might answer differently if a nuance is lost. Safe mode avoids this entirely. It only removes formatting redundancy that carries zero semantic weight. Aggressive mode goes further with semantic dedup, but preserves every unique phrase via word-level diff extraction. Both are backed by <strong>60 automated tests</strong> covering accuracy, edge cases, and roundtrip integrity.
                     </p>
                 </div>
             </div>
@@ -875,7 +875,7 @@
 
                 <div class="ba-grid" data-anim>
                     <div class="ba-card">
-                        <div class="ba-card-header before">Before &mdash; user refines their request</div>
+                        <div class="ba-card-header before">Before: user refines their request</div>
 <pre><span class="dim">// Turn 1</span>
 Write a Python function that takes a list of
 integers and returns the two numbers that add
@@ -891,11 +891,11 @@ up to a target sum. Use a hash map for O(n)
 time complexity. Handle edge cases like empty
 lists and duplicates. <strong>Return the actual</strong>
 <strong>values, not indices.</strong></pre>
-                        <div class="token-count">Turn 3 repeats ~90% of turn 1 &mdash; <strong>wasted tokens</strong></div>
+                        <div class="token-count">Turn 3 repeats ~90% of turn 1, <strong>wasted tokens</strong></div>
                     </div>
 
                     <div class="ba-card">
-                        <div class="ba-card-header after">After &mdash; aggressive mode</div>
+                        <div class="ba-card-header after">After: aggressive mode</div>
 <pre><span class="dim">// Turn 1 — preserved in full</span>
 Write a Python function that takes a list of
 integers and returns the two numbers that add
@@ -908,7 +908,7 @@ of the two numbers.
 [similar to earlier message: "Write a Python
 function that takes a list of integers and re..."]
 <strong>Key differences: actual values, not indices.</strong></pre>
-                        <div class="token-count">Critical refinement kept &mdash; boilerplate removed &mdash; <strong style="color: var(--success);">tokens saved</strong></div>
+                        <div class="token-count">Critical refinement kept, boilerplate removed. <strong style="color: var(--success);">Tokens saved</strong></div>
                     </div>
                 </div>
 

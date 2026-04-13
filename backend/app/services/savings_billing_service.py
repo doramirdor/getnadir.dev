@@ -73,7 +73,12 @@ class SavingsBillingService:
         )
 
         rows = result.data or []
-        total_savings = sum(r.get("savings_usd", 0) or 0 for r in rows)
+        # Only count positive savings toward the billable fee.
+        # Negative savings (inverted tier pricing) are tracked for
+        # transparency but must not reduce the user's bill.
+        total_savings = sum(
+            s for r in rows if (s := r.get("savings_usd", 0) or 0) > 0
+        )
         savings_fee = calculate_savings_fee(total_savings)
         total_invoice = self.BASE_FEE + savings_fee
 
@@ -128,12 +133,25 @@ class SavingsBillingService:
         complexity_tier: str,
         api_key_id: Optional[str] = None,
     ):
-        """Track savings for a single request. Call this after each completion."""
+        """Track savings for a single request. Call this after each completion.
+
+        Tracks both positive savings (routing saved money) and negative savings
+        (routing cost more — e.g. inverted tier pricing). Negative values are
+        stored so the dashboard can show the real picture. Only positive savings
+        count toward the savings-based billing fee.
+        """
         savings = benchmark_cost - routed_cost
 
-        # Only track positive savings
-        if savings <= 0:
+        # Skip zero-diff (same model routed to benchmark)
+        if savings == 0:
             return
+
+        if savings < 0:
+            logger.warning(
+                "Negative savings for request %s: routed %s ($%.6f) > benchmark %s ($%.6f). "
+                "User's tier config may have inverted pricing.",
+                request_id, routed_model, routed_cost, benchmark_model, benchmark_cost,
+            )
 
         import asyncio
         await asyncio.to_thread(

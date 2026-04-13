@@ -20,6 +20,7 @@ import { SavingsAPI } from "@/services/savingsApi";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { trackBillingView } from "@/utils/analytics";
+import { useSearchParams } from "react-router-dom";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
@@ -78,8 +79,10 @@ interface InvoiceItem {
 // ── Component ────────────────────────────────────────────────────────────
 
 const Billing = () => {
+  const [searchParams] = useSearchParams();
   const [subscribing, setSubscribing] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [promoCode, setPromoCode] = useState(searchParams.get("promo") || "");
   const { toast } = useToast();
   const { apiKey } = useApiKey();
   const queryClient = useQueryClient();
@@ -327,7 +330,7 @@ const Billing = () => {
                 disabled={canceling}
                 variant="outline"
                 size="sm"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="border-muted-foreground/30 text-muted-foreground hover:text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 dark:hover:border-red-800 dark:hover:text-red-400 transition-colors"
               >
                 {canceling ? (
                   <>
@@ -464,24 +467,24 @@ const Billing = () => {
                 <div className="font-bold text-foreground">$5,000</div>
               </div>
               <div>
-                <div className="text-muted-foreground text-xs">Nadir saves ~65%</div>
-                <div className="font-bold text-emerald-600">$3,250</div>
+                <div className="text-muted-foreground text-xs">Nadir saves ~55%</div>
+                <div className="font-bold text-emerald-600">$2,750</div>
               </div>
               <div>
                 <div className="text-muted-foreground text-xs">Nadir fee</div>
-                <div className="font-bold text-foreground">$634</div>
+                <div className="font-bold text-foreground">$584</div>
               </div>
               <div>
                 <div className="text-emerald-700 text-xs font-medium">You keep</div>
-                <div className="font-bold text-emerald-600">$2,616/mo</div>
+                <div className="font-bold text-emerald-600">$2,166/mo</div>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Plan Comparison */}
-      <div>
+      {/* Plan Comparison — only show when not subscribed */}
+      {!isActive && <div>
         <h2 className="text-lg font-semibold text-foreground mb-4">Plans</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free / Open Source */}
@@ -542,13 +545,13 @@ const Billing = () => {
                   <Check className="w-4 h-4 text-blue-600" /> Hosted proxy (api.getnadir.com)
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Aggressive semantic dedup
+                  <Check className="w-4 h-4 text-blue-600" /> Smart duplicate detection
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-blue-600" /> Web dashboard & analytics
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> BYOK or use our keys
+                  <Check className="w-4 h-4 text-blue-600" /> Use your own API keys or ours
                 </li>
               </ul>
               <Button
@@ -594,14 +597,14 @@ const Billing = () => {
                 </li>
               </ul>
               <Button variant="outline" className="w-full" asChild>
-                <a href="mailto:amirdor@gmail.com?subject=Nadir Enterprise">
+                <a href="mailto:info@getnadir.com?subject=Nadir Enterprise">
                   Contact Us
                 </a>
               </Button>
             </CardContent>
           </Card>
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

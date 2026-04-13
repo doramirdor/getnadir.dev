@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Routing Benchmark Results: 10-30% Savings on Real Prompts — NadirClaw</title>
+    <title>Routing Benchmark Results: 10-30% Savings on Real Prompts — Nadir</title>
     <meta name="description" content="We tested routing configurations across 30 diverse real-world prompts. Router + safe optimize saves 10% overall, up to 30% on medium-complexity prompts, with 87% quality maintained by LLM judge.">
     <link rel="canonical" href="https://getnadir.com/blog/6-way-routing-benchmark-results.html" />
     <meta property="og:type" content="article">
     <meta property="og:title" content="Routing Benchmark Results: 10-30% Savings on Real Prompts">
     <meta property="og:description" content="30-prompt benchmark: 10% overall savings, up to 30% on medium prompts. Quality verified by independent LLM judge (87% maintained).">
     <meta property="og:url" content="https://getnadir.com/blog/6-way-routing-benchmark-results.html">
-    <meta property="og:site_name" content="NadirClaw">
+    <meta property="og:site_name" content="Nadir">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -28,8 +28,8 @@
       "@type": "Article",
       "headline": "Routing Benchmark Results: 10-30% Savings on Real Prompts",
       "datePublished": "2026-03-22",
-      "author": { "@type": "Organization", "name": "NadirClaw" },
-      "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
       "url": "https://getnadir.com/blog/6-way-routing-benchmark-results.html",
       "description": "We tested routing configurations across 30 diverse real-world prompts. Router + safe optimize saves 10% overall, up to 30% on medium-complexity prompts, with 87% quality maintained."
     }
@@ -99,21 +99,21 @@
     <p>We tested several variants, progressively layering on cost-saving features. Three stood out as meaningful:</p>
 
     <ol>
-        <li><strong>V1 &mdash; Baseline (Opus)</strong>: Every prompt goes to Claude Opus 4.6. No routing, no optimization. This is the control.</li>
-        <li><strong>V2 &mdash; Router Only</strong>: NadirClaw's heuristic classifier analyzes each prompt and routes simple ones to cheaper models (Haiku, Sonnet) while keeping complex prompts on Opus.</li>
-        <li><strong>V4 &mdash; Router + Safe Optimize</strong>: Routing combined with lossless context compaction (JSON minification, whitespace normalization, tool schema dedup).</li>
+        <li><strong>V1, Baseline (Opus)</strong>: Every prompt goes to Claude Opus 4.6. No routing, no optimization. This is the control.</li>
+        <li><strong>V2, Router Only</strong>: Nadir's heuristic classifier analyzes each prompt and routes simple ones to cheaper models (Haiku, Sonnet) while keeping complex prompts on Opus.</li>
+        <li><strong>V4, Router + Safe Optimize</strong>: Routing combined with lossless context compaction (JSON minification, whitespace normalization, tool schema dedup).</li>
     </ol>
 
-    <p>We also tested aggressive optimization (V6 &mdash; Router + Aggressive), which uses semantic deduplication via sentence embeddings. However, it did not improve over the baseline ($0.249 vs $0.246) in our benchmark, so we do not recommend it as a default. Safe mode remains the better choice for production.</p>
+    <p>We also tested aggressive optimization (V6, Router + Aggressive), which uses semantic deduplication via sentence embeddings. However, it did not improve over the baseline ($0.249 vs $0.246) in our benchmark, so we do not recommend it as a default. Safe mode remains the better choice for production.</p>
 
     <h2>The prompts</h2>
 
     <p>We assembled 30 diverse real-world prompts spanning simple factual questions to complex system design tasks. The prompts fell into three natural categories:</p>
 
     <ul>
-        <li><strong>Simple</strong> &mdash; factual questions, status checks, format conversions. The kind of work where a smaller model is perfectly capable.</li>
-        <li><strong>Medium</strong> &mdash; code generation, explanations with nuance, multi-step reasoning. These benefit from a capable model but do not require the most expensive tier.</li>
-        <li><strong>Complex</strong> &mdash; system architecture design, multi-file refactoring plans, nuanced technical analysis. These genuinely need a frontier model.</li>
+        <li><strong>Simple</strong>: factual questions, status checks, format conversions. The kind of work where a smaller model is perfectly capable.</li>
+        <li><strong>Medium</strong>: code generation, explanations with nuance, multi-step reasoning. These benefit from a capable model but do not require the most expensive tier.</li>
+        <li><strong>Complex</strong>: system architecture design, multi-file refactoring plans, nuanced technical analysis. These genuinely need a frontier model.</li>
     </ul>
 
     <p>This distribution mirrors what we see in real production traffic: a mix of trivial and hard requests, with the majority falling somewhere in the middle.</p>
@@ -145,7 +145,7 @@
             <tr>
                 <td>V1 Baseline (Opus)</td>
                 <td class="num">$0.246</td>
-                <td class="num">&mdash;</td>
+                <td class="num">-</td>
             </tr>
             <tr>
                 <td>V2 Router Only</td>
@@ -191,11 +191,11 @@
 
     <p>Medium prompts are the sweet spot. These typically get routed to Sonnet, which costs significantly less than Opus while delivering equivalent quality for this tier of work. At 28-30% savings, this is where the router pays for itself.</p>
 
-    <p>Simple prompts saved 14%, routed to cheaper models like Haiku. Complex prompts were correctly preserved on the same tier &mdash; the router does not downgrade tasks that genuinely need a frontier model.</p>
+    <p>Simple prompts saved 14%, routed to cheaper models like Haiku. Complex prompts were correctly preserved on the same tier. The router does not downgrade tasks that genuinely need a frontier model.</p>
 
     <h2>Quality verification</h2>
 
-    <p>Quality was verified by an independent LLM-as-judge (Claude Sonnet 4.6). Of the 30 prompts, 26 maintained quality according to the judge &mdash; an 87% pass rate. The judge compared each routed response against the baseline Opus response on correctness, completeness, and clarity.</p>
+    <p>Quality was verified by an independent LLM-as-judge (Claude Sonnet 4.6). Of the 30 prompts, 26 maintained quality according to the judge, an 87% pass rate. The judge compared each routed response against the baseline Opus response on correctness, completeness, and clarity.</p>
 
     <p>The 4 prompts that showed quality differences were edge cases at category boundaries where the classifier routed to a cheaper model than ideal. This is an area where classifier improvements can drive further gains.</p>
 
@@ -205,13 +205,13 @@
 
     <h2>What about aggressive optimization?</h2>
 
-    <p>We also tested aggressive optimization (V6 &mdash; Router + Aggressive), which applies semantic deduplication via sentence embeddings on top of routing. The result: $0.249 total cost, essentially flat compared to the $0.246 baseline. The aggressive optimizer did not help in this benchmark.</p>
+    <p>We also tested aggressive optimization (V6, Router + Aggressive), which applies semantic deduplication via sentence embeddings on top of routing. The result: $0.249 total cost, essentially flat compared to the $0.246 baseline. The aggressive optimizer did not help in this benchmark.</p>
 
-    <p>This does not mean semantic deduplication is useless &mdash; it may show value on workloads with heavily duplicated context (e.g., repeated tool schemas in long conversations). But for the diverse prompt mix we tested, safe mode (lossless transforms only) is the better default.</p>
+    <p>This does not mean semantic deduplication is useless. It may show value on workloads with heavily duplicated context (e.g., repeated tool schemas in long conversations). But for the diverse prompt mix we tested, safe mode (lossless transforms only) is the better default.</p>
 
     <h2>The heuristic classifier</h2>
 
-    <p>NadirClaw's routing classifier is deliberately simple. It is a rule-based heuristic system, not a neural network. It analyzes prompt length, vocabulary complexity, presence of code or structured data, and a handful of other surface-level features to assign a complexity tier.</p>
+    <p>Nadir's routing classifier is deliberately simple. It is a rule-based heuristic system, not a neural network. It analyzes prompt length, vocabulary complexity, presence of code or structured data, and a handful of other surface-level features to assign a complexity tier.</p>
 
     <p>Why heuristic instead of ML? Three reasons:</p>
 
@@ -221,20 +221,20 @@
         <li><strong>Debuggability</strong>: When a prompt gets misrouted, you can trace exactly which rule fired and why.</li>
     </ul>
 
-    <p>The heuristic approach means the classifier is not perfect &mdash; the 87% quality rate reflects this. But the benchmark shows that even with these edge cases, the aggregate savings are meaningful, especially for medium-complexity workloads.</p>
+    <p>The heuristic approach means the classifier is not perfect. The 87% quality rate reflects this. But the benchmark shows that even with these edge cases, the aggregate savings are meaningful, especially for medium-complexity workloads.</p>
 
     <h2>ROI at scale</h2>
 
     <div class="highlight-box">
-        <p>At <strong>$10,000/month</strong> in LLM spend, the 10% savings from Router + Safe translates to roughly <strong>$1,000/month saved</strong> (before routing fees). After NadirClaw's routing fee, the net savings are approximately <strong>$750/month</strong>, or <strong>$9,000/year</strong>.</p>
+        <p>At <strong>$10,000/month</strong> in LLM spend, the 10% savings from Router + Safe translates to roughly <strong>$1,000/month saved</strong> (before routing fees). After Nadir's routing fee, the net savings are approximately <strong>$750/month</strong>, or <strong>$9,000/year</strong>.</p>
         <p>For workloads skewed toward medium-complexity prompts, savings can reach 20-30%, significantly improving the ROI.</p>
     </div>
 
-    <p>The math scales linearly. The classifier runs locally at negligible cost, so the only variable cost is the routing fee, which is a percentage of savings &mdash; you only pay when you save.</p>
+    <p>The math scales linearly. The classifier runs locally at negligible cost, so the only variable cost is the routing fee, which is a percentage of savings. You only pay when you save.</p>
 
     <h2>How to enable routing</h2>
 
-    <p>NadirClaw is a drop-in proxy. Point your base URL at it and add your API key:</p>
+    <p>Nadir is a drop-in proxy. Point your base URL at it and add your API key:</p>
 
 <pre><code># Install
 pip install nadirclaw
@@ -275,12 +275,12 @@ export OPENAI_BASE_URL=http://localhost:8856/v1</code></pre>
 
     <h2>Try it yourself</h2>
 
-    <p>NadirClaw is open source and MIT licensed. Install it with <code>pip install nadirclaw</code>, run <code>nadirclaw serve</code>, and check your savings in the built-in dashboard. The full benchmark methodology and raw data are available on <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a>.</p>
+    <p>Nadir is open source and MIT licensed. Install it with <code>pip install nadirclaw</code>, run <code>nadirclaw serve</code>, and check your savings in the built-in dashboard. The full benchmark methodology and raw data are available on <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a>.</p>
 
     <p>If you want to see projected savings before committing, the <a href="/#benchmark">ROI calculator</a> on our homepage lets you plug in your monthly spend and see the numbers.</p>
 </main>
 <footer>
-    <p>&copy; 2026 NadirClaw &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:amirdor@gmail.com">Contact</a></p>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
 </footer>
 </body>
 </html>

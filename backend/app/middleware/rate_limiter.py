@@ -59,11 +59,13 @@ class RateLimiter:
     each instance holds its own in-memory state.  Set the env var
     ``RATE_LIMIT_INSTANCE_DIVISOR=N`` so each instance enforces ``RPM / N``,
     giving a correct aggregate rate limit across the cluster.
+
     """
 
     def __init__(self):
         self._buckets: Dict[str, TokenBucket] = {}
         self._divisor: int = max(1, settings.RATE_LIMIT_INSTANCE_DIVISOR)
+
         if self._divisor > 1:
             logger.info(
                 "Rate limiter: dividing per-key capacity by %d (multi-instance mode)",

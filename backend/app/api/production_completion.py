@@ -72,6 +72,32 @@ def _map_tier_to_model(
         if flat_override and flat_override in selected_models:
             return flat_override
 
+    # 1b. Validate manual overrides — warn if tier pricing is inverted
+    if model_parameters:
+        tier_models = model_parameters.get("tier_models", {})
+        simple_m = tier_models.get("simple")
+        medium_m = tier_models.get("medium")
+        complex_m = tier_models.get("complex")
+
+        if simple_m and complex_m:
+            simple_cost = _get_model_input_cost(simple_m)
+            complex_cost = _get_model_input_cost(complex_m)
+            if simple_cost > 0 and complex_cost > 0 and simple_cost > complex_cost:
+                logger.warning(
+                    "Inverted tier pricing: simple=%s ($%.6f/tok) > complex=%s ($%.6f/tok). "
+                    "Routing may increase costs instead of reducing them.",
+                    simple_m, simple_cost, complex_m, complex_cost,
+                )
+
+        if medium_m and complex_m:
+            medium_cost = _get_model_input_cost(medium_m)
+            complex_cost = _get_model_input_cost(complex_m)
+            if medium_cost > 0 and complex_cost > 0 and medium_cost > complex_cost:
+                logger.warning(
+                    "Inverted tier pricing: medium=%s ($%.6f/tok) > complex=%s ($%.6f/tok).",
+                    medium_m, medium_cost, complex_m, complex_cost,
+                )
+
     # 2. Auto-sort by price
     if len(selected_models) == 1:
         return selected_models[0]
@@ -233,7 +259,8 @@ async def get_user_config_from_api_key(current_user: UserSession, model_override
         api_key_config = current_user.api_key_config
         
         # If model override is provided, handle it
-        if model_override:
+        # "auto" means "let Nadir decide" — treat it like no override
+        if model_override and model_override != "auto":
             if model_override.startswith("@preset/"):
                 slug = model_override.replace("@preset/", "")
                 # Look for specific preset in presets table
@@ -522,24 +549,24 @@ async def get_intelligent_model_recommendation_with_analysis(
         
     except Exception as e:
         logger.error(f"Error in model recommendation: {e}")
-        # Fallback: use heuristic classifier for intelligent routing even when ML fails
+        # Fallback: use BinaryComplexityClassifier (centroid-based, same algorithm as NadirClaw)
         try:
-            from app.complexity.heuristic_classifier import HeuristicClassifier
-            heuristic = HeuristicClassifier(
+            from app.complexity.binary_classifier import BinaryComplexityClassifier
+            binary_clf = BinaryComplexityClassifier(
                 allowed_providers=current_user.allowed_providers,
                 allowed_models=available_models,
             )
-            heuristic_result = await heuristic.analyze(text=latest_prompt)
-            fallback_model = heuristic_result.get("recommended_model", available_models[0] if available_models else "gpt-4o-mini")
+            binary_result = await binary_clf.analyze(text=latest_prompt)
+            fallback_model = binary_result.get("recommended_model", available_models[0] if available_models else "gpt-4o-mini")
             fallback_analysis = {
-                "model_selection_type": "heuristic_fallback",
+                "model_selection_type": "binary_centroid_fallback",
                 "strategy": "smart-routing",
                 "selected_model": fallback_model,
-                "reasoning": f"ML analyzer failed ({e}), routed via heuristic classifier",
+                "reasoning": f"ML analyzer failed ({e}), routed via binary centroid classifier (NadirClaw algorithm)",
                 "error": str(e),
-                "heuristic_result": heuristic_result,
+                "binary_result": binary_result,
             }
-            logger.info(f"Heuristic fallback routed to {fallback_model} (tier={heuristic_result.get('tier_name')})")
+            logger.info(f"Binary centroid fallback routed to {fallback_model} (tier={binary_result.get('tier_name')})")
             return fallback_model, fallback_analysis
         except Exception as heuristic_err:
             logger.error(f"Heuristic fallback also failed: {heuristic_err}")
@@ -604,7 +631,7 @@ async def create_completion(
                     status_code=402,
                     detail={
                         "error": "hosted_budget_exceeded",
-                        "message": f"Monthly hosted budget of ${budget:.0f} exceeded (spent: ${spent:.2f}). Add your own provider keys (BYOK) for unlimited usage, or upgrade your plan.",
+                        "message": f"Daily hosted budget of ${budget:.0f} exceeded (spent today: ${spent:.2f}). Add your own provider keys (BYOK) for unlimited usage, or contact support to increase your limit.",
                         "spent": spent,
                         "budget": budget,
                         "upgrade_url": "https://getnadir.com/pricing",
@@ -840,6 +867,8 @@ async def create_completion(
                     "together_ai": "together_ai",
                     "mistral": "mistral",
                     "cohere": "cohere",
+                    "openrouter": "openrouter",
+                    "groq": "groq",
                 }
                 key_name = provider_key_map.get(model_provider, model_provider)
                 user_key = current_user.provider_api_keys.get(key_name)
@@ -860,15 +889,17 @@ async def create_completion(
                     or (model_provider in ("google", "gemini") and settings.GOOGLE_API_KEY)
                 )
                 use_bedrock = settings.AWS_ACCESS_KEY_ID and not has_direct_key
+                logger.info("Hosted mode check: model=%s provider=%s has_direct_key=%s use_bedrock=%s aws_key=%s",
+                            recommended_model, model_provider, has_direct_key, use_bedrock, bool(settings.AWS_ACCESS_KEY_ID))
 
                 if use_bedrock and not recommended_model.startswith("bedrock/"):
                     bedrock_map = {
-                        "claude-opus-4-6": "bedrock/anthropic.claude-opus-4-6-v1",
-                        "claude-sonnet-4-6": "bedrock/anthropic.claude-sonnet-4-6",
-                        "claude-haiku-4-5": "bedrock/anthropic.claude-haiku-4-5-20251001-v1:0",
-                        "claude-opus-4-5": "bedrock/anthropic.claude-opus-4-5-20251101-v1:0",
-                        "claude-sonnet-4-5": "bedrock/anthropic.claude-sonnet-4-5-20250929-v1:0",
-                        "claude-3-5-haiku-20241022": "bedrock/anthropic.claude-3-5-haiku-20241022-v1:0",
+                        "claude-opus-4-6": "bedrock/us.anthropic.claude-opus-4-6-v1",
+                        "claude-sonnet-4-6": "bedrock/us.anthropic.claude-sonnet-4-6",
+                        "claude-haiku-4-5": "bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0",
+                        "claude-opus-4-5": "bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0",
+                        "claude-sonnet-4-5": "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+                        "claude-3-5-haiku-20241022": "bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0",
                     }
                     bedrock_model = bedrock_map.get(recommended_model)
                     if bedrock_model:
@@ -1145,7 +1176,7 @@ async def create_completion(
                 )
                 benchmark_cost = benchmark_breakdown.total_cost
 
-                if benchmark_cost > routed_cost:
+                if benchmark_cost != routed_cost:
                     savings_svc = SavingsBillingService(supabase_db.client)
                     complexity_tier = str(
                         complexity_analysis_result.get("extracted_metrics", {}).get("tier", "unknown")

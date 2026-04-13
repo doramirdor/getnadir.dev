@@ -2,7 +2,7 @@ const posts = [
   {
     date: "April 4, 2026",
     tag: "Research",
-    title: "OCR: our new closed-loop routing algorithm (NeurIPS 2026)",
+    title: "OCR: our new closed-loop routing algorithm",
     excerpt:
       "Static routers plateau at 88-93% accuracy. We built a closed-loop algorithm that learns from every response, adapts to model changes, and cuts costs 43% with zero quality loss.",
     href: "/blog/ocr-closed-loop-routing",

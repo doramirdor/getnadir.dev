@@ -9,9 +9,10 @@ from pydantic import Field, PostgresDsn
 
 
 # Load environment variables from .env file
+# override=False so runtime env vars (e.g. from App Runner) take precedence
 ENV_FILE = os.getenv("ENV_FILE", ".env")
-load_dotenv(ENV_FILE, override=True)  # Override empty env vars from shell
-load_dotenv(".env.local", override=True)  # Override with local settings if available
+load_dotenv(ENV_FILE, override=False)
+load_dotenv(".env.local", override=True)  # Local overrides always win (dev only)
 
 
 class Settings:
@@ -66,7 +67,7 @@ class Settings:
         self.COMPLEXITY_ANALYZER_PROVIDER: str = os.getenv("COMPLEXITY_ANALYZER_PROVIDER", "openai")
         
         # New ML-based complexity analyzer settings
-        self.COMPLEXITY_ANALYZER_TYPE: str = os.getenv("COMPLEXITY_ANALYZER_TYPE", "heuristic")  # heuristic (default, zero-dep), binary, two_tower, gemini, bert, matrix_factorization, ensemble
+        self.COMPLEXITY_ANALYZER_TYPE: str = os.getenv("COMPLEXITY_ANALYZER_TYPE", "trained")  # trained (default, 96% accuracy), heuristic (zero-dep fallback), binary, two_tower, gemini, bert, matrix_factorization, ensemble
         self.BERT_MODEL_PATH: str = os.getenv("BERT_MODEL_PATH", "distilbert-base-uncased")
         self.MF_MODEL_PATH: str = os.getenv("MF_MODEL_PATH", "")  # Path to pre-trained MF model
         self.TWO_TOWER_MODEL_PATH: str = os.getenv("TWO_TOWER_MODEL_PATH", "")  # Path to pre-trained Two-Tower model
@@ -131,6 +132,8 @@ class Settings:
         self.TOGETHERAI_API_KEY: Optional[str] = os.getenv("TOGETHERAI_API_KEY")
         self.COHERE_API_KEY: Optional[str] = os.getenv("COHERE_API_KEY")
         self.MISTRAL_API_KEY: Optional[str] = os.getenv("MISTRAL_API_KEY")
+        self.OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+        self.GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY")
     
     # Encryption
         self.ENCRYPTION_SECRET: Optional[str] = os.getenv("ENCRYPTION_SECRET")
@@ -176,16 +179,28 @@ class Settings:
             self.OPENAI_API_KEY,
             self.ANTHROPIC_API_KEY,
             self.GOOGLE_API_KEY,
+            self.AWS_ACCESS_KEY_ID,  # Bedrock counts as a provider
         ])
         if not has_provider_key:
             msg = (
                 "No LLM provider API key configured. At least one of "
-                "OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY is required. "
+                "OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, or AWS_ACCESS_KEY_ID is required. "
                 "LLM routing requests will fail."
             )
             _logger.critical(msg)
             if not self.DEBUG:
                 raise ValueError(msg)
+
+        # Validate encryption secret for provider key storage
+        if not self.ENCRYPTION_SECRET:
+            msg = (
+                "ENCRYPTION_SECRET is not set. Provider API keys cannot be stored securely. "
+                "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
+            _logger.critical(msg)
+            if not self.DEBUG:
+                raise ValueError(msg)
+
 
     def _parse_api_keys(self) -> Dict[str, str]:
         """Parse API_KEYS environment variable into a dictionary."""

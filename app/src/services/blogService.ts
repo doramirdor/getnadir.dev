@@ -16,7 +16,7 @@ export interface BlogPost extends BlogPostMetadata {
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
     id: "ocr-closed-loop-routing",
-    title: "OCR: our new closed-loop routing algorithm (NeurIPS 2026 submission)",
+    title: "OCR: our new closed-loop routing algorithm",
     date: "2026-04-04",
     author: "Dor Amir",
     excerpt: "Static routers plateau at 88-93% accuracy. We built a closed-loop algorithm that learns from every response, adapts to model changes, and cuts costs 43% with zero quality loss.",
@@ -152,13 +152,13 @@ The static classifier doesn't go away. It provides the initial complexity estima
 
 ## What's next
 
-The paper is submitted to NeurIPS 2026. We're integrating OCR into Nadir's hosted platform and open-source router. Key areas we're still working on:
+We're integrating OCR into Nadir's hosted platform and open-source router. Key areas we're still working on:
 
 - **Richer quality signals:** OCR currently uses binary valid/invalid. LLM-as-judge scoring could accelerate convergence but adds $0.01-0.05 per evaluation
 - **Multi-turn routing:** OCR routes single requests independently. Conversation-level complexity aggregation is a natural extension
 - **Top-tier estimation:** The most expensive model can't benefit from calibration probes (nothing cheaper to compare against). We're exploring alternative estimation strategies for the top tier
 
-Read the full paper: **OCR: Closed-Loop LLM Routing via Matched-Timescale Implicit Feedback and Cross-Tier Calibration Probes** (Dor Amir, submitted to NeurIPS 2026).`,
+Read the full paper: **OCR: Closed-Loop LLM Routing via Matched-Timescale Implicit Feedback and Cross-Tier Calibration Probes** (Dor Amir).`,
 
   "50-prompt-benchmark": `## Setup
 

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowRight } from "lucide-react";
 import { trackAuthAttempt, trackAuthSuccess } from "@/utils/analytics";
 
@@ -29,7 +30,10 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [searchParams] = useSearchParams();
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "signin";
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
   const [resetEmail, setResetEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -45,6 +49,14 @@ const Auth = () => {
   }, [navigate]);
 
   const handleOAuthSignIn = async (provider: "google" | "github") => {
+    if (mode === "signup" && !agreedToTerms) {
+      toast({
+        variant: "destructive",
+        title: "Agreement required",
+        description: "You must agree to the Terms of Service and Privacy Policy to create an account.",
+      });
+      return;
+    }
     setOauthLoading(provider);
     trackAuthAttempt(provider, mode === "signup" ? "signup" : "signin");
     try {
@@ -67,6 +79,14 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      toast({
+        variant: "destructive",
+        title: "Agreement required",
+        description: "You must agree to the Terms of Service and Privacy Policy to create an account.",
+      });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -345,7 +365,28 @@ const Auth = () => {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full h-10" disabled={loading}>
+                {mode === "signup" && (
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to the{" "}
+                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground underline hover:no-underline">
+                        Terms of Service
+                      </a>{" "}
+                      and{" "}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground underline hover:no-underline">
+                        Privacy Policy
+                      </a>
+                    </label>
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full h-10" disabled={loading || (mode === "signup" && !agreedToTerms)}>
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (

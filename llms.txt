@@ -50,5 +50,5 @@ Free and open-source (MIT License)
 
 ## Contact
 
-- Email: amirdor@gmail.com
+- Email: info@getnadir.com
 - Builder: Dor Amir (@doramirdor on GitHub)

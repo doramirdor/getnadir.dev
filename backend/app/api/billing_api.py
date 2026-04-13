@@ -5,13 +5,15 @@ Exposes subscription management, checkout, invoices, and Stripe portal.
 """
 import asyncio
 import logging
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from app.auth.supabase_auth import supabase, validate_api_key, UserSession
+from app.auth.supabase_auth import supabase, validate_api_key, validate_jwt, UserSession
 from app.services.stripe_service import stripe_service
+from app.services.savings_billing_service import SavingsBillingService
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +23,14 @@ router = APIRouter(tags=["billing"])
 # ── Request / Response schemas ──────────────────────────────────────────
 
 
+_BILLING_BASE = os.getenv("BILLING_RETURN_URL", "https://getnadir.com/dashboard/billing")
+
+
 class CheckoutRequest(BaseModel):
     plan_id: str = "pro"  # "pro" or "enterprise"
-    success_url: str = "https://getnadir.com/dashboard/billing?status=success"
-    cancel_url: str = "https://getnadir.com/dashboard/billing?status=cancelled"
+    success_url: str = f"{_BILLING_BASE}?status=success"
+    cancel_url: str = f"{_BILLING_BASE}?status=cancelled"
+    promo_code: Optional[str] = None
 
 
 class CheckoutResponse(BaseModel):
@@ -64,7 +70,7 @@ async def get_subscription(current_user: UserSession = Depends(validate_api_key)
     """Get current user's subscription status."""
     try:
         result = await asyncio.to_thread(
-            lambda: supabase.table("user_subscriptions")
+            lambda: supabase.table("subscriptions")
             .select("*")
             .eq("user_id", current_user.id)
             .execute()
@@ -91,9 +97,13 @@ async def get_subscription(current_user: UserSession = Depends(validate_api_key)
 @router.post("/v1/billing/checkout", response_model=CheckoutResponse)
 async def create_checkout(
     req: CheckoutRequest,
-    current_user: UserSession = Depends(validate_api_key),
+    current_user: UserSession = Depends(validate_jwt),
 ):
-    """Create a Stripe checkout session for subscription signup."""
+    """Create a Stripe checkout session for subscription signup.
+
+    Accepts a Supabase JWT (Authorization: Bearer <token>) so the user
+    doesn't need an API key yet (e.g. during onboarding).
+    """
     try:
         # Get or create Stripe customer
         email = current_user.email or ""
@@ -106,6 +116,7 @@ async def create_checkout(
             plan_id=req.plan_id,
             success_url=req.success_url,
             cancel_url=req.cancel_url,
+            promo_code=req.promo_code,
         )
         return CheckoutResponse(checkout_url=url)
     except Exception as e:
@@ -115,10 +126,15 @@ async def create_checkout(
 
 @router.post("/v1/billing/cancel", response_model=CancelResponse)
 async def cancel_subscription(current_user: UserSession = Depends(validate_api_key)):
-    """Cancel user's subscription at period end."""
+    """Cancel user's subscription at period end.
+
+    Before cancellation, any pending savings fees for the current period
+    are calculated and attached as a Stripe invoice item so the user is
+    billed for usage up to the cancellation date.
+    """
     try:
         result = await asyncio.to_thread(
-            lambda: supabase.table("user_subscriptions")
+            lambda: supabase.table("subscriptions")
             .select("stripe_subscription_id, status")
             .eq("user_id", current_user.id)
             .execute()
@@ -131,11 +147,54 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
         if not sub_id:
             raise HTTPException(status_code=400, detail="No Stripe subscription found")
 
+        # ── Charge pending savings fee before cancellation ──────────
+        try:
+            from datetime import date, timedelta
+
+            today = date.today()
+            period_start = today.replace(day=1)
+            period_end = today + timedelta(days=1)  # up to today
+
+            billing_service = SavingsBillingService(supabase)
+            invoice = await billing_service.calculate_monthly_invoice(
+                current_user.id, period_start, period_end
+            )
+
+            if invoice.savings_fee_usd > 0:
+                amount_cents = int(round(invoice.savings_fee_usd * 100))
+                description = (
+                    f"Nadir savings fee (partial {period_start.strftime('%b %Y')}): "
+                    f"${invoice.total_savings_usd:.2f} saved, "
+                    f"${invoice.savings_fee_usd:.2f} fee"
+                )
+                await stripe_service.create_usage_invoice_item(
+                    user_id=current_user.id,
+                    amount_cents=amount_cents,
+                    description=description,
+                )
+                logger.info(
+                    "Attached pending savings fee $%.2f for user %s before cancellation",
+                    invoice.savings_fee_usd,
+                    current_user.id,
+                )
+
+                # Store the partial-month invoice
+                await billing_service.generate_and_store_invoice(
+                    current_user.id, period_start, period_end
+                )
+        except Exception as fee_err:
+            # Log but don't block cancellation — user still has the right to cancel
+            logger.error(
+                "Failed to attach pending savings fee for user %s: %s",
+                current_user.id, fee_err,
+            )
+
+        # ── Proceed with cancellation ──────────────────────────────
         await stripe_service.cancel_subscription(sub_id)
 
         # Mark in our DB
         await asyncio.to_thread(
-            lambda: supabase.table("user_subscriptions")
+            lambda: supabase.table("subscriptions")
             .update({"cancel_at_period_end": True})
             .eq("user_id", current_user.id)
             .execute()
@@ -143,7 +202,7 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
 
         return CancelResponse(
             status="canceling",
-            message="Subscription will cancel at the end of the current billing period",
+            message="Subscription will cancel at the end of the current billing period. Any outstanding savings fees have been applied.",
         )
     except HTTPException:
         raise
@@ -164,7 +223,7 @@ async def create_portal_session(current_user: UserSession = Depends(validate_api
 
         session = stripe.billing_portal.Session.create(
             customer=customer_id,
-            return_url="https://getnadir.com/dashboard/billing",
+            return_url=f"{_BILLING_BASE}",
         )
         return {"portal_url": session.url}
     except HTTPException:

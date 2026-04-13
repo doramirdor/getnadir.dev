@@ -81,12 +81,33 @@ const Layout = () => {
     return <Auth />;
   }
 
+  const isOnboarding = location.pathname === "/dashboard/onboarding";
+
   const getCurrentPage = () => {
     const path = location.pathname;
     if (path === '/dashboard' || path === '/dashboard/') return 'dashboard';
     const segments = path.replace('/dashboard/', '').split('/');
     return segments[0] || 'dashboard';
   };
+
+  // Fullscreen layout for onboarding (no sidebar, no escape)
+  if (isOnboarding) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-40 h-14 border-b border-border bg-background flex items-center px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-semibold text-xs">N</span>
+            </div>
+            <span className="text-sm font-semibold text-foreground">Nadir</span>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+          <Outlet />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex w-full">

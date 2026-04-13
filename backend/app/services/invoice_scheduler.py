@@ -41,7 +41,7 @@ async def run_monthly_invoicing() -> dict:
     # Fetch all active subscribers
     try:
         result = await asyncio.to_thread(
-            lambda: supabase.table("user_subscriptions")
+            lambda: supabase.table("subscriptions")
             .select("user_id")
             .eq("status", "active")
             .execute()
@@ -144,6 +144,7 @@ async def invoice_scheduler_loop():
     Long-running loop that fires ``run_monthly_invoicing`` on the 1st of
     each month at 00:05 UTC, then sleeps until the next 1st.
     """
+    max_retries = 3
     while True:
         wait_seconds = _seconds_until_next_first_of_month()
         next_run = datetime.utcnow() + timedelta(seconds=wait_seconds)
@@ -154,7 +155,21 @@ async def invoice_scheduler_loop():
         )
         await asyncio.sleep(wait_seconds)
 
-        try:
-            await run_monthly_invoicing()
-        except Exception as e:
-            logger.error("Invoice scheduler run failed: %s", e, exc_info=True)
+        for attempt in range(1, max_retries + 1):
+            try:
+                summary = await run_monthly_invoicing()
+                if summary.get("failed", 0) == 0:
+                    break  # All succeeded
+                logger.warning(
+                    "Invoice run attempt %d/%d: %d users failed — retrying in 10 min",
+                    attempt, max_retries, summary["failed"],
+                )
+                if attempt < max_retries:
+                    await asyncio.sleep(600)  # 10 min between retries
+            except Exception as e:
+                logger.error(
+                    "Invoice scheduler attempt %d/%d failed: %s",
+                    attempt, max_retries, e, exc_info=True,
+                )
+                if attempt < max_retries:
+                    await asyncio.sleep(600)

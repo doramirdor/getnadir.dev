@@ -12,9 +12,9 @@ import {
   ChevronRight,
   FileText,
   Zap,
-  HelpCircle,
   LogOut,
   Menu,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ const mainMenuItems = [
 ];
 
 const manageMenuItems = [
+  { id: "playground", label: "Playground", icon: Play, path: "/dashboard/playground" },
   { id: "api-keys", label: "API Keys", icon: Key, path: "/dashboard/api-keys" },
   { id: "integrations", label: "Provider Keys", icon: Zap, path: "/dashboard/integrations" },
 ];
@@ -40,7 +41,6 @@ const manageMenuItems = [
 const accountMenuItems = [
   { id: "logs", label: "Logs", icon: FileText, path: "/dashboard/logs" },
   { id: "billing", label: "Billing", icon: CreditCard, path: "/dashboard/billing" },
-  { id: "help", label: "Help", icon: HelpCircle, path: "/dashboard/help" },
   { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/settings" },
 ];
 

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Why Open-Source LLM Routing Matters — NadirClaw</title>
-    <meta name="description" content="Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. NadirClaw is MIT-licensed, self-hosted, and fully transparent.">
+    <title>Why Open-Source LLM Routing Matters — Nadir</title>
+    <meta name="description" content="Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. Nadir is MIT-licensed, self-hosted, and fully transparent.">
     <link rel="canonical" href="https://getnadir.com/blog/why-open-source-llm-routing-matters.html" />
     <meta property="og:type" content="article">
     <meta property="og:title" content="Why Open-Source LLM Routing Matters">
     <meta property="og:description" content="Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. Open-source routing changes this entirely.">
     <meta property="og:url" content="https://getnadir.com/blog/why-open-source-llm-routing-matters.html">
-    <meta property="og:site_name" content="NadirClaw">
+    <meta property="og:site_name" content="Nadir">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
     <meta property="article:published_time" content="2026-03-04">
     <meta name="twitter:card" content="summary_large_image">
@@ -29,10 +29,10 @@
       "headline": "Why Open-Source LLM Routing Matters",
       "datePublished": "2026-03-04",
       "dateModified": "2026-03-20",
-      "author": { "@type": "Organization", "name": "NadirClaw" },
-      "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
       "url": "https://getnadir.com/blog/why-open-source-llm-routing-matters.html",
-      "description": "Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. NadirClaw is MIT-licensed, self-hosted, and fully transparent."
+      "description": "Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. Nadir is MIT-licensed, self-hosted, and fully transparent."
     }
     </script>
     <style>
@@ -61,22 +61,33 @@
     <h1>Why Open-Source LLM Routing Matters</h1>
     <p class="meta"><time datetime="2026-03-04">March 4, 2026</time></p>
 
-    <p>Proprietary LLM routers create a dependency you cannot inspect, audit, or customize. You send your prompts through a black box and hope the routing decisions are optimal. Open-source routing changes this equation entirely.</p>
+    <p>There are a handful of LLM routing products on the market now. Most of them work the same way: you send your API traffic through their servers, their classifier picks a model, and you get a response back. You pay a fee on top of the LLM cost. The routing logic itself? Closed source, running on their infrastructure, making decisions about your prompts that you have no way to verify.</p>
 
-    <h2>The problem with black-box routing</h2>
-    <p>When you use a proprietary router, you have no visibility into how your prompts are being classified. You can't verify the routing decisions are correct for your workload. You can't audit the code for security issues. And you can't adapt the classifier when your prompt patterns don't match the router's assumptions.</p>
+    <p>We think that's the wrong model for something this critical.</p>
 
-    <h2>Full transparency with NadirClaw</h2>
-    <p>NadirClaw is MIT-licensed, self-hosted, and fully transparent. You can inspect every routing decision, customize the complexity classifier for your specific workload, add new model providers, and audit the codebase for security. Self-hosting means your prompts never leave your infrastructure &mdash; critical for teams handling sensitive code or data.</p>
+    <h2>What actually goes wrong with proprietary routers</h2>
+    <p>The pitch sounds great: "just point your base URL at us and save money." But in practice, three things tend to happen.</p>
+    <p>First, the classifier makes bad decisions for your specific workload and you have no recourse. Every routing product trains or tunes its classifier on some dataset. If your prompts look different from that training data, routing quality degrades. With a closed-source router, your only option is to file a support ticket and hope they adjust something on their end. You cannot look at the classification logic, you cannot add a rule for your edge case, and you cannot retrain the model on your own data.</p>
+    <p>Second, your prompts flow through someone else's servers. For teams working on proprietary code, healthcare data, financial systems, or anything covered by an NDA, this is a non-starter. Some routers claim they don't log prompts. You have no way to verify that claim.</p>
+    <p>Third, pricing changes without warning. We have seen routing services introduce per-request fees, change their margin structure, or add usage tiers after teams are already integrated. Once your production stack depends on a third-party proxy, switching costs are real.</p>
 
-    <h2>Community-driven improvements</h2>
-    <p>Open-source also means the community contributes improvements: better classifiers, new provider integrations, and performance optimizations. The LLM cost problem affects every developer using AI tools. The solution should be open, auditable, and owned by the community &mdash; not locked behind another SaaS subscription.</p>
+    <h2>What open-source routing gives you</h2>
+    <p>Nadir is MIT-licensed. The entire codebase, including the complexity classifier, the routing logic, and the proxy server, is on GitHub. Here is what that means in practice.</p>
+    <p><strong>You can read the classifier.</strong> The heuristic classifier is a single Python module. When a prompt gets misrouted, you open the file, find the rule that fired, and understand exactly why. Try doing that with a proprietary API.</p>
+    <p><strong>You can change the classifier.</strong> If your workload has a specific pattern (say, lots of SQL generation prompts that the default classifier underestimates), you can add a rule or adjust thresholds. Fork the repo, make the change, done. The hosted version of Nadir also supports trained ML classifiers if you want something more sophisticated, but the point is that you have the option.</p>
+    <p><strong>Your prompts stay on your machine.</strong> Nadir runs as a local proxy on <code>localhost:8856</code>. Your requests go directly from Nadir to the LLM provider (OpenAI, Anthropic, Google). No intermediate servers, no third-party logging, no data residency questions.</p>
+    <p><strong>You control the model lineup.</strong> New model drops from Anthropic? Add it to your config and set the tier mapping. A provider has a 4-hour outage? Nadir's health monitor detects the failures and routes around it automatically. You do not wait for a vendor to push an update.</p>
 
-    <h2>Zero vendor lock-in</h2>
-    <p>With NadirClaw, you own the routing layer. If a new model becomes the best value-per-quality option, you update your config. If a provider has an outage, the health monitor automatically routes around it. No waiting for a vendor to update their product. No surprise price changes. Full control, always.</p>
+    <h2>The case for community-owned infrastructure</h2>
+    <p>LLM routing is infrastructure. It sits in the critical path of every API call your application makes. The argument for open-sourcing infrastructure is well-established: Linux, Kubernetes, PostgreSQL, Redis, Nginx. The software that everything else depends on should be inspectable, modifiable, and not controlled by a single company.</p>
+    <p>LLM costs affect every developer building with AI. The routing layer that reduces those costs should not be another SaaS dependency with opaque pricing and closed logic. It should be something the community can audit, improve, and own.</p>
+    <p>That's why Nadir's core router is MIT-licensed with no usage restrictions. Use it commercially, fork it, embed it in your product. The code is yours.</p>
+
+    <h2>Open source does not mean unsupported</h2>
+    <p>We also offer a hosted version at <a href="https://getnadir.com">getnadir.com</a> with a trained ML classifier, analytics dashboard, Stripe billing integration, and managed infrastructure. If you want the convenience of a hosted service with the transparency of open source, that option exists. But the self-hosted open-source version is fully functional on its own. It is not a crippled free tier designed to push you toward a paid plan.</p>
 </main>
 <footer>
-    <p>&copy; 2026 NadirClaw &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:amirdor@gmail.com">Contact</a></p>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
 </footer>
 </body>
 </html>

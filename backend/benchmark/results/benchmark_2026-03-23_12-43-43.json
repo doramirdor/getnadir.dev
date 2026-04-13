@@ -1,0 +1,1527 @@
+{
+  "timestamp": "2026-03-23_12-43-43",
+  "date": "2026-03-23",
+  "num_prompts": 30,
+  "variants": [
+    "V1",
+    "V2",
+    "V4"
+  ],
+  "summary": {
+    "V1": {
+      "label": "Baseline",
+      "total_cost": 0.116232,
+      "savings_pct": 0,
+      "avg_latency_ms": 42576.9,
+      "quality_maintained": 0,
+      "quality_total": 0,
+      "avg_score_routed": 0,
+      "avg_score_baseline": 0
+    },
+    "V2": {
+      "label": "Router",
+      "total_cost": 0.246165,
+      "savings_pct": -111.8,
+      "avg_latency_ms": 39914.3,
+      "quality_maintained": 24,
+      "quality_total": 30,
+      "avg_score_routed": 5.9,
+      "avg_score_baseline": 5.9
+    },
+    "V4": {
+      "label": "Router+Safe",
+      "total_cost": 0.241569,
+      "savings_pct": -107.8,
+      "avg_latency_ms": 29957.0,
+      "quality_maintained": 23,
+      "quality_total": 30,
+      "avg_score_routed": 6.5,
+      "avg_score_baseline": 5.7
+    }
+  },
+  "detailed_results": {
+    "V1": [
+      {
+        "prompt_id": 1,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 7.2e-05,
+        "latency_ms": 7573.2,
+        "response_length": 6,
+        "response_preview": "Paris.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 2,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000195,
+        "latency_ms": 6508.4,
+        "response_length": 17,
+        "response_preview": "17 \u00d7 23 = **391**",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 3,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.00013,
+        "latency_ms": 9031.6,
+        "response_length": 28,
+        "response_preview": "\u304a\u306f\u3088\u3046\u3054\u3056\u3044\u307e\u3059 (Ohayou gozaimasu)",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 4,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 7.8e-05,
+        "latency_ms": 15820.0,
+        "response_length": 5,
+        "response_preview": "1989.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 5,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000611,
+        "latency_ms": 9119.4,
+        "response_length": 121,
+        "response_preview": "**Ephemeral** means lasting for a very short time; transitory or fleeting. From Greek *eph\u0113meros* (\"lasting only a day\").",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 6,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000878,
+        "latency_ms": 12174.6,
+        "response_length": 185,
+        "response_preview": "Python is interpreted. It executes code line-by-line via the CPython interpreter, though it does compile source to bytecode (`.pyc` files) as an intermediate step before interpretation.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 7,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 7.8e-05,
+        "latency_ms": 6256.2,
+        "response_length": 9,
+        "response_preview": "`#FF0000`",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 8,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000487,
+        "latency_ms": 7497.0,
+        "response_length": 114,
+        "response_preview": "There are **7 continents**: Africa, Antarctica, Asia, Australia/Oceania, Europe, North America, and South America.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 9,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.00013,
+        "latency_ms": 6101.2,
+        "response_length": 28,
+        "response_preview": "Hypertext Transfer Protocol.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 10,
+        "category": "simple",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 5.8e-05,
+        "latency_ms": 6794.0,
+        "response_length": 7,
+        "response_preview": "37.78\u00b0C",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 11,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.001982,
+        "latency_ms": 10810.8,
+        "response_length": 440,
+        "response_preview": "TCP is a connection-oriented protocol that guarantees reliable, ordered delivery of data by establishing a connection and retransmitting lost packets. UDP is connectionless and sends datagrams without",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 12,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000728,
+        "latency_ms": 6467.7,
+        "response_length": 143,
+        "response_preview": "```python\ndef is_palindrome(s: str) -> bool:\n    cleaned = ''.join(c.lower() for c in s if c.isalnum())\n    return cleaned == cleaned[::-1]\n```",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 13,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.004245,
+        "latency_ms": 23189.2,
+        "response_length": 896,
+        "response_preview": "**Monolith**\n\nPros:\n- Simpler to develop, test, and deploy initially\n- No network overhead between components\n- Easier debugging and tracing\n- Single deployment unit\n\nCons:\n- Harder to scale individua",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 14,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.006611,
+        "latency_ms": 14910.5,
+        "response_length": 1427,
+        "response_preview": "The **CAP theorem** (Brewer's theorem) states that a distributed system can provide at most **two of three** guarantees simultaneously:\n\n- **Consistency** \u2014 Every read receives the most recent write (",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 15,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000513,
+        "latency_ms": 6660.4,
+        "response_length": 96,
+        "response_preview": "```sql\nSELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees);\n```",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 16,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.007729,
+        "latency_ms": 15860.9,
+        "response_length": 1398,
+        "response_preview": "A **hash table** stores key-value pairs for ~O(1) lookups by using a **hash function** to map keys to array indices.\n\n## Core mechanism\n\n1. **Hash function** takes a key \u2192 produces an integer\n2. **Ind",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 17,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000637,
+        "latency_ms": 10437.4,
+        "response_length": 65,
+        "response_preview": "```bash\nfind . -type f -exec du -h {} + | sort -rh | head -10\n```",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 18,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.007332,
+        "latency_ms": 16427.0,
+        "response_length": 1884,
+        "response_preview": "## Observer Pattern\n\nAn object (the **subject**) maintains a list of dependents (**observers**) and notifies them automatically when its state changes.\n\n### Real-World Analogy\n\nA YouTube channel (subj",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 19,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.008391,
+        "latency_ms": 20548.4,
+        "response_length": 1864,
+        "response_preview": "**SOLID Principles**\n\n**S \u2014 Single Responsibility Principle**\nA class should have only one reason to change.\n```python\n# Bad: handles both user data and email\nclass User:\n    def save(self): ...\n    d",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 20,
+        "category": "medium",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.008729,
+        "latency_ms": 22046.8,
+        "response_length": 1718,
+        "response_preview": "Here's how DNS resolution works step by step:\n\n**1. Local cache check**\nYour browser/OS checks its local DNS cache for a cached answer. If found and not expired (TTL), it uses that immediately.\n\n**2. ",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 21,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.03978,
+        "latency_ms": 62965.4,
+        "response_length": 10703,
+        "response_preview": "# Distributed Rate Limiter \u2014 1M req/s\n\n## Algorithm: Sliding Window Log + Token Bucket Hybrid\n\nUse **token bucket** per client for throughput (simple, memory-efficient) with a **sliding window counter",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 22,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.003802,
+        "latency_ms": 102795.0,
+        "response_length": 866,
+        "response_preview": "It looks like I need write permission. Could you approve the file write? I'm creating two files:\n\n1. **`app/services/lru_cache.py`** \u2014 The LRU cache implementation\n2. **`tests/unit/test_lru_cache.py`*",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 23,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.021827,
+        "latency_ms": 37313.4,
+        "response_length": 4678,
+        "response_preview": "## Event Sourcing vs CRUD for a Financial Trading Platform\n\n### Consistency Guarantees\n\n**Event Sourcing** \u2014 Strong eventual consistency. Every state change is an immutable event appended to a log. Th",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 24,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000182,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 25,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000156,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 26,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000162,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 27,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000182,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 28,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000176,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 29,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000189,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 30,
+        "category": "complex",
+        "variant": "V1",
+        "model": "opus",
+        "tier": "n/a",
+        "cost": 0.000162,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      }
+    ],
+    "V2": [
+      {
+        "prompt_id": 1,
+        "category": "simple",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 1.4e-05,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 2,
+        "category": "simple",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 1.3e-05,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 3,
+        "category": "simple",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000215,
+        "latency_ms": 44097.2,
+        "response_length": 206,
+        "response_preview": "\"Good morning\" in Japanese is:\n\n- **\u304a\u306f\u3088\u3046** (ohayou) \u2014 casual\n- **\u304a\u306f\u3088\u3046\u3054\u3056\u3044\u307e\u3059** (ohayou gozaimasu) \u2014 polite/formal\n\nThe formal version is commonly used in business or when greeting someone you don't know",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 4,
+        "category": "simple",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 4.7e-05,
+        "latency_ms": 12988.6,
+        "response_length": 5,
+        "response_preview": "1989.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 5,
+        "category": "simple",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000532,
+        "latency_ms": 11121.4,
+        "response_length": 485,
+        "response_preview": "**Ephemeral** means lasting for a very short time; temporary or transient.\n\nThe word describes something that is:\n- Short-lived or fleeting\n- Quick to fade or disappear\n- Not permanent or long-lasting",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 6,
+        "category": "simple",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000943,
+        "latency_ms": 10753.0,
+        "response_length": 1032,
+        "response_preview": "Python is **interpreted**, but with a nuance: it's actually compiled to bytecode first, then that bytecode is interpreted.\n\nHere's what happens:\n\n1. **Compilation phase**: Python source code (`.py` fi",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 7,
+        "category": "simple",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 4.7e-05,
+        "latency_ms": 9226.2,
+        "response_length": 9,
+        "response_preview": "`#FF0000`",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 8,
+        "category": "simple",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000383,
+        "latency_ms": 9038.8,
+        "response_length": 355,
+        "response_preview": "There are **7 continents** in the most widely used model:\n\n1. North America\n2. South America\n3. Europe\n4. Africa\n5. Asia\n6. Oceania\n7. Antarctica\n\n(Some geographical models combine North and South Ame",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 9,
+        "category": "simple",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000137,
+        "latency_ms": 10666.2,
+        "response_length": 48,
+        "response_preview": "HTTP stands for **HyperText Transfer Protocol**.",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 10,
+        "category": "simple",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000152,
+        "latency_ms": 10069.1,
+        "response_length": 30,
+        "response_preview": "(100 - 32) \u00d7 5/9 = **37.78\u00b0C**",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 11,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.001267,
+        "latency_ms": 10282.3,
+        "response_length": 451,
+        "response_preview": "TCP (Transmission Control Protocol) is connection-oriented \u2014 it establishes a handshake before sending data, guarantees delivery and ordering, and retransmits lost packets. UDP (User Datagram Protocol",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 12,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000359,
+        "latency_ms": 7449.3,
+        "response_length": 107,
+        "response_preview": "```python\ndef is_palindrome(s: str) -> bool:\n    s = s.lower().replace(\" \", \"\")\n    return s == s[::-1]\n```",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 13,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.005589,
+        "latency_ms": 18136.8,
+        "response_length": 1887,
+        "response_preview": "## Monolith vs Microservices\n\n### Monolith\n\n**Pros**\n- Simple to develop, test, and deploy (one unit)\n- Low operational overhead \u2014 no network hops between services\n- Easy to debug and trace requests\n-",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 14,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.005058,
+        "latency_ms": 17197.3,
+        "response_length": 1653,
+        "response_preview": "## CAP Theorem\n\nThe CAP theorem (Brewer's theorem) states that a distributed system can guarantee at most **2 of 3** properties simultaneously:\n\n- **Consistency (C)** \u2014 Every read receives the most re",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 15,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.001634,
+        "latency_ms": 11142.4,
+        "response_length": 537,
+        "response_preview": "```sql\nSELECT MAX(salary) AS second_highest_salary\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);\n```\n\nOr using `DENSE_RANK` (handles ties more explicitly):\n\n```sql\nSELECT salary A",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 16,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.007153,
+        "latency_ms": 19800.7,
+        "response_length": 2135,
+        "response_preview": "## Hash Tables\n\nA hash table stores key-value pairs with O(1) average-case lookup, insert, and delete.\n\n### Core Idea\n\n1. Allocate an array of N buckets\n2. To store/retrieve a key, run it through a **",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 17,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000382,
+        "latency_ms": 11272.1,
+        "response_length": 66,
+        "response_preview": "```bash\nfind . -type f -exec du -sh {} + | sort -rh | head -10\n```",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 18,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.005569,
+        "latency_ms": 17656.4,
+        "response_length": 2439,
+        "response_preview": "## Observer Pattern\n\nThe Observer pattern defines a **one-to-many dependency** between objects: when one object (the **Subject**) changes state, all its dependents (**Observers**) are notified automat",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 19,
+        "category": "medium",
+        "variant": "V2",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.002062,
+        "latency_ms": 12718.8,
+        "response_length": 2473,
+        "response_preview": "# SOLID Principles\n\n## 1. **Single Responsibility Principle (SRP)**\nA class should have only one reason to change.\n\n```python\n# \u274c Bad: Class does too much\nclass User:\n    def save_to_db(self): pass\n  ",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 20,
+        "category": "medium",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.005706,
+        "latency_ms": 19827.8,
+        "response_length": 1794,
+        "response_preview": "## DNS Resolution: Step by Step\n\nWhen you type `example.com` in a browser:\n\n**1. Browser cache check**\nThe browser checks its own DNS cache. If it has a recent record, resolution stops here.\n\n**2. OS ",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 21,
+        "category": "complex",
+        "variant": "V2",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.032825,
+        "latency_ms": 52683.1,
+        "response_length": 8995,
+        "response_preview": "# Distributed Rate Limiter \u2014 1M req/s\n\n## Algorithm: Sliding Window Log + Token Bucket Hybrid\n\nUse **token bucket** for per-key rate limiting (simple, memory-efficient) with a **sliding window counter",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 22,
+        "category": "complex",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.027904,
+        "latency_ms": 116796.1,
+        "response_length": 16310,
+        "response_preview": "It seems write permissions aren't being granted. Let me show you the complete implementation directly.\n\n---\n\n## `lru_cache.py`\n\n```python\n\"\"\"\nThread-safe LRU cache with O(1) get/put and TTL-based auto",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 23,
+        "category": "complex",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.019668,
+        "latency_ms": 52116.1,
+        "response_length": 6857,
+        "response_preview": "# Event Sourcing vs CRUD for a Financial Trading Platform\n\n## Core Architectural Difference\n\n**CRUD** stores current state: `positions` table holds `{symbol: AAPL, qty: 100, avg_cost: 150.00}`. Update",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 24,
+        "category": "complex",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.016762,
+        "latency_ms": 33816.8,
+        "response_length": 7092,
+        "response_preview": "```python\n# parser.py \u2014 recursive descent parser for arithmetic expressions\nfrom __future__ import annotations\nfrom dataclasses import dataclass\nfrom enum import Enum, auto\nfrom typing import Optional",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 25,
+        "category": "complex",
+        "variant": "V2",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.034378,
+        "latency_ms": 62571.2,
+        "response_length": 7685,
+        "response_preview": "# Real-Time Collaborative Text Editor Design\n\n## CRDTs vs OT: Core Comparison\n\n| Dimension | OT (Operational Transformation) | CRDTs (Conflict-free Replicated Data Types) |\n|---|---|---|\n| **Architect",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 26,
+        "category": "complex",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 9.7e-05,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 27,
+        "category": "complex",
+        "variant": "V2",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.018675,
+        "latency_ms": 33540.6,
+        "response_length": 3977,
+        "response_preview": "# Consensus Algorithm Comparison\n\n## Overview\n\n| Property | Raft | Paxos | PBFT | Tendermint |\n|---|---|---|---|---|\n| **Fault model** | Crash (CFT) | Crash (CFT) | Byzantine (BFT) | Byzantine (BFT) |",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 28,
+        "category": "complex",
+        "variant": "V2",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.027833,
+        "latency_ms": 49851.0,
+        "response_length": 6059,
+        "response_preview": "# Real-Time Fraud Detection ML Pipeline\n\n## 1. Feature Engineering\n\n**Transaction-level features (computed at request time):**\n- Amount, currency, merchant category code (MCC), payment method\n- Time-o",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 29,
+        "category": "complex",
+        "variant": "V2",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000113,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": false,
+        "optimize_mode": "none"
+      },
+      {
+        "prompt_id": 30,
+        "category": "complex",
+        "variant": "V2",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.030648,
+        "latency_ms": 52610.6,
+        "response_length": 6725,
+        "response_preview": "# Multi-Region Database Replication Strategy\n\n## 1. Consistency Models\n\n**Choose based on your tolerance for stale reads vs. latency:**\n\n| Model | Latency | Use Case |\n|-------|---------|----------|\n|",
+        "optimized": false,
+        "optimize_mode": "none"
+      }
+    ],
+    "V4": [
+      {
+        "prompt_id": 1,
+        "category": "simple",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 4.7e-05,
+        "latency_ms": 5554.4,
+        "response_length": 31,
+        "response_preview": "The capital of France is Paris.",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 2,
+        "category": "simple",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 3.9e-05,
+        "latency_ms": 10468.5,
+        "response_length": 17,
+        "response_preview": "17 \u00d7 23 = **391**",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 3,
+        "category": "simple",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000182,
+        "latency_ms": 6440.7,
+        "response_length": 190,
+        "response_preview": "'Good morning' in Japanese is:\n\n- **\u304a\u306f\u3088\u3046** (ohayou) \u2014 informal\n- **\u304a\u306f\u3088\u3046\u3054\u3056\u3044\u307e\u3059** (ohayou gozaimasu) \u2014 formal/polite\n\nThe formal version is commonly used in professional or respectful contexts.",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 4,
+        "category": "simple",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 4.7e-05,
+        "latency_ms": 6695.2,
+        "response_length": 5,
+        "response_preview": "1989.",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 5,
+        "category": "simple",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000408,
+        "latency_ms": 7041.5,
+        "response_length": 468,
+        "response_preview": "**Ephemeral** (adjective) means lasting for a very short time; temporary or fleeting.\n\nKey uses:\n- **Time-bound**: Something that doesn't endure or is transient (e.g., \"ephemeral art,\" \"ephemeral beau",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 6,
+        "category": "simple",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.001059,
+        "latency_ms": 10732.8,
+        "response_length": 1120,
+        "response_preview": "Python is **both compiled and interpreted**.\n\nHere's what actually happens:\n\n1. **Compilation phase**: Python source code (`.py` files) is compiled into bytecode (`.pyc` files stored in `__pycache__/`",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 7,
+        "category": "simple",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 4.7e-05,
+        "latency_ms": 6592.5,
+        "response_length": 9,
+        "response_preview": "`#FF0000`",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 8,
+        "category": "simple",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.000377,
+        "latency_ms": 8138.1,
+        "response_length": 381,
+        "response_preview": "There are typically **7 continents** according to the most common model used in English-speaking countries:\n\n1. North America\n2. South America\n3. Europe\n4. Africa\n5. Asia\n6. Oceania\n7. Antarctica\n\nHow",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 9,
+        "category": "simple",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000137,
+        "latency_ms": 6378.3,
+        "response_length": 48,
+        "response_preview": "HTTP stands for **HyperText Transfer Protocol**.",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 10,
+        "category": "simple",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000152,
+        "latency_ms": 6205.2,
+        "response_length": 30,
+        "response_preview": "(100 - 32) \u00d7 5/9 = **37.78\u00b0C**",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 11,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.001287,
+        "latency_ms": 9787.6,
+        "response_length": 451,
+        "response_preview": "TCP is connection-oriented, guaranteeing delivery and ordering of packets through a handshake, acknowledgments, and retransmission \u2014 at the cost of latency. UDP is connectionless and sends packets wit",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 12,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000359,
+        "latency_ms": 6317.4,
+        "response_length": 107,
+        "response_preview": "```python\ndef is_palindrome(s: str) -> bool:\n    s = s.lower().replace(\" \", \"\")\n    return s == s[::-1]\n```",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 13,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.00436,
+        "latency_ms": 15933.9,
+        "response_length": 1458,
+        "response_preview": "## Microservices vs Monolith\n\n### Monolith\n\n**Pros:**\n- Simple to develop, test, and deploy initially\n- No network overhead between components\n- Easy debugging (single process, single log stream)\n- At",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 14,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.005351,
+        "latency_ms": 24055.2,
+        "response_length": 1779,
+        "response_preview": "## CAP Theorem\n\nThe CAP theorem (Brewer's theorem) states that a distributed system can guarantee at most **2 of 3** properties simultaneously:\n\n- **Consistency (C)** \u2014 Every read returns the most rec",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 15,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000347,
+        "latency_ms": 8482.0,
+        "response_length": 121,
+        "response_preview": "```sql\nSELECT MAX(salary) AS second_highest_salary\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);\n```",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 16,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.006353,
+        "latency_ms": 17691.2,
+        "response_length": 1916,
+        "response_preview": "## Hash Tables\n\nA hash table maps keys to values using a **hash function** that converts a key into an array index.\n\n```\nkey \u2192 hash(key) % array_size \u2192 index \u2192 value\n```\n\n### Core Mechanics\n\n1. **Arra",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 17,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000265,
+        "latency_ms": 6057.5,
+        "response_length": 42,
+        "response_preview": "```bash\ndu -ah . | sort -rh | head -10\n```",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 18,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.006193,
+        "latency_ms": 16157.0,
+        "response_length": 2734,
+        "response_preview": "## Observer Pattern\n\nThe Observer pattern defines a one-to-many dependency between objects: when one object (the **Subject**) changes state, all its dependents (**Observers**) are notified automatical",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 19,
+        "category": "medium",
+        "variant": "V4",
+        "model": "haiku",
+        "tier": "simple",
+        "cost": 0.001977,
+        "latency_ms": 9840.9,
+        "response_length": 2367,
+        "response_preview": "# SOLID Principles\n\n## **S \u2014 Single Responsibility Principle**\nA class should have only one reason to change.\n\n**Example**: Separate a `UserManager` (handles user data) from `EmailService` (handles se",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 20,
+        "category": "medium",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.006115,
+        "latency_ms": 17634.7,
+        "response_length": 1909,
+        "response_preview": "## DNS Resolution \u2014 Step by Step\n\n**1. Browser cache check**\nThe browser first checks its own DNS cache. If a record exists and hasn't expired (TTL), it uses it directly.\n\n**2. OS cache check**\nIf not",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 21,
+        "category": "complex",
+        "variant": "V4",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.043713,
+        "latency_ms": 67185.8,
+        "response_length": 11079,
+        "response_preview": "# Distributed Rate Limiter \u2014 1M req/s\n\n## Algorithm: Sliding Window Log + Token Bucket Hybrid\n\nUse **token bucket** for per-key rate limiting (simple, memory-efficient) with a **sliding window counter",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 22,
+        "category": "complex",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000117,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 23,
+        "category": "complex",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.017893,
+        "latency_ms": 50641.8,
+        "response_length": 6430,
+        "response_preview": "## Event Sourcing vs Traditional CRUD for Financial Trading Platforms\n\n### Core Mental Model\n\n| Dimension | CRUD | Event Sourcing |\n|-----------|------|----------------|\n| Storage unit | Current state",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 24,
+        "category": "complex",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.015495,
+        "latency_ms": 37501.1,
+        "response_length": 6855,
+        "response_preview": "```python\n# parser.py \u2014 recursive descent parser for arithmetic expressions\nfrom __future__ import annotations\nfrom dataclasses import dataclass\nfrom typing import Union\nimport re\n\n# \u2500\u2500 Tokens \u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 25,
+        "category": "complex",
+        "variant": "V4",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.029796,
+        "latency_ms": 51100.7,
+        "response_length": 7170,
+        "response_preview": "# Real-Time Collaborative Text Editor Design\n\n## CRDTs vs OT: Core Comparison\n\n| Dimension | OT (Operational Transformation) | CRDTs (Conflict-free Replicated Data Types) |\n|---|---|---|\n| **Architect",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 26,
+        "category": "complex",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.02225,
+        "latency_ms": 109500.5,
+        "response_length": 11411,
+        "response_preview": "It looks like file write permissions aren't granted for this project. Let me share the full implementation directly:\n\n---\n\n```python\n\"\"\"\nB+ Tree implementation with insert, delete, search, and range q",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 27,
+        "category": "complex",
+        "variant": "V4",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.018544,
+        "latency_ms": 36026.5,
+        "response_length": 3872,
+        "response_preview": "# Consensus Algorithm Comparison\n\n## Overview\n\n| Property | **Raft** | **Paxos** | **PBFT** | **Tendermint** |\n|---|---|---|---|---|\n| Fault model | Crash (CFT) | Crash (CFT) | Byzantine (BFT) | Byzan",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 28,
+        "category": "complex",
+        "variant": "V4",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.026663,
+        "latency_ms": 47477.3,
+        "response_length": 6294,
+        "response_preview": "# Real-Time Fraud Detection ML Pipeline\n\n## 1. Feature Engineering\n\n**Transaction-level features (computed at request time):**\n- Amount, currency, merchant category code (MCC), payment method\n- Hour o",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 29,
+        "category": "complex",
+        "variant": "V4",
+        "model": "sonnet",
+        "tier": "medium",
+        "cost": 0.000113,
+        "latency_ms": 120000,
+        "response_length": 9,
+        "response_preview": "[TIMEOUT]",
+        "optimized": true,
+        "optimize_mode": "safe"
+      },
+      {
+        "prompt_id": 30,
+        "category": "complex",
+        "variant": "V4",
+        "model": "opus",
+        "tier": "complex",
+        "cost": 0.031883,
+        "latency_ms": 53073.0,
+        "response_length": 7023,
+        "response_preview": "# Multi-Region Database Replication Strategy\n\n## 1. Consistency Models\n\nChoose based on your tolerance for stale reads vs. latency:\n\n| Model | Latency | Use Case |\n|---|---|---|\n| **Strong (synchronou",
+        "optimized": true,
+        "optimize_mode": "safe"
+      }
+    ]
+  },
+  "judgments": {
+    "V2": [
+      {
+        "a": 0,
+        "b": 10,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 0,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 9,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 9,
+        "b": 10,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 7,
+        "b": 8,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 8,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 9,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 5,
+        "b": 5,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 6,
+        "b": 6,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 7,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 6,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 3,
+        "b": 3,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 9,
+        "b": 8,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 4,
+        "b": 4,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 6,
+        "b": 6,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 6,
+        "b": 6,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 3,
+        "b": 3,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 2,
+        "b": 1,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 2,
+        "b": 2,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 2,
+        "b": 0,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 7,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 3,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 6,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 3,
+        "b": 1,
+        "verdict": "A_BETTER"
+      }
+    ],
+    "V4": [
+      {
+        "a": 9,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 9,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 8,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 7,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 8,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 9,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 9,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 7,
+        "b": 7,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 4,
+        "b": 4,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 7,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 8,
+        "b": 7,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 3,
+        "b": 3,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 8,
+        "b": 9,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 6,
+        "b": 6,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 8,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 3,
+        "b": 3,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 3,
+        "b": 3,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 1,
+        "b": 3,
+        "verdict": "B_BETTER"
+      },
+      {
+        "a": 2,
+        "b": 2,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 4,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 7,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 2,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 6,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 6,
+        "b": 1,
+        "verdict": "A_BETTER"
+      },
+      {
+        "a": 10,
+        "b": 10,
+        "verdict": "EQUAL"
+      },
+      {
+        "a": 7,
+        "b": 0,
+        "verdict": "A_BETTER"
+      }
+    ]
+  },
+  "classifier_version": "heuristic-v1.0"
+}

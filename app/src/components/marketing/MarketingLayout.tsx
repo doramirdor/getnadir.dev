@@ -1,6 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Github, Menu, X, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import PromoBanner from "@/components/PromoBanner";
 
 function NewsletterSignup() {
   const [email, setEmail] = useState("");
@@ -193,6 +194,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
             </nav>
           </div>
         )}
+        <PromoBanner />
       </header>
 
       <main role="main">{children}</main>

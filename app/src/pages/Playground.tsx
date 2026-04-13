@@ -232,7 +232,7 @@ export default function Playground() {
       </div>
 
       {!keysLoading && apiKeys.length === 0 && (
-        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
           <Zap className="h-4 w-4 shrink-0" />
           <span>No API keys found. Create one on the <a href="/dashboard/api-keys" className="underline font-medium">API Keys</a> page first.</span>
         </div>
@@ -296,19 +296,21 @@ export default function Playground() {
                       )}
                     </Badge>
                     {layers?.routing !== false && (
-                      <Badge variant="outline" className="text-xs gap-1 text-blue-600 border-blue-200 bg-blue-50">
+                      <Badge variant="outline" className="text-xs gap-1 text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950/40">
                         <Route className="w-3 h-3" /> Routing
                       </Badge>
                     )}
                     {layers?.optimize && layers.optimize !== "off" && (
                       <Badge variant="outline" className={`text-xs gap-1 ${
-                        layers.optimize === "aggressive" ? "text-orange-600 border-orange-200 bg-orange-50" : "text-green-600 border-green-200 bg-green-50"
+                        layers.optimize === "aggressive"
+                          ? "text-orange-600 border-orange-200 bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:bg-orange-950/40"
+                          : "text-green-600 border-green-200 bg-green-50 dark:text-green-400 dark:border-green-800 dark:bg-green-950/40"
                       }`}>
                         <Minimize2 className="w-3 h-3" /> Compact ({layers.optimize})
                       </Badge>
                     )}
                     {layers?.fallback !== false && (
-                      <Badge variant="outline" className="text-xs gap-1 text-purple-600 border-purple-200 bg-purple-50">
+                      <Badge variant="outline" className="text-xs gap-1 text-purple-600 border-purple-200 bg-purple-50 dark:text-purple-400 dark:border-purple-800 dark:bg-purple-950/40">
                         <Shield className="w-3 h-3" /> Fallback
                       </Badge>
                     )}
@@ -388,7 +390,7 @@ export default function Playground() {
               />
               <div className="flex justify-between items-center">
                 <p className="text-xs text-muted-foreground">
-                  {mode === "analysis" ? "Analysis only — no LLM call" : "Sends to Nadir → routes to best model"}
+                  {mode === "analysis" ? "Analysis only, no LLM call" : "Sends to Nadir, routes to best model"}
                   {" · "}⌘+Enter to send
                 </p>
                 <Button onClick={handleSend} disabled={loading || !prompt.trim() || !selectedKeyId}>
@@ -408,7 +410,7 @@ export default function Playground() {
         <div className="space-y-4">
           {/* Routing Metadata */}
           {meta && (
-            <Card className="clean-card border-blue-100">
+            <Card className="clean-card border-blue-100 dark:border-blue-900">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-blue-600" /> Routing Info
@@ -463,9 +465,9 @@ export default function Playground() {
                   </p>
                 )}
                 {meta.selection_reasoning && (
-                  <div className="mt-3 p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
-                    <p className="text-xs font-medium text-blue-800 mb-1">Selection Reasoning</p>
-                    <p className="text-xs text-blue-700">
+                  <div className="mt-3 p-2.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 rounded-lg">
+                    <p className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1">Selection Reasoning</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-400">
                       {typeof meta.selection_reasoning === "string"
                         ? meta.selection_reasoning
                         : meta.selection_reasoning.selection_reasoning || meta.selection_reasoning.complexity_reasoning || JSON.stringify(meta.selection_reasoning)

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Context Optimize: How We Cut LLM Input Tokens 30-70% Without Losing Accuracy — NadirClaw</title>
-    <meta name="description" content="Agent loops, RAG pipelines, and tool-heavy workflows waste tokens on formatting bloat. NadirClaw Context Optimize applies deterministic, lossless transforms to cut input tokens 30-70% with zero semantic loss.">
+    <title>Context Optimize: How We Cut LLM Input Tokens 30-70% Without Losing Accuracy — Nadir</title>
+    <meta name="description" content="Agent loops, RAG pipelines, and tool-heavy workflows waste tokens on formatting bloat. Nadir Context Optimize applies deterministic, lossless transforms to cut input tokens 30-70% with zero semantic loss.">
     <link rel="canonical" href="https://getnadir.com/blog/context-optimize-cut-llm-input-tokens.html" />
     <meta property="og:type" content="article">
     <meta property="og:title" content="Context Optimize: How We Cut LLM Input Tokens 30-70% Without Losing Accuracy">
-    <meta property="og:description" content="Agent loops, RAG pipelines, and tool-heavy workflows waste tokens on formatting bloat. NadirClaw Context Optimize cuts input tokens 30-70% with zero semantic loss.">
+    <meta property="og:description" content="Agent loops, RAG pipelines, and tool-heavy workflows waste tokens on formatting bloat. Nadir Context Optimize cuts input tokens 30-70% with zero semantic loss.">
     <meta property="og:url" content="https://getnadir.com/blog/context-optimize-cut-llm-input-tokens.html">
-    <meta property="og:site_name" content="NadirClaw">
+    <meta property="og:site_name" content="Nadir">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -28,10 +28,10 @@
       "@type": "Article",
       "headline": "Context Optimize: How We Cut LLM Input Tokens 30-70% Without Losing Accuracy",
       "datePublished": "2026-03-20",
-      "author": { "@type": "Organization", "name": "NadirClaw" },
-      "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" },
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
       "url": "https://getnadir.com/blog/context-optimize-cut-llm-input-tokens.html",
-      "description": "Agent loops, RAG pipelines, and tool-heavy workflows waste tokens on formatting bloat. NadirClaw Context Optimize applies deterministic, lossless transforms to cut input tokens 30-70% with zero semantic loss."
+      "description": "Agent loops, RAG pipelines, and tool-heavy workflows waste tokens on formatting bloat. Nadir Context Optimize applies deterministic, lossless transforms to cut input tokens 30-70% with zero semantic loss."
     }
     </script>
     <style>
@@ -92,7 +92,7 @@
 
     <h2>The problem: you are paying for formatting, not meaning</h2>
 
-    <p>LLM input tokens are expensive. Claude Opus 4.6 charges $15 per million input tokens. GPT-4 is in the same ballpark. And in production workloads &mdash; agent loops, RAG pipelines, tool-heavy workflows &mdash; a large fraction of those tokens carry zero semantic weight.</p>
+    <p>LLM input tokens are expensive. Claude Opus 4.6 charges $15 per million input tokens. GPT-4 is in the same ballpark. And in production workloads (agent loops, RAG pipelines, tool-heavy workflows), a large fraction of those tokens carry zero semantic weight.</p>
 
     <p>Consider what actually gets stuffed into context on every request: pretty-printed JSON with indentation and newlines that a model does not need. Identical tool schemas repeated on every turn of an agent loop. System prompts duplicated inside user messages by certain frameworks. Long chat histories where early turns are no longer relevant. Multiple spaces and blank lines that inflate token counts without adding information.</p>
 
@@ -107,11 +107,11 @@
     <p>Safe mode applies five transforms that are fully reversible and never alter semantic content:</p>
 
     <ol>
-        <li><strong>JSON minification</strong> &mdash; finds JSON objects and arrays in message content using <code>json.JSONDecoder.raw_decode</code>, then re-serializes them with no whitespace. Content inside fenced code blocks is skipped. The compact form only replaces the original if it is actually shorter.</li>
-        <li><strong>Tool schema deduplication</strong> &mdash; detects identical tool/function schemas across messages by comparing their canonical JSON representation. The first occurrence is kept in full. Subsequent copies are replaced with a short reference like <code>[see tool "web_search" schema above]</code>.</li>
-        <li><strong>System prompt deduplication</strong> &mdash; if the system prompt text appears verbatim in a later user message (common in some orchestration frameworks), the duplicate is removed from the later message. The system message itself is never modified.</li>
-        <li><strong>Whitespace normalization</strong> &mdash; collapses three or more consecutive blank lines to two, and collapses runs of multiple spaces to one. Lines inside fenced code blocks are skipped to preserve formatting where it matters.</li>
-        <li><strong>Chat history trimming</strong> &mdash; for conversations exceeding a configurable turn limit (default: 40), keeps the system prompt, the first user/assistant turn for task context, and the last N turns. A placeholder message notes how many turns were trimmed.</li>
+        <li><strong>JSON minification</strong>: finds JSON objects and arrays in message content using <code>json.JSONDecoder.raw_decode</code>, then re-serializes them with no whitespace. Content inside fenced code blocks is skipped. The compact form only replaces the original if it is actually shorter.</li>
+        <li><strong>Tool schema deduplication</strong>: detects identical tool/function schemas across messages by comparing their canonical JSON representation. The first occurrence is kept in full. Subsequent copies are replaced with a short reference like <code>[see tool "web_search" schema above]</code>.</li>
+        <li><strong>System prompt deduplication</strong>: if the system prompt text appears verbatim in a later user message (common in some orchestration frameworks), the duplicate is removed from the later message. The system message itself is never modified.</li>
+        <li><strong>Whitespace normalization</strong>: collapses three or more consecutive blank lines to two, and collapses runs of multiple spaces to one. Lines inside fenced code blocks are skipped to preserve formatting where it matters.</li>
+        <li><strong>Chat history trimming</strong>: for conversations exceeding a configurable turn limit (default: 40), keeps the system prompt, the first user/assistant turn for task context, and the last N turns. A placeholder message notes how many turns were trimmed.</li>
     </ol>
 
     <p>Every transform checks that its output is smaller than its input. If a replacement would somehow be larger, the original is kept untouched.</p>
@@ -159,9 +159,9 @@ Key differences: actual values, not indices.</code></pre>
 
     <h2>Accurate token counting with tiktoken</h2>
 
-    <p>Early in development, we used a <code>len(text) // 4</code> heuristic for token estimation. This is the rule of thumb you see everywhere &mdash; roughly four characters per token for English text. We measured the actual error and found it was about 18% off compared to the real BPE tokenizer output, sometimes overcounting and sometimes undercounting.</p>
+    <p>Early in development, we used a <code>len(text) // 4</code> heuristic for token estimation. This is the rule of thumb you see everywhere, roughly four characters per token for English text. We measured the actual error and found it was about 18% off compared to the real BPE tokenizer output, sometimes overcounting and sometimes undercounting.</p>
 
-    <p>For a feature whose entire value proposition is measured in token savings, an 18% measurement error is unacceptable. We switched to <code>tiktoken</code> with the <code>cl100k_base</code> encoding &mdash; the same BPE tokenizer used by GPT-4 and compatible with Claude-family token counting. The fallback to <code>len // 4</code> only activates if tiktoken is not installed.</p>
+    <p>For a feature whose entire value proposition is measured in token savings, an 18% measurement error is unacceptable. We switched to <code>tiktoken</code> with the <code>cl100k_base</code> encoding, the same BPE tokenizer used by GPT-4 and compatible with Claude-family token counting. The fallback to <code>len // 4</code> only activates if tiktoken is not installed.</p>
 
 <pre><code>try:
     import tiktoken as _tiktoken
@@ -231,12 +231,12 @@ except Exception:
     <p>The heaviest savings come from payloads with deeply nested JSON (the OpenAPI spec, the API response analysis) and from agent loops where tool schemas repeat across turns. RAG payloads benefit less because retrieval chunks are mostly prose with little formatting waste, but 29% is still meaningful at scale.</p>
 
     <div class="highlight-box">
-        <p><strong>Combined with routing:</strong> NadirClaw's tier-based routing already saves 40-70% by sending simple prompts to cheaper models. Context Optimize stacks on top of that. If routing cuts your bill by 50% and optimize cuts input tokens by another 60%, your effective cost reduction is significantly higher than either alone.</p>
+        <p><strong>Combined with routing:</strong> Nadir's tier-based routing already saves 30-60% by sending simple prompts to cheaper models. Context Optimize stacks on top of that. If routing cuts your bill by 50% and optimize cuts input tokens by another 60%, your effective cost reduction is significantly higher than either alone.</p>
     </div>
 
     <h2>How to enable</h2>
 
-    <p>Context Optimize is off by default. When disabled, it adds zero overhead &mdash; the code path is never entered.</p>
+    <p>Context Optimize is off by default. When disabled, it adds zero overhead. The code path is never entered.</p>
 
 <pre><code># Start the server with safe mode enabled
 nadirclaw serve --optimize safe
@@ -253,9 +253,9 @@ nadirclaw optimize payload.json --mode safe --format json</code></pre>
     <p>Three settings are available:</p>
 
     <ul>
-        <li><strong><code>off</code></strong> &mdash; default. No processing. Zero overhead.</li>
-        <li><strong><code>safe</code></strong> &mdash; lossless transforms only. Recommended for production.</li>
-        <li><strong><code>aggressive</code></strong> &mdash; all safe transforms plus semantic dedup via sentence embeddings. Requires <code>sentence-transformers</code>.</li>
+        <li><strong><code>off</code></strong>: default. No processing. Zero overhead.</li>
+        <li><strong><code>safe</code></strong>: lossless transforms only. Recommended for production.</li>
+        <li><strong><code>aggressive</code></strong>: all safe transforms plus semantic dedup via sentence embeddings. Requires <code>sentence-transformers</code>.</li>
     </ul>
 
     <p>The chat history trim threshold is configurable via <code>NADIRCLAW_OPTIMIZE_MAX_TURNS</code> (default: 40). Per-request overrides take precedence over the server-wide setting.</p>
@@ -265,20 +265,20 @@ nadirclaw optimize payload.json --mode safe --format json</code></pre>
     <p>The optimize module has 60 automated tests covering correctness, edge cases, and roundtrip integrity. Here are the categories that matter most:</p>
 
     <ul>
-        <li><strong>JSON roundtrip</strong> &mdash; <code>json.loads(before) == json.loads(after)</code> for every minification. No keys dropped, no values changed, no type coercion.</li>
-        <li><strong>Code block preservation</strong> &mdash; content inside fenced code blocks is never modified by any transform.</li>
-        <li><strong>Unicode safety</strong> &mdash; all transforms use <code>ensure_ascii=False</code>. CJK characters, emoji, and RTL text pass through unchanged.</li>
-        <li><strong>No negative savings</strong> &mdash; every transform checks that its output is smaller than its input. If not, the original is kept.</li>
+        <li><strong>JSON roundtrip</strong>: <code>json.loads(before) == json.loads(after)</code> for every minification. No keys dropped, no values changed, no type coercion.</li>
+        <li><strong>Code block preservation</strong>: content inside fenced code blocks is never modified by any transform.</li>
+        <li><strong>Unicode safety</strong>: all transforms use <code>ensure_ascii=False</code>. CJK characters, emoji, and RTL text pass through unchanged.</li>
+        <li><strong>No negative savings</strong>: every transform checks that its output is smaller than its input. If not, the original is kept.</li>
     </ul>
 
     <p>Five tests specifically target aggressive mode accuracy:</p>
 
     <ol>
-        <li><strong>Refined instructions preserved</strong> &mdash; when a user changes "return indices" to "return values, not indices," the diff phrase survives dedup.</li>
-        <li><strong>Format changes preserved</strong> &mdash; switching from "use a list" to "use a dictionary" is captured in the diff output.</li>
-        <li><strong>Language changes preserved</strong> &mdash; if a user switches from "write in Python" to "write in Rust," the language change is kept.</li>
-        <li><strong>No negative savings</strong> &mdash; if the reference-plus-diff replacement is larger than the original, dedup is skipped.</li>
-        <li><strong>Exact duplicates compacted</strong> &mdash; truly identical messages produce a clean reference with no diff section.</li>
+        <li><strong>Refined instructions preserved</strong>: when a user changes "return indices" to "return values, not indices," the diff phrase survives dedup.</li>
+        <li><strong>Format changes preserved</strong>: switching from "use a list" to "use a dictionary" is captured in the diff output.</li>
+        <li><strong>Language changes preserved</strong>: if a user switches from "write in Python" to "write in Rust," the language change is kept.</li>
+        <li><strong>No negative savings</strong>: if the reference-plus-diff replacement is larger than the original, dedup is skipped.</li>
+        <li><strong>Exact duplicates compacted</strong>: truly identical messages produce a clean reference with no diff section.</li>
     </ol>
 
     <h2>Implementation details</h2>
@@ -299,12 +299,12 @@ print(f"Transforms: {result.optimizations_applied}")</code></pre>
 
     <h2>What is next</h2>
 
-    <p>Context Optimize is available now in NadirClaw. Install with <code>pip install nadirclaw</code>, add <code>--optimize safe</code> to your serve command, and check your token savings in the dashboard. If you want to see what it would do before enabling it in production, the <code>nadirclaw optimize</code> CLI command lets you dry-run any payload file and inspect the results.</p>
+    <p>Context Optimize is available now in Nadir. Install with <code>pip install nadirclaw</code>, add <code>--optimize safe</code> to your serve command, and check your token savings in the dashboard. If you want to see what it would do before enabling it in production, the <code>nadirclaw optimize</code> CLI command lets you dry-run any payload file and inspect the results.</p>
 
     <p>The <a href="/optimize.html">Optimize feature page</a> has the full benchmark table, before/after examples, and projected monthly savings at different request volumes. The <a href="https://github.com/NadirRouter/NadirClaw">source code</a> is open and MIT-licensed.</p>
 </main>
 <footer>
-    <p>&copy; 2026 NadirClaw &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:amirdor@gmail.com">Contact</a></p>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
 </footer>
 </body>
 </html>

@@ -133,10 +133,10 @@ client = openai.OpenAI(
 client = openai.OpenAI(`}
                   {"\n"}
                   <span className="bg-[#0066ff]/5 text-[#0066ff]">
-                    {'    base_url="http://localhost:8856",'}
+                    {'    base_url="https://api.getnadir.com/v1",'}
                   </span>
                   {"\n"}
-                  {'    api_key="sk-..."'}
+                  {'    api_key="ndr_..."'}
                   {"\n)"}
                 </code>
               </pre>
@@ -151,11 +151,11 @@ client = openai.OpenAI(`}
                 Complex ones stay on premium. You save on every call.
               </p>
               <p className="text-[13px] text-[#999] mt-2">
-                Run{" "}
-                <code className="text-xs bg-white px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  nadirclaw report
-                </code>{" "}
-                to see your real savings breakdown.
+                Track every request in your{" "}
+                <a href="/auth?mode=signup" className="text-[#0066ff] hover:underline">
+                  dashboard
+                </a>
+                .
               </p>
             </div>
           </div>

@@ -1598,6 +1598,286 @@ export function ProFeaturesContent() {
 }
 
 /* ================================================================== */
+/*  PYTHON SDK                                                         */
+/* ================================================================== */
+
+export function SdkPythonContent() {
+  return (
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-semibold text-foreground">Python SDK</h1>
+        <P>
+          Official Python client for the Nadir LLM router. Provides typed access
+          to routing metadata, model recommendations, and all Nadir features
+          beyond what the OpenAI SDK offers.
+        </P>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Installation</H2>
+        <CodeBlock label="pip">{`pip install nadir-sdk`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Quick Start</H2>
+        <CodeBlock label="Python">{`from nadir import NadirClient
+
+client = NadirClient(api_key="ndr_...")
+
+# Chat completion — Nadir picks the optimal model
+response = client.chat.completions.create(
+    messages=[{"role": "user", "content": "What is 2+2?"}],
+)
+print(response.choices[0].message.content)
+
+# See which model was selected and why
+print(response.nadir_metadata.tier)             # "simple"
+print(response.nadir_metadata.selected_model)   # "gpt-4o-mini"
+print(response.nadir_metadata.complexity_score)  # 0.12`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Streaming</H2>
+        <CodeBlock label="Streaming">{`stream = client.chat.completions.create(
+    messages=[{"role": "user", "content": "Tell me a story"}],
+    stream=True,
+)
+for chunk in stream:
+    print(chunk.choices[0].delta.content or "", end="", flush=True)`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Model Recommendation (no LLM call)</H2>
+        <P>
+          Get a routing recommendation without making an LLM call. Useful for
+          previewing which model Nadir would select.
+        </P>
+        <CodeBlock label="Recommend">{`rec = client.recommend("Explain quantum entanglement in detail")
+print(rec)  # {"recommended_model": "claude-sonnet-4-20250514", "complexity": ...}`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Async</H2>
+        <CodeBlock label="Async">{`import asyncio
+from nadir import AsyncNadirClient
+
+async def main():
+    async with AsyncNadirClient(api_key="ndr_...") as client:
+        response = await client.chat.completions.create(
+            messages=[{"role": "user", "content": "Hello!"}],
+        )
+        print(response.choices[0].message.content)
+
+asyncio.run(main())`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Fallback &amp; Routing Control</H2>
+        <CodeBlock label="Advanced">{`response = client.chat.completions.create(
+    messages=[{"role": "user", "content": "Complex analysis..."}],
+    route="fallback",                          # enable auto-fallback
+    fallback_models=["claude-sonnet-4-20250514", "gpt-4o"],  # explicit fallback chain
+    layers={"routing": True, "optimize": True},  # per-request feature toggles
+    reasoning={"effort": "high"},              # reasoning token support
+)`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Environment Variables</H2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left p-3 font-medium text-foreground border-b border-border">Variable</th>
+                <th className="text-left p-3 font-medium text-foreground border-b border-border">Description</th>
+                <th className="text-left p-3 font-medium text-foreground border-b border-border">Default</th>
+              </tr>
+            </thead>
+            <tbody className="text-muted-foreground">
+              <tr className="border-b border-border">
+                <td className="p-3"><InlineCode>NADIR_API_KEY</InlineCode></td>
+                <td className="p-3">API key (fallback if not passed to constructor)</td>
+                <td className="p-3">-</td>
+              </tr>
+              <tr>
+                <td className="p-3"><InlineCode>NADIR_BASE_URL</InlineCode></td>
+                <td className="p-3">API base URL</td>
+                <td className="p-3"><InlineCode>https://api.getnadir.dev</InlineCode></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <H2>OpenAI Drop-in Compatibility</H2>
+        <P>
+          Nadir's API is OpenAI-compatible. You can also use the OpenAI SDK
+          directly. The Nadir SDK adds typed routing metadata, recommendations,
+          and clustering that the OpenAI SDK can't reach.
+        </P>
+        <CodeBlock label="OpenAI SDK">{`from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.getnadir.dev/v1",
+    api_key="ndr_...",
+)
+response = client.chat.completions.create(
+    model="auto",
+    messages=[{"role": "user", "content": "Hello"}],
+)`}</CodeBlock>
+      </div>
+
+      <Callout type="info">
+        Source code and issues:{" "}
+        <a
+          href="https://github.com/NadirRouter/nadir-python"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2"
+        >
+          github.com/NadirRouter/nadir-python
+        </a>
+      </Callout>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  NODE.JS SDK                                                        */
+/* ================================================================== */
+
+export function SdkNodeContent() {
+  return (
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-semibold text-foreground">Node.js SDK</h1>
+        <P>
+          Official Node.js/TypeScript client for the Nadir LLM router. Zero
+          runtime dependencies, native <InlineCode>fetch</InlineCode>, and full
+          TypeScript types.
+        </P>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Installation</H2>
+        <CodeBlock label="npm">{`npm install nadir-sdk`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Quick Start</H2>
+        <CodeBlock label="TypeScript">{`import { NadirClient } from "nadir-sdk";
+
+const client = new NadirClient({ apiKey: "ndr_..." });
+
+// Chat completion — Nadir picks the optimal model
+const response = await client.chat.completions.create({
+  messages: [{ role: "user", content: "What is 2+2?" }],
+});
+console.log(response.choices[0].message?.content);
+
+// See which model was selected and why
+console.log(response.nadir_metadata?.tier);             // "simple"
+console.log(response.nadir_metadata?.selected_model);   // "gpt-4o-mini"
+console.log(response.nadir_metadata?.complexity_score);  // 0.12`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Streaming</H2>
+        <CodeBlock label="Streaming">{`const stream = await client.chat.completions.create({
+  messages: [{ role: "user", content: "Tell me a story" }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? "");
+}`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Model Recommendation (no LLM call)</H2>
+        <P>
+          Get a routing recommendation without making an LLM call.
+        </P>
+        <CodeBlock label="Recommend">{`const rec = await client.recommend({
+  prompt: "Explain quantum entanglement in detail",
+});
+console.log(rec);`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Fallback &amp; Routing Control</H2>
+        <CodeBlock label="Advanced">{`const response = await client.chat.completions.create({
+  messages: [{ role: "user", content: "Complex analysis..." }],
+  route: "fallback",                              // enable auto-fallback
+  fallback_models: ["claude-sonnet-4-20250514", "gpt-4o"],  // explicit fallback chain
+  layers: { routing: true, optimize: true },        // per-request feature toggles
+  reasoning: { effort: "high" },                   // reasoning token support
+});`}</CodeBlock>
+      </div>
+
+      <div className="space-y-4">
+        <H2>Environment Variables</H2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left p-3 font-medium text-foreground border-b border-border">Variable</th>
+                <th className="text-left p-3 font-medium text-foreground border-b border-border">Description</th>
+                <th className="text-left p-3 font-medium text-foreground border-b border-border">Default</th>
+              </tr>
+            </thead>
+            <tbody className="text-muted-foreground">
+              <tr className="border-b border-border">
+                <td className="p-3"><InlineCode>NADIR_API_KEY</InlineCode></td>
+                <td className="p-3">API key (fallback if not passed to constructor)</td>
+                <td className="p-3">-</td>
+              </tr>
+              <tr>
+                <td className="p-3"><InlineCode>NADIR_BASE_URL</InlineCode></td>
+                <td className="p-3">API base URL</td>
+                <td className="p-3"><InlineCode>https://api.getnadir.dev</InlineCode></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <H2>OpenAI Drop-in Compatibility</H2>
+        <P>
+          Nadir's API is OpenAI-compatible. The Nadir SDK adds typed routing
+          metadata, recommendations, and clustering on top.
+        </P>
+        <CodeBlock label="OpenAI SDK">{`import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.getnadir.dev/v1",
+  apiKey: "ndr_...",
+});
+
+const response = await client.chat.completions.create({
+  model: "auto",
+  messages: [{ role: "user", content: "Hello" }],
+});`}</CodeBlock>
+      </div>
+
+      <Callout type="info">
+        Requires Node.js 18+ (native fetch). Source code and issues:{" "}
+        <a
+          href="https://github.com/NadirRouter/nadir-node"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2"
+        >
+          github.com/NadirRouter/nadir-node
+        </a>
+      </Callout>
+    </div>
+  );
+}
+
+/* ================================================================== */
 /*  Content map                                                        */
 /* ================================================================== */
 
@@ -1614,5 +1894,7 @@ export const docsContentMap: Record<string, () => JSX.Element> = {
   dashboard: DashboardContent,
   prometheus: PrometheusContent,
   "cli-commands": CliCommandsContent,
+  "sdk-python": SdkPythonContent,
+  "sdk-node": SdkNodeContent,
   "pro-features": ProFeaturesContent,
 };

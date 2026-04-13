@@ -115,6 +115,8 @@ class LiteLLMService:
             ("TOGETHERAI_API_KEY", os.getenv("TOGETHERAI_API_KEY")),
             ("COHERE_API_KEY", os.getenv("COHERE_API_KEY")),
             ("MISTRAL_API_KEY", os.getenv("MISTRAL_API_KEY")),
+            ("OPENROUTER_API_KEY", os.getenv("OPENROUTER_API_KEY")),
+            ("GROQ_API_KEY", os.getenv("GROQ_API_KEY")),
         ]:
             if key:
                 os.environ.setdefault(provider, key)

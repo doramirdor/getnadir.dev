@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { trackGitHubClick } from "@/utils/analytics";
 
 export const HeroSection = () => {
+  const [tab, setTab] = useState<"pro" | "selfhost">("pro");
+
   return (
     <section className="py-10 md:py-16 text-center">
       <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
@@ -11,15 +14,23 @@ export const HeroSection = () => {
         <p className="text-lg md:text-xl text-[#666] mb-10 max-w-[640px] mx-auto leading-relaxed">
           Every "write a test" or "fix this typo" burns premium LLM credits.{" "}
           <strong>Nadir</strong>{" "}
-          routes simple prompts to cheaper models automatically. Save on every
-          call that doesn't need your most expensive model.
+          routes simple prompts to cheaper models automatically. Save 30-60% on
+          calls that don't need your most expensive model.
         </p>
 
         <div className="flex gap-3 justify-center flex-wrap mb-4">
           <a
+            href="/auth?mode=signup"
+            className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
+          >
+            Try Free for 30 Days
+          </a>
+          <a
             href="https://github.com/NadirRouter/NadirClaw"
             onClick={() => trackGitHubClick("hero")}
-            className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] hover:border-[#666] hover:-translate-y-px hover:shadow-md transition-all no-underline"
           >
             <svg
               width="16"
@@ -31,16 +42,10 @@ export const HeroSection = () => {
             </svg>
             Star on GitHub
           </a>
-          <a
-            href="#calculator"
-            className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] hover:border-[#666] hover:-translate-y-px hover:shadow-md transition-all no-underline"
-          >
-            Quick Start
-          </a>
         </div>
 
         <p className="text-[13px] text-[#999] mb-8">
-          Two commands. Zero configuration.
+          No credit card required. Only pay for what we save you.
         </p>
 
         {/* Works with */}
@@ -65,29 +70,104 @@ export const HeroSection = () => {
         {/* Terminal Demo */}
         <div className="max-w-[720px] mx-auto relative">
           <div className="bg-white border border-[#e5e5e5] rounded-xl overflow-hidden text-left font-mono text-sm">
-            {/* Terminal header */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#e5e5e5] bg-[#fafafa]">
+            {/* Tab header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5] bg-[#fafafa]">
               <div className="flex gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
               </div>
-              <span className="text-xs text-[#999]">nadirclaw serve</span>
+              <div className="flex gap-1 bg-white border border-[#e5e5e5] rounded-md p-0.5">
+                <button
+                  onClick={() => setTab("pro")}
+                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                    tab === "pro"
+                      ? "bg-[#0a0a0a] text-white"
+                      : "text-[#999] hover:text-[#666]"
+                  }`}
+                >
+                  Pro (hosted)
+                </button>
+                <button
+                  onClick={() => setTab("selfhost")}
+                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
+                    tab === "selfhost"
+                      ? "bg-[#0a0a0a] text-white"
+                      : "text-[#999] hover:text-[#666]"
+                  }`}
+                >
+                  Self-host (free)
+                </button>
+              </div>
             </div>
 
             {/* Terminal body */}
             <div className="p-5">
-              <div className="mb-1 leading-[1.8]">
-                <span className="text-[#999]">$</span> nadirclaw serve
-              </div>
-              <div className="mb-1 leading-[1.8]">
-                <span className="text-[#00a86b]">&#10003;</span> Classifier
-                ready
-              </div>
-              <div className="mb-1 leading-[1.8]">
-                <span className="text-[#00a86b]">&#10003;</span> Listening on{" "}
-                <span className="text-[#0066ff]">localhost:8856</span>
-              </div>
+              {tab === "pro" ? (
+                <>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#0066ff]">import</span>{" "}
+                    <span className="text-[#0a0a0a]">openai</span>
+                  </div>
+                  <div className="h-2" />
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#0a0a0a]">client</span>{" "}
+                    <span className="text-[#999]">=</span>{" "}
+                    <span className="text-[#0a0a0a]">openai.OpenAI(</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8] pl-6">
+                    <span className="text-[#0a0a0a]">base_url</span>
+                    <span className="text-[#999]">=</span>
+                    <span className="text-[#0066ff]">"https://api.getnadir.com/v1"</span>
+                    <span className="text-[#999]">,</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8] pl-6">
+                    <span className="text-[#0a0a0a]">api_key</span>
+                    <span className="text-[#999]">=</span>
+                    <span className="text-[#0066ff]">"ndr_..."</span>
+                    <span className="text-[#999]">,</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#0a0a0a]">)</span>
+                  </div>
+                  <div className="h-2" />
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#0a0a0a]">r</span>{" "}
+                    <span className="text-[#999]">=</span>{" "}
+                    <span className="text-[#0a0a0a]">client.chat.completions.create(</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8] pl-6">
+                    <span className="text-[#0a0a0a]">model</span>
+                    <span className="text-[#999]">=</span>
+                    <span className="text-[#0066ff]">"auto"</span>
+                    <span className="text-[#999]">,</span>
+                    {"  "}
+                    <span className="text-[#999]"># Nadir picks the best model</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8] pl-6">
+                    <span className="text-[#0a0a0a]">messages</span>
+                    <span className="text-[#999]">=[{"{"}"role": "user", "content": "Hello!"{"}"}</span>
+                    <span className="text-[#999]">],</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#0a0a0a]">)</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#999]">$</span> nadirclaw serve
+                  </div>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#00a86b]">&#10003;</span> Classifier
+                    ready
+                  </div>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#00a86b]">&#10003;</span> Listening on{" "}
+                    <span className="text-[#0066ff]">localhost:8856</span>
+                  </div>
+                </>
+              )}
 
               <div className="h-4" />
 
@@ -96,14 +176,14 @@ export const HeroSection = () => {
                 {
                   type: "simple",
                   prompt: '"What is 2+2?"',
-                  model: "budget",
+                  model: "efficient",
                   cost: "$0.0002",
                   green: true,
                 },
                 {
                   type: "simple",
                   prompt: '"Format this JSON"',
-                  model: "budget",
+                  model: "efficient",
                   cost: "$0.0004",
                   green: true,
                 },
@@ -124,7 +204,7 @@ export const HeroSection = () => {
                 {
                   type: "simple",
                   prompt: '"Write a docstring for get_user()"',
-                  model: "budget",
+                  model: "efficient",
                   cost: "$0.0002",
                   green: true,
                 },

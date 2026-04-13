@@ -29,7 +29,7 @@ export const ContactFooter = () => {
           {/* Contact links with icons */}
           <div className="flex items-center justify-center gap-4 mt-6">
             <a
-              href="mailto:amirdor@gmail.com"
+              href="mailto:info@getnadir.com"
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#e5e5e5] text-[#666] hover:text-[#0a0a0a] hover:border-[#999] hover:bg-[#f5f5f5] transition-all no-underline text-sm"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NadirClaw Docs — Installation, API Reference & Configuration</title>
-    <meta name="description" content="Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.">
+    <title>NadirClaw Docs | Installation, API Reference & Configuration</title>
+    <meta name="description" content="Comprehensive documentation for NadirClaw, the open-source LLM router that cuts AI costs by 40-70%.">
     <link rel="canonical" href="https://getnadir.com/docs.html" />
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getnadir.com/docs.html">
-    <meta property="og:title" content="NadirClaw Documentation — Installation, Configuration & API Reference">
-    <meta property="og:description" content="Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.">
+    <meta property="og:title" content="NadirClaw Documentation | Installation, Configuration & API Reference">
+    <meta property="og:description" content="Comprehensive documentation for NadirClaw, the open-source LLM router that cuts AI costs by 40-70%.">
     <meta property="og:image" content="https://getnadir.com/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NadirClaw Documentation">
-    <meta name="twitter:description" content="Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.">
+    <meta name="twitter:description" content="Comprehensive documentation for NadirClaw, the open-source LLM router that cuts AI costs by 40-70%.">
     <meta name="twitter:image" content="https://getnadir.com/og-image.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -24,8 +24,8 @@
     {
       "@context": "https://schema.org",
       "@type": "TechArticle",
-      "headline": "NadirClaw Documentation — Installation, Configuration & API Reference",
-      "description": "Comprehensive documentation for NadirClaw — the open-source LLM router that cuts AI costs by 40-70%.",
+      "headline": "NadirClaw Documentation | Installation, Configuration & API Reference",
+      "description": "Comprehensive documentation for NadirClaw, the open-source LLM router that cuts AI costs by 40-70%.",
       "url": "https://getnadir.com/docs.html",
       "publisher": { "@type": "Organization", "name": "NadirClaw", "url": "https://getnadir.com" }
     }
@@ -458,7 +458,7 @@
 
         <main class="content">
             <h1>NadirClaw Documentation</h1>
-            <p class="lead">Open-source LLM router that classifies prompt complexity and routes to the optimal model. Cut AI API costs by 40–70% with zero code changes.</p>
+            <p class="lead">Open-source LLM router that classifies prompt complexity and routes to the optimal model. Cut AI API costs by 40-70% with zero code changes.</p>
 
             <!-- GETTING STARTED -->
             <h2 id="installation">Installation</h2>
@@ -497,9 +497,9 @@ nadirclaw serve --verbose</code></pre>
             <p>NadirClaw starts on <code>http://localhost:8856</code> with sensible defaults (Gemini Flash for simple, Codex for complex). If you skip <code>nadirclaw setup</code>, the <code>serve</code> command will offer to run it on first launch.</p>
 
             <h2 id="first-run">First Run</h2>
-            <p>On first request, NadirClaw downloads the <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">all-MiniLM-L6-v2</a> sentence embedding model (~80 MB). This takes 2–3 seconds. Subsequent requests classify in ~10ms.</p>
+            <p>On first request, NadirClaw downloads the <a href="https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2">all-MiniLM-L6-v2</a> sentence embedding model (~80 MB). This takes 2-3 seconds. Subsequent requests classify in ~10ms.</p>
             <div class="callout">
-                <p><strong>Prerequisites:</strong> Python 3.10+ and at least one LLM provider — a <a href="https://aistudio.google.com/apikey">Gemini API key</a> (free tier available), <a href="https://ollama.com">Ollama</a> running locally (free), or any cloud provider API key.</p>
+                <p><strong>Prerequisites:</strong> Python 3.10+ and at least one LLM provider: a <a href="https://aistudio.google.com/apikey">Gemini API key</a> (free tier available), <a href="https://ollama.com">Ollama</a> running locally (free), or any cloud provider API key.</p>
             </div>
 
             <!-- CONFIGURATION -->
@@ -534,9 +534,9 @@ nadirclaw serve --verbose</code></pre>
                     <tr><td><code>NADIRCLAW_MODEL_RATE_LIMITS</code></td><td><em>none</em></td><td>Per-model RPM limits (e.g. <code>gemini-3-flash-preview=30,gpt-4.1=60</code>)</td></tr>
                     <tr><td><code>NADIRCLAW_DEFAULT_MODEL_RPM</code></td><td><code>0</code> (unlimited)</td><td>Default RPM limit for all models</td></tr>
                     <tr><td><code>NADIRCLAW_API_BASE</code></td><td><em>none</em></td><td>Custom OpenAI-compatible endpoint (vLLM, LocalAI, etc.)</td></tr>
-                    <tr><td><code>GEMINI_API_KEY</code></td><td>—</td><td>Google Gemini API key</td></tr>
-                    <tr><td><code>ANTHROPIC_API_KEY</code></td><td>—</td><td>Anthropic API key</td></tr>
-                    <tr><td><code>OPENAI_API_KEY</code></td><td>—</td><td>OpenAI API key</td></tr>
+                    <tr><td><code>GEMINI_API_KEY</code></td><td>-</td><td>Google Gemini API key</td></tr>
+                    <tr><td><code>ANTHROPIC_API_KEY</code></td><td>-</td><td>Anthropic API key</td></tr>
+                    <tr><td><code>OPENAI_API_KEY</code></td><td>-</td><td>OpenAI API key</td></tr>
                     <tr><td><code>OLLAMA_API_BASE</code></td><td><code>http://localhost:11434</code></td><td>Ollama base URL</td></tr>
                     <tr><td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td><td><em>empty</em></td><td>OpenTelemetry collector endpoint</td></tr>
                 </tbody>
@@ -625,9 +625,9 @@ nadirclaw auth remove google</code></pre>
             <h3>How Classification Works</h3>
             <p>NadirClaw uses a binary complexity classifier based on sentence embeddings:</p>
             <ol>
-                <li><strong>Pre-computed centroids</strong> — two tiny vectors (~1.5 KB each) derived from ~170 seed prompts, shipped with the package.</li>
-                <li><strong>Classification</strong> — computes the prompt's embedding via <code>all-MiniLM-L6-v2</code> and measures cosine similarity to both centroids. Closer to complex centroid → complex model.</li>
-                <li><strong>Borderline handling</strong> — when confidence is below threshold (default <code>0.06</code>), defaults to complex. It's cheaper to over-serve than under-serve.</li>
+                <li><strong>Pre-computed centroids:</strong> two tiny vectors (~1.5 KB each) derived from ~170 seed prompts, shipped with the package.</li>
+                <li><strong>Classification:</strong> computes the prompt's embedding via <code>all-MiniLM-L6-v2</code> and measures cosine similarity to both centroids. Closer to complex centroid → complex model.</li>
+                <li><strong>Borderline handling:</strong> when confidence is below threshold (default <code>0.06</code>), defaults to complex. It's cheaper to over-serve than under-serve.</li>
             </ol>
 
             <h3>Routing Tiers</h3>
@@ -646,11 +646,11 @@ nadirclaw auth remove google</code></pre>
             <h3>Routing Modifiers</h3>
             <p>After base classification, these overrides apply in order:</p>
             <ul>
-                <li><strong>Agentic detection</strong> — forces complex when tool definitions, tool-role messages, or agent system prompts are detected</li>
-                <li><strong>Reasoning detection</strong> — routes to reasoning model when 2+ reasoning markers found</li>
-                <li><strong>Vision detection</strong> — swaps to a vision-capable model (GPT-4o, Claude, Gemini) when <code>image_url</code> content is detected</li>
-                <li><strong>Context window check</strong> — swaps to a model with larger context if conversation exceeds model's limit</li>
-                <li><strong>Session persistence</strong> — reuses the same model for follow-up messages (30-minute TTL)</li>
+                <li><strong>Agentic detection:</strong> forces complex when tool definitions, tool-role messages, or agent system prompts are detected</li>
+                <li><strong>Reasoning detection:</strong> routes to reasoning model when 2+ reasoning markers found</li>
+                <li><strong>Vision detection:</strong> swaps to a vision-capable model (GPT-4o, Claude, Gemini) when <code>image_url</code> content is detected</li>
+                <li><strong>Context window check:</strong> swaps to a model with larger context if conversation exceeds model's limit</li>
+                <li><strong>Session persistence:</strong> reuses the same model for follow-up messages (30-minute TTL)</li>
             </ul>
 
             <h3>Confidence Threshold</h3>
@@ -692,9 +692,9 @@ NADIRCLAW_TIER_THRESHOLDS=0.35,0.65</code></pre>
             <table>
                 <thead><tr><th>Score Range</th><th>Tier</th><th>Model</th></tr></thead>
                 <tbody>
-                    <tr><td>0.00 – 0.35</td><td>Simple</td><td><code>NADIRCLAW_SIMPLE_MODEL</code></td></tr>
-                    <tr><td>0.35 – 0.65</td><td>Mid</td><td><code>NADIRCLAW_MID_MODEL</code></td></tr>
-                    <tr><td>0.65 – 1.00</td><td>Complex</td><td><code>NADIRCLAW_COMPLEX_MODEL</code></td></tr>
+                    <tr><td>0.00 - 0.35</td><td>Simple</td><td><code>NADIRCLAW_SIMPLE_MODEL</code></td></tr>
+                    <tr><td>0.35 - 0.65</td><td>Mid</td><td><code>NADIRCLAW_MID_MODEL</code></td></tr>
+                    <tr><td>0.65 - 1.00</td><td>Complex</td><td><code>NADIRCLAW_COMPLEX_MODEL</code></td></tr>
                 </tbody>
             </table>
 
@@ -747,7 +747,7 @@ nadirclaw cache
 # API endpoint
 curl http://localhost:8856/v1/cache</code></pre>
 
-            <p>Cache is keyed on the full message content. Streaming requests with identical content will also hit the cache. Only exact matches count — no fuzzy matching.</p>
+            <p>Cache is keyed on the full message content. Streaming requests with identical content will also hit the cache. Only exact matches count. No fuzzy matching.</p>
 
             <!-- INTEGRATIONS -->
             <h2 id="claude-code">Claude Code</h2>
@@ -763,7 +763,7 @@ claude</code></pre>
             <p>Or use a shell alias:</p>
 <pre><code>alias claude-routed='ANTHROPIC_BASE_URL=http://localhost:8856/v1 ANTHROPIC_API_KEY=local claude'</code></pre>
 
-            <p>Simple prompts ("read this file", "what does this function do?") route to a cheap model like Gemini Flash. Complex prompts ("refactor this module") stay on Claude. Typical savings: 40–70%.</p>
+            <p>Simple prompts ("read this file", "what does this function do?") route to a cheap model like Gemini Flash. Complex prompts ("refactor this module") stay on Claude. Typical savings: 40-70%.</p>
 
             <h3>Using your Claude subscription</h3>
 <pre><code># OAuth login (opens browser)
@@ -779,7 +779,7 @@ nadirclaw openclaw onboard
 # Start the router
 nadirclaw serve</code></pre>
 
-            <p>This writes NadirClaw as a provider in <code>~/.openclaw/openclaw.json</code> with model <code>nadirclaw/auto</code>. OpenClaw auto-reloads — no restart needed.</p>
+            <p>This writes NadirClaw as a provider in <code>~/.openclaw/openclaw.json</code> with model <code>nadirclaw/auto</code>. OpenClaw auto-reloads automatically, no restart needed.</p>
 
             <p>The generated config:</p>
 <pre><code>{
@@ -826,18 +826,18 @@ nadirclaw continue onboard</code></pre>
             <h2 id="cursor">Cursor</h2>
 <pre><code># Show setup instructions
 nadirclaw cursor onboard</code></pre>
-            <p>In Cursor: <strong>Settings → Models → OpenAI API Key:</strong> <code>local</code>, <strong>Base URL:</strong> <code>http://localhost:8856/v1</code>. Select a model or use <code>auto</code>.</p>
+            <p>In Cursor: <strong>Settings > Models > OpenAI API Key:</strong> <code>local</code>, <strong>Base URL:</strong> <code>http://localhost:8856/v1</code>. Select a model or use <code>auto</code>.</p>
 
             <h2 id="open-webui">Open WebUI</h2>
 <pre><code># Show setup instructions
 nadirclaw openwebui onboard</code></pre>
-            <p>In Open WebUI: <strong>Admin Settings → Connections → OpenAI → Add Connection</strong>. Set URL to <code>http://localhost:8856/v1</code> and API Key to <code>local</code>. Open WebUI auto-discovers NadirClaw's routing profiles and tier models via <code>/v1/models</code>.</p>
+            <p>In Open WebUI: <strong>Admin Settings > Connections > OpenAI > Add Connection</strong>. Set URL to <code>http://localhost:8856/v1</code> and API Key to <code>local</code>. Open WebUI auto-discovers NadirClaw's routing profiles and tier models via <code>/v1/models</code>.</p>
 
             <h2 id="openai-compatible">Any OpenAI-Compatible Client</h2>
             <p>NadirClaw exposes a standard OpenAI-compatible API. Point any tool at it:</p>
 <pre><code># Base URL: http://localhost:8856/v1
 # Model: "auto" (or omit)
-# API Key: "local" (or anything — auth disabled by default)</code></pre>
+# API Key: "local" (or anything - auth disabled by default)</code></pre>
 
             <h3>Python (openai SDK)</h3>
 <pre><code>from openai import OpenAI
@@ -886,7 +886,7 @@ Options:
   --log-raw               Log full raw requests/responses to JSONL</code></pre>
 
             <h3>nadirclaw setup</h3>
-            <p>Interactive setup wizard — guides you through providers, API keys, and model selection.</p>
+            <p>Interactive setup wizard. Guides you through providers, API keys, and model selection.</p>
 <pre><code>nadirclaw setup</code></pre>
 
             <h3>nadirclaw classify</h3>
@@ -1006,10 +1006,10 @@ nadirclaw dashboard</code></pre>
                     <tr><td><code>nadirclaw_tokens_completion_total</code></td><td>counter</td><td>model</td><td>Total completion tokens</td></tr>
                     <tr><td><code>nadirclaw_cost_dollars_total</code></td><td>counter</td><td>model</td><td>Estimated cost in USD</td></tr>
                     <tr><td><code>nadirclaw_request_latency_ms</code></td><td>histogram</td><td>model, tier</td><td>Request latency distribution</td></tr>
-                    <tr><td><code>nadirclaw_cache_hits_total</code></td><td>counter</td><td>—</td><td>Prompt cache hits</td></tr>
+                    <tr><td><code>nadirclaw_cache_hits_total</code></td><td>counter</td><td>-</td><td>Prompt cache hits</td></tr>
                     <tr><td><code>nadirclaw_fallbacks_total</code></td><td>counter</td><td>from_model, to_model</td><td>Fallback events</td></tr>
                     <tr><td><code>nadirclaw_errors_total</code></td><td>counter</td><td>model, error_type</td><td>Request errors</td></tr>
-                    <tr><td><code>nadirclaw_uptime_seconds</code></td><td>gauge</td><td>—</td><td>Seconds since start</td></tr>
+                    <tr><td><code>nadirclaw_uptime_seconds</code></td><td>gauge</td><td>-</td><td>Seconds since start</td></tr>
                 </tbody>
             </table>
 
@@ -1031,9 +1031,9 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 nadirclaw serve</code></pre>
 
             <p>Emitted spans:</p>
             <ul>
-                <li><code>smart_route_analysis</code> — classifier decision (tier, confidence, model selected)</li>
-                <li><code>dispatch_model</code> — LLM provider call (model, tokens, latency)</li>
-                <li><code>chat_completion</code> — full request lifecycle</li>
+                <li><code>smart_route_analysis</code>: classifier decision (tier, confidence, model selected)</li>
+                <li><code>dispatch_model</code>: LLM provider call (model, tokens, latency)</li>
+                <li><code>chat_completion</code>: full request lifecycle</li>
             </ul>
             <p>Includes GenAI semantic conventions plus custom <code>nadirclaw.*</code> attributes for routing metadata.</p>
 
@@ -1113,8 +1113,8 @@ docker run -p 8856:8856 --env-file .env nadirclaw</code></pre>
             <!-- TROUBLESHOOTING -->
             <h2 id="troubleshooting">Troubleshooting</h2>
 
-            <h3>First request is slow (2–3 seconds)</h3>
-            <p>Normal — NadirClaw downloads the sentence embedding model (~80 MB) on first use. Subsequent requests classify in ~10ms.</p>
+            <h3>First request is slow (2-3 seconds)</h3>
+            <p>This is normal. NadirClaw downloads the sentence embedding model (~80 MB) on first use. Subsequent requests classify in ~10ms.</p>
 
             <h3>Port 8856 already in use</h3>
 <pre><code># Use a different port
@@ -1149,7 +1149,7 @@ OLLAMA_API_BASE=http://192.168.1.100:11434 nadirclaw serve</code></pre>
             <p>NadirClaw supports full SSE streaming. Ensure your request includes <code>"stream": true</code> and your client handles SSE format. Check that you're not behind a reverse proxy that buffers responses.</p>
 
             <h3>Rate limits (429 errors)</h3>
-            <p>NadirClaw handles these automatically — retries once, then falls through the fallback chain. If all models are exhausted, configure additional fallbacks:</p>
+            <p>NadirClaw handles these automatically. It retries once, then falls through the fallback chain. If all models are exhausted, configure additional fallbacks:</p>
 <pre><code>NADIRCLAW_FALLBACK_CHAIN=gpt-4.1,claude-sonnet-4-5-20250929,gemini-2.5-flash</code></pre>
 
             <h3>Viewing logs</h3>

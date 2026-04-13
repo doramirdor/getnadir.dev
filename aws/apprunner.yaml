@@ -1,0 +1,28 @@
+# AWS App Runner configuration for Nadir backend
+# Simpler than ECS Fargate — just push code, AWS handles the rest.
+#
+# Deploy:
+#   1. Push Docker image to ECR (see deploy-aws.sh)
+#   2. App Runner auto-deploys from ECR
+#
+# Or use the CLI:
+#   aws apprunner create-service --cli-input-json file://aws/apprunner-service.json
+
+version: 1.0
+runtime: python312
+build:
+  commands:
+    build:
+      - pip install -r backend/requirements.txt
+  env:
+    - name: PYTHONUNBUFFERED
+      value: "1"
+run:
+  command: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 4 --timeout 120
+  network:
+    port: 8000
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+    - name: DEBUG
+      value: "False"

@@ -10,7 +10,7 @@ export default function OpenClaw() {
     <MarketingLayout>
       <SEO
         title="OpenClaw Integration - Nadir | Smart Routing for OpenClaw Agents"
-        description="Add intelligent LLM routing to OpenClaw with one command. Same keys, same workflow — 30-60% cheaper."
+        description="Add intelligent LLM routing to OpenClaw with one command. Same keys, same workflow, 30-60% cheaper."
         path="/openclaw"
       />
 
@@ -24,7 +24,7 @@ export default function OpenClaw() {
         </h1>
         <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
           Nadir plugs into OpenClaw as a model provider. Your agents automatically
-          use cheaper models for simple prompts — same keys, same workflow, 30-60% lower costs.
+          use cheaper models for simple prompts. Same keys, same workflow, 30-60% lower costs.
         </p>
       </section>
 
@@ -36,7 +36,7 @@ export default function OpenClaw() {
             <div className="text-sm font-semibold text-[#0066ff] mb-2">1. Install & setup</div>
             <p className="text-sm text-[#666]">
               Install Nadir and run the setup wizard. It detects your existing OpenClaw
-              credentials automatically — no extra keys needed.
+              credentials automatically. No extra keys needed.
             </p>
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
@@ -89,7 +89,7 @@ openclaw gateway restart
             <h3 className="text-sm font-semibold mb-2">Same keys, zero config</h3>
             <p className="text-sm text-[#666]">
               Nadir reads your OpenClaw credential store directly. If you already have
-              API keys in OpenClaw, Nadir uses them — nothing to copy or re-enter.
+              API keys in OpenClaw, Nadir uses them. Nothing to copy or re-enter.
             </p>
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
@@ -122,7 +122,7 @@ openclaw gateway restart
           <h2 className="text-xl font-semibold mb-2">Want hosted routing with analytics?</h2>
           <p className="text-sm text-[#666] max-w-lg mx-auto mb-6">
             Nadir Pro gives you a managed proxy with team dashboards, savings tracking,
-            and priority support — still works seamlessly with OpenClaw.
+            and priority support. Still works seamlessly with OpenClaw.
           </p>
           <WaitlistForm variant="card" source="openclaw-page" />
         </div>

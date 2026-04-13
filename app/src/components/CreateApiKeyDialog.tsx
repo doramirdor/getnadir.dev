@@ -39,9 +39,34 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowDown,
+  CircleCheck,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+const PROVIDER_KEY_FIELDS = [
+  { key: "openai", label: "OpenAI", placeholder: "sk-..." },
+  { key: "anthropic", label: "Anthropic", placeholder: "sk-ant-..." },
+  { key: "google", label: "Google AI", placeholder: "AI..." },
+  { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-..." },
+  { key: "groq", label: "Groq", placeholder: "gsk_..." },
+];
+
+function isProviderKeyFormatValid(provider: string, key: string): boolean {
+  if (!key.trim()) return false;
+  switch (provider) {
+    case "openai": return key.startsWith("sk-") && key.length > 20;
+    case "anthropic": return key.startsWith("sk-ant-") && key.length > 20;
+    case "openrouter": return key.startsWith("sk-or-") && key.length > 20;
+    case "groq": return key.startsWith("gsk_") && key.length > 20;
+    default: return key.length > 10;
+  }
+}
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -87,6 +112,16 @@ const MODELS_BY_PROVIDER: Record<string, ModelDef[]> = {
     { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", inputCost: 0.1, outputCost: 0.4 },
     { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", inputCost: 1.25, outputCost: 10 },
   ],
+  groq: [
+    { id: "groq/llama-3.3-70b-versatile", name: "Llama 3.3 70B", inputCost: 0.59, outputCost: 0.79 },
+    { id: "groq/mixtral-8x7b-32768", name: "Mixtral 8x7B", inputCost: 0.24, outputCost: 0.24 },
+  ],
+  openrouter: [
+    { id: "openrouter/auto", name: "OpenRouter Auto", inputCost: 1, outputCost: 5 },
+    { id: "openrouter/anthropic/claude-sonnet-4-20250514", name: "Claude Sonnet 4 (OR)", inputCost: 3, outputCost: 15 },
+    { id: "openrouter/openai/gpt-4o", name: "GPT-4o (OR)", inputCost: 2.5, outputCost: 10 },
+    { id: "openrouter/google/gemini-2.0-flash-001", name: "Gemini Flash (OR)", inputCost: 0.1, outputCost: 0.4 },
+  ],
 };
 
 // Hosted = only Bedrock (Anthropic Claude models)
@@ -101,14 +136,12 @@ const PROVIDER_DISPLAY: Record<string, string> = {
   openai: "OpenAI",
   google: "Google",
   "amazon-bedrock": "Amazon Bedrock",
+  openrouter: "OpenRouter",
+  groq: "Groq",
 };
 
-const STEP_TITLES = [
-  "Name & Mode",
-  "Routing & Models",
-  "Fallback Chains",
-  "Review & Create",
-];
+const BASE_STEPS = ["Name & Mode", "Routing & Models", "Fallback Chains", "Review & Create"];
+const PROVIDER_STEP_TITLE = "Provider Keys";
 
 function blendedCost(m: ModelDef): number {
   return m.inputCost + m.outputCost;
@@ -124,7 +157,10 @@ function pricingLabel(m: ModelDef): string {
 export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig }: CreateApiKeyDialogProps) {
   const isEdit = !!editConfig;
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
+  const [newProviderKeys, setNewProviderKeys] = useState<Record<string, string>>({});
 
   // Step 1
   const [keyName, setKeyName] = useState("");
@@ -139,12 +175,28 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
   const [mediumModel, setMediumModel] = useState("");
   const [complexModel, setComplexModel] = useState("");
 
+  // Step 2b: Optimize
+  const [optimizeMode, setOptimizeMode] = useState<"off" | "safe" | "aggressive">("off");
+
   // Step 3: Fallback
   const [fallbackEnabled, setFallbackEnabled] = useState(true);
   const [fallbackChain, setFallbackChain] = useState<string[]>([]);
 
   // Submitting
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Dynamic steps: insert "Provider Keys" step after "Name & Mode" when BYOK + no keys ──
+  // Only show provider step for new keys (not edit) when providers haven't loaded yet or are empty
+  const needsProviderStep = !isEdit && mode === "byok" && !loadingProviders && configuredProviders.length === 0;
+  const STEP_TITLES = useMemo(() => {
+    if (needsProviderStep) {
+      return [BASE_STEPS[0], PROVIDER_STEP_TITLE, ...BASE_STEPS.slice(1)];
+    }
+    return BASE_STEPS;
+  }, [needsProviderStep]);
+
+  // Map logical step index to step type
+  const stepType = (s: number): string => STEP_TITLES[s] || "";
 
   // ── Reset / pre-populate ──
   useEffect(() => {
@@ -179,6 +231,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
         setFallbackEnabled(true);
         setFallbackChain([]);
         setOptimizeMode("off");
+        setNewProviderKeys({});
       }
     }
   }, [open]);
@@ -212,17 +265,46 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
     } catch {}
   };
 
-  // ── Available models ──
+  // ── Available models (includes both saved + newly entered provider keys) ──
+  const allProviders = useMemo(() => {
+    const s = new Set(configuredProviders);
+    for (const [provider, key] of Object.entries(newProviderKeys)) {
+      if (key.trim() && isProviderKeyFormatValid(provider, key)) s.add(provider);
+    }
+    return Array.from(s);
+  }, [configuredProviders, newProviderKeys]);
+
   const availableModels: ModelDef[] = useMemo(() => {
     if (mode === "hosted") return HOSTED_MODELS;
     const models: ModelDef[] = [];
-    for (const provider of configuredProviders) {
+    const seen = new Set<string>();
+    for (const provider of allProviders) {
       if (MODELS_BY_PROVIDER[provider]) {
-        models.push(...MODELS_BY_PROVIDER[provider]);
+        for (const m of MODELS_BY_PROVIDER[provider]) {
+          if (!seen.has(m.id)) { models.push(m); seen.add(m.id); }
+        }
+      }
+    }
+    // In edit mode, ensure previously-selected models are always available
+    if (editConfig?.model_parameters?.tier_models) {
+      const tiers = editConfig.model_parameters.tier_models;
+      for (const id of [tiers.simple, tiers.medium, tiers.complex].filter(Boolean)) {
+        if (!seen.has(id)) {
+          models.push({ id, name: id, inputCost: 0, outputCost: 0 });
+          seen.add(id);
+        }
+      }
+    }
+    if (editConfig?.model_parameters?.fallback_chain) {
+      for (const id of editConfig.model_parameters.fallback_chain) {
+        if (!seen.has(id)) {
+          models.push({ id, name: id, inputCost: 0, outputCost: 0 });
+          seen.add(id);
+        }
       }
     }
     return models;
-  }, [mode, configuredProviders]);
+  }, [mode, allProviders, editConfig]);
 
   // Sorted by cost for dropdowns
   const sortedModels = useMemo(
@@ -272,14 +354,21 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
   }, [routingEnabled, simpleModel, mediumModel, complexModel]);
 
   // ── Validation ──
+  // Count valid new inline provider keys
+  const validNewKeys = Object.entries(newProviderKeys).filter(
+    ([provider, key]) => key.trim() && isProviderKeyFormatValid(provider, key)
+  );
+  const totalProviders = configuredProviders.length + validNewKeys.length;
+
   const canProceedStep = (s: number): boolean => {
-    switch (s) {
-      case 0:
-        return keyName.trim().length >= 1 && (mode === "hosted" || configuredProviders.length > 0);
-      case 1:
+    const type = stepType(s);
+    switch (type) {
+      case "Name & Mode":
+        return keyName.trim().length >= 1;
+      case "Provider Keys":
+        return validNewKeys.length > 0;
+      case "Routing & Models":
         if (routingEnabled) return !!simpleModel && !!complexModel;
-        return true; // no routing = no model requirements here
-      case 2:
         return true;
       default:
         return true;
@@ -287,13 +376,18 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
   };
 
   const validateStep = (s: number): boolean => {
-    if (s === 0) {
+    const type = stepType(s);
+    if (type === "Name & Mode") {
       const t = keyName.trim();
       if (t.length < 1 || t.length > 50) { setNameError("Name must be 1-50 characters"); return false; }
       if (!/^[a-zA-Z0-9 _-]+$/.test(t)) { setNameError("Letters, numbers, spaces, dashes, underscores only"); return false; }
-      if (mode === "byok" && configuredProviders.length === 0) { setNameError("Configure provider keys in Integrations first"); return false; }
       setNameError("");
       return true;
+    }
+    if (type === "Provider Keys") {
+      return validNewKeys.length > 0;
+    }
+    if (type === "Routing & Models") {
     }
     return canProceedStep(s);
   };
@@ -319,10 +413,35 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
     setFallbackChain(fallbackChain.filter((x) => x !== id));
   };
 
-  // ── Create ──
+  // ── Save new provider keys via JWT, then create API key ──
   const handleCreate = async () => {
     setSubmitting(true);
     try {
+      // Save any new provider keys entered inline
+      if (mode === "byok" && validNewKeys.length > 0) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("Not authenticated");
+
+        for (const [provider, key] of validNewKeys) {
+          const resp = await fetch(`${API_BASE}/v1/provider-keys/setup`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ provider, api_key: key }),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Failed to save ${provider} key`);
+          }
+        }
+        toast({
+          title: "Provider keys saved",
+          description: `${validNewKeys.length} provider key(s) configured.`,
+        });
+      }
+
       const benchmark = complexModel || (sortedModels.length > 0 ? sortedModels[sortedModels.length - 1].id : "");
       await onCreate({
         name: keyName.trim(),
@@ -330,7 +449,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
         benchmark_model: benchmark,
         model_parameters: {
           key_mode: mode,
-          layers: { routing: routingEnabled, fallback: fallbackEnabled, optimize: "off" as const },
+          layers: { routing: routingEnabled, fallback: fallbackEnabled, optimize: optimizeMode },
           ...(routingEnabled
             ? {
                 tier_models: {
@@ -344,7 +463,9 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
         },
       });
       onClose();
-    } catch {} finally {
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Error", description: e.message });
+    } finally {
       setSubmitting(false);
     }
   };
@@ -368,7 +489,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
         </div>
 
         {/* ═══ STEP 1: Name & Mode ═══ */}
-        {step === 0 && (
+        {stepType(step) === "Name & Mode" && (
           <div className="space-y-5 py-2">
             <div className="space-y-2">
               <Label className="text-sm font-medium">API Key Name</Label>
@@ -409,18 +530,13 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
             </div>
 
             {mode === "hosted" && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 rounded-lg text-xs text-blue-700 dark:text-blue-400">
                 <Zap className="w-3.5 h-3.5 flex-shrink-0" />
                 Powered by AWS Bedrock - currently supporting Anthropic Claude models.
               </div>
             )}
 
-            {mode === "byok" && configuredProviders.length === 0 && !loadingProviders && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-                No provider keys configured. Go to <strong>Integrations</strong> to add keys first.
-              </div>
-            )}
-            {mode === "byok" && configuredProviders.length > 0 && (
+            {mode === "byok" && !loadingProviders && configuredProviders.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {configuredProviders.map((p) => (
                   <Badge key={p} variant="outline" className="text-xs">
@@ -429,11 +545,65 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                 ))}
               </div>
             )}
+            {mode === "byok" && !loadingProviders && configuredProviders.length === 0 && !isEdit && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-700 dark:text-amber-400">
+                <Key className="w-3.5 h-3.5 flex-shrink-0" />
+                You'll configure provider keys in the next step.
+              </div>
+            )}
           </div>
         )}
 
-        {/* ═══ STEP 2: Routing & Models ═══ */}
-        {step === 1 && (
+        {/* ═══ PROVIDER KEYS STEP (only when BYOK + no existing keys) ═══ */}
+        {stepType(step) === "Provider Keys" && (
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Add at least one provider key to use BYOK mode. You can add more later from Integrations.
+            </p>
+            <div className="space-y-3">
+              {PROVIDER_KEY_FIELDS.map((field) => {
+                const value = newProviderKeys[field.key] || "";
+                const valid = isProviderKeyFormatValid(field.key, value);
+                const showValidation = value.trim().length > 0;
+                return (
+                  <div key={field.key} className="space-y-1">
+                    <Label className="text-xs">{field.label}</Label>
+                    <div className="relative">
+                      <Input
+                        type="password"
+                        placeholder={field.placeholder}
+                        value={value}
+                        onChange={(e) =>
+                          setNewProviderKeys({ ...newProviderKeys, [field.key]: e.target.value })
+                        }
+                        className={
+                          showValidation
+                            ? valid
+                              ? "pr-9 border-green-400 focus-visible:ring-green-400"
+                              : "pr-9 border-orange-300 focus-visible:ring-orange-300"
+                            : ""
+                        }
+                      />
+                      {showValidation && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {valid ? (
+                            <CircleCheck className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <span className="text-xs text-orange-400">check format</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">Keys are encrypted at rest.</p>
+          </div>
+        )}
+
+        {/* ═══ Routing & Models ═══ */}
+        {stepType(step) === "Routing & Models" && (
           <div className="space-y-5 py-2">
             {/* Routing toggle */}
             <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -507,6 +677,41 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                 {(!simpleModel || !complexModel) && (
                   <p className="text-xs text-amber-600">Simple and Complex tiers are required.</p>
                 )}
+
+                {/* Warn if tier pricing is inverted */}
+                {simpleModel && complexModel && (() => {
+                  const s = getModel(simpleModel);
+                  const m = mediumModel ? getModel(mediumModel) : null;
+                  const c = getModel(complexModel);
+                  const warnings: string[] = [];
+                  if (s && c && blendedCost(s) > blendedCost(c)) {
+                    warnings.push(
+                      `Simple tier (${s.name} — ${pricingLabel(s)}) is more expensive than Complex tier (${c.name} — ${pricingLabel(c)}).`
+                    );
+                  }
+                  if (s && m && blendedCost(s) > blendedCost(m)) {
+                    warnings.push(
+                      `Simple tier (${s.name}) is more expensive than Medium tier (${m.name}).`
+                    );
+                  }
+                  if (m && c && blendedCost(m) > blendedCost(c)) {
+                    warnings.push(
+                      `Medium tier (${m.name}) is more expensive than Complex tier (${c.name}).`
+                    );
+                  }
+                  if (warnings.length === 0) return null;
+                  return (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-1">
+                      <p className="text-sm font-medium text-amber-800">Inverted pricing detected</p>
+                      {warnings.map((w, i) => (
+                        <p key={i} className="text-xs text-amber-700">{w}</p>
+                      ))}
+                      <p className="text-xs text-amber-700 font-medium">
+                        Routing will cost you more, not less. Did you mean to swap them?
+                      </p>
+                    </div>
+                  );
+                })()}
               </>
             ) : (
               <div className="p-4 bg-muted/50 rounded-lg space-y-2">
@@ -520,7 +725,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
         )}
 
         {/* ═══ STEP 3: Fallback Chains ═══ */}
-        {step === 2 && (
+        {stepType(step) === "Fallback Chains" && (
           <div className="space-y-4 py-2">
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
@@ -677,7 +882,7 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
         )}
 
         {/* ═══ STEP 4: Review & Create ═══ */}
-        {step === 3 && (
+        {stepType(step) === "Review & Create" && (
           <div className="space-y-3 py-2">
             <div className="border rounded-lg divide-y">
               <div className="p-3 flex items-center justify-between">

@@ -12,6 +12,7 @@ import {
   Activity,
   Terminal,
   Crown,
+  Package,
 } from "lucide-react";
 
 export interface DocSection {
@@ -56,6 +57,13 @@ export const docsNavigation: DocGroup[] = [
       { slug: "dashboard", label: "Dashboard & Reports", icon: BarChart3 },
       { slug: "prometheus", label: "Prometheus Metrics", icon: Activity },
       { slug: "cli-commands", label: "CLI Reference", icon: Terminal },
+    ],
+  },
+  {
+    title: "SDKs",
+    sections: [
+      { slug: "sdk-python", label: "Python SDK", icon: Package },
+      { slug: "sdk-node", label: "Node.js SDK", icon: Package },
     ],
   },
   {

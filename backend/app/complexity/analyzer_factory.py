@@ -63,6 +63,7 @@ class AnalyzerType(str, Enum):
     BINARY = "binary"  # Semantic prototype binary classifier
     HEURISTIC = "heuristic"  # Zero-dependency rule-based classifier (<1ms)
     CONFIDENCE_AWARE = "confidence_aware"  # Binary → two-tower cascade
+    TRAINED = "trained"  # Trained GBT classifier with sentence embeddings
 
 
 class ComplexityAnalyzerFactory:
@@ -149,6 +150,12 @@ class ComplexityAnalyzerFactory:
         elif analyzer_type == AnalyzerType.CONFIDENCE_AWARE:
             return ComplexityAnalyzerFactory._create_confidence_aware_analyzer(
                 allowed_providers, allowed_models, **kwargs
+            )
+        elif analyzer_type == AnalyzerType.TRAINED:
+            from app.complexity.trained_classifier_analyzer import get_trained_classifier
+            return get_trained_classifier(
+                allowed_providers=allowed_providers,
+                allowed_models=allowed_models,
             )
         else:
             raise ValueError(f"Unsupported analyzer type: {analyzer_type}")

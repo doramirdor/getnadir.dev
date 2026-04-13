@@ -37,6 +37,8 @@ from app.api.stripe_webhooks import router as stripe_webhook_router
 from app.api.billing_api import router as billing_router
 from app.api.admin_invoicing import router as admin_invoicing_router
 from app.api.support_api import router as support_router
+from app.api.provider_keys import router as provider_keys_router
+from app.api.account_api import router as account_router
 
 
 # Create FastAPI application
@@ -46,9 +48,18 @@ app = FastAPI(
     description="API for LLM routing and optimization"
 )
 
+# Add OpenAI SDK compatibility middleware (must be outermost — runs first)
+# Maps Authorization: Bearer <key> → X-API-Key so openai.OpenAI(api_key=...) works
+from app.middleware.openai_compat import OpenAICompatMiddleware
+app.add_middleware(OpenAICompatMiddleware)
+
 # Add Request Context middleware (must be added before CORS)
 from app.middleware.request_context import RequestContextMiddleware
 app.add_middleware(RequestContextMiddleware)
+
+# Add security headers middleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Add CORS middleware
 # In production, set CORS_ORIGINS to explicit origins (e.g. "https://app.nadir.dev,https://admin.nadir.dev")
@@ -127,9 +138,10 @@ async def startup_event():
         settings.OPENAI_API_KEY,
         settings.ANTHROPIC_API_KEY,
         settings.GOOGLE_API_KEY,
+        settings.AWS_ACCESS_KEY_ID,
     ])
     if not has_api_keys:
-        logger.warning("No provider API keys configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY) — LLM calls will fail")
+        logger.warning("No provider API keys configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, or AWS_ACCESS_KEY_ID) — LLM calls will fail")
         degraded_services.append("provider_keys")
     else:
         healthy_services.append("provider_keys")
@@ -299,6 +311,8 @@ app.include_router(stripe_webhook_router)             # Stripe webhooks
 app.include_router(billing_router)                     # Billing & subscription API
 app.include_router(admin_invoicing_router)              # Admin invoicing trigger
 app.include_router(support_router)                        # Support tickets API
+app.include_router(provider_keys_router)                    # Provider key management (encrypted)
+app.include_router(account_router)                           # Account management (GDPR/CCPA deletion)
 
 
 # Root endpoint

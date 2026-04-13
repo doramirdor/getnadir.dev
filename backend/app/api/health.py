@@ -50,7 +50,7 @@ async def health_check(
         critical_down = True
 
     # 2. Provider API keys configured
-    has_keys = any([settings.OPENAI_API_KEY, settings.ANTHROPIC_API_KEY, settings.GOOGLE_API_KEY])
+    has_keys = any([settings.OPENAI_API_KEY, settings.ANTHROPIC_API_KEY, settings.GOOGLE_API_KEY, settings.AWS_ACCESS_KEY_ID])
     checks["provider_keys"] = "ok" if has_keys else "missing"
     if not has_keys:
         critical_down = True
