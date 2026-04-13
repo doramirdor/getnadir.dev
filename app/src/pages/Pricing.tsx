@@ -36,6 +36,21 @@ const tiers = [
     highlighted: false,
   },
   {
+    name: "Free",
+    price: "Free",
+    subtitle: "Hosted (BYOK)",
+    description: "Try the hosted platform with your own API keys. No credit card required.",
+    features: [
+      "Hosted proxy (api.getnadir.com)",
+      "15 requests/day (BYOK only)",
+      "Intelligent routing",
+      "Web dashboard & analytics",
+    ],
+    cta: "Sign Up",
+    ctaLink: "/auth?mode=signup",
+    highlighted: false,
+  },
+  {
     name: "Pro",
     price: "$9",
     subtitle: "/month + up to 25% of savings",

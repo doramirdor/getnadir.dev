@@ -532,6 +532,39 @@ const Billing = () => {
             </CardContent>
           </Card>
 
+          {/* Free Hosted */}
+          <Card className={`clean-card ${!isActive ? "border-2 border-emerald-300" : ""}`}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-foreground">Free</CardTitle>
+                {!isActive && (
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                    Current
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">Hosted (BYOK)</p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-foreground mb-1">Free</p>
+              <p className="text-sm text-muted-foreground mb-4">no credit card required</p>
+              <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600" /> Hosted proxy (api.getnadir.com)
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600" /> 15 requests/day (BYOK only)
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600" /> Intelligent routing
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600" /> Web dashboard & analytics
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
           {/* Pro */}
           <Card className={`clean-card border-2 ${isActive ? "border-emerald-300" : "border-blue-300"}`}>
             <CardHeader>

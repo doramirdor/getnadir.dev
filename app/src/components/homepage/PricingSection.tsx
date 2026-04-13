@@ -13,6 +13,16 @@ const tiers = [
     highlighted: false,
   },
   {
+    name: "Free",
+    price: "Free",
+    subtitle: "Hosted (BYOK)",
+    features: ["Hosted proxy (api.getnadir.com)", "15 requests/day (BYOK only)", "Intelligent routing", "Web dashboard & analytics"],
+    cta: "Sign Up",
+    ctaLink: "/auth?mode=signup",
+    external: false,
+    highlighted: false,
+  },
+  {
     name: "Pro",
     price: "$9",
     subtitle: "/month + up to 25% of savings",
