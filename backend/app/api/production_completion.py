@@ -610,7 +610,7 @@ async def create_completion(
         if request.layers:
             layers = {**layers, **request.layers}
 
-        # Billing enforcement: free tier only gets routing; fallback + optimize require Pro
+        # Free tier (BYOK, unsubscribed): routing only — no fallback or optimize
         if current_user.is_free_tier:
             layers["fallback"] = False
             layers["optimize"] = "off"
