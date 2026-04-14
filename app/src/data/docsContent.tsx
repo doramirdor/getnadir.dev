@@ -1498,11 +1498,11 @@ export function ProFeaturesContent() {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold text-foreground">Coming Soon with Nadir Pro</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Nadir Pro</h1>
         <P>
           NadirClaw is free and open source forever. Nadir Pro adds a managed
-          layer on top for teams who want hosted infrastructure and advanced
-          features.
+          hosted layer on top for teams who want zero-setup infrastructure and
+          advanced features.
         </P>
       </div>
 
@@ -1563,14 +1563,19 @@ export function ProFeaturesContent() {
             </thead>
             <tbody className="text-muted-foreground">
               <tr className="border-b border-border">
-                <td className="px-4 py-3 font-semibold text-foreground">Open Source</td>
+                <td className="px-4 py-3 font-semibold text-foreground">Self-Host</td>
                 <td className="px-4 py-3">Free forever</td>
-                <td className="px-4 py-3">Full CLI router, smart routing, context optimize, fallbacks, local dashboard</td>
+                <td className="px-4 py-3">Full CLI router, smart routing, context optimize, fallbacks, local dashboard (MIT licensed)</td>
+              </tr>
+              <tr className="border-b border-border">
+                <td className="px-4 py-3 font-semibold text-foreground">Free (Hosted)</td>
+                <td className="px-4 py-3">Free</td>
+                <td className="px-4 py-3">Hosted proxy, 15 requests/day (BYOK only), web dashboard, intelligent routing</td>
               </tr>
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-semibold text-foreground">Pro</td>
-                <td className="px-4 py-3">$9/mo + share of savings</td>
-                <td className="px-4 py-3">Hosted proxy, team dashboard, ML routing, health monitoring, response healing, clustering</td>
+                <td className="px-4 py-3">$9/mo + up to 25% of savings</td>
+                <td className="px-4 py-3">Unlimited requests, hosted keys or BYOK, semantic cache, fallback chains, context optimization</td>
               </tr>
               <tr>
                 <td className="px-4 py-3 font-semibold text-foreground">Enterprise</td>
