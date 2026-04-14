@@ -48,7 +48,7 @@ const BulletItem = ({ children }: { children: React.ReactNode }) => (
 );
 
 /* ================================================================== */
-/*  1. QUICKSTART                                                      */
+/*  1. QUICKSTART (Pro / Hosted)                                       */
 /* ================================================================== */
 
 export function QuickstartContent() {
@@ -57,9 +57,108 @@ export function QuickstartContent() {
       <div className="space-y-4">
         <h1 className="text-3xl font-semibold text-foreground">Quick Start</h1>
         <P>
+          Get started with the Nadir hosted platform in under a minute.
+          No server to run, no infra to manage. Sign up, grab an API key,
+          and point your code to <InlineCode>api.getnadir.com</InlineCode>.
+        </P>
+      </div>
+
+      <div className="space-y-4">
+        <H2>1. Create an account</H2>
+        <P>
+          Sign up at{" "}
+          <a href="/auth?mode=signup" className="text-primary underline underline-offset-2">
+            getnadir.com/auth
+          </a>
+          . The free tier gives you 15 requests/day with your own API keys (BYOK).
+          Subscribe to Pro for unlimited requests and hosted keys.
+        </P>
+      </div>
+
+      <div className="space-y-4">
+        <H2>2. Get your API key</H2>
+        <P>
+          After signing up, go to the{" "}
+          <a href="/dashboard/api-keys" className="text-primary underline underline-offset-2">
+            API Keys page
+          </a>{" "}
+          in your dashboard and copy your key.
+        </P>
+      </div>
+
+      <div className="space-y-4">
+        <H2>3. Make a request</H2>
+        <P>
+          Use the OpenAI-compatible endpoint. Just change the base URL and API key.
+        </P>
+
+        <CodeTabs
+          examples={[
+            {
+              label: "Python",
+              language: "python",
+              code: `import openai
+
+client = openai.OpenAI(
+    base_url="https://api.getnadir.com/v1",
+    api_key="YOUR_NADIR_API_KEY",
+)
+
+response = client.chat.completions.create(
+    messages=[{"role": "user", "content": "Explain quantum computing"}],
+    model="auto",  # Nadir picks the best model
+)
+
+print(response.choices[0].message.content)`,
+            },
+            {
+              label: "cURL",
+              language: "curl",
+              code: `curl https://api.getnadir.com/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: YOUR_NADIR_API_KEY" \\
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Explain quantum computing"}
+    ],
+    "model": "auto"
+  }'`,
+            },
+          ]}
+        />
+      </div>
+
+      <Callout type="tip">
+        Set <InlineCode>model</InlineCode> to <InlineCode>"auto"</InlineCode> to
+        let Nadir's classifier pick the most cost-effective model. Or specify a
+        model name like <InlineCode>"claude-sonnet-4-20250514"</InlineCode> to
+        pin the request.
+      </Callout>
+
+      <Callout type="info">
+        Want to self-host instead? Check the{" "}
+        <a href="/docs/self-host" className="text-primary underline underline-offset-2">
+          Self-Host guide
+        </a>{" "}
+        to run NadirClaw on your own machine.
+      </Callout>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  1b. SELF-HOST QUICKSTART                                           */
+/* ================================================================== */
+
+export function SelfHostContent() {
+  return (
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-semibold text-foreground">Self-Host (NadirClaw)</h1>
+        <P>
           NadirClaw is a self-hosted, open-source CLI LLM router that
           automatically routes each request to the best model for the job.
-          Get started in under two minutes.
+          MIT licensed, runs locally, unlimited requests.
         </P>
       </div>
 
@@ -1888,6 +1987,7 @@ const response = await client.chat.completions.create({
 
 export const docsContentMap: Record<string, () => JSX.Element> = {
   quickstart: QuickstartContent,
+  "self-host": SelfHostContent,
   installation: InstallationContent,
   configuration: ConfigurationContent,
   "smart-routing": SmartRoutingContent,

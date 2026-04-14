@@ -13,6 +13,7 @@ import {
   Terminal,
   Crown,
   Package,
+  Server,
 } from "lucide-react";
 
 export interface DocSection {
@@ -31,6 +32,7 @@ export const docsNavigation: DocGroup[] = [
     title: "Getting Started",
     sections: [
       { slug: "quickstart", label: "Quick Start", icon: Zap },
+      { slug: "self-host", label: "Self-Host", icon: Server },
       { slug: "installation", label: "Installation", icon: Download },
       { slug: "configuration", label: "Configuration", icon: Settings },
     ],
@@ -67,7 +69,7 @@ export const docsNavigation: DocGroup[] = [
     ],
   },
   {
-    title: "Coming Soon (Pro)",
+    title: "Pro",
     sections: [
       { slug: "pro-features", label: "Pro Features", icon: Crown },
     ],
