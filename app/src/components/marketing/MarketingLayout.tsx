@@ -94,7 +94,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
   const navLinks: { to: string; label: string; title?: string }[] = [
     { to: "/pricing", label: "Pricing" },
     { to: "/docs", label: "Docs" },
-    { to: "/openclaw", label: "OpenClaw", title: "Smart LLM routing for OpenClaw agents" },
+    { to: "/openclaw", label: "Open Source" },
     { to: "/optimize", label: "Optimize" },
     { to: "/blog", label: "Blog" },
   ];
