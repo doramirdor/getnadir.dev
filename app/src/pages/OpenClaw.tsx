@@ -10,7 +10,7 @@ export default function OpenClaw() {
   return (
     <MarketingLayout>
       <SEO
-        title="NadirClaw — Open Source LLM Router | MIT Licensed"
+        title="NadirClaw | Self-Host Your Own LLM Router | MIT Licensed"
         description="Self-hosted LLM router that cuts API costs 30-60%. 4-tier routing, context optimization, fallback chains. MIT licensed, runs locally."
         path="/openclaw"
       />
@@ -19,14 +19,14 @@ export default function OpenClaw() {
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f0f0f0] text-xs font-medium text-[#666] mb-4">
           <Github className="w-3.5 h-3.5" />
-          MIT Licensed — Free Forever
+          MIT Licensed, Free Forever
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
           NadirClaw
         </h1>
         <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Open-source LLM router. Self-hosted, local-first, unlimited requests.
-          Route simple prompts to cheaper models automatically — save 30-60% on API costs.
+          Run your own LLM router. Self-hosted, local-first, unlimited requests.
+          Route simple prompts to cheaper models and save 30-60% on API costs.
         </p>
         <div className="flex items-center justify-center gap-4">
           <a
@@ -60,7 +60,7 @@ export default function OpenClaw() {
 nadirclaw setup        # auto-detects your API keys
 nadirclaw serve        # starts local proxy on :4000
 
-# Use it like OpenAI — just change the base URL
+# Works like OpenAI, just change the base URL
 curl http://localhost:4000/v1/chat/completions \\
   -d '{"model": "nadirclaw/auto", "messages": [...]}'`}
           </pre>
@@ -77,8 +77,8 @@ curl http://localhost:4000/v1/chat/completions \\
               <h3 className="text-sm font-semibold">4-tier intelligent routing</h3>
             </div>
             <p className="text-sm text-[#666]">
-              Binary classifier routes prompts across simple, mid, complex, and reasoning
-              tiers in under 10ms. 96% accuracy on real-world benchmarks.
+              A binary classifier routes each prompt to the right tier (simple, mid, complex,
+              reasoning) in under 10ms. 96% accuracy on real-world benchmarks.
             </p>
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
@@ -87,18 +87,18 @@ curl http://localhost:4000/v1/chat/completions \\
               <h3 className="text-sm font-semibold">Context optimization</h3>
             </div>
             <p className="text-sm text-[#666]">
-              Automatically trims redundant context, system prompt bloat, and long
-              conversation history. Reduces input tokens 20-40% without quality loss.
+              Trims redundant context, system prompt bloat, and long conversation
+              history. Cuts input tokens by 20-40% with no quality loss.
             </p>
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-4 h-4 text-[#0066ff]" />
-              <h3 className="text-sm font-semibold">Fallback chains</h3>
+              <h3 className="text-sm font-semibold">Automatic fallback chains</h3>
             </div>
             <p className="text-sm text-[#666]">
-              If a provider is rate-limited or down, Nadir retries with the next model
-              in the chain. Your app never sees a failure.
+              When a provider is rate-limited or down, NadirClaw retries with the next model
+              in the chain. Your app stays up.
             </p>
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
@@ -107,7 +107,7 @@ curl http://localhost:4000/v1/chat/completions \\
               <h3 className="text-sm font-semibold">CLI dashboard</h3>
             </div>
             <p className="text-sm text-[#666]">
-              Rich terminal UI showing live routing decisions, cost savings, model
+              A rich terminal UI with live routing decisions, cost savings, model
               usage, and latency. No browser needed.
             </p>
           </div>
@@ -116,17 +116,17 @@ curl http://localhost:4000/v1/chat/completions \\
 
       {/* How it compares */}
       <section className="max-w-4xl mx-auto px-6 pb-16">
-        <h2 className="text-2xl font-semibold text-center mb-8">Open Source vs Hosted</h2>
+        <h2 className="text-2xl font-semibold text-center mb-8">Self-Host vs Hosted</h2>
         <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           <div className="p-6 rounded-xl border-2 border-[#e5e5e5] bg-white">
-            <h3 className="font-semibold mb-1">NadirClaw (Open Source)</h3>
-            <p className="text-xs text-[#999] mb-4">Self-hosted, MIT licensed</p>
+            <h3 className="font-semibold mb-1">NadirClaw (Self-Host)</h3>
+            <p className="text-xs text-[#999] mb-4">MIT licensed, runs on your infra</p>
             <ul className="space-y-2">
               {[
                 "Unlimited requests",
                 "Runs on your machine",
                 "CLI dashboard",
-                "YAML config & custom rules",
+                "YAML config and custom rules",
                 "No data leaves your network",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-[#444]">
@@ -140,11 +140,11 @@ curl http://localhost:4000/v1/chat/completions \\
             <p className="text-xs text-[#999] mb-4">$9/mo + savings fee</p>
             <ul className="space-y-2">
               {[
-                "Everything in Open Source",
-                "Hosted proxy — zero setup",
-                "Web dashboard & analytics",
-                "Semantic cache & dedup",
-                "Use our keys or BYOK",
+                "Everything in self-host",
+                "Hosted proxy, zero setup",
+                "Web dashboard and analytics",
+                "Semantic cache and dedup",
+                "Use our keys or bring your own",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-[#444]">
                   <Check className="w-4 h-4 text-[#0066ff] shrink-0" /> {f}
@@ -166,7 +166,7 @@ curl http://localhost:4000/v1/chat/completions \\
         <div className="rounded-xl border border-[#e5e5e5] bg-[#fafafa] p-8">
           <h2 className="text-xl font-semibold mb-2 text-center">Works with OpenClaw</h2>
           <p className="text-sm text-[#666] text-center max-w-lg mx-auto mb-6">
-            NadirClaw integrates with OpenClaw as a model provider. Your agents automatically
+            NadirClaw plugs into OpenClaw as a model provider. Your agents automatically
             use cheaper models for simple tasks.
           </p>
           <div className="grid md:grid-cols-3 gap-4">
