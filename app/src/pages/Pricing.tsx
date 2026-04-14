@@ -20,22 +20,6 @@ import { trackPricingView } from "@/utils/analytics";
 
 const tiers = [
   {
-    name: "Open Source",
-    price: "Free",
-    subtitle: "Self-hosted",
-    description: "Run Nadir on your own infrastructure. Full routing + optimization.",
-    features: [
-      "Intelligent 4-tier routing",
-      "Context Optimize (safe mode)",
-      "CLI dashboard & analytics",
-      "Unlimited requests",
-      "MIT licensed",
-    ],
-    cta: "Get Started",
-    ctaLink: "https://github.com/NadirRouter/NadirClaw",
-    highlighted: false,
-  },
-  {
     name: "Free",
     price: "Free",
     subtitle: "Hosted (BYOK)",
@@ -56,13 +40,12 @@ const tiers = [
     subtitle: "/month + up to 25% of savings",
     description: "Hosted proxy with zero setup. We only earn when we save you money.",
     features: [
-      "Everything in Open Source",
-      "Hosted proxy (zero setup)",
+      "Everything in Free, unlimited",
+      "Hosted keys or BYOK",
       "Semantic cache & dedup",
-      "Web dashboard & analytics",
-      "BYOK or use our keys",
+      "Fallback chains & context optimization",
     ],
-    cta: "signup",
+    cta: "Sign Up",
     ctaLink: "/auth?mode=signup",
     highlighted: true,
   },
@@ -333,6 +316,9 @@ export default function Pricing() {
             </div>
           ))}
         </div>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Want to self-host instead? <Link to="/openclaw" className="text-blue-600 hover:underline">NadirClaw is open source (MIT)</Link> — unlimited requests, run on your own infra.
+        </p>
       </section>
 
       {/* Calculator */}

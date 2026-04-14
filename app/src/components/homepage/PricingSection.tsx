@@ -3,16 +3,6 @@ import { Link } from "react-router-dom";
 
 const tiers = [
   {
-    name: "Open Source",
-    price: "Free",
-    subtitle: "Self-hosted",
-    features: ["Intelligent 4-tier routing", "Context Optimize (safe mode)", "CLI dashboard & analytics", "Unlimited requests", "MIT licensed"],
-    cta: "Get Started",
-    ctaLink: "https://github.com/NadirRouter/NadirClaw",
-    external: true,
-    highlighted: false,
-  },
-  {
     name: "Free",
     price: "Free",
     subtitle: "Hosted (BYOK)",
@@ -26,7 +16,7 @@ const tiers = [
     name: "Pro",
     price: "$9",
     subtitle: "/month + up to 25% of savings",
-    features: ["Everything in Open Source", "Hosted proxy (zero setup)", "Semantic cache & dedup", "Web dashboard & analytics", "BYOK or use our keys"],
+    features: ["Everything in Free, unlimited", "Hosted keys or BYOK", "Semantic cache & dedup", "Fallback chains & context optimization"],
     cta: "Sign Up",
     ctaLink: "/auth?mode=signup",
     external: false,
@@ -54,7 +44,7 @@ export const PricingSection = () => {
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666]">
-            Free to self-host. Pay only when we save you money.
+            Start free. Pay only when we save you money.
           </p>
         </div>
 

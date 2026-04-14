@@ -502,36 +502,6 @@ const Billing = () => {
         <h2 className="text-lg font-semibold text-foreground mb-4">Plans</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free / Open Source */}
-          <Card className="clean-card">
-            <CardHeader>
-              <CardTitle className="text-foreground">Open Source</CardTitle>
-              <p className="text-sm text-muted-foreground">Self-hosted</p>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-foreground mb-1">Free</p>
-              <p className="text-sm text-muted-foreground mb-4">forever</p>
-              <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> 4-tier intelligent routing
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Context Optimize (safe mode)
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> CLI dashboard
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Unlimited requests
-                </li>
-              </ul>
-              <Button variant="outline" className="w-full" asChild>
-                <a href="https://github.com/NadirRouter/NadirClaw" target="_blank" rel="noopener noreferrer">
-                  View on GitHub
-                </a>
-              </Button>
-            </CardContent>
-          </Card>
-
           {/* Free Hosted */}
           <Card className={`clean-card ${!isActive ? "border-2 border-emerald-300" : ""}`}>
             <CardHeader>
@@ -586,19 +556,16 @@ const Billing = () => {
               <p className="text-xs text-muted-foreground mb-4">10% above $2K saved</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Everything in Open Source
+                  <Check className="w-4 h-4 text-blue-600" /> Everything in Free, unlimited
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Hosted proxy (api.getnadir.com)
+                  <Check className="w-4 h-4 text-blue-600" /> Hosted keys or BYOK
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Smart duplicate detection
+                  <Check className="w-4 h-4 text-blue-600" /> Semantic cache & dedup
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Web dashboard & analytics
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Use your own API keys or ours
+                  <Check className="w-4 h-4 text-blue-600" /> Fallback chains & context optimization
                 </li>
               </ul>
               {!isActive && (
