@@ -110,6 +110,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/self-host" element={<OpenClaw />} />
             <Route path="/openclaw" element={<OpenClaw />} />
             <Route path="/optimize" element={<Optimize />} />
 
