@@ -9,5 +9,11 @@ __pycache__/
 venv/
 .venv/
 *.egg-info/
+.claude/worktrees/
+.netlify/
+.DS_Store
+app/.vite/
+app/test-results/
+supabase/.temp/
 model.safetensors
 *.npy
