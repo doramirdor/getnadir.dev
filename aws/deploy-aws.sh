@@ -18,7 +18,7 @@ set -euo pipefail
 AWS_REGION="${AWS_REGION:-us-east-1}"
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null || echo "")
 ECR_REPO="nadir-backend"
-APP_NAME="nadir-backend"
+APP_NAME="nadir-backend-api"
 IMAGE_TAG="latest"
 
 GREEN='\033[0;32m'
