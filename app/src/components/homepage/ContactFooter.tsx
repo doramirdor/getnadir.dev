@@ -22,9 +22,12 @@ export const ContactFooter = () => {
             that.
           </p>
           <p className="text-[15px] text-[#666] leading-relaxed mb-4">
-            The project is open-source (MIT License), fully self-hosted, and
-            designed to save developers 30-60% on API costs without adding
-            complexity. No signup, no telemetry, no vendor lock-in.
+            The hosted Pro plan saves developers 30-60% on API costs without
+            adding complexity. The routing core is{" "}
+            <a href="https://github.com/NadirRouter/NadirClaw" className="text-[#0066ff] hover:underline">
+              open-source (MIT)
+            </a>{" "}
+            for those who prefer to self-host.
           </p>
           {/* Contact links with icons */}
           <div className="flex items-center justify-center gap-4 mt-6">
@@ -68,25 +71,21 @@ export const ContactFooter = () => {
             Stop overpaying for simple prompts
           </h2>
           <p className="text-[17px] text-[#666] mb-8 max-w-[480px] mx-auto">
-            Self-host for free, or{" "}
-            <Link to="/auth?mode=signup" className="text-[#0066ff] hover:underline font-semibold">
-              sign up
-            </Link>{" "}
-            for our hosted Pro plan.
+            Start with the free tier. Upgrade when you're saving real money.
           </p>
           <div className="flex gap-3 justify-center">
-            <a
-              href="https://github.com/NadirRouter/NadirClaw"
-              className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
-            >
-              Self-host free
-            </a>
             <Link
               to="/auth?mode=signup"
+              className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
+            >
+              Try Free for 30 Days
+            </Link>
+            <a
+              href="/self-host"
               className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] transition-all no-underline"
             >
-              Sign up
-            </Link>
+              Or self-host free
+            </a>
           </div>
         </div>
       </section>

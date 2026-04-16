@@ -55,7 +55,7 @@ const features = [
   },
   {
     name: "Setup effort",
-    nadirclaw: { icon: "none", text: "2 commands", bold: true },
+    nadirclaw: { icon: "none", text: "1 URL swap", bold: true },
     litellm: { icon: "none", text: "Days of engineering" },
     openrouter: { icon: "none", text: "Account + config" },
     helicone: { icon: "none", text: "SDK integration" },
@@ -64,7 +64,7 @@ const features = [
   },
   {
     name: "Pricing",
-    nadirclaw: { icon: "check", text: "Free self-host (MIT)", bold: true },
+    nadirclaw: { icon: "check", text: "Free tier + Pro from $9/mo", bold: true },
     litellm: { icon: "none", text: "Free (your time)" },
     openrouter: { icon: "none", text: "Per-token markup" },
     helicone: { icon: "none", text: "Free 10K, Pro $79/mo" },

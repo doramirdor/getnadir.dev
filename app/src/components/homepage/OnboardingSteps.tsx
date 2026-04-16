@@ -178,10 +178,16 @@ export const OnboardingSteps = () => {
             {/* CTAs */}
             <div className="flex gap-2.5 flex-wrap">
               <a
+                href="/auth?mode=signup"
+                className="flex-1 min-w-[200px] text-center py-3 px-6 bg-[#0a0a0a] text-white rounded-md font-semibold text-[15px] no-underline inline-flex items-center justify-center gap-1.5 hover:bg-[#333] transition-colors"
+              >
+                Start Saving Now
+              </a>
+              <a
                 href="https://github.com/NadirRouter/NadirClaw"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 min-w-[200px] text-center py-3 px-6 bg-[#0a0a0a] text-white rounded-md font-semibold text-[15px] no-underline inline-flex items-center justify-center gap-1.5 hover:bg-[#333] transition-colors"
+                className="flex-1 min-w-[160px] text-center py-3 px-6 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md font-semibold text-[15px] no-underline hover:bg-[#f5f5f5] transition-colors inline-flex items-center justify-center gap-1.5"
               >
                 <svg
                   width="14"
@@ -191,13 +197,7 @@ export const OnboardingSteps = () => {
                 >
                   <polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63" />
                 </svg>
-                Star our repo
-              </a>
-              <a
-                href="/pricing"
-                className="flex-1 min-w-[160px] text-center py-3 px-6 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md font-semibold text-[15px] no-underline hover:bg-[#f5f5f5] transition-colors"
-              >
-                Start Now
+                Star on GitHub
               </a>
             </div>
           </div>

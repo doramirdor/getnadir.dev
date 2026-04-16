@@ -1,8 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trackGitHubClick } from "@/utils/analytics";
+
+const REQUESTS = [
+  { type: "simple" as const, prompt: '"What is 2+2?"', model: "efficient", cost: 0.0002, premiumCost: 0.18 },
+  { type: "simple" as const, prompt: '"Format this JSON"', model: "efficient", cost: 0.0004, premiumCost: 0.22 },
+  { type: "complex" as const, prompt: '"Refactor this auth module..."', model: "premium", cost: 0.098, premiumCost: 0.098 },
+  { type: "complex" as const, prompt: '"Debug this race condition..."', model: "premium", cost: 0.45, premiumCost: 0.45 },
+  { type: "simple" as const, prompt: '"Write a docstring for get_user()"', model: "efficient", cost: 0.0002, premiumCost: 0.42 },
+];
+
+const fmtCost = (n: number) => {
+  if (n < 0.01) return `$${n.toFixed(4)}`;
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  return `$${parseFloat(n.toFixed(3))}`;
+};
 
 export const HeroSection = () => {
   const [tab, setTab] = useState<"pro" | "selfhost">("pro");
+  const [animating, setAnimating] = useState(false);
+  const [visibleRows, setVisibleRows] = useState(0);
+  const [showStats, setShowStats] = useState(false);
+  const [showSavings, setShowSavings] = useState(false);
+  const terminalRef = useRef<HTMLDivElement>(null);
+
+  // Reduced motion: show everything immediately. Otherwise observe.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setVisibleRows(REQUESTS.length);
+      setShowStats(true);
+      setShowSavings(true);
+      return;
+    }
+    const el = terminalRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setAnimating(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Cascade row reveals, then stats, then savings badge
+  useEffect(() => {
+    if (!animating) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    REQUESTS.forEach((_, i) => {
+      timers.push(setTimeout(() => setVisibleRows(i + 1), 300 + i * 600));
+    });
+    const afterRows = 300 + REQUESTS.length * 600;
+    timers.push(setTimeout(() => setShowStats(true), afterRows + 300));
+    timers.push(setTimeout(() => setShowSavings(true), afterRows + 800));
+    return () => timers.forEach(clearTimeout);
+  }, [animating]);
+
+  const totalWith = REQUESTS.reduce((s, r) => s + r.cost, 0);
+  const totalWithout = REQUESTS.reduce((s, r) => s + r.premiumCost, 0);
+  const savingsPct = Math.round(
+    ((totalWithout - totalWith) / totalWithout) * 100,
+  );
+  const cheaperCount = REQUESTS.filter((r) => r.premiumCost > r.cost).length;
 
   return (
     <section className="py-10 md:py-16 text-center">
@@ -68,7 +130,7 @@ export const HeroSection = () => {
         </div>
 
         {/* Terminal Demo */}
-        <div className="max-w-[720px] mx-auto relative">
+        <div className="max-w-[720px] mx-auto relative" ref={terminalRef}>
           <div className="bg-white border border-[#e5e5e5] rounded-xl overflow-hidden text-left font-mono text-sm">
             {/* Tab header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5] bg-[#fafafa]">
@@ -118,7 +180,9 @@ export const HeroSection = () => {
                   <div className="mb-1 leading-[1.8] pl-6">
                     <span className="text-[#0a0a0a]">base_url</span>
                     <span className="text-[#999]">=</span>
-                    <span className="text-[#0066ff]">"https://api.getnadir.com/v1"</span>
+                    <span className="text-[#0066ff]">
+                      "https://api.getnadir.com/v1"
+                    </span>
                     <span className="text-[#999]">,</span>
                   </div>
                   <div className="mb-1 leading-[1.8] pl-6">
@@ -134,7 +198,9 @@ export const HeroSection = () => {
                   <div className="mb-1 leading-[1.8]">
                     <span className="text-[#0a0a0a]">r</span>{" "}
                     <span className="text-[#999]">=</span>{" "}
-                    <span className="text-[#0a0a0a]">client.chat.completions.create(</span>
+                    <span className="text-[#0a0a0a]">
+                      client.chat.completions.create(
+                    </span>
                   </div>
                   <div className="mb-1 leading-[1.8] pl-6">
                     <span className="text-[#0a0a0a]">model</span>
@@ -142,11 +208,14 @@ export const HeroSection = () => {
                     <span className="text-[#0066ff]">"auto"</span>
                     <span className="text-[#999]">,</span>
                     {"  "}
-                    <span className="text-[#999]"># Nadir picks the best model</span>
+                    <span className="text-[#999]">
+                      # Nadir picks the best model
+                    </span>
                   </div>
                   <div className="mb-1 leading-[1.8] pl-6">
                     <span className="text-[#0a0a0a]">messages</span>
-                    <span className="text-[#999]">=[{"{"}"role": "user", "content": "Hello!"{"}"}</span>
+                    <span className="text-[#999]">
+                      =[{"{"}"role": "user", "content": "Hello!"{"}"}</span>
                     <span className="text-[#999]">],</span>
                   </div>
                   <div className="mb-1 leading-[1.8]">
@@ -156,119 +225,155 @@ export const HeroSection = () => {
               ) : (
                 <>
                   <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]">$</span> nadirclaw serve
+                    <span className="text-[#999]"># enable on your server</span>
                   </div>
                   <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#00a86b]">&#10003;</span> Classifier
-                    ready
+                    <span className="text-[#999]">$</span> nadirclaw serve{" "}
+                    <span className="text-[#0066ff]">--optimize safe</span>
+                  </div>
+                  <div className="h-3" />
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#999]"># or per-request</span>
                   </div>
                   <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#00a86b]">&#10003;</span> Listening on{" "}
-                    <span className="text-[#0066ff]">localhost:8856</span>
+                    <span className="text-[#999]">{"{"}</span>
+                    <span className="text-[#0066ff]">"optimize"</span>
+                    <span className="text-[#999]">: </span>
+                    <span className="text-[#0066ff]">"safe"</span>
+                    <span className="text-[#999]">, </span>
+                    <span className="text-[#0066ff]">"model"</span>
+                    <span className="text-[#999]">: </span>
+                    <span className="text-[#0066ff]">"auto"</span>
+                    <span className="text-[#999]">, ...{"}"}</span>
+                  </div>
+                  <div className="h-3" />
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#999]"># dry-run on any file to see savings</span>
+                  </div>
+                  <div className="mb-1 leading-[1.8]">
+                    <span className="text-[#999]">$</span> nadirclaw optimize{" "}
+                    <span className="text-[#0a0a0a]">payload.json</span>
                   </div>
                 </>
               )}
 
               <div className="h-4" />
 
-              {/* Request rows */}
-              {[
-                {
-                  type: "simple",
-                  prompt: '"What is 2+2?"',
-                  model: "efficient",
-                  cost: "$0.0002",
-                  green: true,
-                },
-                {
-                  type: "simple",
-                  prompt: '"Format this JSON"',
-                  model: "efficient",
-                  cost: "$0.0004",
-                  green: true,
-                },
-                {
-                  type: "complex",
-                  prompt: '"Refactor this auth module..."',
-                  model: "premium",
-                  cost: "$0.098",
-                  green: false,
-                },
-                {
-                  type: "complex",
-                  prompt: '"Debug this race condition..."',
-                  model: "premium",
-                  cost: "$0.450",
-                  green: false,
-                },
-                {
-                  type: "simple",
-                  prompt: '"Write a docstring for get_user()"',
-                  model: "efficient",
-                  cost: "$0.0002",
-                  green: true,
-                },
-              ].map((req, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2.5 flex-wrap p-2 px-3 rounded-md mb-1.5 bg-[#fafafa] text-[13px] md:text-sm"
-                >
-                  <span
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${
-                      req.type === "simple"
-                        ? "bg-[#00a86b]/10 text-[#00a86b]"
-                        : "bg-[#0066ff]/10 text-[#0066ff]"
-                    }`}
+              {/* Animated routing rows */}
+              {REQUESTS.map((req, i) => {
+                const visible = i < visibleRows;
+                const saved = req.premiumCost > req.cost;
+
+                return (
+                  <div
+                    key={i}
+                    className={`
+                      flex items-center gap-2.5 flex-wrap p-2 px-3 rounded-md mb-1.5
+                      text-[13px] md:text-sm transition-all duration-500 ease-out
+                      border-l-2
+                      ${
+                        visible
+                          ? saved
+                            ? "opacity-100 translate-y-0 bg-[#00a86b]/[0.04] border-l-[#00a86b]/40"
+                            : "opacity-100 translate-y-0 bg-[#fafafa] border-l-transparent"
+                          : "opacity-0 translate-y-3 border-l-transparent"
+                      }
+                    `}
                   >
-                    {req.type}
-                  </span>
-                  <span className="text-[#999]">{req.prompt}</span>
-                  <span className="text-[#999]">&rarr;</span>
-                  <span className="font-semibold text-[#0a0a0a]">
-                    {req.model}
-                  </span>
-                  <span
-                    className={`ml-auto font-medium text-[13px] ${
-                      req.green ? "text-[#00a86b]" : "text-[#0a0a0a]"
-                    }`}
-                  >
-                    {req.cost}
-                  </span>
-                </div>
-              ))}
+                    <span
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 ${
+                        req.type === "simple"
+                          ? "bg-[#00a86b]/10 text-[#00a86b]"
+                          : "bg-[#0066ff]/10 text-[#0066ff]"
+                      }`}
+                    >
+                      {req.type}
+                    </span>
+                    <span className="text-[#999] truncate">{req.prompt}</span>
+                    <span className="text-[#999]">&rarr;</span>
+                    <span className="font-semibold text-[#0a0a0a]">
+                      {req.model}
+                    </span>
+                    <span className="ml-auto flex items-center gap-2 shrink-0">
+                      {saved && (
+                        <span className="text-[#ccc] line-through text-[12px]">
+                          {fmtCost(req.premiumCost)}
+                        </span>
+                      )}
+                      <span
+                        className={`font-semibold text-[13px] ${
+                          saved ? "text-[#00a86b]" : "text-[#0a0a0a]"
+                        }`}
+                      >
+                        {fmtCost(req.cost)}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
 
               <div className="h-4" />
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#e5e5e5]">
-                {[
-                  { value: "5", label: "requests" },
-                  {
-                    value: "3 of 5",
-                    label: "routed cheaper",
-                    green: true,
-                  },
-                  {
-                    value: "$0.549",
-                    label: "with Nadir",
-                    green: true,
-                  },
-                  { value: "$1.37", label: "without routing" },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <div
-                      className={`text-xl font-bold mb-0.5 ${
-                        stat.green ? "text-[#00a86b]" : "text-[#0a0a0a]"
-                      }`}
-                    >
-                      {stat.value}
-                    </div>
-                    <div className="text-[11px] text-[#999] font-sans">
-                      {stat.label}
-                    </div>
+              {/* Stats bar */}
+              <div
+                className={`grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#e5e5e5] transition-all duration-500 ease-out ${
+                  showStats
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-2"
+                }`}
+              >
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[#0a0a0a] mb-0.5">
+                    {REQUESTS.length}
                   </div>
-                ))}
+                  <div className="text-[11px] text-[#999] font-sans">
+                    requests
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[#00a86b] mb-0.5">
+                    {cheaperCount} of {REQUESTS.length}
+                  </div>
+                  <div className="text-[11px] text-[#999] font-sans">
+                    routed cheaper
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[#00a86b] mb-0.5">
+                    {fmtCost(totalWith)}
+                  </div>
+                  <div className="text-[11px] text-[#999] font-sans">
+                    with Nadir
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[#0a0a0a] mb-0.5">
+                    {fmtCost(totalWithout)}
+                  </div>
+                  <div className="text-[11px] text-[#999] font-sans">
+                    without routing
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+
+          {/* Savings reveal */}
+          <div
+            className={`mt-5 transition-all duration-700 ease-out ${
+              showSavings
+                ? "opacity-100 translate-y-0 scale-100"
+                : "opacity-0 translate-y-4 scale-95"
+            }`}
+          >
+            <div className="inline-flex items-center gap-3 px-6 py-3.5 bg-[#00a86b]/[0.08] border border-[#00a86b]/20 rounded-xl">
+              <span className="text-2xl md:text-3xl font-bold text-[#00a86b]">
+                {savingsPct}% saved
+              </span>
+              <span className="text-[#ccc]">&middot;</span>
+              <span className="text-[#666] text-sm">
+                {fmtCost(totalWith)} instead of {fmtCost(totalWithout)}
+              </span>
             </div>
           </div>
         </div>

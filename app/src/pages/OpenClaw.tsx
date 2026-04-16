@@ -114,6 +114,37 @@ curl http://localhost:4000/v1/chat/completions \\
         </div>
       </section>
 
+      {/* Context Optimize CLI */}
+      <section className="max-w-4xl mx-auto px-6 pb-12">
+        <h2 className="text-2xl font-semibold text-center mb-8">Context Optimize</h2>
+        <p className="text-sm text-[#666] text-center max-w-lg mx-auto mb-6">
+          Routes to the right model, then trims the payload before it hits your bill.
+          Lossless by default -- output quality stays identical.
+        </p>
+        <div className="rounded-xl border border-[#e5e5e5] bg-[#fafafa] overflow-hidden">
+          <div className="px-4 py-2 border-b border-[#e5e5e5] bg-white flex items-center gap-2">
+            <Terminal className="w-3.5 h-3.5 text-[#999]" />
+            <span className="text-xs font-medium text-[#999]">Terminal</span>
+          </div>
+          <pre className="p-4 text-sm font-mono text-[#333] overflow-x-auto leading-relaxed">
+{`# enable on your server
+nadirclaw serve --optimize safe
+
+# or per-request
+{"optimize": "safe", "model": "auto", ...}
+
+# dry-run on any file to see savings
+nadirclaw optimize payload.json`}
+          </pre>
+        </div>
+        <p className="text-xs text-[#999] text-center mt-3">
+          Off by default -- zero overhead when disabled.{" "}
+          <Link to="/optimize" className="text-[#0066ff] hover:underline">
+            See full benchmark results and aggressive mode
+          </Link>
+        </p>
+      </section>
+
       {/* How it compares */}
       <section className="max-w-4xl mx-auto px-6 pb-16">
         <h2 className="text-2xl font-semibold text-center mb-8">Self-Host vs Hosted</h2>

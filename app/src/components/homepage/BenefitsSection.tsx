@@ -40,11 +40,8 @@ export const BenefitsSection = () => {
               <p className="text-[15px] text-[#666] leading-relaxed">
                 LiteLLM gives you multi-provider access. But you still write the
                 routing logic, the classifier, the fallback chains, the cost
-                tracking, the dashboard. Nadir ships all of that.{" "}
-                <code className="text-xs bg-[#f8f8f8] px-1 py-0.5 rounded border border-[#e5e5e5]">
-                  pip install
-                </code>{" "}
-                and done.
+                tracking, the dashboard. Nadir ships all of that.
+                One URL swap and done.
               </p>
             </div>
             <div className="p-6 rounded-xl hover:-translate-y-0.5 hover:shadow-lg transition-all">
@@ -81,20 +78,20 @@ export const BenefitsSection = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-[960px] mx-auto">
             {[
               {
-                title: "Docker + Compose",
-                desc: "docker compose up gives you Nadir + Ollama for a fully local stack. Mount your .env for API keys.",
+                title: "Managed infrastructure",
+                desc: "No servers to run. Nadir Pro handles routing, caching, and failover at the edge. You get an API endpoint and a dashboard.",
               },
               {
                 title: "Fallback chains",
                 desc: "When a provider returns 429 or 5xx, Nadir cascades through your fallback chain. Configure per-tier or use the global default.",
               },
               {
-                title: "Prometheus metrics",
-                desc: "/metrics endpoint with request counts, latency histograms, token totals, cache hit rates. Zero extra dependencies.",
+                title: "Full observability",
+                desc: "Request logs, per-model costs, latency histograms, token totals, and cache hit rates. All visible in your dashboard.",
               },
               {
                 title: "Budget controls",
-                desc: "Set daily and monthly spending limits. Get alerts before you hit them. nadirclaw budget shows real-time status.",
+                desc: "Set daily and monthly spending limits. Get alerts before you hit them. Track real-time usage in your dashboard.",
               },
               {
                 title: "Session persistence",
@@ -118,12 +115,12 @@ export const BenefitsSection = () => {
           </div>
 
           <p className="mt-8 text-sm text-[#666] text-center max-w-[640px] mx-auto">
-            All credentials stay on your machine in{" "}
-            <code className="text-xs bg-[#f8f8f8] px-1.5 py-0.5 rounded border border-[#e5e5e5]">
-              ~/.nadir/credentials.json
-            </code>
-            . No telemetry. No data leaves your network. Your API keys never
-            touch our servers because there are no servers.
+            Your API keys are encrypted at rest and never logged.
+            All traffic is routed over TLS. Want full control?{" "}
+            <a href="/self-host" className="text-[#0066ff] hover:underline">
+              Self-host for free
+            </a>{" "}
+            with the open-source MIT-licensed core.
           </p>
         </div>
       </section>
@@ -301,22 +298,6 @@ export const BenefitsSection = () => {
                   Deduped schemas are expanded by the model. Trimmed history keeps the turns
                   that matter. Code blocks, URLs, and unicode are never touched.
                 </p>
-              </div>
-
-              <div className="bg-[#f8f8f8] border border-[#e5e5e5] rounded-lg p-4 font-mono text-sm leading-relaxed">
-                <span className="text-[#999]"># enable on your server</span>
-                <br />
-                nadirclaw serve --optimize safe
-                <br />
-                <br />
-                <span className="text-[#999]"># or per-request</span>
-                <br />
-                {`{"optimize": "safe", "model": "auto", ...}`}
-                <br />
-                <br />
-                <span className="text-[#999]"># dry-run on any file to see savings</span>
-                <br />
-                nadirclaw optimize payload.json
               </div>
 
               <p className="text-xs text-[#999] mt-3">

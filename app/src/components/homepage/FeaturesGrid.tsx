@@ -45,25 +45,25 @@ export const FeaturesGrid = () => {
               How it works
             </h2>
             <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
-            <p className="text-lg text-[#666]">Install once. Route forever.</p>
+            <p className="text-lg text-[#666]">One URL swap. Route forever.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 max-w-[800px] mx-auto">
             {[
               {
                 step: "STEP 1",
-                title: "Start the router",
-                desc: "Run Nadir locally. It sits between your app and OpenAI's API. No cloud services, no signup, no tracking.",
+                title: "Swap one URL",
+                desc: "Change your base URL from api.openai.com to api.getnadir.com. Works with Claude Code, Cursor, Codex, Aider, or any OpenAI-compatible client.",
               },
               {
                 step: "STEP 2",
-                title: "Point your tools to localhost",
-                desc: "Change your base URL from api.openai.com to localhost:8856. Works with Claude Code, Cursor, Codex, Aider, or any OpenAI-compatible client.",
+                title: "Set model to auto",
+                desc: "Use model=\"auto\" and Nadir's classifier picks the right model for each request. Simple prompts go cheap, complex ones stay premium.",
               },
               {
                 step: "STEP 3",
                 title: "Watch costs drop",
-                desc: "Nadir classifies every prompt and routes it to the cheapest model that can handle it. Check the dashboard to see where you're actually spending.",
+                desc: "Nadir classifies every prompt and routes it to the cheapest model that can handle it. Check your dashboard to see where you're actually spending.",
               },
               {
                 step: "STEP 4",
