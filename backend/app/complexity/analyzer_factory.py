@@ -64,6 +64,7 @@ class AnalyzerType(str, Enum):
     HEURISTIC = "heuristic"  # Zero-dependency rule-based classifier (<1ms)
     CONFIDENCE_AWARE = "confidence_aware"  # Binary → two-tower cascade
     TRAINED = "trained"  # Trained GBT classifier with sentence embeddings
+    WIDE_DEEP_ASYM = "wide_deep_asym"  # Wide&Deep (BGE + struct) trained with asymmetric-cost loss
 
 
 class ComplexityAnalyzerFactory:
@@ -156,6 +157,10 @@ class ComplexityAnalyzerFactory:
             return get_trained_classifier(
                 allowed_providers=allowed_providers,
                 allowed_models=allowed_models,
+            )
+        elif analyzer_type == AnalyzerType.WIDE_DEEP_ASYM:
+            return ComplexityAnalyzerFactory._create_wide_deep_asym_analyzer(
+                allowed_providers, allowed_models, **kwargs
             )
         else:
             raise ValueError(f"Unsupported analyzer type: {analyzer_type}")
@@ -314,6 +319,38 @@ class ComplexityAnalyzerFactory:
         )
 
     @staticmethod
+    def _create_wide_deep_asym_analyzer(
+        allowed_providers: Optional[List[str]],
+        allowed_models: Optional[List[str]],
+        **kwargs,
+    ):
+        """Create Wide&Deep (asymmetric-cost) analyzer.
+
+        Env overrides (also settable via kwargs):
+          WIDE_DEEP_ASYM_DECISION_RULE = "argmax" | "cost_sensitive"   (default: argmax)
+          WIDE_DEEP_ASYM_COST_LAMBDA   = float                         (default: 3.0)
+        """
+        import os as _os
+        from app.complexity.wide_deep_asym_analyzer import get_wide_deep_asym_analyzer
+
+        decision_rule = kwargs.get(
+            "decision_rule",
+            _os.getenv("WIDE_DEEP_ASYM_DECISION_RULE", "argmax"),
+        )
+        cost_lambda = float(
+            kwargs.get(
+                "cost_lambda",
+                _os.getenv("WIDE_DEEP_ASYM_COST_LAMBDA", "3.0"),
+            )
+        )
+        return get_wide_deep_asym_analyzer(
+            allowed_providers=allowed_providers,
+            allowed_models=allowed_models,
+            decision_rule=decision_rule,
+            cost_lambda=cost_lambda,
+        )
+
+    @staticmethod
     def _create_confidence_aware_analyzer(
         allowed_providers: Optional[List[str]],
         allowed_models: Optional[List[str]],
@@ -427,6 +464,20 @@ class ComplexityAnalyzerFactory:
                 "accuracy": "high",
                 "requires_api": False,
                 "cost": "very_low"
+            },
+            AnalyzerType.WIDE_DEEP_ASYM.value: {
+                "name": "Wide&Deep (asymmetric-cost) Classifier",
+                "description": "BGE-base-en-v1.5 + 33 structural features → 3-way softmax, trained with asymmetric expected-cost loss (λ=3). Prefers upgrading over downgrading: 95.4% safe at argmax, 97.8% safe with cost-sensitive λ=20 decoding. Zero catastrophic (complex→simple) errors on v3 test set.",
+                "speed": "fast",
+                "accuracy": "high",
+                "requires_api": False,
+                "cost": "very_low",
+                "performance": {
+                    "safe_argmax": "95.4%",
+                    "safe_cost_sens_lam20": "97.8%",
+                    "catastrophic_pct": "0.0%",
+                    "latency_ms_cpu": "~40-70"
+                }
             }
         }
 

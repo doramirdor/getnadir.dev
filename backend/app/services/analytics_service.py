@@ -238,15 +238,42 @@ class AnalyticsService:
                 )
             })
 
-            # Enrich with classifier-specific fields when analyzer_type is binary
-            if analytics.model_analytics.analyzer_type == "binary":
-                additional = analytics.additional_metadata or {}
+            # Enrich with classifier-specific fields for any classifier-style
+            # analyzer that emits a tier + confidence. Historically this was
+            # gated on `== "binary"`; new trained classifiers (binary, trained,
+            # wide_deep_asym, …) all emit the same shape, so we enrich whenever
+            # we actually have a tier or classifier_version in additional_metadata.
+            CLASSIFIER_TYPES = {
+                "binary",
+                "trained",
+                "wide_deep_asym",
+                "confidence_aware",
+                "heuristic",
+            }
+            additional = analytics.additional_metadata or {}
+            is_classifier = (
+                analytics.model_analytics.analyzer_type in CLASSIFIER_TYPES
+                or additional.get("classifier_tier") is not None
+                or additional.get("classifier_version") is not None
+            )
+            if is_classifier:
                 metadata.update({
-                    "classifier_tier": additional.get("classifier_tier") or analytics.model_analytics.task_type,
-                    "classifier_confidence": analytics.model_analytics.complexity_score,
+                    "classifier_tier": (
+                        additional.get("classifier_tier")
+                        or analytics.model_analytics.task_type
+                    ),
+                    "classifier_confidence": (
+                        additional.get("confidence")
+                        if additional.get("confidence") is not None
+                        else analytics.model_analytics.complexity_score
+                    ),
                     "classifier_version": additional.get("classifier_version", "2.0"),
                     "model_was_overridden": metadata.get("model_changed", False),
                 })
+                # Optional fields — only written if emitted by the analyzer.
+                for k in ("tier_probabilities", "decision_rule", "cost_lambda"):
+                    if additional.get(k) is not None:
+                        metadata[k] = additional[k]
         
         # Add cost analytics
         if analytics.cost_analytics:

@@ -81,8 +81,35 @@ def _parse_range(range_str: str) -> datetime:
     return datetime.now(timezone.utc) - timedelta(days=days)
 
 
+# Analyzer types that emit a classifier-shaped tier/confidence payload and so
+# can be surfaced by the classifier-analytics dashboard. Keep in sync with the
+# enrichment list in `app/services/analytics_service.py::_build_analytics_metadata`.
+CLASSIFIER_ANALYZER_TYPES = {
+    "binary",
+    "trained",
+    "wide_deep_asym",
+    "confidence_aware",
+    "heuristic",
+}
+
+
+def _is_classifier_event(event: Dict) -> bool:
+    """Return True for usage_events that came from a classifier-style analyzer."""
+    meta = event.get("metadata") or {}
+    if meta.get("analyzer_type") in CLASSIFIER_ANALYZER_TYPES:
+        return True
+    # Fallback: the analyzer_type list may lag behind deployments of new
+    # classifier variants, so accept any event that carries a classifier_tier
+    # or classifier_version in its metadata.
+    if meta.get("classifier_tier") is not None:
+        return True
+    if meta.get("classifier_version") is not None:
+        return True
+    return False
+
+
 def _get_classifier_events(user_id: str, start: datetime, limit: int = 5000) -> List[Dict]:
-    """Fetch usage_events where analyzer_type is binary for the given user."""
+    """Fetch usage_events for any classifier-style analyzer for the given user."""
     try:
         response = (
             supabase.table("usage_events")
@@ -94,11 +121,7 @@ def _get_classifier_events(user_id: str, start: datetime, limit: int = 5000) -> 
             .execute()
         )
         events = response.data or []
-        # Filter to binary classifier events
-        return [
-            e for e in events
-            if (e.get("metadata") or {}).get("analyzer_type") == "binary"
-        ]
+        return [e for e in events if _is_classifier_event(e)]
     except Exception as e:
         logger.error("Error fetching classifier events: %s", e)
         return []

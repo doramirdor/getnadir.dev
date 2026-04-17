@@ -612,7 +612,22 @@ class SupabaseUnifiedLLMService:
                             "analyzer_type": settings.COMPLEXITY_ANALYZER_TYPE,
                             "analysis_metadata": analysis_result.get("metadata", {}),
                             "full_analysis": analysis_result,
-                            "errors": []  # Empty errors array when analyzer succeeds
+                            "errors": [],  # Empty errors array when analyzer succeeds
+                            # Promote classifier output to the top level so downstream
+                            # analytics/metadata builders can log it without having to
+                            # reach into `full_analysis`. These are always-safe reads
+                            # because analysis_result is a dict.
+                            "tier_name": analysis_result.get("tier_name")
+                                or analysis_result.get("complexity_name"),
+                            "tier": analysis_result.get("tier")
+                                or analysis_result.get("complexity_tier"),
+                            "tier_probabilities": analysis_result.get("tier_probabilities"),
+                            "confidence": analysis_result.get("confidence"),
+                            "classifier_version": analysis_result.get("analyzer_version")
+                                or analysis_result.get("classifier_version"),
+                            "decision_rule": analysis_result.get("decision_rule"),
+                            "cost_lambda": analysis_result.get("cost_lambda"),
+                            "analyzer_latency_ms": analysis_result.get("analyzer_latency_ms"),
                         }
                         
                         return (
@@ -1111,21 +1126,56 @@ class SupabaseUnifiedLLMService:
     def _build_classifier_metadata(
         analyzer_type: str, complexity_analysis: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Build additional_metadata ensuring classifier fields are present for the learning service."""
+        """Build additional_metadata ensuring classifier fields are present for the learning service.
+
+        Captures both the `analyzer_type` (which factory key was used —
+        e.g. ``wide_deep_asym`` / ``binary`` / ``trained``) and the analyzer's
+        own versioned identifier (``classifier_version`` / ``analyzer_version``
+        — e.g. ``wide_deep_asym_v3``). For classifier-style analyzers we also
+        persist the tier probabilities and the decision rule / λ so Supabase
+        rows can be filtered or re-scored offline.
+        """
         metrics = complexity_analysis.get("extracted_metrics", {})
+        full = complexity_analysis.get("full_analysis", {}) or {}
+
         meta: Dict[str, Any] = {
             "complexity_analyzer": analyzer_type,
             "full_complexity_analysis": complexity_analysis,
         }
-        # Ensure top-level keys the learning service queries are always set
         meta["analyzer_type"] = analyzer_type
         meta["classifier_tier"] = (
             metrics.get("reasoning_depth")
             or complexity_analysis.get("tier_name")
             or complexity_analysis.get("complexity_name")
+            or full.get("tier_name")
+            or full.get("complexity_name")
         )
-        meta["confidence"] = metrics.get("confidence") or complexity_analysis.get("confidence")
-        meta["classifier_version"] = metrics.get("classifier_version") or complexity_analysis.get("classifier_version")
+        meta["confidence"] = (
+            metrics.get("confidence")
+            or complexity_analysis.get("confidence")
+            or full.get("confidence")
+        )
+        meta["classifier_version"] = (
+            metrics.get("classifier_version")
+            or complexity_analysis.get("classifier_version")
+            or full.get("analyzer_version")
+            or full.get("classifier_version")
+        )
+        # Tier probabilities + decision-rule config (when the analyzer emits them).
+        tier_probs = complexity_analysis.get("tier_probabilities") or full.get("tier_probabilities")
+        if tier_probs is not None:
+            meta["tier_probabilities"] = tier_probs
+        decision_rule = complexity_analysis.get("decision_rule") or full.get("decision_rule")
+        if decision_rule is not None:
+            meta["decision_rule"] = decision_rule
+        cost_lambda = complexity_analysis.get("cost_lambda") or full.get("cost_lambda")
+        if cost_lambda is not None:
+            meta["cost_lambda"] = cost_lambda
+        analyzer_latency_ms = (
+            complexity_analysis.get("analyzer_latency_ms") or full.get("analyzer_latency_ms")
+        )
+        if analyzer_latency_ms is not None:
+            meta["analyzer_latency_ms"] = analyzer_latency_ms
         return meta
 
     def _get_routing_strategy(self) -> str:
