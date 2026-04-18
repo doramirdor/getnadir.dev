@@ -1052,6 +1052,15 @@ class SupabaseUnifiedLLMService:
                 response_size_bytes=len(response_text.encode('utf-8')) if response_text else 0
             )
             
+            # Apply privacy setting BEFORE constructing analytics payload so the
+            # analytics service never sees raw prompt/response content when the
+            # user has opted out.
+            classifier_meta = self._build_classifier_metadata(analyzer_type, complexity_analysis)
+            redacted_prompt, redacted_response, redacted_meta = self._redact_for_privacy(
+                prompt, response_text, classifier_meta
+            )
+            redacted_system = system_message if getattr(self.user_session, "store_prompts", True) else None
+
             # Build comprehensive request analytics
             request_analytics = RequestAnalytics(
                 request_id=request_id,
@@ -1062,11 +1071,11 @@ class SupabaseUnifiedLLMService:
                 funnel_tag=funnel_tag,
                 tracking_tags=tracking_tags,
                 endpoint="/v1/chat/completions",
-                route="/v1/chat/completions", 
+                route="/v1/chat/completions",
                 nadir_mode=nadir_mode,
-                prompt=prompt,
-                system_message=system_message,
-                response=response_text,
+                prompt=redacted_prompt,
+                system_message=redacted_system,
+                response=redacted_response,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 has_tools=bool(tools),
@@ -1079,9 +1088,7 @@ class SupabaseUnifiedLLMService:
                 ip_address=ip_address,
                 user_agent=user_agent,
                 cluster_id=cluster_id,
-                additional_metadata=self._build_classifier_metadata(
-                    analyzer_type, complexity_analysis
-                )
+                additional_metadata=redacted_meta,
             )
             
             # Log using the enhanced analytics service
@@ -1214,6 +1221,29 @@ class SupabaseUnifiedLLMService:
         else:
             return "unknown"
     
+    def _redact_for_privacy(
+        self,
+        prompt: Optional[str],
+        response: Optional[str],
+        metadata: Optional[Dict[str, Any]],
+    ) -> tuple[Optional[str], Optional[str], Optional[Dict[str, Any]]]:
+        """Apply the user's privacy setting to a prompt/response/metadata tuple.
+
+        When `user_session.store_prompts` is False, the prompt is replaced with
+        `sha256:<hex>`, the response is dropped, and `metadata.prompt_hashed=True`
+        is set. Used by every log path (primary analytics + fallback) so we
+        never leak raw prompt content regardless of which code path runs.
+        """
+        if prompt is None or getattr(self.user_session, "store_prompts", True):
+            return prompt, response, metadata
+        import hashlib
+        prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+        return (
+            f"sha256:{prompt_hash}",
+            None,  # responses can echo prompt content — drop in privacy mode
+            {**(metadata or {}), "prompt_hashed": True},
+        )
+
     async def _log_usage_event(
         self,
         request_id: str,
@@ -1233,22 +1263,13 @@ class SupabaseUnifiedLLMService:
     ) -> None:
         """Log usage event to Supabase.
 
-        Respects the user's privacy setting (`user_session.store_prompts`):
-        when disabled, the raw prompt is replaced with `sha256:<hex>` and the
-        response is dropped, so the logs still power cost/latency analytics
-        without retaining prompt/response content.
+        Respects the user's privacy setting via `_redact_for_privacy`. Used as
+        the fallback path when the primary analytics logger fails.
         """
         try:
-            logged_prompt = prompt
-            logged_response = response
-            logged_metadata = metadata
-            if prompt is not None and not getattr(self.user_session, "store_prompts", True):
-                import hashlib
-                prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
-                logged_prompt = f"sha256:{prompt_hash}"
-                # Responses can echo prompt content — drop them in privacy mode.
-                logged_response = None
-                logged_metadata = {**(metadata or {}), "prompt_hashed": True}
+            logged_prompt, logged_response, logged_metadata = self._redact_for_privacy(
+                prompt, response, metadata
+            )
 
             await log_usage_event(
                 user_id=self.user_session.id,
