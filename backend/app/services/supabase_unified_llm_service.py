@@ -1231,8 +1231,25 @@ class SupabaseUnifiedLLMService:
         metadata: Optional[Dict[str, Any]] = None,
         error: Optional[str] = None
     ) -> None:
-        """Log usage event to Supabase."""
+        """Log usage event to Supabase.
+
+        Respects the user's privacy setting (`user_session.store_prompts`):
+        when disabled, the raw prompt is replaced with `sha256:<hex>` and the
+        response is dropped, so the logs still power cost/latency analytics
+        without retaining prompt/response content.
+        """
         try:
+            logged_prompt = prompt
+            logged_response = response
+            logged_metadata = metadata
+            if prompt is not None and not getattr(self.user_session, "store_prompts", True):
+                import hashlib
+                prompt_hash = hashlib.sha256(prompt.encode("utf-8")).hexdigest()
+                logged_prompt = f"sha256:{prompt_hash}"
+                # Responses can echo prompt content — drop them in privacy mode.
+                logged_response = None
+                logged_metadata = {**(metadata or {}), "prompt_hashed": True}
+
             await log_usage_event(
                 user_id=self.user_session.id,
                 request_id=request_id,
@@ -1242,12 +1259,12 @@ class SupabaseUnifiedLLMService:
                 tokens_out=tokens_out,
                 cost=cost,
                 route=route,
-                prompt=prompt,
-                response=response,
+                prompt=logged_prompt,
+                response=logged_response,
                 latency_ms=latency_ms,
                 cluster_id=cluster_id,
                 embedding=embedding,
-                metadata=metadata,
+                metadata=logged_metadata,
                 error=error
             )
         except Exception as e:

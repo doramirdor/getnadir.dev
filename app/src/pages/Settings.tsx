@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Save, LogOut, Brain, DollarSign, Settings as SettingsIcon, Shield, Key, Trash2, AlertTriangle, Loader2, MessageSquare, Send } from "lucide-react";
+import { Save, LogOut, Brain, DollarSign, Settings as SettingsIcon, Shield, Key, Trash2, AlertTriangle, Loader2, MessageSquare, Send, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiKey } from "@/hooks/useApiKey";
@@ -31,6 +32,9 @@ const Settings = () => {
   const [benchmarkModel, setBenchmarkModel] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [layers, setLayers] = useState<Layers>({ routing: true, fallback: true, optimize: "off" });
+  // Privacy: when true (default) the backend stores the raw prompt text. When false,
+  // only a SHA-256 hash is stored — disables adaptive classifier learning.
+  const [storePrompts, setStorePrompts] = useState<boolean>(true);
 
   useEffect(() => { trackPageView("settings"); }, []);
 
@@ -73,6 +77,9 @@ const Settings = () => {
           optimize: savedLayers.optimize ?? "off",
         });
       }
+      // Privacy: default to storing prompts unless explicitly disabled.
+      const privacy = data.model_parameters?.privacy ?? {};
+      setStorePrompts(privacy.store_prompts ?? true);
     } catch (error) {
       logger.error('Error fetching user profile:', error);
       toast({
@@ -88,14 +95,18 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      // Merge layers into existing model_parameters
+      // Merge layers + privacy into existing model_parameters
       const existingParams = userProfile?.model_parameters || {};
       const { error } = await supabase
         .from('profiles')
         .update({
           name: companyName,
           benchmark_model: benchmarkModel,
-          model_parameters: { ...existingParams, layers },
+          model_parameters: {
+            ...existingParams,
+            layers,
+            privacy: { ...(existingParams.privacy || {}), store_prompts: storePrompts },
+          },
         })
         .eq('id', user.id);
 
@@ -171,6 +182,52 @@ const Settings = () => {
 
       {/* Feature Layers */}
       <LayerConfig layers={layers} onChange={setLayers} />
+
+      {/* Privacy */}
+      <Card className="clean-card">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            <CardTitle className="text-foreground">Privacy</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <EyeOff className="w-4 h-4 text-muted-foreground" />
+                <label htmlFor="store-prompts" className="text-sm font-medium text-foreground">
+                  Store prompt text in logs
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-2xl">
+                When on, Nadir stores the full prompt text with each request in your
+                private logs. This powers the adaptive classifier &mdash; it learns
+                from your traffic so routing gets more accurate over time.
+              </p>
+              {!storePrompts && (
+                <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Only a SHA-256 hash will be stored.</p>
+                    <p className="mt-1 opacity-90">
+                      This satisfies stricter data-retention requirements but disables
+                      adaptive classifier learning for your account. Routing accuracy
+                      will stay frozen at the default classifier and won't improve
+                      based on your usage patterns.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <Switch
+              id="store-prompts"
+              checked={storePrompts}
+              onCheckedChange={setStorePrompts}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Current Usage */}
       {userProfile && (

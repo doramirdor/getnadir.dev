@@ -141,6 +141,10 @@ class UserSession:
         # Key mode: "byok" = user's own provider keys, "hosted" = Nadir's Bedrock keys
         self.key_mode: str = user_data.get("key_mode", "hosted")
         self.provider_api_keys: Dict[str, str] = user_data.get("provider_api_keys", {})
+        # Privacy: when False, the backend stores only a SHA-256 hash of the prompt
+        # text instead of the raw content. Default True (store raw) preserves adaptive
+        # classifier learning.
+        self.store_prompts: bool = bool(user_data.get("store_prompts", True))
         self.raw_data = user_data
 
     @property
@@ -270,6 +274,10 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         key_mode = key_mode_override or ("byok" if user_provider_keys else "hosted")
 
         # Compile user session data using both API key config and profile data
+        # Privacy preference: profile.model_parameters.privacy.store_prompts (default True).
+        privacy_cfg = (profile_data.get("model_parameters") or {}).get("privacy") or {}
+        store_prompts = bool(privacy_cfg.get("store_prompts", True))
+
         user_session_data = {
             "id": user_id,
             "email": profile_data.get("email"),
@@ -285,6 +293,7 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             "subscription_plan": sub_plan,
             "key_mode": key_mode,
             "provider_api_keys": user_provider_keys,
+            "store_prompts": store_prompts,
         }
 
         session = UserSession(user_session_data)
