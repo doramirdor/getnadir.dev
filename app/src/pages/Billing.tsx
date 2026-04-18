@@ -18,7 +18,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiKey } from "@/hooks/useApiKey";
-import { SavingsAPI } from "@/services/savingsApi";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { trackBillingView } from "@/utils/analytics";
@@ -30,7 +29,48 @@ function calculateFee(totalSavings: number) {
   const base = 9;
   const first2k = Math.min(totalSavings, 2000) * 0.25;
   const above2k = Math.max(totalSavings - 2000, 0) * 0.10;
-  return { base, first2k, above2k, total: base + first2k + above2k };
+  const variable = first2k + above2k;
+  return { base, first2k, above2k, variable, total: base + variable };
+}
+
+// ── Supabase-direct savings summary (no API key required) ───────────────
+
+async function fetchCurrentMonthSavings(): Promise<{
+  total_savings_usd: number;
+  total_spent_usd: number;
+  requests_routed: number;
+} | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+  const { data } = await supabase
+    .from("savings_tracking")
+    .select("routed_cost_usd, savings_usd")
+    .eq("user_id", user.id)
+    .gte("created_at", monthStart.toISOString())
+    .lt("created_at", monthEnd.toISOString());
+
+  const rows = data ?? [];
+  return {
+    total_savings_usd: rows.reduce((s, r: any) => s + Number(r.savings_usd || 0), 0),
+    total_spent_usd: rows.reduce((s, r: any) => s + Number(r.routed_cost_usd || 0), 0),
+    requests_routed: rows.length,
+  };
+}
+
+async function fetchInvoicesFromSupabase(): Promise<InvoiceItem[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data } = await supabase
+    .from("savings_invoices")
+    .select("id, billing_period_start, billing_period_end, total_savings_usd, base_fee_usd, savings_fee_usd, total_invoice_usd, status, created_at")
+    .eq("user_id", user.id)
+    .order("billing_period_start", { ascending: false });
+  return (data ?? []) as InvoiceItem[];
 }
 
 // ── API helper ───────────────────────────────────────────────────────────
@@ -91,19 +131,18 @@ const Billing = () => {
 
   useEffect(() => { trackBillingView(); }, []);
 
-  // Fetch savings summary
-  const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;
+  // Fetch savings summary directly from Supabase (RLS-scoped to the user)
+  // so the Billing page works without an in-memory API key.
   const { data: savingsSummary, isLoading } = useQuery({
-    queryKey: ["savings", "summary", apiKey],
-    queryFn: () => savingsApi!.getSavingsSummary(),
-    enabled: !!savingsApi,
+    queryKey: ["billing", "savings", "supabase"],
+    queryFn: fetchCurrentMonthSavings,
     retry: 1,
     staleTime: 60_000,
   });
 
   // Fetch subscription status
   const { data: subscription } = useQuery({
-    queryKey: ["subscription", apiKey],
+    queryKey: ["subscription", "supabase"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -111,29 +150,27 @@ const Billing = () => {
         .from("user_subscriptions")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       return data;
     },
     retry: 1,
     staleTime: 60_000,
   });
 
-  // Fetch invoice history
+  // Fetch invoice history from Supabase (RLS-scoped, no API key needed)
   const { data: invoicesData } = useQuery({
-    queryKey: ["billing", "invoices", apiKey],
-    queryFn: () =>
-      billingRequest<{ invoices: InvoiceItem[] }>(
-        "/v1/billing/invoices",
-        apiKey!
-      ),
-    enabled: !!apiKey,
+    queryKey: ["billing", "invoices", "supabase"],
+    queryFn: fetchInvoicesFromSupabase,
     retry: 1,
     staleTime: 60_000,
   });
 
-  const invoices = invoicesData?.invoices ?? [];
+  const invoices = invoicesData ?? [];
   const currentSavings = savingsSummary?.total_savings_usd ?? 0;
+  const currentSpent = savingsSummary?.total_spent_usd ?? 0;
   const fee = calculateFee(currentSavings);
+  // Net savings excludes the flat base fee (billed separately as a subscription).
+  const netSavings = currentSavings - fee.variable;
   const isActive = subscription?.status === "active";
   const isCanceling = subscription?.cancel_at_period_end === true;
 
@@ -255,13 +292,15 @@ const Billing = () => {
 
         <Card className="clean-card">
           <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Net Savings</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">You Pay This Month</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-foreground">
-              ${(currentSavings - fee.total).toFixed(2)}
+            <p className="text-2xl font-bold text-blue-600">
+              ${fee.total.toFixed(2)}
             </p>
-            <p className="text-sm text-muted-foreground">after Nadir fee</p>
+            <p className="text-sm text-muted-foreground">
+              ${fee.base.toFixed(2)} base + ${fee.variable.toFixed(2)} variable
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -272,7 +311,7 @@ const Billing = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-blue-600" />
-              <CardTitle className="text-foreground">Current Month Fee</CardTitle>
+              <CardTitle className="text-foreground">You Pay This Month</CardTitle>
             </div>
             <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
               ${fee.total.toFixed(2)}
@@ -284,6 +323,7 @@ const Billing = () => {
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">Base fee</div>
               <div className="text-lg font-bold text-foreground">${fee.base.toFixed(2)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">flat monthly</div>
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">25% on first $2K saved</div>
@@ -294,18 +334,20 @@ const Billing = () => {
               <div className="text-lg font-bold text-foreground">${fee.above2k.toFixed(2)}</div>
             </div>
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-xs text-blue-700">Total fee</div>
+              <div className="text-xs text-blue-700">Total due</div>
               <div className="text-lg font-bold text-blue-600">${fee.total.toFixed(2)}</div>
+              <div className="text-[10px] text-blue-600/80 mt-0.5">base + variable</div>
             </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
             <div>
               <p className="text-sm font-medium text-emerald-800">
-                You saved ${currentSavings.toFixed(2)} this month
+                You saved ${currentSavings.toFixed(2)} vs always-Opus &mdash; spent ${currentSpent.toFixed(2)}
               </p>
               <p className="text-xs text-emerald-600">
-                Net savings after fee: ${(currentSavings - fee.total).toFixed(2)}
+                Net after ${fee.variable.toFixed(2)} variable fee: <b>${netSavings.toFixed(2)}</b>
+                <span className="text-emerald-600/70"> (the $9 base is billed separately)</span>
               </p>
             </div>
             {!isActive && (

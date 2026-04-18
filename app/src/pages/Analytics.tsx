@@ -210,8 +210,24 @@ const Analytics = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="costs">Costs</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="complexity">Complexity</TabsTrigger>
-          <TabsTrigger value="classifier">Classifier</TabsTrigger>
+          <TabsTrigger value="complexity" className="gap-1.5">
+            Complexity
+            <Badge
+              variant="outline"
+              className="h-4 px-1 py-0 text-[9px] font-medium tracking-wide border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
+            >
+              SOON
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="classifier" className="gap-1.5">
+            Classifier
+            <Badge
+              variant="outline"
+              className="h-4 px-1 py-0 text-[9px] font-medium tracking-wide border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
+            >
+              SOON
+            </Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -352,24 +368,33 @@ const Analytics = () => {
 
                 <Card className="clean-card">
                   <CardHeader>
-                    <CardTitle className="text-sm font-medium">Provider Distribution</CardTitle>
+                    <CardTitle className="text-sm font-medium">Model Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          data={overview.topProviders}
+                          data={overview.topModels}
                           cx="50%"
                           cy="50%"
                           outerRadius={80}
                           dataKey="usage"
-                          nameKey="provider"
+                          nameKey="model"
+                          label={({ model, percent }) =>
+                            `${model}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                          }
                         >
-                          {overview.topProviders.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={`hsl(${index * 120}, 70%, 50%)`} />
+                          {overview.topModels.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={`hsl(${(index * 55 + 152) % 360}, 55%, ${50 - index * 4}%)`}
+                            />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+                        <Tooltip
+                          contentStyle={CHART_TOOLTIP_STYLE}
+                          formatter={(value: number) => [formatNumber(value), "requests"]}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -583,10 +608,25 @@ const Analytics = () => {
           )}
         </TabsContent>
 
-        {/* Complexity Tab */}
+        {/* Complexity Tab — Coming Soon */}
         <TabsContent value="complexity" className="space-y-6">
-          {errors.complexity && <FetchError message={errors.complexity} onRetry={() => retrySection("complexity")} />}
-          {!errors.complexity && (!complexity || complexity.complexityDistribution.length === 0) ? (
+          <Card className="clean-card">
+            <CardContent className="p-10 text-center">
+              <Badge
+                variant="outline"
+                className="mb-3 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
+              >
+                Coming soon
+              </Badge>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Complexity Insights</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Per-prompt complexity scoring, tier distribution, and optimization opportunities
+                land in the next release. We're finalizing the scoring model and the UI.
+              </p>
+            </CardContent>
+          </Card>
+          {false && errors.complexity && <FetchError message={errors.complexity} onRetry={() => retrySection("complexity")} />}
+          {false && !errors.complexity && (!complexity || complexity.complexityDistribution.length === 0) ? (
             <Card className="clean-card">
               <CardContent className="p-8 text-center">
                 <h3 className="text-lg font-semibold text-foreground mb-2">No Complexity Data Yet</h3>
@@ -746,9 +786,31 @@ const Analytics = () => {
           ) : null}
         </TabsContent>
 
-        {/* Classifier Tab */}
+        {/* Classifier Tab — Coming Soon */}
         <TabsContent value="classifier" className="space-y-6">
-          <ClassifierAnalytics timeRange={timeRange} />
+          <Card className="clean-card">
+            <CardContent className="p-10 text-center">
+              <Badge
+                variant="outline"
+                className="mb-3 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
+              >
+                Coming soon
+              </Badge>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Prompt Cohort Classifier</h3>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                Automatically group your traffic into prompt cohorts, see how each cohort is
+                performing (cost, latency, quality, routed tier), and get flagged when a cohort
+                is underperforming or ripe for optimization &mdash; e.g. a cluster still hitting
+                Opus that a distilled Haiku expert could handle.
+              </p>
+              <ul className="text-xs text-muted-foreground/90 mt-4 space-y-1 inline-block text-left">
+                <li>• Auto-discovery of prompt cohorts from your traffic</li>
+                <li>• Per-cohort cost, latency, and quality trends</li>
+                <li>• Underperformance + drift alerts</li>
+                <li>• One-click "optimize this cohort" &rarr; distillation or rerouting</li>
+              </ul>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

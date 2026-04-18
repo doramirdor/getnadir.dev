@@ -38,6 +38,10 @@ export interface TierBreakdown {
   requests: number;
   savings_usd: number;
   avg_savings_per_request: number;
+  /** Fraction of the benchmark cost saved on this tier (0..1). Added client-side. */
+  savings_pct?: number;
+  benchmark_usd?: number;
+  spent_usd?: number;
 }
 
 export interface SavingsHistoryMonth {

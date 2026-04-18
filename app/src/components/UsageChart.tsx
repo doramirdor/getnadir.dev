@@ -21,31 +21,40 @@ export const UsageChart = () => {
 
   const fetchUsageData = async () => {
     try {
+      // Last 30 days, daily buckets, zero-padded.
+      const since = new Date();
+      since.setUTCDate(since.getUTCDate() - 29);
+      since.setUTCHours(0, 0, 0, 0);
+
       const { data: eventsData } = await supabase
         .from('usage_logs')
         .select('created_at, cost')
+        .gte('created_at', since.toISOString())
         .order('created_at', { ascending: true });
 
-      if (eventsData && eventsData.length > 0) {
-        const monthlyData = eventsData.reduce((acc, ev) => {
-          const month = new Date(ev.created_at).toLocaleDateString('en-US', { month: 'short' });
-          if (!acc[month]) {
-            acc[month] = { requests: 0, cost: 0, month };
-          }
-          acc[month].requests += 1;
-          acc[month].cost += ev.cost || 0;
-          return acc;
-        }, {} as Record<string, { requests: number, cost: number, month: string }>);
+      const perDay = new Map<string, { requests: number; cost: number }>();
+      (eventsData ?? []).forEach((ev) => {
+        const key = new Date(ev.created_at).toISOString().slice(0, 10);
+        const cur = perDay.get(key) ?? { requests: 0, cost: 0 };
+        cur.requests += 1;
+        cur.cost += ev.cost || 0;
+        perDay.set(key, cur);
+      });
 
-        const chartData = Object.values(monthlyData).map(data => ({
-          name: data.month,
-          requests: data.requests,
-          cost: parseFloat(data.cost.toFixed(2))
-        })).slice(-6);
-        setData(chartData);
-      } else {
-        setData([]);
+      const chartData: UsageData[] = [];
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(since);
+        d.setUTCDate(d.getUTCDate() + i);
+        const isoKey = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const v = perDay.get(isoKey) ?? { requests: 0, cost: 0 };
+        chartData.push({
+          name: label,
+          requests: v.requests,
+          cost: parseFloat(v.cost.toFixed(2)),
+        });
       }
+      setData(chartData);
     } catch (error) {
       logger.error('Error fetching usage data:', error);
       setData([]);

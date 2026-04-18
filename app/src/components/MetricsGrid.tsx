@@ -8,15 +8,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { useApiKey } from "@/hooks/useApiKey";
-import { useAuth } from "@/hooks/useAuth";
-import { SavingsAPI } from "@/services/savingsApi";
 import { logger } from "@/utils/logger";
 
 interface Metrics {
   totalRequests: number;
   monthlyCost: number;
+  savedThisMonth: number;
   activeApiKeys: number;
   avgResponseTime: number;
 }
@@ -25,24 +22,11 @@ export const MetricsGrid = () => {
   const [metrics, setMetrics] = useState<Metrics>({
     totalRequests: 0,
     monthlyCost: 0,
+    savedThisMonth: 0,
     activeApiKeys: 0,
     avgResponseTime: 0,
   });
   const [loading, setLoading] = useState(true);
-  const { apiKey } = useApiKey();
-  const { user } = useAuth();
-
-  // Fetch savings summary from backend
-  const savingsApi = apiKey ? new SavingsAPI(apiKey) : null;
-  const { data: savingsSummary } = useQuery({
-    queryKey: ["savings", "summary", apiKey],
-    queryFn: () => savingsApi!.getSavingsSummary(),
-    enabled: !!savingsApi,
-    retry: 1,
-    staleTime: 60_000,
-  });
-
-  const savedThisMonth = savingsSummary?.total_savings_usd ?? 0;
 
   useEffect(() => {
     fetchMetrics();
@@ -74,6 +58,20 @@ export const MetricsGrid = () => {
         activeApiKeys = count || 0;
       }
 
+      // Fetch this-month savings directly from savings_tracking (RLS-scoped to current user)
+      let savedThisMonth = 0;
+      if (user) {
+        const monthStart = new Date();
+        monthStart.setUTCDate(1);
+        monthStart.setUTCHours(0, 0, 0, 0);
+        const { data: savingsRows } = await supabase
+          .from('savings_tracking')
+          .select('savings_usd')
+          .eq('user_id', user.id)
+          .gte('created_at', monthStart.toISOString());
+        savedThisMonth = savingsRows?.reduce((s, r: any) => s + Number(r.savings_usd || 0), 0) || 0;
+      }
+
       const totalRequests = eventsData?.length || 0;
 
       const monthlyCost = eventsData?.reduce((sum, ev) => sum + (ev.cost || 0), 0) || 0;
@@ -85,6 +83,7 @@ export const MetricsGrid = () => {
       setMetrics({
         totalRequests,
         monthlyCost,
+        savedThisMonth,
         activeApiKeys,
         avgResponseTime,
       });
@@ -104,7 +103,7 @@ export const MetricsGrid = () => {
   const metricsConfig = [
     { title: "Total Requests", value: formatNumber(metrics.totalRequests), icon: Activity },
     { title: "Monthly Cost", value: `$${metrics.monthlyCost.toFixed(2)}`, icon: CreditCard },
-    { title: "Savings This Month", value: `$${savedThisMonth.toFixed(2)}`, icon: TrendingDown, highlight: savedThisMonth > 0 },
+    { title: "Savings This Month", value: `$${metrics.savedThisMonth.toFixed(2)}`, icon: TrendingDown, highlight: metrics.savedThisMonth > 0 },
     { title: "Active API Keys", value: metrics.activeApiKeys.toString(), icon: Key },
     { title: "Avg Response", value: `${metrics.avgResponseTime.toFixed(1)}s`, icon: TrendingUp },
   ];

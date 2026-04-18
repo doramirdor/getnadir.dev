@@ -29,63 +29,80 @@ export const LatencyChart = () => {
 
   const fetchLatencyData = async () => {
     try {
+      // Last 30 days, daily buckets, zero-padded.
+      const since = new Date();
+      since.setUTCDate(since.getUTCDate() - 29);
+      since.setUTCHours(0, 0, 0, 0);
+
       const { data: eventsData } = await supabase
         .from('usage_logs')
         .select('created_at, latency_ms, model_name')
+        .gte('created_at', since.toISOString())
         .not('latency_ms', 'is', null)
         .order('created_at', { ascending: true });
 
-      if (eventsData && eventsData.length > 0) {
-        const monthlyData = eventsData.reduce((acc, ev) => {
-          const month = new Date(ev.created_at).toLocaleDateString('en-US', { month: 'short' });
-          if (!acc[month]) {
-            acc[month] = { responses: [], month };
-          }
-          acc[month].responses.push(ev.latency_ms);
-          return acc;
-        }, {} as Record<string, { responses: number[], month: string }>);
-
-        const chartData = Object.values(monthlyData).map(monthData => {
-          const sorted = [...monthData.responses].sort((a, b) => a - b);
-          const avgLatency = sorted.reduce((sum, time) => sum + time, 0) / sorted.length;
-          const p95Index = Math.floor(sorted.length * 0.95);
-          const p99Index = Math.floor(sorted.length * 0.99);
-          return {
-            name: monthData.month,
-            avgLatency: Math.round(avgLatency),
-            p95Latency: sorted[p95Index] || Math.floor(avgLatency * 1.8),
-            p99Latency: sorted[p99Index] || Math.floor(avgLatency * 2.5)
-          };
-        }).slice(-6);
-
-        setLatencyData(chartData);
-        const avgResponseTime = chartData[chartData.length - 1]?.avgLatency || 0;
-        setAvgResponse(avgResponseTime / 1000);
-
-        const modelData = eventsData.reduce((acc, ev) => {
-          if (!acc[ev.model_name]) {
-            acc[ev.model_name] = { responses: [], model: ev.model_name };
-          }
-          acc[ev.model_name].responses.push(ev.latency_ms);
-          return acc;
-        }, {} as Record<string, { responses: number[], model: string }>);
-
-        const modelLatency = Object.values(modelData)
-          .map((modelData) => ({
-            model: modelData.model,
-            avgLatency: Math.round(modelData.responses.reduce((sum, time) => sum + time, 0) / modelData.responses.length),
-          }))
-          .sort((a, b) => a.avgLatency - b.avgLatency)
-          .slice(0, 5);
-
-        setModelLatencyData(modelLatency);
-        setFastestModel(modelLatency[0]?.model || "");
-      } else {
+      if (!eventsData || eventsData.length === 0) {
         setLatencyData([]);
         setModelLatencyData([]);
         setAvgResponse(0);
         setFastestModel("");
+        return;
       }
+
+      // Group latencies by day
+      const perDay = new Map<string, number[]>();
+      for (const ev of eventsData) {
+        const key = new Date(ev.created_at).toISOString().slice(0, 10);
+        const arr = perDay.get(key) ?? [];
+        arr.push(ev.latency_ms);
+        perDay.set(key, arr);
+      }
+
+      const chartData: LatencyData[] = [];
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(since);
+        d.setUTCDate(d.getUTCDate() + i);
+        const isoKey = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const responses = perDay.get(isoKey) ?? [];
+        if (responses.length === 0) {
+          // Zero-pad to keep the x-axis continuous; the chart reads NaN as a gap.
+          chartData.push({ name: label, avgLatency: NaN as any, p95Latency: NaN as any, p99Latency: NaN as any });
+          continue;
+        }
+        const sorted = [...responses].sort((a, b) => a - b);
+        const avg = sorted.reduce((s, v) => s + v, 0) / sorted.length;
+        const p95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))];
+        const p99 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.99))];
+        chartData.push({
+          name: label,
+          avgLatency: Math.round(avg),
+          p95Latency: p95,
+          p99Latency: p99,
+        });
+      }
+
+      setLatencyData(chartData);
+      const overallAvg = eventsData.reduce((s, ev) => s + (ev.latency_ms || 0), 0) / eventsData.length;
+      setAvgResponse(overallAvg / 1000);
+
+      // Per-model averages
+      const perModel = new Map<string, number[]>();
+      for (const ev of eventsData) {
+        const arr = perModel.get(ev.model_name) ?? [];
+        arr.push(ev.latency_ms);
+        perModel.set(ev.model_name, arr);
+      }
+      const modelLatency: ModelLatencyData[] = Array.from(perModel.entries())
+        .map(([model, xs]) => ({
+          model,
+          avgLatency: Math.round(xs.reduce((s, v) => s + v, 0) / xs.length),
+        }))
+        .sort((a, b) => a.avgLatency - b.avgLatency)
+        .slice(0, 5);
+
+      setModelLatencyData(modelLatency);
+      setFastestModel(modelLatency[0]?.model || "");
     } catch (error) {
       logger.error('Error fetching latency data:', error);
       setLatencyData([]);
