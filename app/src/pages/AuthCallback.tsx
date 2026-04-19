@@ -1,12 +1,17 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { trackAuthSuccess } from "@/utils/analytics";
 
 /**
  * Handles the OAuth callback from Supabase.
  * Supabase redirects here with tokens in the URL hash (#access_token=...).
  * The Supabase client automatically picks them up via onAuthStateChange,
  * then we redirect to the dashboard.
+ *
+ * This is the ONLY place OAuth signins land. Any analytics for OAuth
+ * success (identify + auth_success capture) has to happen here —
+ * `handleSignIn` in Auth.tsx only covers the email/password path.
  */
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -24,10 +29,18 @@ const AuthCallback = () => {
       }
 
       if (session) {
+        // `app_metadata.provider` is set by Supabase to the OAuth provider
+        // name ("google" | "github"). For email signins the caller in
+        // Auth.tsx already fires trackAuthSuccess("email", ...); this path
+        // only runs for OAuth so passing the provider is the right label.
+        const provider = session.user.app_metadata?.provider ?? "oauth";
+        trackAuthSuccess(provider, session.user.id);
         navigate("/dashboard", { replace: true });
       } else {
         // If no session yet, the onAuthStateChange listener in AuthProvider
-        // will handle it. Give it a moment then redirect.
+        // will handle it. Give it a moment then redirect. (Analytics on
+        // this branch would double-count when the listener fires, so we
+        // skip it here and rely on the next mount.)
         const timeout = setTimeout(() => {
           navigate("/dashboard", { replace: true });
         }, 1000);

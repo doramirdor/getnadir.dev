@@ -20,7 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useApiKey } from "@/hooks/useApiKey";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
-import { trackBillingView } from "@/utils/analytics";
+import { trackBillingView, trackCheckoutStart, trackCheckoutCancel } from "@/utils/analytics";
 import { formatUSD } from "@/utils/format";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -132,6 +132,17 @@ const Billing = () => {
 
   useEffect(() => { trackBillingView(); }, []);
 
+  // When Stripe redirects back with ?status=cancelled the user closed the
+  // checkout tab without paying. Fire a client-side `checkout_cancel` so the
+  // drop-off shows up in the funnel. (The complementary server-side
+  // `checkout_abandon` fires from the `checkout.session.expired` webhook
+  // for users who never come back at all.)
+  useEffect(() => {
+    if (searchParams.get("status") === "cancelled") {
+      trackCheckoutCancel("pro");
+    }
+  }, [searchParams]);
+
   // Fetch savings summary directly from Supabase (RLS-scoped to the user)
   // so the Billing page works without an in-memory API key.
   const { data: savingsSummary, isLoading } = useQuery({
@@ -195,6 +206,10 @@ const Billing = () => {
         apiKey,
         { method: "POST", body: checkoutBody }
       );
+      // Fire the tracking event *before* navigation — window.location.href
+      // tears down the PostHog snippet immediately and any capture() call
+      // made after the assignment is lost.
+      trackCheckoutStart("pro", "billing_page");
       window.location.href = data.checkout_url;
     } catch (error: any) {
       logger.error("Error starting checkout:", error);

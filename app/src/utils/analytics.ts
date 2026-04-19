@@ -76,6 +76,24 @@ export const trackContactSubmit = () =>
 export const trackBillingView = () =>
   capture("billing_view");
 
+/**
+ * Fires the moment we redirect the user to Stripe Checkout.
+ * Pair with the server-side `checkout_abandon` event (emitted from the
+ * `checkout.session.expired` Stripe webhook) to measure the client->paid
+ * drop-off. Stripe Checkout runs on checkout.stripe.com so the PostHog
+ * snippet can't see anything that happens after this point.
+ */
+export const trackCheckoutStart = (plan: string, source: string) =>
+  capture("checkout_start", { plan, source });
+
+/**
+ * Fires when the user returns to our site from Stripe Checkout with a
+ * cancel status. Server-side `checkout_abandon` covers the case where
+ * they close the tab entirely (via `checkout.session.expired`).
+ */
+export const trackCheckoutCancel = (plan: string) =>
+  capture("checkout_cancel", { plan });
+
 // -- Playground events --
 export const trackPlaygroundSend = (mode: string) =>
   capture("playground_send", { mode });

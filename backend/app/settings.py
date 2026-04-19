@@ -142,6 +142,12 @@ class Settings:
         self.STRIPE_SECRET_KEY: Optional[str] = os.getenv("STRIPE_SECRET_KEY")
         self.STRIPE_WEBHOOK_SECRET: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")
         self.STRIPE_PRICE_ID_BASE: Optional[str] = os.getenv("STRIPE_PRICE_ID_BASE")  # $9/mo base plan
+
+    # PostHog (server-side capture for events the client can't see, e.g.
+    # Stripe Checkout abandonment — Stripe's hosted page is off-domain so
+    # the PostHog snippet never fires there).
+        self.POSTHOG_API_KEY: Optional[str] = os.getenv("POSTHOG_API_KEY")
+        self.POSTHOG_HOST: str = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
         self.ADMIN_API_KEY: Optional[str] = os.getenv("ADMIN_API_KEY")  # Admin key for internal endpoints
 
     # API keys for authentication
