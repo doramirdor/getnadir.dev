@@ -21,17 +21,34 @@ function isLocalHost() {
     hostname === "127.0.0.1" ||
     hostname === "0.0.0.0" ||
     hostname === "[::1]" ||
-    hostname.endsWith(".local")
+    hostname.endsWith(".local") ||
+    // LAN IPs: dev servers bound to 192.168.x.x / 10.x.x.x / 172.16-31.x.x
+    // (covers "vite dev --host" + phone testing on the same network)
+    /^192\.168\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname)
   );
 }
 
+// Short-circuit for Vite dev mode regardless of hostname — covers ngrok,
+// cloud-preview URLs, and anything else where the hostname looks "real"
+// but we're still running a dev build. `import.meta.env.DEV` is replaced
+// at build time, so production bundles get `false` and tree-shake the
+// early return away.
+const isDevBuild =
+  typeof import.meta !== "undefined" && (import.meta as any).env?.DEV === true;
+
+function shouldSuppressCapture(): boolean {
+  return isDevBuild || isLocalHost();
+}
+
 function capture(event: string, properties?: Record<string, unknown>) {
-  if (isLocalHost()) return;
+  if (shouldSuppressCapture()) return;
   window.posthog?.capture(event, properties);
 }
 
 function identify(userId: string, properties?: Record<string, unknown>) {
-  if (isLocalHost()) return;
+  if (shouldSuppressCapture()) return;
   window.posthog?.identify(userId, properties);
 }
 

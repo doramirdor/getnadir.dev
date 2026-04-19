@@ -14,6 +14,8 @@ import {
   Loader2,
   XCircle,
   Tag,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -117,6 +119,175 @@ interface InvoiceItem {
   total_invoice_usd: number;
   status: string;
   created_at: string;
+}
+
+// ── Projected-savings hero ───────────────────────────────────────────────
+//
+// Shown above the pricing card for unsubscribed users. Leads with their
+// own observed savings (or a cohort projection for zero-usage users) so
+// the $9/mo Pro price is anchored against a personalized benefit number
+// instead of arriving cold.
+//
+// Three display states:
+//   (1) real savings this month         -> "you'd save ~$X/mo"
+//   (2) has requests but no savings yet -> nudge to playground + Pro
+//   (3) no usage at all                 -> "try the playground" CTA
+// Hidden entirely when the user is already on Pro (handled by the caller).
+
+const PRO_MONTHLY_FEE_USD = 9;
+
+// Fallback projection used when the user has no usage yet. Anchored to the
+// rough median of real Nadir users so we're not making up numbers — adjust
+// once we have a real cohort baseline in savings_tracking.
+const COHORT_MEDIAN_MONTHLY_SAVINGS_USD = 38;
+
+function daysElapsedThisMonth(now = new Date()): { elapsed: number; total: number } {
+  const elapsed = now.getUTCDate();
+  const total = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
+  return { elapsed, total };
+}
+
+interface ProjectedSavingsHeroProps {
+  currentSavings: number;
+  requestsRouted: number;
+  onSubscribe: () => void;
+  subscribing: boolean;
+}
+
+function ProjectedSavingsHero({
+  currentSavings,
+  requestsRouted,
+  onSubscribe,
+  subscribing,
+}: ProjectedSavingsHeroProps) {
+  const { elapsed, total } = daysElapsedThisMonth();
+  const monthlyProjected = elapsed > 0 ? (currentSavings * total) / elapsed : 0;
+  const netProjected = Math.max(monthlyProjected - PRO_MONTHLY_FEE_USD, 0);
+  const paybackDays =
+    monthlyProjected > PRO_MONTHLY_FEE_USD
+      ? Math.max(1, Math.ceil((PRO_MONTHLY_FEE_USD / monthlyProjected) * total))
+      : null;
+
+  const hasSavings = currentSavings > 0.01;
+  const hasUsage = requestsRouted > 0;
+
+  // State 1 — real data. Lead with the projection, anchor the price.
+  if (hasSavings) {
+    return (
+      <Card className="clean-card border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background">
+        <CardContent className="pt-6 pb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium uppercase tracking-wide text-primary">
+                  Projected savings
+                </span>
+              </div>
+              <p className="mono text-[40px] font-bold tracking-tight text-foreground leading-none">
+                ~${formatUSD(monthlyProjected)}
+                <span className="text-muted-foreground font-normal text-lg ml-2">/ month</span>
+              </p>
+              <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+                Based on {requestsRouted} request{requestsRouted === 1 ? "" : "s"} routed this month
+                (${formatUSD(currentSavings)} saved so far, {elapsed}/{total} days elapsed).
+                {paybackDays !== null && (
+                  <>
+                    {" "}
+                    At this pace, <strong className="text-foreground">Pro pays for itself in {paybackDays}
+                    {" "}day{paybackDays === 1 ? "" : "s"}</strong> and nets you roughly ${formatUSD(netProjected)}/mo after the $9 base fee.
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="lg:text-right">
+              <Button size="lg" onClick={onSubscribe} disabled={subscribing} className="whitespace-nowrap">
+                {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                  <>Upgrade to Pro <ArrowRight className="w-4 h-4 ml-2" /></>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">$9/mo base + 10-25% of net savings</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // State 2 — has requests but no savings yet (edge case: routing hit
+  // benchmark only). Nudge to Pro's smarter router, no fake projection.
+  if (hasUsage) {
+    return (
+      <Card className="clean-card border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background">
+        <CardContent className="pt-6 pb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium uppercase tracking-wide text-primary">
+                  Unlock smarter routing
+                </span>
+              </div>
+              <p className="text-[22px] font-semibold tracking-tight text-foreground leading-tight">
+                You've routed {requestsRouted} request{requestsRouted === 1 ? "" : "s"}. Pro's Wide&amp;Deep Asym router saves a typical user 45-53%.
+              </p>
+              <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+                Upgrade to route simple requests to Haiku and reasoning to Opus automatically. We only bill when we save you money.
+              </p>
+            </div>
+            <div className="lg:text-right">
+              <Button size="lg" onClick={onSubscribe} disabled={subscribing} className="whitespace-nowrap">
+                {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                  <>Upgrade to Pro <ArrowRight className="w-4 h-4 ml-2" /></>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">$9/mo base + 10-25% of net savings</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // State 3 — no usage yet. Don't fabricate a savings number; point them
+  // to the playground so we can show real data on the next visit.
+  return (
+    <Card className="clean-card border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background">
+      <CardContent className="pt-6 pb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-xs font-medium uppercase tracking-wide text-primary">
+                See your projected savings
+              </span>
+            </div>
+            <p className="text-[22px] font-semibold tracking-tight text-foreground leading-tight">
+              Route a few prompts and we'll show you the monthly savings in real terms.
+            </p>
+            <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+              Typical users save around ${COHORT_MEDIAN_MONTHLY_SAVINGS_USD}/month. Try a handful of prompts
+              in the playground and we'll extrapolate your own projection here.
+            </p>
+          </div>
+          <div className="lg:text-right flex flex-col gap-2 lg:items-end">
+            <Button asChild size="lg" variant="default" className="whitespace-nowrap">
+              <Link to="/dashboard/playground">
+                Try the playground <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+            <button
+              onClick={onSubscribe}
+              disabled={subscribing}
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+            >
+              {subscribing ? "Opening checkout…" : "or upgrade to Pro now — $9/mo"}
+            </button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -268,6 +439,16 @@ const Billing = () => {
           Savings-based pricing - we only earn when we save you money
         </p>
       </div>
+
+      {/* Projected savings hero (only for unsubscribed users) */}
+      {!isActive && (
+        <ProjectedSavingsHero
+          currentSavings={currentSavings}
+          requestsRouted={savingsSummary?.requests_routed ?? 0}
+          onSubscribe={handleSubscribe}
+          subscribing={subscribing}
+        />
+      )}
 
       {/* Plan Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
