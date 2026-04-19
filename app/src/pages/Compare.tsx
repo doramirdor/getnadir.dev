@@ -54,7 +54,12 @@ export default function Compare() {
             </p>
           </div>
 
-          <section className="mb-16 bg-[#fbfbfd] border border-black/[0.06] rounded-3xl p-8 md:p-10">
+          {/*
+            "Why teams pick Nadir" — borderless open layout. The section no
+            longer sits inside a bordered/tinted card; pillar cards also drop
+            their borders and lean on a subtle off-white fill for separation.
+          */}
+          <section className="mb-16">
             <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
               Why teams pick Nadir
             </div>
@@ -71,7 +76,7 @@ export default function Compare() {
               {NADIR_PILLARS.map((pillar) => (
                 <div
                   key={pillar.title}
-                  className="bg-white border border-black/[0.06] rounded-2xl p-5"
+                  className="bg-[#fbfbfd] rounded-2xl p-5"
                 >
                   <div className="text-[16px] font-semibold text-[#1d1d1f] tracking-[-0.01em] mb-2">
                     {pillar.title}
