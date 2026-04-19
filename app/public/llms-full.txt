@@ -1,0 +1,251 @@
+# Nadir
+
+> Nadir is an open-source, intelligent LLM router. It classifies every prompt
+> by complexity and routes it to the cheapest model that can still handle
+> it. Teams cut their Claude, GPT, and Gemini spend by up to 40 percent
+> without changing application code.
+
+This is the full-content version of https://getnadir.com/llms.txt, written
+for AI systems that cite, summarize, or answer questions about Nadir. The
+short menu is at /llms.txt.
+
+---
+
+## Who Nadir is for
+
+- Engineering teams on Claude Code, Cursor, Codex, Aider, Windsurf, or
+  Continue who are watching Anthropic and OpenAI bills climb past what
+  their agent workload warrants.
+- Product teams whose production LLM usage is 70 percent "fix this typo"
+  and 30 percent "reason about this architecture," but where every call
+  hits Opus or GPT-4o because nobody wants to write routing rules.
+- Platform teams who need OCR, fallback chains, semantic cache, and a
+  cost dashboard but do not want to build a gateway.
+
+---
+
+## Products
+
+Nadir ships as two things:
+
+### NadirClaw — free, open source
+
+- MIT-licensed CLI and local FastAPI server.
+- Binary and cascade classifiers. 4-tier routing (simple, mid, complex,
+  reasoning).
+- Context optimization and custom routing rules via YAML.
+- Local SQLite and JSONL storage. No Supabase dependency.
+- GitHub: https://github.com/NadirRouter/NadirClaw
+
+### getnadir.com — hosted service
+
+- Full routing engine on top of LiteLLM.
+- Trained DistilBERT classifier, semantic cache, matrix-factorization
+  analyzer, OCR (outcome-conditioned routing).
+- React web dashboard (analytics, savings, playground, logs).
+- Stripe-backed savings billing and Supabase for auth.
+- Self-hosted Docker image or hosted SaaS at https://getnadir.com.
+
+The routing engine is the same on both. Results are consistent whether
+you self-host or use the hosted proxy.
+
+---
+
+## How Nadir works
+
+1. Your client calls `https://api.getnadir.com/v1/chat/completions` as if
+   it were OpenAI (drop-in, one-line base-URL change).
+2. The complexity classifier reads the prompt in under 10 ms and assigns
+   a tier (simple / mid / complex).
+3. The cost-aware ranker picks the cheapest model above your configured
+   quality threshold for that tier.
+4. Nadir calls the provider via LiteLLM, with circuit-breaker and
+   provider-health-monitoring wrapping every call.
+5. The response is logged with routed cost and benchmark cost (what
+   always-Opus would have cost). Savings = benchmark − routed.
+6. A background job feeds verified outcomes back into OCR so the
+   thresholds adapt as models drift.
+
+---
+
+## What sets Nadir apart from other LLM gateways
+
+### 1. Decide, don't configure
+
+A DistilBERT classifier reads every prompt in under 10 ms and picks
+Haiku, Sonnet, or Opus automatically. You do not pick the tier per call.
+You do not write routing rules. OpenRouter and Portkey make you do both.
+
+Proof: 96 percent agreement with human labels on our public 50-prompt
+eval. Zero catastrophic routes in benchmark.
+
+### 2. A router that adapts (OCR — Outcome-Conditioned Routing)
+
+Nadir's closed-loop algorithm watches live responses, updates on quality
+failures fast and cost signals slow, and runs calibration probes when a
+cheaper tier closes the gap. Static routers rot. OCR does not.
+
+No other gateway ships this. OpenRouter, Requesty, Portkey, LiteLLM,
+Not Diamond — all static.
+
+Proof: Calibration closes the gap within a few thousand requests at
+2.16 percent overhead.
+
+### 3. Privacy that survives audit
+
+Opt-in hash-only prompt storage writes SHA-256 instead of prompt text.
+Responses are dropped when store_prompts is false. The redaction runs on
+both the primary and fallback log paths, so nothing leaks on the
+unhappy path.
+
+Proof: store_prompts=false stamps `metadata.prompt_hashed=true` across
+every log row. See app/services/supabase_unified_llm_service.py.
+
+### 4. Reliability built in
+
+Circuit breakers with rolling health scoring, provider health monitoring,
+and zero-completion insurance. Empty responses do not bill. Failed
+providers drop out of the pool before the next call hits them.
+
+Proof: Closed -> Open after 5 failures -> Half-Open at 60s. Health
+scores weighted 40/30/20/10 on success rate, latency, trend, volume.
+
+### 5. Savings that compound
+
+Semantic cache at 85–90 percent similarity and Context Optimize input
+compression fire before the router does. Cheap models on compressed
+inputs is multiplicative, not additive. Nobody bundles both pre-route.
+
+Proof: 29 to 71 percent input token reduction measured on our benchmark
+workload.
+
+### 6. Open source core
+
+NadirClaw is MIT. Run it on localhost, ship it in a Docker container,
+deploy it to your own infra. The hosted platform is the convenience
+layer, not a lock-in.
+
+---
+
+## Comparisons
+
+Deep dives live at https://getnadir.com/compare. Quick summary:
+
+| Feature                               | Nadir | OpenRouter | Requesty | Portkey | DIY |
+|---------------------------------------|:-----:|:----------:|:--------:|:-------:|:---:|
+| Automatic model selection             |  Yes  |     No     |  Manual  |  Rules  | No  |
+| Outcome-conditioned routing (OCR)     |  Yes  |     No     |    No    |   No    | No  |
+| Adaptive classifier retraining        |  Yes  |     No     |    No    |   No    | No  |
+| OpenAI-compatible API                 |  Yes  |    Yes     |   Yes    |   Yes   | No  |
+| BYOK and hosted keys                  | Both  |    BYOK    |   Both   |  BYOK   |Both |
+| Semantic cache included               |  Yes  |     No     |    No    |   Yes   | No  |
+| Per-request cost dashboard            |  Yes  |     No     |   Yes    |   Yes   | No  |
+| Provider failover                     |  Yes  |     No     |   Yes    |   Yes   | Yes |
+| Starts free                           |  Yes  |    Yes     |    No    |   Yes   | No  |
+
+Specific comparison pages:
+
+- https://getnadir.com/compare/openrouter — "OpenRouter is a catalogue; Nadir is a decision engine."
+- https://getnadir.com/compare/requesty  — "Requesty makes you hand-pick per-model rules; Nadir's classifier does it in 10 ms."
+- https://getnadir.com/compare/litellm   — "LiteLLM is plumbing. Nadir runs LiteLLM inside its backend."
+- https://getnadir.com/compare/notdiamond — "Not Diamond recommends a model. Nadir recommends and then proves it via OCR."
+- https://getnadir.com/compare/portkey   — "Portkey is a gateway with guardrails. Nadir adds the routing decision that guardrails do not."
+
+---
+
+## Pricing
+
+### Free (BYOK)
+
+- $0 forever
+- 15 requests per day on the hosted proxy (BYOK only — use your own
+  provider keys)
+- Full web dashboard, intelligent routing, semantic cache
+- No credit card required
+
+### Pro — $9 per month plus variable savings fee
+
+- $9 flat monthly base.
+- Variable fee: 25 percent of the first $2,000 of monthly savings,
+  10 percent above $2,000.
+- If Nadir saves you nothing, you pay only the $9 base.
+- Everything in Free, unlimited.
+- Hosted keys or BYOK.
+- Semantic cache, dedup, fallback chains, context optimization, OCR.
+
+### Enterprise — custom
+
+- Everything in Pro.
+- SSO / SAML.
+- Custom routing models trained on your traffic.
+- 99.9 percent SLA.
+- Annual contract with invoicing.
+
+Savings math: Net savings = (benchmark cost − routed cost) − variable
+fee. The $9 base is a subscription cost, billed separately, and is not
+deducted from the displayed net savings.
+
+---
+
+## Supported providers and integrations
+
+Providers: Anthropic, OpenAI, Google, DeepSeek, Groq, Amazon Bedrock.
+Any OpenAI-compatible endpoint can be added.
+
+Clients: Claude Code, Cursor, Codex, Aider, Windsurf, Continue,
+LangChain, OpenAI SDK, Anthropic SDK (via drop-in base URL).
+
+---
+
+## Routing model (current default)
+
+- Claude 4.6 family: `claude-opus-4-6`, `claude-sonnet-4-6`,
+  `claude-haiku-4-5`.
+- Benchmark: always-Opus 4.6 (the theoretical "what you would have
+  spent" line).
+- Default router: `wide_deep_asym` with λ=20. Routes simple -> Haiku,
+  mid -> Sonnet, complex -> Opus.
+- Eval result: λ=20 saves ~47 percent vs always-Opus with 0 percent
+  catastrophic routes. The argmax variant saves ~53 percent with
+  2.4 pp higher downgrade rate.
+
+---
+
+## Privacy and security
+
+- BYOK on every tier. You can run Nadir without ever sending provider
+  keys to us.
+- Opt-in prompt logging. `store_prompts=false` writes SHA-256 hashes
+  instead of prompt text and drops response bodies entirely.
+- API keys stored as SHA-256 in `public.api_keys.key_hash`. Keys never
+  leave the backend in plaintext after creation.
+- RLS on every user-scoped table (`savings_tracking`, `savings_invoices`,
+  `user_subscriptions`). Dashboard reads go through RLS, not the
+  backend, so a backend compromise cannot leak cross-tenant data.
+
+---
+
+## Key facts at a glance
+
+- License: MIT (NadirClaw core). Proprietary (hosted platform).
+- Typical savings: up to 40 percent on a realistic prompt mix. 38
+  percent average on our 50-prompt benchmark.
+- Routing accuracy: 96 percent agreement with human labels.
+- Classifier overhead: under 10 ms per request.
+- Input token reduction (Context Optimize): 29 to 71 percent measured.
+- OCR calibration overhead: 2.16 percent of calls.
+
+---
+
+## Links
+
+- Website: https://getnadir.com
+- Deep-dive comparisons: https://getnadir.com/compare
+- Pricing: https://getnadir.com/pricing
+- Savings calculator: https://getnadir.com/calculator
+- Docs: https://getnadir.com/docs
+- Self-host guide: https://getnadir.com/self-host
+- Blog: https://getnadir.com/blog
+- Contact: https://getnadir.com/contact
+- NadirClaw (open source): https://github.com/NadirRouter/NadirClaw
+- Main repo: https://github.com/doramirdor/getnadir.dev

@@ -170,50 +170,23 @@ export default function Pricing() {
         jsonLd={pricingJsonLd}
       />
 
-      {/* Hero */}
-      <section className="pt-20 md:pt-32 pb-16 md:pb-20 text-center">
-        <div className="max-w-[920px] mx-auto px-6 sm:px-8">
-          <h1 className="text-[44px] sm:text-[60px] md:text-[76px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f]">
-            Simple pricing.
-            <br />
-            <span className="text-[#86868b]">You keep the savings.</span>
-          </h1>
-          <p className="text-lg md:text-[21px] text-[#424245] max-w-[640px] mx-auto leading-[1.42] tracking-[-0.01em]">
-            Start free with your own keys. Upgrade when you need hosted routing. We only earn when we cut your bill.
-          </p>
-        </div>
-      </section>
-
-      {/* Benchmark band */}
-      <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
-        <div className="max-w-[1160px] mx-auto px-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
-          {[
-            { value: "Up to 40%", label: "Cost savings on a realistic prompt mix." },
-            { value: "96%", label: "Routing accuracy on our 50-prompt benchmark." },
-            { value: "< 10 ms", label: "Classifier overhead. Faster than a DNS lookup." },
-          ].map((s, i) => (
-            <div
-              key={s.label}
-              className="text-center px-2 md:px-4 md:border-l md:first:border-l-0 border-black/[0.08]"
-              style={{ borderLeftColor: i === 0 ? "transparent" : undefined }}
-            >
-              <div className="text-[36px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[1.05] mb-3 text-[#1d1d1f]">
-                {s.value}
-              </div>
-              <div className="text-[14px] sm:text-[15px] text-[#424245] tracking-[-0.01em] max-w-[280px] mx-auto leading-[1.45]">
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-[13px] text-[#86868b] mt-8 tracking-[-0.005em]">
-          Benchmarked on real-world prompts. Quality verified by LLM judge.
-        </p>
-      </section>
-
-      {/* Tiers */}
-      <section className="py-24 md:py-36">
+      {/*
+        Tier cards lead the page — buckets first, pitch second. The eyebrow
+        label replaces the huge hero headline so the fold is dominated by
+        something users can actually click (Free / Pro / Enterprise), not
+        a marketing sentence. The full "Simple pricing. You keep the
+        savings." intro now sits below the cards as supporting copy.
+      */}
+      <section className="pt-20 md:pt-28 pb-16 md:pb-20">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
+          <div className="text-center mb-10 md:mb-14">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
+              Pricing
+            </div>
+            <h1 className="text-[32px] sm:text-[44px] md:text-[52px] font-semibold leading-[1.06] tracking-[-0.03em] text-[#1d1d1f] max-w-[720px] mx-auto">
+              Pick your tier. We only earn when we cut your bill.
+            </h1>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
             {TIERS.map((tier) => {
               const highlighted = tier.highlighted;
@@ -304,6 +277,51 @@ export default function Pricing() {
             Unlimited requests on your own infrastructure.
           </p>
         </div>
+      </section>
+
+      {/*
+        Intro copy — pushed below the tier cards on purpose, so the first
+        thing a visitor sees is "what are the buckets" not "here is a
+        marketing sentence".
+      */}
+      <section className="pb-20 md:pb-28 text-center">
+        <div className="max-w-[920px] mx-auto px-6 sm:px-8">
+          <h2 className="text-[32px] sm:text-[40px] md:text-[52px] font-semibold leading-[1.06] tracking-[-0.03em] mb-5 text-[#1d1d1f]">
+            Simple pricing.
+            <br />
+            <span className="text-[#86868b]">You keep the savings.</span>
+          </h2>
+          <p className="text-[17px] md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.45] tracking-[-0.01em]">
+            Start free with your own keys. Upgrade when you need hosted routing. We only earn when we cut your bill.
+          </p>
+        </div>
+      </section>
+
+      {/* Benchmark band */}
+      <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
+        <div className="max-w-[1160px] mx-auto px-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
+          {[
+            { value: "Up to 40%", label: "Cost savings on a realistic prompt mix." },
+            { value: "96%", label: "Routing accuracy on our 50-prompt benchmark." },
+            { value: "< 10 ms", label: "Classifier overhead. Faster than a DNS lookup." },
+          ].map((s, i) => (
+            <div
+              key={s.label}
+              className="text-center px-2 md:px-4 md:border-l md:first:border-l-0 border-black/[0.08]"
+              style={{ borderLeftColor: i === 0 ? "transparent" : undefined }}
+            >
+              <div className="text-[36px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[1.05] mb-3 text-[#1d1d1f]">
+                {s.value}
+              </div>
+              <div className="text-[14px] sm:text-[15px] text-[#424245] tracking-[-0.01em] max-w-[280px] mx-auto leading-[1.45]">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-[13px] text-[#86868b] mt-8 tracking-[-0.005em]">
+          Benchmarked on real-world prompts. Quality verified by LLM judge.
+        </p>
       </section>
 
       {/* How savings pricing works */}
