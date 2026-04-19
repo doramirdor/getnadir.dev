@@ -13,11 +13,25 @@ declare global {
   }
 }
 
+function isLocalHost() {
+  if (typeof window === "undefined") return false;
+  const { hostname } = window.location;
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "[::1]" ||
+    hostname.endsWith(".local")
+  );
+}
+
 function capture(event: string, properties?: Record<string, unknown>) {
+  if (isLocalHost()) return;
   window.posthog?.capture(event, properties);
 }
 
 function identify(userId: string, properties?: Record<string, unknown>) {
+  if (isLocalHost()) return;
   window.posthog?.identify(userId, properties);
 }
 
@@ -81,3 +95,7 @@ export const trackDocsView = (section: string) =>
 // -- CTA events --
 export const trackCtaClick = (cta: string, location: string) =>
   capture("cta_click", { cta, location });
+
+// -- FAQ events --
+export const trackFaqOpen = (question: string, location: string) =>
+  capture("faq_open", { question, location });

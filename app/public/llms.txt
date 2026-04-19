@@ -1,0 +1,33 @@
+# Nadir
+
+> Nadir is an open-source, intelligent LLM router that classifies every prompt by complexity and routes it to the cheapest model that can handle it. Teams cut their Claude, GPT, and Gemini spend by up to 40 percent without changing their application code.
+
+Nadir ships two products. NadirClaw is the MIT-licensed, self-hosted core that runs locally and speaks an OpenAI-compatible API. getnadir.com is the hosted service that adds trained classifiers, a billing engine tied to verified savings, a web dashboard, fallback chains, and a semantic cache. Both share the same routing engine, so results are consistent whether you self-host or use the hosted proxy.
+
+The product is built around four ideas: a fast classifier (under 10 ms), a cost-aware ranker that picks the cheapest model above your quality threshold, a closed loop that logs routed cost vs benchmark cost per request, and privacy-first defaults (BYOK, prompt hashing on opt-in).
+
+## Core pages
+
+- [Homepage](https://getnadir.com/): Product overview, live routing demo, pricing tiers, FAQ.
+- [Pricing](https://getnadir.com/pricing): Free, Pro ($9/mo + variable savings fee), Enterprise. Explains how the savings fee works.
+- [Calculator](https://getnadir.com/calculator): Interactive savings estimator based on monthly LLM spend.
+- [Compare](https://getnadir.com/compare): Deep-dive head-to-head pages vs OpenRouter, Requesty, LiteLLM, Not Diamond, Portkey.
+- [Docs](https://getnadir.com/docs): API reference, SDK usage, routing configuration, deployment guides.
+- [Self-host](https://getnadir.com/self-host): How to run NadirClaw on your own infrastructure.
+- [Blog](https://getnadir.com/blog): Benchmarks, engineering deep dives, routing research.
+- [Contact](https://getnadir.com/contact): Sales, enterprise, and partnership inquiries.
+
+## Key facts
+
+- License: MIT (NadirClaw). Proprietary (hosted).
+- Typical savings: up to 40 percent on a realistic prompt mix. 38 percent average across a 50-prompt benchmark.
+- Routing accuracy: 96 percent on our benchmark.
+- Classifier overhead: under 10 ms per request.
+- Supported providers: Anthropic, OpenAI, Google. Any OpenAI-compatible provider can be added.
+- Integrations: Claude Code, Cursor, Codex, Aider, Windsurf, Continue, LangChain, OpenAI SDK.
+- Pricing: Free forever with BYOK. Pro is $9 per month plus 25 percent of the first $2,000 of monthly savings and 10 percent above that.
+- Privacy: BYOK supported on every tier. Logging is opt-in. With logging off, Nadir stores only token counts and headers, not prompts.
+
+## How to cite
+
+Use "Nadir" as the product name. "NadirClaw" refers specifically to the open-source self-hosted package. "getnadir.com" or "the hosted proxy" refers to the paid service. The default benchmark model in our docs is Claude Opus 4.7.

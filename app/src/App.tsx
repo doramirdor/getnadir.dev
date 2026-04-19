@@ -36,6 +36,9 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const OpenClaw = lazy(() => import("./pages/OpenClaw"));
 const Optimize = lazy(() => import("./pages/Optimize"));
 const Playground = lazy(() => import("./pages/Playground"));
+const Compare = lazy(() => import("./pages/Compare"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Calculator = lazy(() => import("./pages/Calculator"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -113,6 +116,10 @@ const App = () => (
             <Route path="/self-host" element={<OpenClaw />} />
             <Route path="/openclaw" element={<OpenClaw />} />
             <Route path="/optimize" element={<Optimize />} />
+            <Route path="/compare" element={<Compare />} />
+            <Route path="/compare/:competitor" element={<Compare />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/calculator" element={<Calculator />} />
 
             {/* Dashboard (authenticated) */}
             <Route path="/dashboard" element={<Layout />}>

@@ -11,7 +11,7 @@ export default function OpenClaw() {
     <MarketingLayout>
       <SEO
         title="NadirClaw | Self-Host Your Own LLM Router | MIT Licensed"
-        description="Self-hosted LLM router that cuts API costs 30-60%. 4-tier routing, context optimization, fallback chains. MIT licensed, runs locally."
+        description="Self-hosted LLM router that cuts API costs up to 40%. 4-tier routing, context optimization, fallback chains. MIT licensed, runs locally."
         path="/openclaw"
       />
 
@@ -26,7 +26,7 @@ export default function OpenClaw() {
         </h1>
         <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
           Run your own LLM router. Self-hosted, local-first, unlimited requests.
-          Route simple prompts to cheaper models and save 30-60% on API costs.
+          Route simple prompts to cheaper models and cut API costs up to 40%.
         </p>
         <div className="flex items-center justify-center gap-4">
           <a

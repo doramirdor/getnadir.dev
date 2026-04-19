@@ -1,380 +1,228 @@
-import { useState, useEffect, useRef } from "react";
-import { trackGitHubClick } from "@/utils/analytics";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { SignupDialog } from "@/components/marketing/SignupDialog";
+import { trackCtaClick } from "@/utils/analytics";
 
-const REQUESTS = [
-  { type: "simple" as const, prompt: '"What is 2+2?"', model: "efficient", cost: 0.0002, premiumCost: 0.18 },
-  { type: "simple" as const, prompt: '"Format this JSON"', model: "efficient", cost: 0.0004, premiumCost: 0.22 },
-  { type: "complex" as const, prompt: '"Refactor this auth module..."', model: "premium", cost: 0.098, premiumCost: 0.098 },
-  { type: "complex" as const, prompt: '"Debug this race condition..."', model: "premium", cost: 0.45, premiumCost: 0.45 },
-  { type: "simple" as const, prompt: '"Write a docstring for get_user()"', model: "efficient", cost: 0.0002, premiumCost: 0.42 },
-];
-
-const fmtCost = (n: number) => {
-  if (n < 0.01) return `$${n.toFixed(4)}`;
-  if (n >= 1) return `$${n.toFixed(2)}`;
-  return `$${parseFloat(n.toFixed(3))}`;
+// Real Anthropic published rates (per million tokens, April 2026).
+// Haiku 4.5: $1 in / $5 out. Sonnet 4.6: $3 / $15. Opus 4.7: $5 / $25.
+const RATES: Record<string, [number, number]> = {
+  haiku: [1, 5],
+  sonnet: [3, 15],
+  opus: [5, 25],
 };
 
+const tokCost = (inTok: number, outTok: number, rates: [number, number]) =>
+  (inTok * rates[0]) / 1e6 + (outTok * rates[1]) / 1e6;
+
+type Req = {
+  type: "simple" | "complex";
+  prompt: string;
+  model: string;
+  routeTo: "haiku" | "sonnet" | "opus";
+  inTok: number;
+  outTok: number;
+  cost: number;
+  premiumCost: number;
+};
+
+const REQUESTS: Req[] = (
+  [
+    { type: "simple", prompt: '"Summarize this support ticket"', model: "haiku-4.5", routeTo: "haiku", inTok: 420, outTok: 140 },
+    { type: "simple", prompt: '"Classify sentiment of this email"', model: "haiku-4.5", routeTo: "haiku", inTok: 180, outTok: 60 },
+    { type: "complex", prompt: '"Refactor this auth module"', model: "sonnet-4.6", routeTo: "sonnet", inTok: 4200, outTok: 1800 },
+    { type: "complex", prompt: '"Debug this race condition"', model: "sonnet-4.6", routeTo: "sonnet", inTok: 3800, outTok: 2400 },
+    { type: "simple", prompt: '"Write a docstring for get_user()"', model: "haiku-4.5", routeTo: "haiku", inTok: 260, outTok: 90 },
+    { type: "complex", prompt: '"Design a migration plan"', model: "opus-4.7", routeTo: "opus", inTok: 900, outTok: 300 },
+  ] as const
+).map((r) => ({
+  ...r,
+  cost: tokCost(r.inTok, r.outTok, RATES[r.routeTo]),
+  premiumCost: tokCost(r.inTok, r.outTok, RATES.opus),
+}));
+
+const fmtCost = (n: number) =>
+  n < 0.01 ? `$${n.toFixed(4)}` : n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`;
+
 export const HeroSection = () => {
-  const [tab, setTab] = useState<"pro" | "selfhost">("pro");
-  const [animating, setAnimating] = useState(false);
   const [visibleRows, setVisibleRows] = useState(0);
   const [showStats, setShowStats] = useState(false);
-  const [showSavings, setShowSavings] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
 
-  // Reduced motion: show everything immediately. Otherwise observe.
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setVisibleRows(REQUESTS.length);
       setShowStats(true);
-      setShowSavings(true);
       return;
     }
     const el = terminalRef.current;
     if (!el) return;
+    let timers: ReturnType<typeof setTimeout>[] = [];
     const obs = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
-          setAnimating(true);
+          REQUESTS.forEach((_, i) => {
+            timers.push(setTimeout(() => setVisibleRows(i + 1), 400 + i * 480));
+          });
+          timers.push(setTimeout(() => setShowStats(true), 400 + REQUESTS.length * 480 + 280));
           obs.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.15 },
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    return () => {
+      obs.disconnect();
+      timers.forEach(clearTimeout);
+    };
   }, []);
-
-  // Cascade row reveals, then stats, then savings badge
-  useEffect(() => {
-    if (!animating) return;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    REQUESTS.forEach((_, i) => {
-      timers.push(setTimeout(() => setVisibleRows(i + 1), 300 + i * 600));
-    });
-    const afterRows = 300 + REQUESTS.length * 600;
-    timers.push(setTimeout(() => setShowStats(true), afterRows + 300));
-    timers.push(setTimeout(() => setShowSavings(true), afterRows + 800));
-    return () => timers.forEach(clearTimeout);
-  }, [animating]);
 
   const totalWith = REQUESTS.reduce((s, r) => s + r.cost, 0);
   const totalWithout = REQUESTS.reduce((s, r) => s + r.premiumCost, 0);
-  const savingsPct = Math.round(
-    ((totalWithout - totalWith) / totalWithout) * 100,
-  );
-  const cheaperCount = REQUESTS.filter((r) => r.premiumCost > r.cost).length;
+  const savingsPct = Math.round(((totalWithout - totalWith) / totalWithout) * 100);
 
   return (
-    <section className="py-10 md:py-16 text-center">
-      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-        <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-5 max-w-[900px] mx-auto bg-gradient-to-br from-[#0a0a0a] via-[#0a0a0a] to-[#0066ff] bg-clip-text text-transparent">
-          Your simple prompts are burning premium tokens
+    <section className="pt-20 md:pt-32 pb-16 md:pb-20 text-center">
+      <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
+        <h1 className="text-[44px] sm:text-[64px] md:text-[80px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 max-w-[920px] mx-auto text-[#1d1d1f]">
+          Cut your LLM bill
+          <br />
+          <span className="text-[#86868b]">up to 40%.</span>
         </h1>
 
-        <p className="text-lg md:text-xl text-[#666] mb-10 max-w-[640px] mx-auto leading-relaxed">
-          Every "write a test" or "fix this typo" burns premium LLM credits.{" "}
-          <strong>Nadir</strong>{" "}
-          routes simple prompts to cheaper models automatically. Save 30-60% on
-          calls that don't need your most expensive model.
+        <p className="text-lg md:text-[21px] text-[#424245] max-w-[620px] mx-auto mb-11 leading-[1.42] tracking-[-0.01em]">
+          <strong className="font-semibold text-[#1d1d1f]">Nadir</strong> reads every prompt and routes it to the right model for the task. Premium when it's complex. Lighter when it's not.
         </p>
 
-        <div className="flex gap-3 justify-center flex-wrap mb-4">
-          <a
-            href="/auth?mode=signup"
-            className="inline-flex items-center gap-1.5 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
-          >
-            Try Free for 30 Days
-          </a>
-          <a
-            href="https://github.com/NadirRouter/NadirClaw"
-            onClick={() => trackGitHubClick("hero")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-[#0a0a0a] border border-[#e5e5e5] rounded-md text-[15px] font-semibold hover:bg-[#f5f5f5] hover:border-[#666] hover:-translate-y-px hover:shadow-md transition-all no-underline"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="currentColor"
+        <div className="flex gap-6 justify-center items-center flex-wrap mb-4">
+          <SignupDialog ctaLabel="start_saving" ctaLocation="hero">
+            <button
+              type="button"
+              className="inline-flex items-center px-6 py-3 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#333] transition-colors tracking-[-0.01em]"
             >
-              <polygon points="8,0 10.47,4.63 15.6,5.39 12,9.07 12.94,14.4 8,11.84 3.06,14.4 4,9.07 0.4,5.39 5.53,4.63" />
-            </svg>
-            Star on GitHub
+              Start saving
+            </button>
+          </SignupDialog>
+          <a
+            href="/docs"
+            onClick={() => trackCtaClick("read_docs", "hero")}
+            className="inline-flex items-center text-[#1d1d1f] text-[15px] font-medium no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
+          >
+            Read the docs <span className="ml-1 text-[14px]">›</span>
           </a>
         </div>
-
-        <p className="text-[13px] text-[#999] mb-8">
-          No credit card required. Only pay for what we save you.
+        <p className="text-[13px] text-[#86868b] mb-3">
+          Free to start. No credit card. Bring your own keys.
+        </p>
+        <p className="text-[12px] text-[#86868b] mb-16 md:mb-20 tracking-[-0.005em]">
+          One URL &middot; OpenAI compatible &middot; Open source
         </p>
 
-        {/* Works with */}
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-12 text-sm">
-          <span className="text-[#999] font-medium mr-1">Works with</span>
-          {[
-            "Claude Code",
-            "Cursor",
-            "Codex",
-            "Aider",
-            "Windsurf",
-            "Continue",
-            "Any OpenAI-compatible client",
-          ].map((item, i) => (
-            <span key={item} className="flex items-center gap-2">
-              {i > 0 && <span className="text-[#e5e5e5]">/</span>}
-              <span className="text-[#666] font-semibold">{item}</span>
+        {/* Mac-window live demo */}
+        <div
+          ref={terminalRef}
+          className="max-w-[960px] mx-auto bg-white border border-black/[0.08] rounded-[18px] overflow-hidden text-left"
+          style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.04)" }}
+        >
+          <div className="relative flex items-center px-5 py-3 border-b border-black/[0.06] bg-[#fbfbfd]">
+            <div className="flex gap-2">
+              <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+              <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+              <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+            </div>
+            <span className="absolute left-1/2 -translate-x-1/2 text-[12px] text-[#86868b] font-medium">
+              api.getnadir.com
             </span>
-          ))}
-        </div>
-
-        {/* Terminal Demo */}
-        <div className="max-w-[720px] mx-auto relative" ref={terminalRef}>
-          <div className="bg-white border border-[#e5e5e5] rounded-xl overflow-hidden text-left font-mono text-sm">
-            {/* Tab header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5] bg-[#fafafa]">
-              <div className="flex gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#e5e5e5]" />
-              </div>
-              <div className="flex gap-1 bg-white border border-[#e5e5e5] rounded-md p-0.5">
-                <button
-                  onClick={() => setTab("pro")}
-                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                    tab === "pro"
-                      ? "bg-[#0a0a0a] text-white"
-                      : "text-[#999] hover:text-[#666]"
-                  }`}
-                >
-                  Pro (hosted)
-                </button>
-                <button
-                  onClick={() => setTab("selfhost")}
-                  className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                    tab === "selfhost"
-                      ? "bg-[#0a0a0a] text-white"
-                      : "text-[#999] hover:text-[#666]"
-                  }`}
-                >
-                  Self-host (free)
-                </button>
-              </div>
-            </div>
-
-            {/* Terminal body */}
-            <div className="p-5">
-              {tab === "pro" ? (
-                <>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#0066ff]">import</span>{" "}
-                    <span className="text-[#0a0a0a]">openai</span>
-                  </div>
-                  <div className="h-2" />
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#0a0a0a]">client</span>{" "}
-                    <span className="text-[#999]">=</span>{" "}
-                    <span className="text-[#0a0a0a]">openai.OpenAI(</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8] pl-6">
-                    <span className="text-[#0a0a0a]">base_url</span>
-                    <span className="text-[#999]">=</span>
-                    <span className="text-[#0066ff]">
-                      "https://api.getnadir.com/v1"
-                    </span>
-                    <span className="text-[#999]">,</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8] pl-6">
-                    <span className="text-[#0a0a0a]">api_key</span>
-                    <span className="text-[#999]">=</span>
-                    <span className="text-[#0066ff]">"ndr_..."</span>
-                    <span className="text-[#999]">,</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#0a0a0a]">)</span>
-                  </div>
-                  <div className="h-2" />
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#0a0a0a]">r</span>{" "}
-                    <span className="text-[#999]">=</span>{" "}
-                    <span className="text-[#0a0a0a]">
-                      client.chat.completions.create(
-                    </span>
-                  </div>
-                  <div className="mb-1 leading-[1.8] pl-6">
-                    <span className="text-[#0a0a0a]">model</span>
-                    <span className="text-[#999]">=</span>
-                    <span className="text-[#0066ff]">"auto"</span>
-                    <span className="text-[#999]">,</span>
-                    {"  "}
-                    <span className="text-[#999]">
-                      # Nadir picks the best model
-                    </span>
-                  </div>
-                  <div className="mb-1 leading-[1.8] pl-6">
-                    <span className="text-[#0a0a0a]">messages</span>
-                    <span className="text-[#999]">
-                      =[{"{"}"role": "user", "content": "Hello!"{"}"}</span>
-                    <span className="text-[#999]">],</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#0a0a0a]">)</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]"># enable on your server</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]">$</span> nadirclaw serve{" "}
-                    <span className="text-[#0066ff]">--optimize safe</span>
-                  </div>
-                  <div className="h-3" />
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]"># or per-request</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]">{"{"}</span>
-                    <span className="text-[#0066ff]">"optimize"</span>
-                    <span className="text-[#999]">: </span>
-                    <span className="text-[#0066ff]">"safe"</span>
-                    <span className="text-[#999]">, </span>
-                    <span className="text-[#0066ff]">"model"</span>
-                    <span className="text-[#999]">: </span>
-                    <span className="text-[#0066ff]">"auto"</span>
-                    <span className="text-[#999]">, ...{"}"}</span>
-                  </div>
-                  <div className="h-3" />
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]"># dry-run on any file to see savings</span>
-                  </div>
-                  <div className="mb-1 leading-[1.8]">
-                    <span className="text-[#999]">$</span> nadirclaw optimize{" "}
-                    <span className="text-[#0a0a0a]">payload.json</span>
-                  </div>
-                </>
-              )}
-
-              <div className="h-4" />
-
-              {/* Animated routing rows */}
-              {REQUESTS.map((req, i) => {
-                const visible = i < visibleRows;
-                const saved = req.premiumCost > req.cost;
-
-                return (
-                  <div
-                    key={i}
-                    className={`
-                      flex items-center gap-2.5 flex-wrap p-2 px-3 rounded-md mb-1.5
-                      text-[13px] md:text-sm transition-all duration-500 ease-out
-                      border-l-2
-                      ${
-                        visible
-                          ? saved
-                            ? "opacity-100 translate-y-0 bg-[#00a86b]/[0.04] border-l-[#00a86b]/40"
-                            : "opacity-100 translate-y-0 bg-[#fafafa] border-l-transparent"
-                          : "opacity-0 translate-y-3 border-l-transparent"
-                      }
-                    `}
-                  >
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 ${
-                        req.type === "simple"
-                          ? "bg-[#00a86b]/10 text-[#00a86b]"
-                          : "bg-[#0066ff]/10 text-[#0066ff]"
-                      }`}
-                    >
-                      {req.type}
-                    </span>
-                    <span className="text-[#999] truncate">{req.prompt}</span>
-                    <span className="text-[#999]">&rarr;</span>
-                    <span className="font-semibold text-[#0a0a0a]">
-                      {req.model}
-                    </span>
-                    <span className="ml-auto flex items-center gap-2 shrink-0">
-                      {saved && (
-                        <span className="text-[#ccc] line-through text-[12px]">
-                          {fmtCost(req.premiumCost)}
-                        </span>
-                      )}
-                      <span
-                        className={`font-semibold text-[13px] ${
-                          saved ? "text-[#00a86b]" : "text-[#0a0a0a]"
-                        }`}
-                      >
-                        {fmtCost(req.cost)}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-
-              <div className="h-4" />
-
-              {/* Stats bar */}
-              <div
-                className={`grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#e5e5e5] transition-all duration-500 ease-out ${
-                  showStats
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-2"
-                }`}
-              >
-                <div className="text-center">
-                  <div className="text-xl font-bold text-[#0a0a0a] mb-0.5">
-                    {REQUESTS.length}
-                  </div>
-                  <div className="text-[11px] text-[#999] font-sans">
-                    requests
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-[#00a86b] mb-0.5">
-                    {cheaperCount} of {REQUESTS.length}
-                  </div>
-                  <div className="text-[11px] text-[#999] font-sans">
-                    routed cheaper
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-[#00a86b] mb-0.5">
-                    {fmtCost(totalWith)}
-                  </div>
-                  <div className="text-[11px] text-[#999] font-sans">
-                    with Nadir
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-[#0a0a0a] mb-0.5">
-                    {fmtCost(totalWithout)}
-                  </div>
-                  <div className="text-[11px] text-[#999] font-sans">
-                    without routing
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Savings reveal */}
-          <div
-            className={`mt-5 transition-all duration-700 ease-out ${
-              showSavings
-                ? "opacity-100 translate-y-0 scale-100"
-                : "opacity-0 translate-y-4 scale-95"
-            }`}
-          >
-            <div className="inline-flex items-center gap-3 px-6 py-3.5 bg-[#00a86b]/[0.08] border border-[#00a86b]/20 rounded-xl">
-              <span className="text-2xl md:text-3xl font-bold text-[#00a86b]">
+          <div className="px-5 pt-5 pb-6 md:px-6 md:pb-7">
+            <div className="hidden sm:grid gap-2.5 px-2 pb-3.5 text-[10px] text-[#86868b] uppercase tracking-[0.08em] font-semibold" style={{ gridTemplateColumns: "90px 1fr auto auto" }}>
+              <div>Type</div>
+              <div>Prompt</div>
+              <div>Routed to</div>
+              <div className="text-right">Cost</div>
+            </div>
+
+            {REQUESTS.map((req, i) => {
+              const visible = i < visibleRows;
+              const saved = req.premiumCost > req.cost;
+              return (
+                <div
+                  key={i}
+                  className="grid gap-2.5 items-center px-2 py-2.5 rounded-lg mb-0.5 text-[13px] transition-all duration-500"
+                  style={{
+                    gridTemplateColumns: "90px 1fr auto auto",
+                    background: visible && saved ? "rgba(48,209,88,0.06)" : "transparent",
+                    opacity: visible ? 1 : 0,
+                    transform: visible ? "none" : "translateY(8px)",
+                  }}
+                >
+                  <span
+                    className="text-[10px] font-semibold px-2 py-[3px] rounded uppercase tracking-[0.08em] justify-self-start"
+                    style={{
+                      background: req.type === "simple" ? "rgba(48,209,88,0.12)" : "rgba(0,113,227,0.10)",
+                      color: req.type === "simple" ? "#028a3e" : "#0071e3",
+                    }}
+                  >
+                    {req.type}
+                  </span>
+                  <span className="text-[#424245] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[12px]">
+                    {req.prompt}
+                  </span>
+                  <span className="font-medium text-[#1d1d1f] font-mono text-[12px]">
+                    {req.model}
+                  </span>
+                  <span className="flex items-center gap-2 justify-end min-w-[120px]">
+                    {saved && (
+                      <span className="text-[#c7c7cc] line-through text-[11px] font-mono">
+                        {fmtCost(req.premiumCost)}
+                      </span>
+                    )}
+                    <span
+                      className="font-semibold font-mono text-[12px]"
+                      style={{ color: saved ? "#028a3e" : "#1d1d1f" }}
+                    >
+                      {fmtCost(req.cost)}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+
+            <div
+              className="mt-4 pt-4 border-t border-black/[0.06] flex items-center justify-between gap-3 flex-wrap transition-all duration-500"
+              style={{
+                opacity: showStats ? 1 : 0,
+                transform: showStats ? "none" : "translateY(6px)",
+              }}
+            >
+              <div className="text-[13px] text-[#424245]">
+                Would have cost{" "}
+                <span className="line-through text-[#86868b] font-mono">{fmtCost(totalWithout)}</span>
+                . You paid{" "}
+                <span className="text-[#1d1d1f] font-semibold font-mono">{fmtCost(totalWith)}</span>
+                .
+              </div>
+              <span className="text-[15px] font-semibold text-[#028a3e] tracking-[-0.01em]">
                 {savingsPct}% saved
               </span>
-              <span className="text-[#ccc]">&middot;</span>
-              <span className="text-[#666] text-sm">
-                {fmtCost(totalWith)} instead of {fmtCost(totalWithout)}
-              </span>
             </div>
+            <p className="mt-3 text-[11px] text-[#86868b] leading-[1.5] tracking-[-0.005em]">
+              Based on a sample of six prompts at current Anthropic rates. Your savings vary with your workload.
+            </p>
+          </div>
+        </div>
+
+        {/* Logos row */}
+        <div className="mt-16 md:mt-20">
+          <p className="text-[12px] text-[#86868b] uppercase tracking-[0.12em] font-medium mb-7">
+            Works with the tools your team already uses
+          </p>
+          <div className="flex justify-center items-center gap-x-10 gap-y-4 flex-wrap">
+            {["Claude Code", "Cursor", "Codex", "Aider", "Windsurf", "Continue", "LangChain", "OpenAI SDK"].map((item) => (
+              <span key={item} className="text-[15px] md:text-[16px] text-[#86868b] font-medium tracking-[-0.012em]">
+                {item}
+              </span>
+            ))}
           </div>
         </div>
       </div>

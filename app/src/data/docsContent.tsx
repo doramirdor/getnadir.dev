@@ -1184,6 +1184,25 @@ export function DashboardContent() {
       </div>
 
       <div className="space-y-4">
+        <H2>Video tour</H2>
+        <P>
+          A 60-second walkthrough of the hosted dashboard: API keys, live
+          routing, savings, and logs.
+        </P>
+        <div
+          className="relative rounded-lg overflow-hidden border border-border bg-muted"
+          style={{ paddingBottom: "56.25%", height: 0 }}
+        >
+          <iframe
+            src="https://www.tella.tv/video/vid_cmo4ivdrz00e904jpdc6d20yg/embed?b=1&title=1&a=1&loop=0&t=0&muted=0&wt=1&o=1"
+            title="Getting Started with the Nadir Dashboard"
+            allow="autoplay; fullscreen"
+            className="absolute top-0 left-0 w-full h-full border-0"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
         <H2>Web dashboard</H2>
         <P>
           Install the dashboard extra and open it in your browser:

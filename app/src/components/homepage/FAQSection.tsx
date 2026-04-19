@@ -1,81 +1,66 @@
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { trackFaqOpen } from "@/utils/analytics";
 
-const faqs = [
-  {
-    q: "What is Nadir?",
-    a: "Nadir is an open-source LLM router that sits between your application and LLM providers. It analyzes prompt complexity in real-time and automatically routes simple requests to cheaper models while keeping complex tasks on premium models, saving 30-60% on API costs without changing any code.",
-  },
-  {
-    q: "How does Nadir reduce costs?",
-    a: "Nadir classifies each prompt by complexity. Simple tasks like status checks, formatting, and basic Q&A are routed to budget-tier models. Complex tasks like code generation and reasoning stay on premium models. You pay less per token on average without sacrificing quality where it matters.",
-  },
-  {
-    q: "Does Nadir require code changes?",
-    a: "No. Nadir is a drop-in proxy. Point your LLM client's base URL to Nadir instead of the provider directly. It works with Claude Code, Cursor, Aider, and any OpenAI-compatible client.",
-  },
-  {
-    q: "Is Nadir free?",
-    a: "Yes. Nadir is free and open-source under the MIT license. You can self-host it on your own infrastructure at no cost.",
-  },
-  {
-    q: "What LLM providers does Nadir support?",
-    a: "Nadir supports Anthropic (Claude), OpenAI (GPT), and Google (Gemini) models out of the box. You can configure custom model tiers and routing rules for any OpenAI-compatible provider.",
-  },
-  {
-    q: "How does the classifier work?",
-    a: 'Nadir uses sentence embeddings (DistilBERT-based) to compute cosine similarity against pre-trained centroid vectors for simple and complex prompts. Classification takes ~10ms. It also detects agentic workflows (tool calls), reasoning chains ("step by step"), and vision content (images) as separate routing signals.',
-  },
-  {
-    q: "What happens when the classifier is wrong?",
-    a: "Nadir biases toward the complex model on low-confidence classifications (threshold: 0.06). This means it's more likely to over-serve (send a simple prompt to a premium model) than under-serve. You can test any prompt with nadirclaw classify \"your prompt\" and tune the threshold.",
-  },
-  {
-    q: "How much latency does routing add?",
-    a: "~10ms for the sentence embedding classification. The router runs locally on your machine, so there is no network hop. For comparison, a typical LLM API call takes 500ms-5s. The routing overhead is less than 1% of total request time.",
-  },
-  {
-    q: 'Where does the "30-60% savings" claim come from?',
-    a: "We benchmarked 50 real-world prompts across simple, medium, and complex tiers. Simple and medium prompts routed to Gemini Flash saved 97%. Complex prompts stayed on Sonnet but saved 12% via Context Optimize. Blended average: 38%. Workloads with more simple prompts see 50-60% savings; complex-heavy workloads see 30%. Your actual savings depend on your prompt mix.",
-  },
+const FAQS: [string, string][] = [
+  [
+    "Do I need to change my code?",
+    "No. Nadir exposes an OpenAI compatible API. Change your base URL to api.getnadir.com and set model to auto. That is the entire change.",
+  ],
+  [
+    "How does routing decide?",
+    "A lightweight classifier reads each prompt, scores it on complexity and task type, and picks the cheapest model above your quality threshold. It adds under ten milliseconds.",
+  ],
+  [
+    "What about quality?",
+    "You set a quality floor per API key. Simple prompts route to Haiku class models. Anything above your threshold routes to your configured premium model.",
+  ],
+  [
+    "Do you store my prompts?",
+    "Only if you turn on logging. With BYOK and logging off, we never see your plaintext. Just headers and token counts.",
+  ],
+  [
+    "Can I bring my own keys?",
+    "Yes. BYOK is supported on every tier, including Free. Your keys stay in your environment.",
+  ],
+  [
+    "What if a provider is down?",
+    "Automatic failover. If Anthropic errors, Nadir retries against OpenAI or Google on your configured chain. Your app stays up.",
+  ],
 ];
 
 export const FAQSection = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
   return (
-    <section id="faq" className="py-6 md:py-10">
-      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-        <div className="text-center mb-8 md:mb-16">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
-            Frequently asked questions
+    <section className="py-24 md:py-36">
+      <div className="max-w-[880px] mx-auto px-6 sm:px-8">
+        <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+          <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
+            Answers, not hedges.
           </h2>
-          <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
-          <p className="text-lg text-[#666]">
-            Everything you need to know about Nadir.
+          <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
+            Everything teams ask before swapping their base URL.
           </p>
         </div>
 
-        <div className="max-w-[720px] mx-auto divide-y divide-[#e5e5e5]">
-          {faqs.map((faq, i) => (
-            <div key={faq.q}>
-              <button
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between py-5 text-left gap-4"
-              >
-                <h3 className="text-base font-semibold text-[#0a0a0a]">{faq.q}</h3>
-                <ChevronDown
-                  className={`w-4 h-4 flex-shrink-0 text-[#999] transition-transform ${
-                    openIndex === i ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {openIndex === i && (
-                <p className="text-[15px] text-[#666] leading-relaxed pb-5 -mt-1">
-                  {faq.a}
-                </p>
-              )}
-            </div>
+        <div className="flex flex-col">
+          {FAQS.map(([q, a]) => (
+            <details
+              key={q}
+              className="group border-b border-black/[0.08] py-6"
+              onToggle={(e) => {
+                if ((e.currentTarget as HTMLDetailsElement).open) {
+                  trackFaqOpen(q, "home_faq");
+                }
+              }}
+            >
+              <summary className="flex justify-between items-center text-[17px] md:text-[19px] font-medium text-[#1d1d1f] cursor-pointer list-none tracking-[-0.015em]">
+                <span>{q}</span>
+                <span className="text-[20px] text-[#86868b] font-light transition-transform duration-200 group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="text-[15px] md:text-[16px] text-[#424245] leading-[1.55] mt-3.5 mb-0 max-w-[720px] tracking-[-0.005em]">
+                {a}
+              </p>
+            </details>
           ))}
         </div>
       </div>

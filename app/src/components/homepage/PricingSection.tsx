@@ -1,110 +1,186 @@
-import { Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { trackCtaClick } from "@/utils/analytics";
 
-const tiers = [
+const tierCtaKey = (name: string) => `${name.toLowerCase()}_cta`;
+
+type Tier = {
+  name: string;
+  price: string;
+  period: string;
+  blurb: string;
+  features: string[];
+  cta: string;
+  ctaLink: string;
+  external?: boolean;
+  highlighted: boolean;
+};
+
+const TIERS: Tier[] = [
   {
     name: "Free",
-    price: "Free",
-    subtitle: "Hosted (BYOK)",
-    features: ["Hosted proxy (api.getnadir.com)", "15 requests/day (BYOK only)", "Intelligent routing", "Web dashboard & analytics"],
-    cta: "Sign Up",
+    price: "$0",
+    period: "forever",
+    blurb: "Perfect for side projects and trying Nadir out.",
+    features: [
+      "Hosted proxy (api.getnadir.com)",
+      "Fifteen requests per day on our keys",
+      "Unlimited with BYOK",
+      "Intelligent routing",
+      "Dashboard and analytics",
+    ],
+    cta: "Start free",
     ctaLink: "/auth?mode=signup",
-    external: false,
     highlighted: false,
   },
   {
     name: "Pro",
     price: "$9",
-    subtitle: "/month + up to 25% of savings",
-    features: ["Everything in Free, unlimited", "Hosted keys or BYOK", "Semantic cache & dedup", "Fallback chains & context optimization"],
-    cta: "Sign Up",
+    period: "per month after 30-day trial, plus variable savings fee",
+    blurb: "For production teams routing real traffic.",
+    features: [
+      "Everything in Free, no request cap",
+      "Hosted keys or BYOK",
+      "Semantic cache and dedup",
+      "Fallback chains and automatic retry",
+      "Context optimization",
+      "Priority email support",
+    ],
+    cta: "Start free",
     ctaLink: "/auth?mode=signup",
-    external: false,
     highlighted: true,
   },
   {
     name: "Enterprise",
     price: "Custom",
-    subtitle: "volume pricing",
-    features: ["Everything in Pro", "SSO / SAML", "Custom routing models", "Dedicated infrastructure", "99.9% SLA"],
-    cta: "Contact Us",
-    ctaLink: "/pricing",
-    external: false,
+    period: "volume pricing",
+    blurb: "For scale, compliance, and dedicated infrastructure.",
+    features: [
+      "Everything in Pro",
+      "SSO and SAML",
+      "Custom routing models",
+      "Dedicated infrastructure",
+      "99.9% uptime SLA",
+      "Solutions engineer on call",
+    ],
+    cta: "Talk to sales",
+    ctaLink: "/contact?reason=enterprise&source=home_pricing",
     highlighted: false,
   },
 ];
 
+const Check = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ flexShrink: 0, marginTop: 4 }}
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 export const PricingSection = () => {
   return (
-    <section id="pricing" className="py-6 md:py-10">
-      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
-            Simple, transparent pricing
+    <section className="py-24 md:py-36">
+      <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
+        <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+          <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
+            Flat base. You keep the savings.
           </h2>
-          <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
-          <p className="text-lg text-[#666]">
-            Start free. Pay only when we save you money.
+          <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
+            Start free. Upgrade when you are ready. Cancel anytime.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-[1000px] mx-auto items-start">
-          {tiers.map((tier) => (
-            <div
-              key={tier.name}
-              className={`rounded-2xl flex flex-col ${
-                tier.highlighted
-                  ? "bg-[#0a0a0a] text-white ring-2 ring-[#0066ff] p-8 md:scale-105 md:-my-2"
-                  : "bg-[#fafafa] text-[#0a0a0a] p-7"
-              }`}
-            >
-              <h3 className={`text-lg font-semibold ${tier.highlighted ? "text-white" : "text-[#0a0a0a]"}`}>
-                {tier.name}
-              </h3>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold">{tier.price}</span>
-                {tier.subtitle && (
-                  <span className={`text-sm ${tier.highlighted ? "text-gray-400" : "text-[#999]"}`}>
-                    {tier.subtitle}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+          {TIERS.map((tier) => {
+            const highlighted = tier.highlighted;
+            const ctaProps = tier.external
+              ? ({ href: tier.ctaLink } as const)
+              : undefined;
+            const ctaClass =
+              "flex items-center justify-center px-4 py-[13px] rounded-full text-[15px] font-medium no-underline tracking-[-0.01em] transition-colors";
+            const ctaColors = highlighted
+              ? "bg-white text-[#1d1d1f] hover:bg-white/90"
+              : "bg-[#1d1d1f] text-white hover:bg-[#333]";
+
+            return (
+              <div
+                key={tier.name}
+                className="relative rounded-[20px] flex flex-col px-7 py-9 md:px-8 md:py-10"
+                style={{
+                  background: highlighted ? "#1d1d1f" : "#fff",
+                  color: highlighted ? "#fff" : "#1d1d1f",
+                  border: highlighted ? "1px solid #1d1d1f" : "1px solid rgba(0,0,0,0.08)",
+                }}
+              >
+                {highlighted && (
+                  <div
+                    className="absolute top-4 right-4 text-[11px] font-medium px-2.5 py-1 rounded-full tracking-[-0.005em]"
+                    style={{ color: "#fff", background: "rgba(255,255,255,0.12)" }}
+                  >
+                    Most popular
+                  </div>
+                )}
+                <h3 className="text-[22px] font-semibold m-0 mb-2 tracking-[-0.022em]">
+                  {tier.name}
+                </h3>
+                <p
+                  className="text-[14px] m-0 mb-7 leading-[1.5] tracking-[-0.005em]"
+                  style={{ color: highlighted ? "#a1a1a6" : "#86868b" }}
+                >
+                  {tier.blurb}
+                </p>
+                <div className="flex items-baseline gap-2 mb-9">
+                  <span className="text-[48px] md:text-[56px] font-semibold tracking-[-0.035em] leading-none">
+                    {tier.price}
                   </span>
+                  <span
+                    className="text-[14px]"
+                    style={{ color: highlighted ? "#a1a1a6" : "#86868b" }}
+                  >
+                    {tier.period}
+                  </span>
+                </div>
+                <ul className="list-none p-0 m-0 mb-9 flex-1">
+                  {tier.features.map((f) => (
+                    <li
+                      key={f}
+                      className="flex gap-3 text-[14px] md:text-[15px] mb-3.5 leading-[1.4] tracking-[-0.005em]"
+                      style={{ color: highlighted ? "#d2d2d7" : "#1d1d1f" }}
+                    >
+                      <span style={{ color: highlighted ? "#a1a1a6" : "#1d1d1f", opacity: 0.9 }}>
+                        <Check />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {ctaProps ? (
+                  <a
+                    {...ctaProps}
+                    onClick={() => trackCtaClick(tierCtaKey(tier.name), "home_pricing")}
+                    className={`${ctaClass} ${ctaColors}`}
+                  >
+                    {tier.cta}
+                  </a>
+                ) : (
+                  <Link
+                    to={tier.ctaLink}
+                    onClick={() => trackCtaClick(tierCtaKey(tier.name), "home_pricing")}
+                    className={`${ctaClass} ${ctaColors}`}
+                  >
+                    {tier.cta}
+                  </Link>
                 )}
               </div>
-
-              <ul className="space-y-3 mt-6 mb-8 flex-1">
-                {tier.features.map((f) => (
-                  <li key={f} className={`flex items-start gap-2.5 text-sm ${tier.highlighted ? "text-gray-300" : "text-[#444]"}`}>
-                    <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${tier.highlighted ? "text-[#0066ff]" : "text-[#00a86b]"}`} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              {tier.external ? (
-                <a
-                  href={tier.ctaLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-center py-3 rounded-lg text-sm font-semibold transition-all no-underline border border-[#e5e5e5] text-[#0a0a0a] hover:border-[#0a0a0a] bg-white"
-                >
-                  {tier.cta}
-                </a>
-              ) : tier.ctaLink.startsWith("#") ? (
-                <a
-                  href={tier.ctaLink}
-                  className="block text-center py-3 rounded-lg text-sm font-semibold transition-all no-underline bg-white text-[#0a0a0a] hover:bg-gray-100"
-                >
-                  {tier.cta}
-                </a>
-              ) : (
-                <Link
-                  to={tier.ctaLink}
-                  className="block text-center py-3 rounded-lg text-sm font-semibold transition-all no-underline border border-[#e5e5e5] text-[#0a0a0a] hover:border-[#0a0a0a] bg-white"
-                >
-                  {tier.cta}
-                </Link>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

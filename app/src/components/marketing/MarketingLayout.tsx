@@ -1,161 +1,151 @@
 import { useNavigate, Link } from "react-router-dom";
-import { Github, Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import PromoBanner from "@/components/PromoBanner";
+import { ContactFooter } from "@/components/homepage/ContactFooter";
+import { SignupDialog } from "@/components/marketing/SignupDialog";
+import { trackGitHubClick } from "@/utils/analytics";
 
-function NewsletterSignup() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+const NAV_LINKS = [
+  { to: "/pricing", label: "Pricing" },
+  { to: "/calculator", label: "Calculator" },
+  { to: "/docs", label: "Docs" },
+  { to: "/self-host", label: "Self-host" },
+  { to: "/optimize", label: "Optimize" },
+  { to: "/blog", label: "Blog" },
+];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setStatus("loading");
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/newsletter_subscribers`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
-      if (res.ok || res.status === 201 || res.status === 409) {
-        setStatus("success");
-        setEmail("");
-      } else {
-        setStatus("error");
-      }
-    } catch {
-      setStatus("error");
-    }
-  };
+const GITHUB_REPO = "NadirRouter/NadirClaw";
 
-  return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div>
-        <h3 className="text-sm font-semibold text-[#0a0a0a] mb-1">Stay in the loop</h3>
-        <p className="text-sm text-[#666]">Product updates, cost-saving tips, and new features. No spam.</p>
-      </div>
-      {status === "success" ? (
-        <p className="text-sm text-[#00a86b] font-medium">Thanks! You're subscribed.</p>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex gap-2 w-full sm:w-auto">
-          <input
-            type="email"
-            required
-            placeholder="you@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="px-3 py-2 text-sm border border-[#e5e5e5] rounded-md bg-white focus:outline-none focus:border-[#0a0a0a] transition-colors w-full sm:w-64"
-          />
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="inline-flex items-center gap-1 px-4 py-2 bg-[#0a0a0a] text-white text-sm font-medium rounded-md hover:bg-[#333] transition-colors disabled:opacity-50 whitespace-nowrap"
-          >
-            Subscribe
-            <ArrowRight className="h-3.5 w-3.5" />
-          </button>
-        </form>
-      )}
-      {status === "error" && (
-        <p className="text-sm text-red-500">Something went wrong. Try again.</p>
-      )}
-    </div>
-  );
-}
+const formatStars = (n: number) => {
+  if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k";
+  return String(n);
+};
 
-const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate();
-  const [starCount, setStarCount] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const GitHubStarButton = ({ compact = false }: { compact?: boolean }) => {
+  const [stars, setStars] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/NadirRouter/NadirClaw")
-      .then((res) => res.json())
+    let cancelled = false;
+    const cached = typeof window !== "undefined" ? sessionStorage.getItem("nadirGhStars") : null;
+    if (cached) {
+      const parsed = parseInt(cached, 10);
+      if (!Number.isNaN(parsed)) setStars(parsed);
+    }
+    fetch(`https://api.github.com/repos/${GITHUB_REPO}`)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data.stargazers_count) {
-          setStarCount(data.stargazers_count.toLocaleString());
+        if (cancelled || !data) return;
+        const count = typeof data.stargazers_count === "number" ? data.stargazers_count : null;
+        if (count !== null) {
+          setStars(count);
+          try { sessionStorage.setItem("nadirGhStars", String(count)); } catch {}
         }
       })
       .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
-  // Close mobile menu on route change
+  return (
+    <a
+      href={`https://github.com/${GITHUB_REPO}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Star ${GITHUB_REPO} on GitHub`}
+      onClick={() => trackGitHubClick("header")}
+      className={
+        compact
+          ? "inline-flex items-center gap-1 text-[#1d1d1f] text-[12px] font-medium no-underline opacity-80 hover:opacity-100 transition-opacity"
+          : "inline-flex items-center gap-1.5 text-[#1d1d1f] text-[13px] font-medium no-underline opacity-80 hover:opacity-100 transition-opacity tracking-[-0.01em]"
+      }
+    >
+      <svg width={compact ? 14 : 16} height={compact ? 14 : 16} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+      </svg>
+      {stars !== null && <span className="tabular-nums">{formatStars(stars)}</span>}
+    </a>
+  );
+};
+
+const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [navigate]);
 
-  const navLinks: { to: string; label: string; title?: string }[] = [
-    { to: "/pricing", label: "Pricing" },
-    { to: "/docs", label: "Docs" },
-    { to: "/self-host", label: "Self-Host" },
-    { to: "/optimize", label: "Optimize" },
-    { to: "/blog", label: "Blog" },
-  ];
-
   return (
-    <div className="min-h-screen bg-white font-['Inter',system-ui,sans-serif] text-[#0a0a0a] antialiased">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md">
-        <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-[#0a0a0a] no-underline"
-            >
-              <img
-                src="/logo.png"
-                alt="Nadir"
-                className="h-7 sm:h-8 w-auto"
-              />
-              <span className="font-semibold text-[15px] font-mono tracking-tight">Nadir</span>
+    <div
+      className="min-h-screen bg-white text-[#1d1d1f] antialiased"
+      style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+    >
+      <header
+        className="sticky top-0 z-50 border-b border-black/[0.06]"
+        style={{
+          background: "rgba(255,255,255,0.82)",
+          backdropFilter: "saturate(180%) blur(20px)",
+          WebkitBackdropFilter: "saturate(180%) blur(20px)",
+        }}
+      >
+        <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
+          <div className="flex items-center justify-between h-14">
+            <Link to="/" className="flex items-center gap-2.5 text-[#1d1d1f] no-underline">
+              <img src="/logo.png" alt="Nadir" className="w-7 h-7 block" />
+              <span className="font-semibold text-[17px] tracking-[-0.022em]">Nadir</span>
             </Link>
 
             {/* Desktop nav */}
-            <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6">
-              {navLinks.map((link) => (
+            <nav
+              aria-label="Main navigation"
+              className="hidden md:flex items-center gap-8"
+            >
+              {NAV_LINKS.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  title={link.title}
-                  className="text-[#666] text-sm font-medium hover:text-[#0a0a0a] transition-colors no-underline"
+                  className="text-[#1d1d1f] text-[13.5px] font-normal no-underline opacity-80 hover:opacity-100 transition-opacity"
                 >
                   {link.label}
                 </Link>
               ))}
-              <Link
-                to="/auth?mode=signup"
-                className="px-4 py-2 bg-[#0a0a0a] text-white rounded-md text-sm font-semibold hover:bg-[#333] transition-all no-underline"
-              >
-                Sign Up
-              </Link>
-              <a
-                href="https://github.com/NadirRouter/NadirClaw"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#e5e5e5] rounded-md text-[#0a0a0a] text-sm font-medium hover:border-[#0a0a0a] hover:bg-[#fafafa] transition-all no-underline"
-              >
-                <Github className="h-4 w-4" />
-                <span className="text-[#666]">
-                  {starCount ? `${starCount} stars` : "GitHub"}
-                </span>
-              </a>
             </nav>
 
-            {/* Mobile: CTA + hamburger */}
-            <div className="flex md:hidden items-center gap-3">
+            <div className="hidden md:flex items-center gap-4">
+              <GitHubStarButton />
               <Link
-                to="/auth?mode=signup"
-                className="px-3 py-1.5 bg-[#0a0a0a] text-white rounded-md text-xs font-semibold hover:bg-[#333] transition-all no-underline"
+                to="/auth"
+                className="text-[#1d1d1f] text-[13.5px] font-normal no-underline opacity-80 hover:opacity-100 transition-opacity"
               >
-                Sign Up
+                Log in
               </Link>
+              <SignupDialog ctaLabel="start_saving" ctaLocation="header">
+                <button
+                  type="button"
+                  className="inline-flex items-center px-3.5 py-[7px] bg-[#1d1d1f] text-white rounded-full text-[13px] font-medium hover:bg-[#333] transition-colors tracking-[-0.01em]"
+                >
+                  Start saving
+                </button>
+              </SignupDialog>
+            </div>
+
+            {/* Mobile: CTA + hamburger */}
+            <div className="flex md:hidden items-center gap-2">
+              <GitHubStarButton compact />
+              <Link
+                to="/auth"
+                className="text-[#1d1d1f] text-[12px] font-normal px-2 py-1.5 no-underline opacity-80"
+              >
+                Log in
+              </Link>
+              <SignupDialog ctaLabel="start_saving" ctaLocation="header_mobile">
+                <button
+                  type="button"
+                  className="px-3 py-1.5 bg-[#1d1d1f] text-white rounded-full text-[12px] font-medium hover:bg-[#333] transition-colors tracking-[-0.01em]"
+                >
+                  Start saving
+                </button>
+              </SignupDialog>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
@@ -167,30 +157,19 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        {/* Mobile dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#e5e5e5] bg-white">
-            <nav className="max-w-[1120px] mx-auto px-4 py-3 flex flex-col gap-1">
-              {navLinks.map((link) => (
+          <div className="md:hidden border-t border-black/[0.06] bg-white">
+            <nav className="max-w-[1160px] mx-auto px-4 py-3 flex flex-col gap-1">
+              {NAV_LINKS.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[#333] text-sm font-medium py-2.5 px-3 rounded-md hover:bg-gray-50 transition-colors no-underline"
+                  className="text-[#1d1d1f] text-[14px] font-normal py-2.5 px-3 rounded-md hover:bg-gray-50 transition-colors no-underline"
                 >
                   {link.label}
                 </Link>
               ))}
-              <a
-                href="https://github.com/NadirRouter/NadirClaw"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileMenuOpen(false)}
-                className="inline-flex items-center gap-2 text-[#333] text-sm font-medium py-2.5 px-3 rounded-md hover:bg-gray-50 transition-colors no-underline"
-              >
-                <Github className="h-4 w-4" />
-                {starCount ? `${starCount} stars` : "GitHub"}
-              </a>
             </nav>
           </div>
         )}
@@ -198,34 +177,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       <main role="main">{children}</main>
-
-      {/* Newsletter + Footer */}
-      <footer className="border-t border-[#e5e5e5] mt-0">
-        {/* Newsletter signup */}
-        <div className="border-b border-[#e5e5e5] py-8 sm:py-10">
-          <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-            <NewsletterSignup />
-          </div>
-        </div>
-
-        {/* Footer links */}
-        <div className="py-8 sm:py-10">
-          <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
-              <nav aria-label="Footer navigation" className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm">
-                <Link to="/" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Home</Link>
-                <Link to="/docs" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Docs</Link>
-                <a href="https://github.com/NadirRouter/NadirClaw" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">GitHub</a>
-                <a href="https://github.com/NadirRouter/NadirClaw/issues" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">Issues</a>
-                <a href="https://github.com/NadirRouter/NadirClaw/blob/main/LICENSE" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline" target="_blank" rel="noopener noreferrer">MIT License</a>
-                <Link to="/terms" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Terms</Link>
-                <Link to="/privacy" className="text-[#666] hover:text-[#0a0a0a] transition-colors no-underline">Privacy</Link>
-              </nav>
-              <p className="text-sm text-[#999]">Built by developers tired of overpaying</p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <ContactFooter />
     </div>
   );
 };

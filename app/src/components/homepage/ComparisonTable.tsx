@@ -1,184 +1,75 @@
-const features = [
-  {
-    name: "Auto Classification",
-    nadirclaw: { icon: "check", text: "Sentence embeddings" },
-    litellm: { icon: "none", text: "You write it" },
-    openrouter: { icon: "dash", text: "" },
-    helicone: { icon: "dash", text: "" },
-    portkey: { icon: "dash", text: "" },
-    premium: { icon: "dash", text: "" },
-  },
-  {
-    name: "Cost-Based Routing",
-    nadirclaw: { icon: "check", text: "Automatic" },
-    litellm: { icon: "check", text: "Manual rules" },
-    openrouter: { icon: "none", text: "Manual model pick" },
-    helicone: { icon: "none", text: "Fallbacks only" },
-    portkey: { icon: "check", text: "Rule-based" },
-    premium: { icon: "dash", text: "Fixed model" },
-  },
-  {
-    name: "Agentic/Reasoning detection",
-    nadirclaw: { icon: "check", text: "Auto" },
-    litellm: { icon: "none", text: "You write it" },
-    openrouter: { icon: "dash", text: "" },
-    helicone: { icon: "dash", text: "" },
-    portkey: { icon: "dash", text: "" },
-    premium: { icon: "none", text: "N/A" },
-  },
-  {
-    name: "Fallback chains",
-    nadirclaw: { icon: "check", text: "Per-tier" },
-    litellm: { icon: "check", text: "Built-in" },
-    openrouter: { icon: "check", text: "" },
-    helicone: { icon: "dash", text: "" },
-    portkey: { icon: "check", text: "" },
-    premium: { icon: "dash", text: "" },
-  },
-  {
-    name: "Observability",
-    nadirclaw: { icon: "check", text: "+ Prometheus" },
-    litellm: { icon: "none", text: "You add it" },
-    openrouter: { icon: "none", text: "Basic stats" },
-    helicone: { icon: "check", text: "Full suite" },
-    portkey: { icon: "check", text: "Full suite" },
-    premium: { icon: "none", text: "Provider dashboard" },
-  },
-  {
-    name: "Context Optimize",
-    nadirclaw: { icon: "check", text: "Lossless" },
-    litellm: { icon: "cross", text: "" },
-    openrouter: { icon: "cross", text: "" },
-    helicone: { icon: "cross", text: "" },
-    portkey: { icon: "cross", text: "" },
-    premium: { icon: "cross", text: "" },
-  },
-  {
-    name: "Setup effort",
-    nadirclaw: { icon: "none", text: "1 URL swap", bold: true },
-    litellm: { icon: "none", text: "Days of engineering" },
-    openrouter: { icon: "none", text: "Account + config" },
-    helicone: { icon: "none", text: "SDK integration" },
-    portkey: { icon: "none", text: "SDK integration" },
-    premium: { icon: "none", text: "None" },
-  },
-  {
-    name: "Pricing",
-    nadirclaw: { icon: "check", text: "Free tier + Pro from $9/mo", bold: true },
-    litellm: { icon: "none", text: "Free (your time)" },
-    openrouter: { icon: "none", text: "Per-token markup" },
-    helicone: { icon: "none", text: "Free 10K, Pro $79/mo" },
-    portkey: { icon: "none", text: "Free 10K, Pro $$" },
-    premium: { icon: "none", text: "Full price" },
-  },
+type Cell = true | false | string;
+
+const ROWS: { feature: string; cells: [Cell, Cell, Cell, Cell, Cell] }[] = [
+  { feature: "Automatic model selection", cells: [true, false, "Manual", "Rules", false] },
+  { feature: "OpenAI compatible API", cells: [true, true, true, true, false] },
+  { feature: "BYOK and hosted keys", cells: [true, "BYOK only", true, "BYOK only", true] },
+  { feature: "Semantic cache included", cells: [true, false, false, true, false] },
+  { feature: "Per request cost dashboard", cells: [true, false, true, true, false] },
+  { feature: "Provider failover", cells: [true, false, true, true, true] },
+  { feature: "Starts free", cells: [true, true, false, true, false] },
 ];
 
-type CellData = { icon: string; text: string; bold?: boolean };
+const COLS = ["Nadir", "OpenRouter", "Requesty", "Portkey", "DIY"];
 
-const CellContent = ({ cell }: { cell: CellData }) => (
-  <span className={cell.bold ? "font-bold" : ""}>
-    {cell.icon === "check" && (
-      <span className="text-[#00a86b] font-bold mr-1">&#10003;</span>
-    )}
-    {cell.icon === "cross" && (
-      <span className="text-red-400 font-bold mr-1">&#10007;</span>
-    )}
-    {cell.icon === "dash" && !cell.text && (
-      <span className="text-[#ccc]">&mdash;</span>
-    )}
-    {cell.icon === "dash" && cell.text && (
-      <>
-        <span className="text-[#ccc] mr-1">&mdash;</span>
-        {cell.text}
-      </>
-    )}
-    {cell.icon !== "dash" && cell.text}
-  </span>
-);
+const renderCell = (v: Cell) => {
+  if (v === true) return <span className="text-[#028a3e] font-medium text-[16px]">✓</span>;
+  if (v === false) return <span className="text-[#c7c7cc] text-[16px]">·</span>;
+  return <span className="text-[13px] text-[#424245]">{v}</span>;
+};
 
 export const ComparisonTable = () => {
   return (
-    <section
-      className="py-6 md:py-10 bg-gradient-to-b from-white via-[#fafafa] to-white"
-      id="compare"
-    >
-      <div className="max-w-[1120px] mx-auto px-4 sm:px-8">
-        <div className="text-center mb-8 md:mb-16">
-          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3">
-            How we compare
+    <section className="py-24 md:py-36">
+      <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
+        <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+          <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
+            What the other gateways are missing.
           </h2>
-          <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
-          <p className="text-lg text-[#666]">
-            Verified against each product's public docs and pricing pages.
+          <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
+            The routing gateways you already know, with the pieces that actually lower your bill.
           </p>
         </div>
 
-        <div className="overflow-x-auto -mx-4 px-4">
-          <table className="w-full min-w-[800px] border-collapse">
+        <div className="bg-white border border-black/[0.08] rounded-[18px] overflow-hidden overflow-x-auto">
+          <table className="w-full border-collapse text-[14px] min-w-[560px]">
             <thead>
-              <tr className="border-b border-[#e5e5e5]">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
+              <tr className="bg-[#fbfbfd] border-b border-black/[0.06]">
+                <th className="text-left px-7 py-5 font-medium text-[13px] text-[#86868b] tracking-[-0.005em]">
                   Feature
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold bg-[#0066ff]/5 text-[#0066ff] rounded-t-lg">
-                  Nadir
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
-                  LiteLLM + rules
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
-                  OpenRouter
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
-                  Helicone
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
-                  Portkey
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-[#999]">
-                  Always premium
-                </th>
+                {COLS.map((c, i) => (
+                  <th
+                    key={c}
+                    className="text-center px-6 py-5 font-semibold text-[14px] text-[#1d1d1f] tracking-[-0.01em]"
+                    style={{ background: i === 0 ? "rgba(0,113,227,0.04)" : "transparent" }}
+                  >
+                    {c}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {features.map((feature, i) => (
+              {ROWS.map((row, ri) => (
                 <tr
-                  key={i}
-                  className={`border-b border-[#f0f0f0] ${
-                    i % 2 === 0 ? "" : "bg-[#fafafa]/50"
-                  }`}
+                  key={row.feature}
+                  className={ri < ROWS.length - 1 ? "border-b border-black/[0.05]" : ""}
                 >
-                  <td className="py-3 px-4 text-sm font-medium text-[#0a0a0a]">
-                    {feature.name}
-                  </td>
-                  <td className="py-3 px-4 text-sm bg-[#0066ff]/5">
-                    <CellContent cell={feature.nadirclaw} />
-                  </td>
-                  <td className="py-3 px-4 text-sm text-[#666]">
-                    <CellContent cell={feature.litellm} />
-                  </td>
-                  <td className="py-3 px-4 text-sm text-[#666]">
-                    <CellContent cell={feature.openrouter} />
-                  </td>
-                  <td className="py-3 px-4 text-sm text-[#666]">
-                    <CellContent cell={feature.helicone} />
-                  </td>
-                  <td className="py-3 px-4 text-sm text-[#666]">
-                    <CellContent cell={feature.portkey} />
-                  </td>
-                  <td className="py-3 px-4 text-sm text-[#666]">
-                    <CellContent cell={feature.premium} />
-                  </td>
+                  <td className="px-7 py-[18px] text-[#1d1d1f] tracking-[-0.005em]">{row.feature}</td>
+                  {row.cells.map((v, i) => (
+                    <td
+                      key={i}
+                      className="text-center px-6 py-[18px]"
+                      style={{ background: i === 0 ? "rgba(0,113,227,0.04)" : "transparent" }}
+                    >
+                      {renderCell(v)}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        <p className="mt-5 text-[13px] text-[#999] text-center">
-          Verified against each product's public docs. The "LiteLLM + rules"
-          column reflects what you'd build yourself on top of a gateway.
-        </p>
       </div>
     </section>
   );
