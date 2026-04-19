@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { SignupDialog } from "@/components/marketing/SignupDialog";
 import { trackCtaClick } from "@/utils/analytics";
 
 const tierCtaKey = (name: string) => `${name.toLowerCase()}_cta`;
@@ -10,8 +11,11 @@ type Tier = {
   blurb: string;
   features: string[];
   cta: string;
-  ctaLink: string;
-  external?: boolean;
+  // ctaType: "signup" opens the SignupDialog (Pro trial by default).
+  //          "link" routes to a react-router path (Talk to sales, etc.).
+  //          "external" is an <a href> to an outside URL.
+  ctaType: "signup" | "link" | "external";
+  ctaLink?: string;
   highlighted: boolean;
 };
 
@@ -29,7 +33,7 @@ const TIERS: Tier[] = [
       "Dashboard and analytics",
     ],
     cta: "Start free",
-    ctaLink: "/auth?mode=signup",
+    ctaType: "signup",
     highlighted: false,
   },
   {
@@ -45,8 +49,8 @@ const TIERS: Tier[] = [
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start free",
-    ctaLink: "/auth?mode=signup",
+    cta: "Start 30-day trial",
+    ctaType: "signup",
     highlighted: true,
   },
   {
@@ -63,6 +67,7 @@ const TIERS: Tier[] = [
       "Solutions engineer on call",
     ],
     cta: "Talk to sales",
+    ctaType: "link",
     ctaLink: "/contact?reason=enterprise&source=home_pricing",
     highlighted: false,
   },
@@ -100,9 +105,6 @@ export const PricingSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
           {TIERS.map((tier) => {
             const highlighted = tier.highlighted;
-            const ctaProps = tier.external
-              ? ({ href: tier.ctaLink } as const)
-              : undefined;
             const ctaClass =
               "flex items-center justify-center px-4 py-[13px] rounded-full text-[15px] font-medium no-underline tracking-[-0.01em] transition-colors";
             const ctaColors = highlighted
@@ -161,9 +163,21 @@ export const PricingSection = () => {
                     </li>
                   ))}
                 </ul>
-                {ctaProps ? (
+                {tier.ctaType === "signup" ? (
+                  // Free + Pro buckets open the signup dialog. The dialog
+                  // defaults to the 30-day Pro trial message and sends users
+                  // into /dashboard/onboarding with Subscribe as step 0.
+                  <SignupDialog
+                    ctaLabel={tierCtaKey(tier.name)}
+                    ctaLocation="home_pricing"
+                  >
+                    <button type="button" className={`${ctaClass} ${ctaColors}`}>
+                      {tier.cta}
+                    </button>
+                  </SignupDialog>
+                ) : tier.ctaType === "external" ? (
                   <a
-                    {...ctaProps}
+                    href={tier.ctaLink}
                     onClick={() => trackCtaClick(tierCtaKey(tier.name), "home_pricing")}
                     className={`${ctaClass} ${ctaColors}`}
                   >
@@ -171,7 +185,7 @@ export const PricingSection = () => {
                   </a>
                 ) : (
                   <Link
-                    to={tier.ctaLink}
+                    to={tier.ctaLink!}
                     onClick={() => trackCtaClick(tierCtaKey(tier.name), "home_pricing")}
                     className={`${ctaClass} ${ctaColors}`}
                   >

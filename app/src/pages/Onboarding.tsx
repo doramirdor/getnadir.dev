@@ -36,9 +36,12 @@ async function sha256(message: string): Promise<string> {
 
 type Mode = "byok" | "hosted";
 
+// Subscribe is the first step — new users land on the 30-day Pro trial
+// offer before anything else. Choosing Free / BYOK is still possible (the
+// Subscribe step has a "skip" option), but the default path is Pro.
 const STEPS = [
+  { id: "subscribe", label: "Start Pro trial", icon: Gift },
   { id: "mode", label: "Choose Mode", icon: Zap },
-  { id: "subscribe", label: "Subscribe", icon: Gift },
   { id: "api-key", label: "Get API Key", icon: Key },
 ];
 
@@ -194,7 +197,8 @@ const Onboarding = () => {
           plan_id: "pro",
           promo_code: "FIRST1",
           success_url: `${window.location.origin}/dashboard/onboarding?subscribed=true`,
-          cancel_url: `${window.location.origin}/dashboard/onboarding?step=1`,
+          // If Stripe cancels, return to the Subscribe step (now step 0).
+          cancel_url: `${window.location.origin}/dashboard/onboarding?step=0`,
         }),
       });
 
@@ -214,9 +218,11 @@ const Onboarding = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("subscribed") === "true") {
-      // User just came back from successful checkout, advance past subscribe step
-      setCurrentStep(2); // Go to Configure step
-      toast({ title: "Subscription active!", description: "First month is free. Let's finish setting up." });
+      // User just came back from successful Stripe checkout. Advance past the
+      // Subscribe step (step 0) to Choose Mode (step 1); they'll finish at
+      // Create API Key (step 2).
+      setCurrentStep(1);
+      toast({ title: "Pro trial active!", description: "30 days of full Pro access. Let's finish setting up." });
       // Clean URL
       window.history.replaceState({}, "", "/dashboard/onboarding");
     }
@@ -370,59 +376,19 @@ console.log(response.choices[0].message.content);`;
       {/* Step Content */}
       <Card className="clean-card">
         <CardContent className="pt-6 space-y-4">
-          {/* ═══ STEP 1: Choose Mode ═══ */}
+          {/* ═══ STEP 0: Subscribe (Pro trial first — this is the default path) ═══ */}
           {currentStep === 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">How do you want to use Nadir?</h2>
-              <p className="text-sm text-muted-foreground">
-                Choose how you want to connect to LLM providers. You can change this anytime.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={() => setMode("byok")}
-                  className={`p-5 border-2 rounded-xl text-left transition-all ${
-                    mode === "byok" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Key className="w-5 h-5 text-primary" />
-                    <p className="font-semibold text-foreground">Bring Your Own Keys</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Use your existing provider API keys (OpenAI, Anthropic, Google). You pay providers directly.
-                  </p>
-                </button>
-                <button
-                  onClick={() => setMode("hosted")}
-                  className={`p-5 border-2 rounded-xl text-left transition-all ${
-                    mode === "hosted" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="w-5 h-5 text-primary" />
-                    <p className="font-semibold text-foreground">Use Nadir Keys</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    No provider accounts needed. Start immediately with zero setup.
-                  </p>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ═══ STEP 2: Subscribe ═══ */}
-          {currentStep === 1 && (
             <div className="space-y-5">
-              <h2 className="text-lg font-semibold text-foreground">Activate your account</h2>
+              <h2 className="text-lg font-semibold text-foreground">Start your 30-day Pro trial</h2>
               <p className="text-sm text-muted-foreground">
-                Subscribe to start routing. Your first month is free.
+                Full Pro access for 30 days. No credit card required to sign up. We only earn when we cut your bill.
               </p>
 
               {/* Promo highlight */}
               <div className="p-5 bg-primary/5 border-2 border-primary/20 rounded-xl text-center space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
                   <Gift className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold text-primary">First month free</span>
+                  <span className="text-sm font-semibold text-primary">30-day Pro trial</span>
                 </div>
                 <div>
                   <p className="text-3xl font-bold text-foreground">
@@ -430,7 +396,7 @@ console.log(response.choices[0].message.content);`;
                     $0
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    for your first month. Only pay for what we save you.
+                    for your first 30 days. Only pay for what we save you after that.
                   </p>
                 </div>
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -464,17 +430,57 @@ console.log(response.choices[0].message.content);`;
                 {subscribing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Redirecting to checkout...</>
                 ) : (
-                  "Start Free Month"
+                  "Start 30-day Pro trial"
                 )}
               </Button>
 
-              {/* Skip */}
+              {/* Skip to Free */}
               <div className="text-center">
                 <button
                   onClick={nextStep}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
                 >
-                  Skip for now
+                  Start on Free instead
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 1: Choose Mode ═══ */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-foreground">How do you want to use Nadir?</h2>
+              <p className="text-sm text-muted-foreground">
+                Choose how you want to connect to LLM providers. You can change this anytime.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => setMode("byok")}
+                  className={`p-5 border-2 rounded-xl text-left transition-all ${
+                    mode === "byok" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Key className="w-5 h-5 text-primary" />
+                    <p className="font-semibold text-foreground">Bring Your Own Keys</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Use your existing provider API keys (OpenAI, Anthropic, Google). You pay providers directly.
+                  </p>
+                </button>
+                <button
+                  onClick={() => setMode("hosted")}
+                  className={`p-5 border-2 rounded-xl text-left transition-all ${
+                    mode === "hosted" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    <p className="font-semibold text-foreground">Use Nadir Keys</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    No provider accounts needed. Start immediately with zero setup.
+                  </p>
                 </button>
               </div>
             </div>
@@ -630,8 +636,9 @@ console.log(response.choices[0].message.content);`;
           <Button onClick={handleFinish} disabled={!createdApiKey}>
             Finish Setup
           </Button>
-        ) : currentStep === 1 ? (
-          // Subscribe step - main CTA is inside the card, just show a subtle skip
+        ) : currentStep === 0 ? (
+          // Subscribe step — the main CTA ("Start 30-day Pro trial") lives
+          // inside the card, so the nav rail stays quiet here.
           <div />
         ) : (
           <Button onClick={nextStep}>

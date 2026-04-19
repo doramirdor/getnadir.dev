@@ -74,8 +74,11 @@ type SignupDialogProps = {
 
 export const SignupDialog = ({
   children,
-  title = "Start 1 month free",
-  subtitle = "No credit card. Cancel anytime.",
+  // Default copy signals "Pro trial by default". The signup flow lands new
+  // users on the Subscribe step of onboarding, which is now Step 0 — so the
+  // dialog promises what the post-auth flow actually delivers.
+  title = "Start your 30-day Pro trial",
+  subtitle = "Full Pro access. No credit card. Cancel anytime.",
   ctaLabel = "start_saving",
   ctaLocation = "unknown",
 }: SignupDialogProps) => {
