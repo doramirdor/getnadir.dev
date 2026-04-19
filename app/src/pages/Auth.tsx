@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowRight } from "lucide-react";
 import { trackAuthAttempt, trackAuthSuccess } from "@/utils/analytics";
 
@@ -30,7 +29,6 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "signin";
   const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
@@ -49,14 +47,11 @@ const Auth = () => {
   }, [navigate]);
 
   const handleOAuthSignIn = async (provider: "google" | "github") => {
-    if (mode === "signup" && !agreedToTerms) {
-      toast({
-        variant: "destructive",
-        title: "Agreement required",
-        description: "You must agree to the Terms of Service and Privacy Policy to create an account.",
-      });
-      return;
-    }
+    // Implicit consent: clicking the OAuth button is the agreement to Terms
+    // and Privacy. The visible notice below the buttons documents this.
+    // (The previous explicit-checkbox gate was the source of an error during
+    // Google login — users hit "Continue with Google" before ticking the box
+    // and got a blocking toast. Dropped.)
     setOauthLoading(provider);
     trackAuthAttempt(provider, mode === "signup" ? "signup" : "signin");
     try {
@@ -79,14 +74,7 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreedToTerms) {
-      toast({
-        variant: "destructive",
-        title: "Agreement required",
-        description: "You must agree to the Terms of Service and Privacy Policy to create an account.",
-      });
-      return;
-    }
+    // Implicit consent — clicking "Create account" is the agreement.
     setLoading(true);
 
     try {
@@ -299,6 +287,25 @@ const Auth = () => {
                 </Button>
               </div>
 
+              {/*
+                Passive ToS notice for OAuth signup. Matches the SignupDialog
+                footer — visible reference without a blocking checkbox, so
+                Google/GitHub flows never hit "Agreement required" errors.
+              */}
+              {mode === "signup" && (
+                <p className="text-[11px] text-muted-foreground text-center leading-relaxed -mt-3 mb-6">
+                  By continuing, you agree to our{" "}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                    Terms
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                    Privacy Policy
+                  </a>
+                  .
+                </p>
+              )}
+
               {/* Divider */}
               <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
@@ -365,28 +372,7 @@ const Auth = () => {
                   </div>
                 )}
 
-                {mode === "signup" && (
-                  <div className="flex items-start gap-2">
-                    <Checkbox
-                      id="terms"
-                      checked={agreedToTerms}
-                      onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-                      className="mt-0.5"
-                    />
-                    <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                      I agree to the{" "}
-                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-foreground underline hover:no-underline">
-                        Terms of Service
-                      </a>{" "}
-                      and{" "}
-                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-foreground underline hover:no-underline">
-                        Privacy Policy
-                      </a>
-                    </label>
-                  </div>
-                )}
-
-                <Button type="submit" className="w-full h-10" disabled={loading || (mode === "signup" && !agreedToTerms)}>
+                <Button type="submit" className="w-full h-10" disabled={loading}>
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -396,6 +382,27 @@ const Auth = () => {
                     </>
                   )}
                 </Button>
+
+                {/*
+                  Implicit-consent notice for signup. Rendered below the
+                  submit button (matching SignupDialog's pattern) so the
+                  visible ToS/Privacy reference is preserved without a
+                  blocking checkbox. Clicking "Create account" (or any
+                  OAuth button above) constitutes agreement.
+                */}
+                {mode === "signup" && (
+                  <p className="text-[11px] text-muted-foreground text-center leading-relaxed mt-2">
+                    By creating an account, you agree to our{" "}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                      Terms of Service
+                    </a>{" "}
+                    and{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+                      Privacy Policy
+                    </a>
+                    .
+                  </p>
+                )}
               </form>
 
               <div className="mt-6 text-center">
