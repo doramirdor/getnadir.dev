@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+import { formatUSD } from "@/utils/format";
 
 interface Metrics {
   totalRequests: number;
@@ -102,8 +103,8 @@ export const MetricsGrid = () => {
 
   const metricsConfig = [
     { title: "Total Requests", value: formatNumber(metrics.totalRequests), icon: Activity },
-    { title: "Monthly Cost", value: `$${metrics.monthlyCost.toFixed(2)}`, icon: CreditCard },
-    { title: "Savings This Month", value: `$${metrics.savedThisMonth.toFixed(2)}`, icon: TrendingDown, highlight: metrics.savedThisMonth > 0 },
+    { title: "Monthly Cost", value: `$${formatUSD(metrics.monthlyCost)}`, icon: CreditCard },
+    { title: "Savings This Month", value: `$${formatUSD(metrics.savedThisMonth)}`, icon: TrendingDown, highlight: metrics.savedThisMonth > 0 },
     { title: "Active API Keys", value: metrics.activeApiKeys.toString(), icon: Key },
     { title: "Avg Response", value: `${metrics.avgResponseTime.toFixed(1)}s`, icon: TrendingUp },
   ];
@@ -121,18 +122,42 @@ export const MetricsGrid = () => {
     );
   }
 
+  // Fade-up stagger caps at 3 per the design system ("up to 3 children").
+  const delayClass = (i: number) => {
+    if (i === 0) return 'animate-fade-up';
+    if (i === 1) return 'animate-fade-up-delay-1';
+    if (i === 2) return 'animate-fade-up-delay-2';
+    return 'animate-fade-up-delay-3';
+  };
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-      {metricsConfig.map((metric) => {
+      {metricsConfig.map((metric, i) => {
         const Icon = metric.icon;
         const isHighlighted = (metric as any).highlight;
         return (
-          <div key={metric.title} className={`metric-card group ${isHighlighted ? 'border-emerald-200 bg-emerald-50/30' : ''}`}>
+          <div
+            key={metric.title}
+            className={`metric-card group ${delayClass(i)} ${
+              isHighlighted
+                ? 'border-[hsl(var(--ok-border))] bg-[hsl(var(--ok-bg))]'
+                : ''
+            }`}
+          >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-muted-foreground">{metric.title}</span>
-              <Icon className={`w-4 h-4 ${isHighlighted ? 'text-emerald-500' : 'text-muted-foreground/50'}`} strokeWidth={1.5} />
+              <span className="text-[12px] font-medium text-muted-foreground">{metric.title}</span>
+              <Icon
+                className={`w-[14px] h-[14px] ${
+                  isHighlighted ? 'text-[hsl(var(--ok))]' : 'text-muted-foreground/50'
+                }`}
+                strokeWidth={1.5}
+              />
             </div>
-            <div className={`text-2xl font-semibold ${isHighlighted ? 'text-emerald-700' : 'text-foreground'}`}>
+            <div
+              className={`mono text-[26px] font-semibold leading-none tracking-tight ${
+                isHighlighted ? 'text-[hsl(var(--ok-strong))]' : 'text-foreground'
+              }`}
+            >
               {metric.value}
             </div>
           </div>

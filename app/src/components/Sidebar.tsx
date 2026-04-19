@@ -83,7 +83,11 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
                   "w-full flex items-center rounded-lg transition-all duration-150 text-left",
                   isCollapsed && !isMobile ? "px-3 py-2.5 justify-center" : "px-3 py-2",
                   isActive
-                    ? "bg-primary/10 text-primary font-medium"
+                    // Active state lifted from AdminSidebar.jsx:
+                    //   background: var(--accent-ring)   → brand-blue tinted at 10% alpha
+                    //   color:      var(--accent)        → brand-blue
+                    //   fontWeight: 500
+                    ? "bg-[hsl(var(--brand-blue)/0.10)] text-[hsl(var(--brand-blue-strong))] font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
@@ -92,7 +96,9 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
                     "w-[18px] h-[18px] flex-shrink-0",
                     (!isCollapsed || isMobile) && "mr-3"
                   )}
-                  strokeWidth={isActive ? 2 : 1.5}
+                  // Per AdminSidebar.jsx: every sidebar icon renders at stroke 1.5.
+                  // The active state is the blue tint + text colour, not a thicker icon.
+                  strokeWidth={1.5}
                 />
                 {(!isCollapsed || isMobile) && (
                   <span className="text-[13px]">{item.label}</span>
@@ -147,11 +153,13 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
             className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Open navigation menu"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5" strokeWidth={1.5} />
           </button>
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-semibold text-xs">N</span>
+            {/* Logo box — brand-blue accent per AdminSidebar.jsx:
+                `background: var(--accent); color: var(--fg-on-accent)`. */}
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[hsl(var(--brand-blue))]">
+              <span className="text-white font-semibold text-xs">N</span>
             </div>
             <span className="text-sm font-semibold text-foreground">Nadir</span>
           </div>
@@ -163,8 +171,8 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
             {/* Sheet header */}
             <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-semibold text-xs">N</span>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[hsl(var(--brand-blue))]">
+                  <span className="text-white font-semibold text-xs">N</span>
                 </div>
                 <span className="text-sm font-semibold text-foreground">Nadir</span>
               </div>
@@ -188,8 +196,10 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
       <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border">
         {!isCollapsed && (
           <div className="flex items-center gap-2.5 pl-1">
-            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-semibold text-xs">N</span>
+            {/* Logo box — brand-blue accent per AdminSidebar.jsx:
+                `background: var(--accent); color: var(--fg-on-accent)`. */}
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[hsl(var(--brand-blue))]">
+              <span className="text-white font-semibold text-xs">N</span>
             </div>
             <span className="text-sm font-semibold text-foreground">Nadir</span>
           </div>
@@ -202,9 +212,9 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
           )}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
           ) : (
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
           )}
         </button>
       </div>

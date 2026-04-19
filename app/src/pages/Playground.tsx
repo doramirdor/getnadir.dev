@@ -296,35 +296,31 @@ export default function Playground() {
                       )}
                     </Badge>
                     {layers?.routing !== false && (
-                      <Badge variant="outline" className="text-xs gap-1 text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950/40">
+                      <span className="chip chip-direct gap-1">
                         <Route className="w-3 h-3" /> Routing
-                      </Badge>
+                      </span>
                     )}
                     {layers?.optimize && layers.optimize !== "off" && (
-                      <Badge variant="outline" className={`text-xs gap-1 ${
-                        layers.optimize === "aggressive"
-                          ? "text-orange-600 border-orange-200 bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:bg-orange-950/40"
-                          : "text-green-600 border-green-200 bg-green-50 dark:text-green-400 dark:border-green-800 dark:bg-green-950/40"
-                      }`}>
+                      <span className={`chip gap-1 ${layers.optimize === "aggressive" ? "chip-warn" : "chip-cluster"}`}>
                         <Minimize2 className="w-3 h-3" /> Compact ({layers.optimize})
-                      </Badge>
+                      </span>
                     )}
                     {layers?.fallback !== false && (
-                      <Badge variant="outline" className="text-xs gap-1 text-purple-600 border-purple-200 bg-purple-50 dark:text-purple-400 dark:border-purple-800 dark:bg-purple-950/40">
+                      <span className="chip chip-load-balance gap-1">
                         <Shield className="w-3 h-3" /> Fallback
-                      </Badge>
+                      </span>
                     )}
                   </div>
                   {tierModels && (Object.values(tierModels).some(Boolean)) && (
                     <div className="mt-2 space-y-0.5">
                       {tierModels.simple && (
-                        <p className="text-xs text-muted-foreground">Simple → <span className="font-mono text-foreground">{tierModels.simple}</span></p>
+                        <p className="text-xs text-muted-foreground">Simple → <span className="mono text-foreground">{tierModels.simple}</span></p>
                       )}
                       {tierModels.medium && (
-                        <p className="text-xs text-muted-foreground">Medium → <span className="font-mono text-foreground">{tierModels.medium}</span></p>
+                        <p className="text-xs text-muted-foreground">Medium → <span className="mono text-foreground">{tierModels.medium}</span></p>
                       )}
                       {tierModels.complex && (
-                        <p className="text-xs text-muted-foreground">Complex → <span className="font-mono text-foreground">{tierModels.complex}</span></p>
+                        <p className="text-xs text-muted-foreground">Complex → <span className="mono text-foreground">{tierModels.complex}</span></p>
                       )}
                     </div>
                   )}
@@ -413,7 +409,7 @@ export default function Playground() {
             <Card className="clean-card border-blue-100 dark:border-blue-900">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm text-foreground flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-blue-600" /> Routing Info
+                  <BarChart3 className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" strokeWidth={1.75} /> Routing Info
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -421,7 +417,7 @@ export default function Playground() {
                   {meta.model_used && (
                     <div className="p-2.5 bg-muted/50 rounded-lg">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Model</p>
-                      <p className="text-sm font-mono font-medium text-foreground truncate">{meta.model_used}</p>
+                      <p className="mono text-sm font-medium text-foreground truncate">{meta.model_used}</p>
                     </div>
                   )}
                   {meta.strategy && (
@@ -465,9 +461,15 @@ export default function Playground() {
                   </p>
                 )}
                 {meta.selection_reasoning && (
-                  <div className="mt-3 p-2.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 rounded-lg">
-                    <p className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1">Selection Reasoning</p>
-                    <p className="text-xs text-blue-700 dark:text-blue-400">
+                  <div
+                    className="mt-3 p-2.5 rounded-lg border"
+                    style={{
+                      background: "hsl(var(--brand-blue-soft))",
+                      borderColor: "hsl(var(--brand-blue) / 0.25)",
+                    }}
+                  >
+                    <p className="text-xs font-medium text-[hsl(var(--brand-blue-strong))] mb-1">Selection Reasoning</p>
+                    <p className="text-xs text-[hsl(var(--brand-blue-strong))]">
                       {typeof meta.selection_reasoning === "string"
                         ? meta.selection_reasoning
                         : meta.selection_reasoning.selection_reasoning || meta.selection_reasoning.complexity_reasoning || JSON.stringify(meta.selection_reasoning)

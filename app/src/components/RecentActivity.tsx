@@ -1,10 +1,23 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+
+// Route / selection-method → chip palette (see index.css `.chip-*`).
+// Colour language follows the Nadir Design System: direct=blue, cluster=green,
+// fallback=yellow/warn, load_balance=violet, everything else=neutral.
+const chipClassForMethod = (method: string | null | undefined): string => {
+  if (!method) return "chip chip-neutral";
+  const m = method.toLowerCase();
+  if (m.includes("fallback")) return "chip chip-fallback";
+  if (m.includes("load") || m.includes("balance")) return "chip chip-load-balance";
+  if (m.includes("cache") || m.includes("cluster")) return "chip chip-cluster";
+  if (m.includes("classifier") || m.includes("direct") || m.includes("route"))
+    return "chip chip-direct";
+  return "chip chip-neutral";
+};
 
 interface Activity {
   id: string;
@@ -126,18 +139,22 @@ export const RecentActivity = () => {
               return (
                 <div key={activity.id} className="p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${status === "ok" ? "bg-emerald-500" : "bg-red-500"}`} />
-                      <span className="text-[13px] font-medium text-foreground">{activity.model_name}</span>
-                      <span className="text-xs text-muted-foreground">{activity.provider}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                          status === "ok"
+                            ? "bg-[hsl(var(--ok-dot))]"
+                            : "bg-[hsl(var(--err-dot))]"
+                        }`}
+                      />
+                      <span className="text-[13px] font-medium text-foreground truncate">{activity.model_name}</span>
+                      <span className="text-xs text-muted-foreground truncate">{activity.provider}</span>
                       {selectionMethod && (
-                        <Badge variant="outline" className="text-[10px] font-normal px-1.5 py-0 text-muted-foreground border-border">
-                          {selectionMethod}
-                        </Badge>
+                        <span className={chipClassForMethod(selectionMethod)}>{selectionMethod}</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">${activity.cost.toFixed(4)}</span>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mono">
+                      <span className="font-semibold text-foreground">${activity.cost.toFixed(4)}</span>
                       {activity.latency_ms && <span>{activity.latency_ms}ms</span>}
                       <span>{formatTimeAgo(activity.created_at)}</span>
                     </div>
@@ -154,20 +171,16 @@ export const RecentActivity = () => {
                       Prompt hidden
                     </span>
                     {clusterLabel && (
-                      <Badge variant="outline" className="text-[10px] font-normal px-1.5 py-0 text-muted-foreground border-border">
-                        {clusterLabel}
-                      </Badge>
+                      <span className="chip chip-neutral">{clusterLabel}</span>
                     )}
                     {tierLabel && (
-                      <Badge variant="outline" className="text-[10px] font-normal px-1.5 py-0 text-muted-foreground border-border">
-                        {tierLabel}
-                      </Badge>
+                      <span className="chip chip-neutral">{tierLabel}</span>
                     )}
                     {tokens > 0 && (
-                      <span className="text-[11px] text-muted-foreground/80">{tokens.toLocaleString()} tok</span>
+                      <span className="text-[11px] text-muted-foreground/80 mono">{tokens.toLocaleString()} tok</span>
                     )}
                     {complexityScore != null && (
-                      <span className="text-[11px] text-muted-foreground/80">
+                      <span className="text-[11px] text-muted-foreground/80 mono">
                         Complexity {(complexityScore * 100).toFixed(0)}%
                       </span>
                     )}

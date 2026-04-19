@@ -1,9 +1,44 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+
+/**
+ * Bar shape replicating the design-system accent bar:
+ * tinted rectangle + a crisp 2px top border (the "accent-chart / accent"
+ * pair in theme.css). Recharts doesn't expose top-border natively, so we
+ * render it ourselves.
+ */
+type UsageBarProps = { x?: number; y?: number; width?: number; height?: number };
+const UsageBar = ({ x = 0, y = 0, width = 0, height = 0 }: UsageBarProps) => {
+  // Clamp so empty buckets still paint a 2px accent line at baseline.
+  const safeHeight = Math.max(height, 2);
+  const topY = height > 0 ? y : y + height - 2;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={safeHeight}
+        fill="hsl(var(--brand-blue) / 0.18)"
+        rx={3}
+        ry={3}
+      />
+      <rect
+        x={x}
+        y={topY}
+        width={width}
+        height={2}
+        fill="hsl(var(--brand-blue))"
+        rx={1}
+        ry={1}
+      />
+    </g>
+  );
+};
 
 interface UsageData {
   name: string;
@@ -98,43 +133,47 @@ export const UsageChart = () => {
   return (
     <Card className="clean-card">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">Usage Overview</CardTitle>
+        <CardTitle className="text-sm font-medium">Requests over time</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
-            <XAxis dataKey="name" stroke="hsl(220, 9%, 46%)" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(220, 9%, 46%)" fontSize={12} tickLine={false} axisLine={false} />
+        {/*
+          Bar chart per the Nadir Design System (ui_kits/admin/DashboardScreen.jsx
+          UsageChart): soft brand-blue fill with a brighter 2px top border, 3px
+          top-rounded corners. No axes or grid — just labels under the trough.
+        */}
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke="transparent" />
+            <XAxis dataKey="name" hide />
+            <YAxis hide />
             <Tooltip
+              cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
               contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid hsl(220, 13%, 91%)',
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
                 fontSize: '13px',
+                color: 'hsl(var(--foreground))',
               }}
+              formatter={(value: number, name: string) =>
+                name === 'Cost ($)' ? [`$${value.toFixed(2)}`, name] : [value, name]
+              }
             />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line
-              type="monotone"
+            <Bar
               dataKey="requests"
-              stroke="hsl(152, 55%, 46%)"
-              strokeWidth={2}
-              dot={{ fill: "hsl(152, 55%, 46%)", strokeWidth: 0, r: 3 }}
               name="Requests"
+              shape={<UsageBar />}
+              isAnimationActive={false}
             />
-            <Line
-              type="monotone"
-              dataKey="cost"
-              stroke="hsl(220, 9%, 46%)"
-              strokeWidth={1.5}
-              dot={{ fill: "hsl(220, 9%, 46%)", strokeWidth: 0, r: 2.5 }}
-              name="Cost ($)"
-              strokeDasharray="4 4"
-            />
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
+        <div className="flex justify-between mt-3 text-[11px] text-muted-foreground">
+          <span>30d ago</span>
+          <span>20d</span>
+          <span>10d</span>
+          <span>today</span>
+        </div>
       </CardContent>
     </Card>
   );

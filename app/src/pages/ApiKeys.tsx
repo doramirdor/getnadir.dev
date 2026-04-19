@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Copy, Trash2, Key, Settings2 } from "lucide-react";
 import {
   Dialog,
@@ -211,21 +210,47 @@ const ApiKeys = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-fade-up">
         <div className="page-header">
           <h1 className="page-title">API Keys</h1>
-          <p className="page-description">Manage your API keys to access all models from Nadir</p>
+          <p className="page-description">Create and manage keys for your LLM routing workloads</p>
         </div>
         <Button
           onClick={() => setShowCreateDialog(true)}
           size="sm"
           className="focus-ring shrink-0"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Create API Key
+          <Plus className="w-4 h-4 mr-2" strokeWidth={2} />
+          New API Key
         </Button>
+      </div>
+
+      {/* Intro callout — accent-soft blue tint per ApiKeysScreen.jsx */}
+      <div
+        className="flex items-start gap-3 p-4 rounded-xl border border-border"
+        style={{ background: "hsl(var(--brand-blue-soft))" }}
+      >
+        <span className="text-[hsl(var(--brand-blue-strong))] mt-0.5 flex-shrink-0">
+          <Key className="w-4 h-4" strokeWidth={1.75} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium text-foreground mb-0.5">
+            Your keys are OpenAI-compatible
+          </div>
+          <div className="text-[12px] text-muted-foreground">
+            Drop in any key below as{" "}
+            <code className="mono text-[11px] bg-card border border-border rounded px-1.5 py-0.5">
+              OPENAI_API_KEY
+            </code>{" "}
+            and point your base URL to{" "}
+            <code className="mono text-[11px] bg-card border border-border rounded px-1.5 py-0.5">
+              https://api.getnadir.com/v1
+            </code>
+            .
+          </div>
+        </div>
       </div>
 
       {/* Existing API Keys */}
@@ -234,66 +259,96 @@ const ApiKeys = () => {
           <CardTitle className="text-sm font-medium">Your API Keys</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {apiKeys.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-                  <Key className="w-8 h-8 text-muted-foreground" />
+                  <Key className="w-8 h-8 text-muted-foreground" strokeWidth={1.5} />
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">No API keys yet</h3>
                 <p className="text-muted-foreground mb-4">Create your first API key to get started.</p>
                 <Button onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2" strokeWidth={2} />
                   Create API Key
                 </Button>
               </div>
             ) : (
               apiKeys.map((apiKey) => (
-                <div key={apiKey.id} className="group p-6 rounded-xl transition-all duration-200 bg-card hover:bg-accent/50">
-                  <div className="flex items-start justify-between">
+                <div
+                  key={apiKey.id}
+                  className="group p-5 rounded-xl border border-border bg-card hover:bg-accent/40 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="font-semibold text-foreground text-lg">{apiKey.name}</h3>
-                        <Badge
-                          variant={apiKey.is_active ? "default" : "secondary"}
-                          className="capitalize"
-                        >
-                          {apiKey.is_active ? "active" : "inactive"}
-                        </Badge>
+                      <div className="flex items-center gap-2 mb-3">
+                        <h3 className="font-semibold text-foreground text-[15px] truncate">
+                          {apiKey.name}
+                        </h3>
+                        {apiKey.is_active ? (
+                          <span className="chip chip-ok">
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ background: "hsl(var(--ok-dot))" }}
+                            />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="chip chip-neutral">Paused</span>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-3 mb-4">
-                        <code className="bg-muted px-3 py-2 rounded-lg font-mono text-sm flex-1 min-w-0 truncate">
-                          {apiKey.prefix}...
+                      <div className="flex items-center gap-2 mb-3">
+                        <code className="mono bg-muted px-3 py-1.5 rounded-lg text-[12px] text-muted-foreground flex-1 min-w-0 truncate">
+                          {apiKey.prefix}…••••••••
                         </code>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copyToClipboard(apiKey.prefix)}
                           className="hover:bg-muted"
+                          aria-label="Copy key prefix"
                         >
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-4 h-4" strokeWidth={1.5} />
                         </Button>
                       </div>
 
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                        <span>Created {new Date(apiKey.created_at).toLocaleDateString()}</span>
-                        {apiKey.last_used_at && <span>Last used {new Date(apiKey.last_used_at).toLocaleDateString()}</span>}
-                        {apiKey.selected_models && apiKey.selected_models.length > 0 && (
-                          <span>{apiKey.selected_models.length} models configured</span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+                        <span>
+                          Created{" "}
+                          <span className="mono">
+                            {new Date(apiKey.created_at).toLocaleDateString()}
+                          </span>
+                        </span>
+                        {apiKey.last_used_at && (
+                          <span>
+                            Last used{" "}
+                            <span className="mono">
+                              {new Date(apiKey.last_used_at).toLocaleDateString()}
+                            </span>
+                          </span>
                         )}
-                        {apiKey.benchmark_model && <span>Benchmark: {apiKey.benchmark_model}</span>}
+                        {apiKey.selected_models && apiKey.selected_models.length > 0 && (
+                          <span>
+                            <span className="mono">{apiKey.selected_models.length}</span>{" "}
+                            models configured
+                          </span>
+                        )}
+                        {apiKey.benchmark_model && (
+                          <span>
+                            Benchmark: <span className="mono">{apiKey.benchmark_model}</span>
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleOpenConfig(apiKey)}
                       >
-                        <Settings2 className="w-4 h-4 mr-1" />
+                        <Settings2 className="w-4 h-4 mr-1" strokeWidth={1.5} />
                         Configure
                       </Button>
                       <Button
@@ -301,8 +356,9 @@ const ApiKeys = () => {
                         size="sm"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => handleDeleteKey(apiKey.id)}
+                        aria-label="Delete key"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" strokeWidth={2} />
                       </Button>
                     </div>
                   </div>
@@ -338,7 +394,7 @@ const ApiKeys = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <code className="block w-full p-3 bg-muted rounded-lg font-mono text-sm break-all select-all">
+            <code className="block w-full p-3 bg-muted rounded-lg mono text-sm break-all select-all">
               {showOnceKey}
             </code>
           </div>

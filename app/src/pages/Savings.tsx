@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { trackPageView } from "@/utils/analytics";
+import { SummaryCard, type SummaryCardTint } from "@/components/admin/SummaryCard";
+import { formatUSD } from "@/utils/format";
 import type { SavingsSummary, DailySaving, TierBreakdown } from "@/services/savingsApi";
 
 function calculateFee(totalSavings: number): number {
@@ -163,26 +165,23 @@ async function loadSavingsFromSupabase(): Promise<{ summary: SavingsSummary; dai
 }
 
 // ── StatCard ─────────────────────────────────────────────────────────────
+// Thin wrapper over the admin SummaryCard primitive that also supports an
+// optional info-tooltip (for explaining how Net Savings is computed).
 
-function StatCard({ icon: Icon, label, value, subtext, color = "blue", info }: {
-  icon: any; label: string; value: string; subtext?: string; color?: string; info?: React.ReactNode;
+function StatCard({ icon, label, value, subtext, tint = "blue", info }: {
+  icon: any; label: string; value: string; subtext?: string; tint?: SummaryCardTint; info?: React.ReactNode;
 }) {
-  const colorMap: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300",
-    green: "bg-green-50 text-green-600 dark:bg-emerald-950/40 dark:text-emerald-300",
-    amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
-    purple: "bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300",
-  };
-
+  if (!info) {
+    return <SummaryCard icon={icon} label={label} value={value} subtext={subtext} tint={tint} />;
+  }
+  // When info is provided, attach the tooltip trigger to the label.
+  const Icon = icon;
   return (
-    <div className="bg-card rounded-xl border border-border p-6">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`p-2 rounded-lg ${colorMap[color]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <span className="text-sm text-muted-foreground flex items-center gap-1">
-          {label}
-          {info && (
+    <div className="clean-card p-6">
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          <p className="text-[13px] font-medium text-muted-foreground mb-1.5 truncate flex items-center gap-1">
+            {label}
             <TooltipProvider delayDuration={100}>
               <UITooltip>
                 <TooltipTrigger asChild>
@@ -199,11 +198,22 @@ function StatCard({ icon: Icon, label, value, subtext, color = "blue", info }: {
                 </TooltipContent>
               </UITooltip>
             </TooltipProvider>
-          )}
-        </span>
+          </p>
+          <p className="mono text-[24px] font-bold tracking-tight text-foreground leading-none">
+            {value}
+          </p>
+          {subtext && <p className="text-[11px] text-muted-foreground/80 mt-2">{subtext}</p>}
+        </div>
+        <div
+          className="w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0"
+          style={{
+            background: `hsl(var(--${tint === "ok" ? "ok-bg" : tint === "violet" ? "violet-bg" : tint === "warn" ? "warn-bg" : tint === "err" ? "err-bg" : "brand-blue-soft"}))`,
+            color: `hsl(var(--${tint === "ok" ? "ok" : tint === "violet" ? "violet" : tint === "warn" ? "warn" : tint === "err" ? "err" : "brand-blue-strong"}))`,
+          }}
+        >
+          <Icon className="w-[18px] h-[18px]" strokeWidth={1.75} />
+        </div>
       </div>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-      {subtext && <div className="text-xs text-muted-foreground/80 mt-1">{subtext}</div>}
     </div>
   );
 }
@@ -230,21 +240,22 @@ export default function Savings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-4 border-t-transparent"
+          style={{ borderColor: "hsl(var(--brand-blue))", borderTopColor: "transparent" }}
+        />
       </div>
     );
   }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Savings</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          How much Nadir saved you this billing period
-        </p>
+      <div className="animate-fade-up">
+        <h1 className="page-title">Savings</h1>
+        <p className="page-description">How much Nadir saved you this billing period</p>
         {!hasRealData && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-            Showing demo data -- savings will appear once you start routing requests.
+          <p className="text-xs text-[hsl(var(--warn))] mt-1">
+            Showing demo data — savings will appear once you start routing requests.
           </p>
         )}
       </div>
@@ -254,30 +265,30 @@ export default function Savings() {
         <StatCard
           icon={DollarSign}
           label="Total Saved"
-          value={`$${Math.round(summary.total_savings_usd).toLocaleString()}`}
+          value={`$${formatUSD(summary.total_savings_usd)}`}
           subtext="this month"
-          color="green"
+          tint="ok"
         />
         <StatCard
           icon={Percent}
           label="Savings Rate"
-          value={`${Math.round(summary.savings_rate * 100)}%`}
+          value={`${(summary.savings_rate * 100).toFixed(1)}%`}
           subtext="of benchmark cost"
-          color="blue"
+          tint="blue"
         />
         <StatCard
           icon={Zap}
           label="Requests Routed"
           value={summary.requests_routed.toLocaleString()}
           subtext="intelligently classified"
-          color="purple"
+          tint="violet"
         />
         <StatCard
           icon={TrendingDown}
           label="Net Savings"
-          value={`$${Math.round(summary.net_savings).toLocaleString()}`}
+          value={`$${formatUSD(summary.net_savings)}`}
           subtext={`after $${summary.savings_fee.toFixed(2)} variable fee`}
-          color="green"
+          tint="ok"
           info={
             <div className="space-y-1">
               <div className="font-semibold">How this is calculated</div>
@@ -302,24 +313,32 @@ export default function Savings() {
         />
       </div>
 
-      {/* Comparison banner */}
-      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-xl p-6 flex flex-wrap items-center justify-between gap-4">
+      {/* Comparison banner — brand-blue soft tint on the outer card, ok-strong
+          on the "You keep" column so the win value is the obvious leader. */}
+      <div
+        className="rounded-xl border border-border p-6 flex flex-wrap items-center justify-between gap-4"
+        style={{ background: "hsl(var(--brand-blue-soft))" }}
+      >
         <div>
-          <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">Without Nadir you would have spent</div>
-          <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
-            ${Math.round(summary.total_savings_usd + summary.total_spent_usd).toLocaleString()}
+          <div className="text-sm font-medium text-[hsl(var(--brand-blue-strong))]">
+            Without Nadir you would have spent
+          </div>
+          <div className="mono text-3xl font-bold text-foreground">
+            ${formatUSD(summary.total_savings_usd + summary.total_spent_usd)}
           </div>
         </div>
         <div className="text-center">
-          <div className="text-sm text-blue-700 dark:text-blue-300 font-medium">With Nadir you spent</div>
-          <div className="text-3xl font-bold text-blue-600 dark:text-blue-300">
-            ${Math.round(summary.total_spent_usd).toLocaleString()}
+          <div className="text-sm font-medium text-[hsl(var(--brand-blue-strong))]">
+            With Nadir you spent
+          </div>
+          <div className="mono text-3xl font-bold text-[hsl(var(--brand-blue-strong))]">
+            ${formatUSD(summary.total_spent_usd)}
           </div>
         </div>
         <div className="text-center">
-          <div className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">You keep</div>
-          <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-            ${Math.round(summary.net_savings).toLocaleString()}
+          <div className="text-sm font-medium text-[hsl(var(--ok))]">You keep</div>
+          <div className="mono text-3xl font-bold text-[hsl(var(--ok-strong))]">
+            ${formatUSD(summary.net_savings)}
           </div>
         </div>
       </div>
@@ -334,11 +353,17 @@ export default function Savings() {
           </div>
           <p className="text-xs text-muted-foreground mb-3">
             <span className="inline-flex items-center gap-1.5 mr-3">
-              <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-400 dark:bg-emerald-500" />
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-sm"
+                style={{ background: "hsl(var(--ok-dot))" }}
+              />
               <span><b className="text-foreground">Saved</b> — what Nadir kept off your bill vs always-Opus</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-400 dark:bg-blue-500" />
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-sm"
+                style={{ background: "hsl(var(--brand-blue))" }}
+              />
               <span><b className="text-foreground">Spent</b> — what you actually paid after routing</span>
             </span>
           </p>
@@ -379,8 +404,8 @@ export default function Savings() {
                 type="monotone"
                 dataKey="saved"
                 stackId="1"
-                stroke="#22c55e"
-                fill="#22c55e"
+                stroke="hsl(var(--ok-dot))"
+                fill="hsl(var(--ok-dot))"
                 fillOpacity={0.35}
                 name="Saved vs Opus"
               />
@@ -388,8 +413,8 @@ export default function Savings() {
                 type="monotone"
                 dataKey="spent"
                 stackId="1"
-                stroke="#3b82f6"
-                fill="#3b82f6"
+                stroke="hsl(var(--brand-blue))"
+                fill="hsl(var(--brand-blue))"
                 fillOpacity={0.35}
                 name="You spent"
               />
@@ -420,18 +445,25 @@ export default function Savings() {
                       <span className="text-xs text-muted-foreground/80">{t.requests.toLocaleString()} req</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={`text-xs font-medium ${zero ? "text-muted-foreground/80" : "text-emerald-600 dark:text-emerald-400"}`}>
+                      <span
+                        className={`text-xs font-medium ${zero ? "text-muted-foreground/80" : "text-[hsl(var(--ok))]"}`}
+                      >
                         {zero ? "0%" : `${Math.round(pct * 100)}% cheaper`}
                       </span>
-                      <span className="font-semibold text-foreground tabular-nums">
+                      <span className="font-semibold text-foreground mono">
                         ${t.savings_usd.toFixed(2)}
                       </span>
                     </div>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${zero ? "bg-muted-foreground/20" : "bg-emerald-500"}`}
-                      style={{ width: `${zero ? 0 : barWidth}%` }}
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${zero ? 0 : barWidth}%`,
+                        background: zero
+                          ? "hsl(var(--muted-foreground) / 0.2)"
+                          : "hsl(var(--ok-dot))",
+                      }}
                     />
                   </div>
                   {zero && (
@@ -447,24 +479,36 @@ export default function Savings() {
       </div>
 
       {/* Fee breakdown */}
-      <div className="bg-card rounded-xl border border-border p-6">
+      <div className="clean-card p-6">
         <h3 className="font-semibold mb-4 text-foreground">Fee Breakdown</h3>
         <div className="grid sm:grid-cols-4 gap-4 text-center">
           <div className="p-4 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground">Base fee</div>
-            <div className="text-lg font-bold text-foreground">$9.00</div>
+            <div className="mono text-lg font-bold text-foreground">$9.00</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground">25% on first $2K saved</div>
-            <div className="text-lg font-bold text-foreground">${(Math.min(summary.total_savings_usd, 2000) * 0.25).toFixed(2)}</div>
+            <div className="mono text-lg font-bold text-foreground">
+              ${(Math.min(summary.total_savings_usd, 2000) * 0.25).toFixed(2)}
+            </div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground">10% above $2K saved</div>
-            <div className="text-lg font-bold text-foreground">${(Math.max(summary.total_savings_usd - 2000, 0) * 0.10).toFixed(2)}</div>
+            <div className="mono text-lg font-bold text-foreground">
+              ${(Math.max(summary.total_savings_usd - 2000, 0) * 0.1).toFixed(2)}
+            </div>
           </div>
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900/50">
-            <div className="text-sm text-blue-700 dark:text-blue-300">Total Nadir fee</div>
-            <div className="text-lg font-bold text-blue-600 dark:text-blue-300">${summary.total_fee.toFixed(2)}</div>
+          <div
+            className="p-4 rounded-lg border"
+            style={{
+              background: "hsl(var(--brand-blue-soft))",
+              borderColor: "hsl(var(--brand-blue) / 0.25)",
+            }}
+          >
+            <div className="text-sm text-[hsl(var(--brand-blue-strong))]">Total Nadir fee</div>
+            <div className="mono text-lg font-bold text-[hsl(var(--brand-blue-strong))]">
+              ${summary.total_fee.toFixed(2)}
+            </div>
           </div>
         </div>
       </div>

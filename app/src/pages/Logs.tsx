@@ -1,17 +1,17 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Download, Activity, Clock, DollarSign, AlertTriangle } from "lucide-react";
+import { Search, Filter, Download, Activity, Clock, DollarSign, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
 import { trackPageView } from "@/utils/analytics";
+import { SummaryCard } from "@/components/admin/SummaryCard";
 
 interface LogEntry {
   id: string;
@@ -88,12 +88,11 @@ const Logs = () => {
     }
   };
 
+  // Status pill — tokenised so it flips themes correctly.
   const getStatusBadge = (error: string | null) => {
-    if (!error) {
-      return <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">Success</Badge>;
-    } else {
-      return <Badge variant="destructive">Error</Badge>;
-    }
+    return error
+      ? <span className="chip chip-err">Error</span>
+      : <span className="chip chip-ok">Success</span>;
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -110,13 +109,15 @@ const Logs = () => {
     return `$${cost.toFixed(6)}`;
   };
 
-  const getRouteColor = (route: string) => {
+  // Route chip palette: direct=blue, cluster=green, fallback=warn/yellow,
+  // load_balance=violet, unknown=neutral — lifted from AdminPrimitives.jsx.
+  const getRouteChipClass = (route: string) => {
     switch (route?.toLowerCase()) {
-      case 'direct': return 'text-blue-600 border-blue-200 bg-blue-50';
-      case 'cluster': return 'text-green-600 border-green-200 bg-green-50';
-      case 'fallback': return 'text-yellow-600 border-yellow-200 bg-yellow-50';
-      case 'load_balance': return 'text-purple-600 border-purple-200 bg-purple-50';
-      default: return 'text-muted-foreground border-border bg-muted';
+      case 'direct':       return 'chip chip-direct';
+      case 'cluster':      return 'chip chip-cluster';
+      case 'fallback':     return 'chip chip-fallback';
+      case 'load_balance': return 'chip chip-load-balance';
+      default:             return 'chip chip-neutral';
     }
   };
 
@@ -142,76 +143,30 @@ const Logs = () => {
     return matchesSearch && matchesProvider && matchesLevel;
   });
 
+  const totalEvents = logEntries.length;
+  const successRate =
+    totalEvents > 0
+      ? ((logEntries.filter(l => !l.error).length / totalEvents) * 100).toFixed(1)
+      : "0";
+  const avgLatency =
+    totalEvents > 0
+      ? Math.round(logEntries.reduce((s, l) => s + (l.latency_ms || 0), 0) / totalEvents)
+      : 0;
+  const totalCost = logEntries.reduce((s, l) => s + (l.cost || 0), 0);
+
   return (
     <div className="space-y-8">
-      <div>
+      <div className="animate-fade-up">
         <h1 className="page-title">System Logs</h1>
         <p className="page-description">Monitor API requests, responses, and system events</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="clean-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Events</p>
-                <p className="text-2xl font-bold">{logEntries.length.toLocaleString()}</p>
-              </div>
-              <Activity className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="clean-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
-                <p className="text-2xl font-bold">
-                  {logEntries.length > 0
-                    ? ((logEntries.filter(log => !log.error).length / logEntries.length) * 100).toFixed(1)
-                    : '0'
-                  }%
-                </p>
-              </div>
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="clean-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Response Time</p>
-                <p className="text-2xl font-bold">
-                  {logEntries.length > 0
-                    ? Math.round(logEntries.reduce((sum, log) => sum + (log.latency_ms || 0), 0) / logEntries.length)
-                    : 0
-                  }ms
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="clean-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
-                <p className="text-2xl font-bold">
-                  ${logEntries.reduce((sum, log) => sum + (log.cost || 0), 0).toFixed(4)}
-                </p>
-              </div>
-              <DollarSign className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Summary Cards — tinted-icon stat tiles, per design kit LogsScreen.jsx */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard label="Total Events"      value={totalEvents.toLocaleString()} icon={Activity}    tint="blue"   />
+        <SummaryCard label="Success Rate"      value={`${successRate}%`}            icon={TrendingUp}  tint="ok"     />
+        <SummaryCard label="Avg Response Time" value={`${avgLatency}ms`}            icon={Clock}       tint="violet" />
+        <SummaryCard label="Total Cost"        value={`$${totalCost.toFixed(4)}`}   icon={DollarSign}  tint="ok"     />
       </div>
 
       {/* Filters */}
@@ -280,15 +235,14 @@ const Logs = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Provider</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Request ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Latency</TableHead>
-                  <TableHead>Tokens</TableHead>
-                  <TableHead>Cost</TableHead>
+                  {['Timestamp','Route','Provider','Model','Request ID','Status','Latency','Tokens','Cost'].map(h => (
+                    <TableHead
+                      key={h}
+                      className="text-[11px] font-medium uppercase tracking-[0.04em] text-muted-foreground"
+                    >
+                      {h}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,25 +255,27 @@ const Logs = () => {
                 ) : (
                   filteredLogs.map((log) => (
                     <TableRow key={log.id}>
-                      <TableCell className="font-mono text-sm">{formatTimestamp(log.created_at)}</TableCell>
+                      <TableCell className="mono text-xs text-muted-foreground">{formatTimestamp(log.created_at)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={getRouteColor(log.route)}>
-                          {log.route || 'direct'}
-                        </Badge>
+                        <span className={getRouteChipClass(log.route)}>{log.route || 'direct'}</span>
                         {log.cluster_id && (
-                          <div className="text-xs text-muted-foreground mt-1">Cluster: {log.cluster_id}</div>
+                          <div className="text-[10px] text-muted-foreground/70 mt-1">
+                            Cluster: <span className="mono">{log.cluster_id}</span>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>{log.provider || 'N/A'}</TableCell>
-                      <TableCell className="font-mono">{log.model_name || 'N/A'}</TableCell>
-                      <TableCell className="font-mono text-sm">{log.request_id?.slice(0, 8) || 'N/A'}...</TableCell>
+                      <TableCell className="mono text-xs">{log.model_name || 'N/A'}</TableCell>
+                      <TableCell className="mono text-xs text-muted-foreground">{log.request_id?.slice(0, 8) || 'N/A'}...</TableCell>
                       <TableCell>{getStatusBadge(log.error)}</TableCell>
-                      <TableCell>{formatResponseTime(log.latency_ms)}</TableCell>
+                      <TableCell className="mono text-xs">{formatResponseTime(log.latency_ms)}</TableCell>
                       <TableCell className="text-sm">
-                        <div>{(log.tokens_in || 0) + (log.tokens_out || 0)} total</div>
-                        <div className="text-muted-foreground">{log.tokens_in || 0}&#8599; {log.tokens_out || 0}&#8600;</div>
+                        <div className="mono">{(log.tokens_in || 0) + (log.tokens_out || 0)}</div>
+                        <div className="text-[11px] text-muted-foreground mono">
+                          {log.tokens_in || 0}&#8599; {log.tokens_out || 0}&#8600;
+                        </div>
                       </TableCell>
-                      <TableCell className="font-semibold">{formatCost(log.cost || 0)}</TableCell>
+                      <TableCell className="mono text-xs font-semibold">{formatCost(log.cost || 0)}</TableCell>
                     </TableRow>
                   ))
                 )}

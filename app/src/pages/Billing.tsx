@@ -21,7 +21,8 @@ import { useApiKey } from "@/hooks/useApiKey";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { trackBillingView } from "@/utils/analytics";
-import { useSearchParams } from "react-router-dom";
+import { formatUSD } from "@/utils/format";
+import { Link, useSearchParams } from "react-router-dom";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
@@ -254,25 +255,18 @@ const Billing = () => {
       </div>
 
       {/* Plan Status */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="clean-card">
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">Current Plan</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-foreground">
+            <p className="mono text-[24px] font-bold tracking-tight text-foreground leading-none mb-2">
               {isActive ? "Pro" : "Free"}
             </p>
-            <Badge
-              variant="outline"
-              className={
-                isActive
-                  ? "text-emerald-600 border-emerald-200 bg-emerald-50"
-                  : "text-muted-foreground"
-              }
-            >
+            <span className={isActive ? "chip chip-ok" : "chip chip-neutral"}>
               {isActive ? (isCanceling ? "cancels at period end" : "active") : "open source"}
-            </Badge>
+            </span>
           </CardContent>
         </Card>
 
@@ -281,11 +275,11 @@ const Billing = () => {
             <CardTitle className="text-sm text-muted-foreground">This Month's Savings</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-emerald-600">
-              ${currentSavings.toFixed(2)}
+            <p className="mono text-[24px] font-bold tracking-tight text-[hsl(var(--ok))] leading-none">
+              ${formatUSD(currentSavings)}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {savingsSummary?.requests_routed ?? 0} requests routed
+            <p className="text-sm text-muted-foreground mt-2">
+              <span className="mono">{savingsSummary?.requests_routed ?? 0}</span> requests routed
             </p>
           </CardContent>
         </Card>
@@ -295,59 +289,69 @@ const Billing = () => {
             <CardTitle className="text-sm text-muted-foreground">You Pay This Month</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">
-              ${fee.total.toFixed(2)}
+            <p className="mono text-[24px] font-bold tracking-tight text-[hsl(var(--brand-blue-strong))] leading-none">
+              ${formatUSD(fee.total)}
             </p>
-            <p className="text-sm text-muted-foreground">
-              ${fee.base.toFixed(2)} base + ${fee.variable.toFixed(2)} variable
+            <p className="text-sm text-muted-foreground mt-2">
+              <span className="mono">${formatUSD(fee.base)}</span> base + <span className="mono">${formatUSD(fee.variable)}</span> variable
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Current Month Fee Breakdown */}
-      <Card className="clean-card border-blue-100">
+      <Card className="clean-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-blue-600" />
+              <TrendingDown className="w-5 h-5 text-[hsl(var(--brand-blue-strong))]" strokeWidth={1.75} />
               <CardTitle className="text-foreground">You Pay This Month</CardTitle>
             </div>
-            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
-              ${fee.total.toFixed(2)}
-            </Badge>
+            <span className="chip chip-direct mono">${formatUSD(fee.total)}</span>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-4 gap-4 text-center mb-6">
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">Base fee</div>
-              <div className="text-lg font-bold text-foreground">${fee.base.toFixed(2)}</div>
+              <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.base)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">flat monthly</div>
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">25% on first $2K saved</div>
-              <div className="text-lg font-bold text-foreground">${fee.first2k.toFixed(2)}</div>
+              <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.first2k)}</div>
             </div>
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">10% above $2K saved</div>
-              <div className="text-lg font-bold text-foreground">${fee.above2k.toFixed(2)}</div>
+              <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.above2k)}</div>
             </div>
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-xs text-blue-700">Total due</div>
-              <div className="text-lg font-bold text-blue-600">${fee.total.toFixed(2)}</div>
-              <div className="text-[10px] text-blue-600/80 mt-0.5">base + variable</div>
+            <div
+              className="p-3 rounded-lg border"
+              style={{
+                background: "hsl(var(--brand-blue-soft))",
+                borderColor: "hsl(var(--brand-blue) / 0.25)",
+              }}
+            >
+              <div className="text-xs text-[hsl(var(--brand-blue-strong))]">Total due</div>
+              <div className="mono text-lg font-bold text-[hsl(var(--brand-blue-strong))]">${formatUSD(fee.total)}</div>
+              <div className="text-[10px] text-[hsl(var(--brand-blue-strong))]/80 mt-0.5">base + variable</div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+          <div
+            className="flex items-center justify-between p-4 rounded-lg border"
+            style={{
+              background: "hsl(var(--ok-bg))",
+              borderColor: "hsl(var(--ok-border))",
+            }}
+          >
             <div>
-              <p className="text-sm font-medium text-emerald-800">
-                You saved ${currentSavings.toFixed(2)} vs always-Opus &mdash; spent ${currentSpent.toFixed(2)}
+              <p className="text-sm font-medium text-[hsl(var(--ok-strong))]">
+                You saved <span className="mono">${formatUSD(currentSavings)}</span> vs always-Opus &mdash; spent <span className="mono">${formatUSD(currentSpent)}</span>
               </p>
-              <p className="text-xs text-emerald-600">
-                Net after ${fee.variable.toFixed(2)} variable fee: <b>${netSavings.toFixed(2)}</b>
-                <span className="text-emerald-600/70"> (the $9 base is billed separately)</span>
+              <p className="text-xs text-[hsl(var(--ok))]">
+                Net after <span className="mono">${formatUSD(fee.variable)}</span> variable fee: <b className="mono">${formatUSD(netSavings)}</b>
+                <span className="opacity-75"> (the $9 base is billed separately)</span>
               </p>
             </div>
             {!isActive && (
@@ -434,31 +438,30 @@ const Billing = () => {
                         {new Date(inv.billing_period_start).toLocaleDateString()} &ndash;{" "}
                         {new Date(inv.billing_period_end).toLocaleDateString()}
                       </td>
-                      <td className="text-right py-2 px-4 text-emerald-600">
-                        ${inv.total_savings_usd.toFixed(2)}
+                      <td className="text-right py-2 px-4 text-[hsl(var(--ok))]">
+                        ${formatUSD(inv.total_savings_usd)}
                       </td>
                       <td className="text-right py-2 px-4 text-foreground">
-                        ${inv.base_fee_usd.toFixed(2)}
+                        ${formatUSD(inv.base_fee_usd)}
                       </td>
                       <td className="text-right py-2 px-4 text-foreground">
-                        ${inv.savings_fee_usd.toFixed(2)}
+                        ${formatUSD(inv.savings_fee_usd)}
                       </td>
                       <td className="text-right py-2 px-4 font-medium text-foreground">
-                        ${inv.total_invoice_usd.toFixed(2)}
+                        ${formatUSD(inv.total_invoice_usd)}
                       </td>
                       <td className="text-right py-2 pl-4">
-                        <Badge
-                          variant="outline"
+                        <span
                           className={
                             inv.status === "paid"
-                              ? "text-emerald-600 border-emerald-200 bg-emerald-50"
+                              ? "chip chip-ok"
                               : inv.status === "pending"
-                              ? "text-amber-600 border-amber-200 bg-amber-50"
-                              : "text-muted-foreground"
+                              ? "chip chip-warn"
+                              : "chip chip-neutral"
                           }
                         >
                           {inv.status}
-                        </Badge>
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -524,15 +527,15 @@ const Billing = () => {
               </div>
               <div>
                 <div className="text-muted-foreground text-xs">Nadir saves ~55%</div>
-                <div className="font-bold text-emerald-600">$2,750</div>
+                <div className="font-bold text-[hsl(var(--ok))]">$2,750</div>
               </div>
               <div>
                 <div className="text-muted-foreground text-xs">Nadir fee</div>
                 <div className="font-bold text-foreground">$584</div>
               </div>
               <div>
-                <div className="text-emerald-700 text-xs font-medium">You keep</div>
-                <div className="font-bold text-emerald-600">$2,166/mo</div>
+                <div className="text-[hsl(var(--ok-strong))] text-xs font-medium">You keep</div>
+                <div className="font-bold text-[hsl(var(--ok))]">$2,166/mo</div>
               </div>
             </div>
           </div>
@@ -545,69 +548,65 @@ const Billing = () => {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free / Open Source */}
           {/* Free Hosted */}
-          <Card className={`clean-card ${!isActive ? "border-2 border-emerald-300" : ""}`}>
+          <Card className={`clean-card ${!isActive ? "border-2 border-[hsl(var(--ok-border))]" : ""}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-foreground">Free</CardTitle>
                 {!isActive && (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                    Current
-                  </Badge>
+                  <span className="chip chip-ok">Current</span>
                 )}
               </div>
               <p className="text-sm text-muted-foreground">Hosted (BYOK)</p>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground mb-1">Free</p>
+              <p className="mono text-3xl font-bold text-foreground tracking-tight mb-1">Free</p>
               <p className="text-sm text-muted-foreground mb-4">no credit card required</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Hosted proxy (api.getnadir.com)
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Hosted proxy (api.getnadir.com)
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> 15 requests/day (BYOK only)
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> 15 requests/day (BYOK only)
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Intelligent routing
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Intelligent routing
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Web dashboard & analytics
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Web dashboard & analytics
                 </li>
               </ul>
             </CardContent>
           </Card>
 
           {/* Pro */}
-          <Card className={`clean-card border-2 ${isActive ? "border-emerald-300" : "border-blue-300"}`}>
+          <Card className={`clean-card border-2 ${isActive ? "border-[hsl(var(--ok-border))]" : "border-[hsl(var(--brand-blue)/0.3)]"}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-foreground">Pro</CardTitle>
                 {isActive && (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                    Current
-                  </Badge>
+                  <span className="chip chip-ok">Current</span>
                 )}
               </div>
               <p className="text-sm text-muted-foreground">Hosted proxy</p>
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-3xl font-bold text-foreground">$9</span>
+                <span className="mono text-3xl font-bold text-foreground tracking-tight">$9</span>
                 <span className="text-sm text-muted-foreground">/mo + 25% of savings</span>
               </div>
               <p className="text-xs text-muted-foreground mb-4">10% above $2K saved</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Everything in Free, unlimited
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Everything in Free, unlimited
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Hosted keys or BYOK
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Hosted keys or BYOK
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Semantic cache & dedup
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Semantic cache & dedup
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Fallback chains & context optimization
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Fallback chains & context optimization
                 </li>
               </ul>
               {!isActive && (
@@ -649,26 +648,26 @@ const Billing = () => {
               <p className="text-sm text-muted-foreground">Volume pricing</p>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground mb-1">Custom</p>
+              <p className="mono text-3xl font-bold text-foreground tracking-tight mb-1">Custom</p>
               <p className="text-sm text-muted-foreground mb-4">let's talk</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Everything in Pro
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Everything in Pro
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> SSO / SAML
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> SSO / SAML
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> Custom routing models
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Custom routing models
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600" /> 99.9% SLA
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> 99.9% SLA
                 </li>
               </ul>
               <Button variant="outline" className="w-full" asChild>
-                <a href="mailto:info@getnadir.com?subject=Nadir Enterprise">
+                <Link to="/contact?reason=enterprise&source=billing_enterprise">
                   Contact Us
-                </a>
+                </Link>
               </Button>
             </CardContent>
           </Card>

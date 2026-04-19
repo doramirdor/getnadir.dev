@@ -1,8 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Nadir admin tokens — aligned with the Nadir Design System handoff.
+ * - Shadcn HSL tokens (--primary, --background, ...) power Tailwind theme colors.
+ * - Admin semantic tokens (--ok, --warn, --violet, --accent-soft, ...) power
+ *   coloured status / route chips on the dashboard, logs, and recent activity.
+ *   Consume them inline as `hsl(var(--ok))` etc, or via the `.mono` / `.chip-*`
+ *   utility classes defined below.
+ */
 
 @layer base {
   :root {
@@ -44,6 +53,35 @@
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 220 13% 93%;
     --sidebar-ring: 152 55% 46%;
+
+    /* --- Admin semantic palette (from Nadir Design System handoff) --- */
+    /* Status: ok / warn / err / violet. Used by route + method chips. */
+    --ok:         160 64% 32%;
+    --ok-strong:  160 64% 28%;
+    --ok-dot:     160 64% 45%;
+    --ok-bg:      160 64% 96%;
+    --ok-border:  160 64% 85%;
+
+    --warn:         38 92% 38%;
+    --warn-bg:      38 92% 96%;
+    --warn-border:  38 92% 85%;
+    --warn-chart:   38 92% 50%;
+
+    --err:         0 74% 42%;
+    --err-dot:     0 74% 55%;
+    --err-bg:      0 84% 96%;
+    --err-border:  0 84% 85%;
+    --err-chart:   0 74% 50%;
+
+    --violet:         262 52% 50%;
+    --violet-bg:      262 52% 96%;
+    --violet-border:  262 52% 88%;
+
+    /* Brand blue — routing / "direct" route / link accents. */
+    --brand-blue:         214 100% 55%;
+    --brand-blue-strong:  214 100% 45%;
+    --brand-blue-soft:    214 100% 97%;
+    --brand-blue-ring:    214 100% 55%;
   }
 
   .dark {
@@ -83,6 +121,33 @@
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 215 14% 16%;
     --sidebar-ring: 152 55% 46%;
+
+    /* Admin semantic palette — brighter so it reads on dark surfaces. */
+    --ok:         160 60% 62%;
+    --ok-strong:  160 60% 70%;
+    --ok-dot:     160 60% 55%;
+    --ok-bg:      160 60% 16%;
+    --ok-border:  160 60% 28%;
+
+    --warn:         38 92% 64%;
+    --warn-bg:      38 50% 18%;
+    --warn-border:  38 60% 30%;
+    --warn-chart:   38 92% 62%;
+
+    --err:         0 80% 68%;
+    --err-dot:     0 78% 62%;
+    --err-bg:      0 50% 18%;
+    --err-border:  0 60% 30%;
+    --err-chart:   0 78% 66%;
+
+    --violet:         262 70% 72%;
+    --violet-bg:      262 40% 20%;
+    --violet-border:  262 50% 32%;
+
+    --brand-blue:         214 100% 66%;
+    --brand-blue-strong:  214 100% 74%;
+    --brand-blue-soft:    214 30% 18%;
+    --brand-blue-ring:    214 100% 66%;
   }
 }
 
@@ -153,6 +218,55 @@
 
   .section-label {
     @apply text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60 px-3 mb-2;
+  }
+
+  /* Monospace for numeric data (costs, latencies, counts, request ids). */
+  .mono {
+    font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /*
+   * Admin route / method chips. Shape copied from the design-system Badge
+   * primitive: 1px tinted border, 11px semi-bold text, 6px radius, very
+   * tight vertical padding. Palette varies per semantic meaning.
+   */
+  .chip {
+    @apply inline-flex items-center gap-1 px-1.5 py-0 text-[11px] font-medium leading-5 rounded-md border;
+  }
+  .chip-neutral {
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+  .chip-direct {
+    background: hsl(var(--brand-blue-soft));
+    border-color: hsl(var(--brand-blue) / 0.25);
+    color: hsl(var(--brand-blue-strong));
+  }
+  .chip-cluster,
+  .chip-ok {
+    background: hsl(var(--ok-bg));
+    border-color: hsl(var(--ok-border));
+    color: hsl(var(--ok));
+  }
+  .chip-fallback,
+  .chip-warn {
+    background: hsl(var(--warn-bg));
+    border-color: hsl(var(--warn-border));
+    color: hsl(var(--warn));
+  }
+  .chip-load-balance,
+  .chip-violet {
+    background: hsl(var(--violet-bg));
+    border-color: hsl(var(--violet-border));
+    color: hsl(var(--violet));
+  }
+  .chip-err {
+    background: hsl(var(--err-bg));
+    border-color: hsl(var(--err-border));
+    color: hsl(var(--err));
   }
 }
 

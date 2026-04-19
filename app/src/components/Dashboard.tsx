@@ -1,7 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricsGrid } from "@/components/MetricsGrid";
@@ -59,49 +58,66 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="page-header">
+      {/* Page Header — title on the left, live-status pill on the right */}
+      <div className="page-header animate-fade-up">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="page-title">Dashboard</h1>
             <p className="page-description">Overview of your LLM routing and usage</p>
           </div>
-          <Badge
-            variant="outline"
-            className={
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium ${
               isConnected
-                ? "text-emerald-600 border-emerald-200 bg-emerald-50 text-xs font-medium"
-                : "text-muted-foreground text-xs font-medium"
-            }
+                ? 'bg-[hsl(var(--ok-bg))] border-[hsl(var(--ok-border))] text-[hsl(var(--ok))]'
+                : 'bg-card border-border text-muted-foreground'
+            }`}
+            aria-live="polite"
           >
-            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isConnected ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
-            {isConnected ? "Live" : "Connecting"}
-          </Badge>
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                isConnected
+                  ? 'bg-[hsl(var(--ok-dot))] animate-pulse'
+                  : 'bg-muted-foreground/40'
+              }`}
+            />
+            {isConnected ? 'Live' : 'Connecting'}
+          </span>
         </div>
       </div>
 
       {/* Metrics Grid */}
       <MetricsGrid />
 
-      {/* Live Feed */}
+      {/* Live Feed (inline ticker when events are streaming in) */}
       {liveEvents.length > 0 && (
         <Card className="clean-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <Activity className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+              <Activity className="w-3.5 h-3.5 text-[hsl(var(--ok))] animate-pulse" />
               Live Events
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-1 max-h-48 overflow-auto">
               {liveEvents.map((event, i) => (
-                <div key={event.id || i} className="flex items-center justify-between text-sm py-2 px-3 rounded-lg hover:bg-accent transition-colors">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${event.error ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                    <span className="font-medium text-foreground text-[13px]">{event.model_name || 'unknown'}</span>
-                    <span className="text-muted-foreground text-xs">{event.provider}</span>
+                <div
+                  key={event.id || i}
+                  className="flex items-center justify-between text-sm py-2 px-3 rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                        event.error ? 'bg-[hsl(var(--err-dot))]' : 'bg-[hsl(var(--ok-dot))]'
+                      }`}
+                    />
+                    <span className="font-medium text-foreground text-[13px] truncate">
+                      {event.model_name || 'unknown'}
+                    </span>
+                    <span className="text-muted-foreground text-xs truncate">
+                      {event.provider}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mono">
                     {event.latency_ms && <span>{event.latency_ms}ms</span>}
                     {event.cost && <span>${parseFloat(event.cost).toFixed(4)}</span>}
                     <span>{new Date(event.created_at).toLocaleTimeString()}</span>

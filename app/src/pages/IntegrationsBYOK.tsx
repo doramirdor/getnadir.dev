@@ -508,9 +508,17 @@ const IntegrationsBYOK = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <p className="text-sm text-blue-800 font-medium">How hosted pricing works</p>
-              <ul className="text-sm text-blue-700 mt-2 space-y-1">
+            <div
+              className="p-4 rounded-lg border"
+              style={{
+                background: "hsl(var(--brand-blue-soft))",
+                borderColor: "hsl(var(--brand-blue) / 0.25)",
+              }}
+            >
+              <p className="text-sm font-medium text-[hsl(var(--brand-blue-strong))]">
+                How hosted pricing works
+              </p>
+              <ul className="text-sm text-[hsl(var(--brand-blue-strong))] mt-2 space-y-1">
                 <li>You pay the same token costs as providers charge</li>
                 <li>Nadir adds a savings-based fee: $9/mo base + 25% of first $2K saved, 10% above</li>
                 <li>If Nadir saves you nothing, you only pay the $9 base</li>

@@ -14,17 +14,19 @@ import FetchError from "@/components/FetchError";
 import ClassifierAnalytics from "@/components/ClassifierAnalytics";
 import { trackPageView } from "@/utils/analytics";
 
-const CHART_GRID_STROKE = "hsl(220, 13%, 91%)";
-const CHART_AXIS_STROKE = "hsl(220, 9%, 46%)";
+// Chart tokens — reference CSS variables so light/dark themes flip correctly.
+const CHART_GRID_STROKE = "hsl(var(--border))";
+const CHART_AXIS_STROKE = "hsl(var(--muted-foreground))";
 const CHART_AXIS_PROPS = { stroke: CHART_AXIS_STROKE, fontSize: 12, tickLine: false, axisLine: false } as const;
 const CHART_TOOLTIP_STYLE = {
-  backgroundColor: '#fff',
-  border: '1px solid hsl(220, 13%, 91%)',
+  backgroundColor: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
   fontSize: '13px',
+  color: 'hsl(var(--foreground))',
 };
-const PRIMARY_GREEN = "hsl(152, 55%, 46%)";
+const PRIMARY_GREEN = "hsl(var(--primary))";
 
 /** Convert an array of objects to a CSV string and trigger a browser download. */
 const downloadCSV = (rows: Record<string, unknown>[], filename: string) => {
@@ -212,21 +214,11 @@ const Analytics = () => {
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="complexity" className="gap-1.5">
             Complexity
-            <Badge
-              variant="outline"
-              className="h-4 px-1 py-0 text-[9px] font-medium tracking-wide border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
-            >
-              SOON
-            </Badge>
+            <span className="chip chip-warn h-4 text-[9px] tracking-wide">SOON</span>
           </TabsTrigger>
           <TabsTrigger value="classifier" className="gap-1.5">
             Classifier
-            <Badge
-              variant="outline"
-              className="h-4 px-1 py-0 text-[9px] font-medium tracking-wide border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
-            >
-              SOON
-            </Badge>
+            <span className="chip chip-warn h-4 text-[9px] tracking-wide">SOON</span>
           </TabsTrigger>
         </TabsList>
 
@@ -234,7 +226,14 @@ const Analytics = () => {
         <TabsContent value="overview" className="space-y-6">
           {errors.overview && <FetchError message={errors.overview} onRetry={() => retrySection("overview")} />}
           {overview?.truncated && (
-            <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <div
+              className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm"
+              style={{
+                background: "hsl(var(--warn-bg))",
+                borderColor: "hsl(var(--warn-border))",
+                color: "hsl(var(--warn))",
+              }}
+            >
               <AlertTriangle className="w-4 h-4 shrink-0" />
               Showing the latest 5,000 events. Results may be incomplete for this time range.
             </div>
@@ -250,19 +249,27 @@ const Analytics = () => {
             </Card>
           ) : !errors.overview && overview && (
             <>
-              {/* Key Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Key Metrics — token-driven trend deltas so they read correctly in dark mode. */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="clean-card">
                   <CardContent className="p-5">
-                    <p className="text-xs text-muted-foreground">Total Requests</p>
-                    <p className="text-2xl font-semibold mt-1">{formatNumber(overview.totalRequests)}</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[12px] font-medium text-muted-foreground">Total Requests</p>
+                    <p className="mono text-[24px] font-semibold mt-1 leading-none tracking-tight">
+                      {formatNumber(overview.totalRequests)}
+                    </p>
+                    <div className="flex items-center mt-2">
                       {overview.requestsChange >= 0 ? (
-                        <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
+                        <TrendingUp className="w-3.5 h-3.5 mr-1 text-[hsl(var(--ok))]" strokeWidth={2} />
                       ) : (
-                        <TrendingDown className="w-4 h-4 text-red-600 mr-1" />
+                        <TrendingDown className="w-3.5 h-3.5 mr-1 text-[hsl(var(--err))]" strokeWidth={2} />
                       )}
-                      <span className={`text-sm ${overview.requestsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span
+                        className={`mono text-[12px] ${
+                          overview.requestsChange >= 0
+                            ? 'text-[hsl(var(--ok))]'
+                            : 'text-[hsl(var(--err))]'
+                        }`}
+                      >
                         {formatPercentage(Math.abs(overview.requestsChange))}
                       </span>
                     </div>
@@ -271,9 +278,11 @@ const Analytics = () => {
 
                 <Card className="clean-card">
                   <CardContent className="p-5">
-                    <p className="text-xs text-muted-foreground">Success Rate</p>
-                    <p className="text-2xl font-semibold mt-1">{formatPercentage(overview.successRate)}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-[12px] font-medium text-muted-foreground">Success Rate</p>
+                    <p className="mono text-[24px] font-semibold mt-1 leading-none tracking-tight">
+                      {formatPercentage(overview.successRate)}
+                    </p>
+                    <p className="mono text-[12px] text-muted-foreground mt-2">
                       {formatNumber(overview.successfulRequests)} / {formatNumber(overview.totalRequests)}
                     </p>
                   </CardContent>
@@ -281,15 +290,24 @@ const Analytics = () => {
 
                 <Card className="clean-card">
                   <CardContent className="p-5">
-                    <p className="text-xs text-muted-foreground">Total Cost</p>
-                    <p className="text-2xl font-semibold mt-1">{formatCurrency(overview.totalCost)}</p>
-                    <div className="flex items-center mt-1">
+                    <p className="text-[12px] font-medium text-muted-foreground">Total Cost</p>
+                    <p className="mono text-[24px] font-semibold mt-1 leading-none tracking-tight">
+                      {formatCurrency(overview.totalCost)}
+                    </p>
+                    <div className="flex items-center mt-2">
+                      {/* For cost: up = bad (err), down = good (ok) */}
                       {overview.costChange >= 0 ? (
-                        <TrendingUp className="w-4 h-4 text-red-600 mr-1" />
+                        <TrendingUp className="w-3.5 h-3.5 mr-1 text-[hsl(var(--err))]" strokeWidth={2} />
                       ) : (
-                        <TrendingDown className="w-4 h-4 text-green-600 mr-1" />
+                        <TrendingDown className="w-3.5 h-3.5 mr-1 text-[hsl(var(--ok))]" strokeWidth={2} />
                       )}
-                      <span className={`text-sm ${overview.costChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <span
+                        className={`mono text-[12px] ${
+                          overview.costChange >= 0
+                            ? 'text-[hsl(var(--err))]'
+                            : 'text-[hsl(var(--ok))]'
+                        }`}
+                      >
                         {formatPercentage(Math.abs(overview.costChange))}
                       </span>
                     </div>
@@ -298,9 +316,13 @@ const Analytics = () => {
 
                 <Card className="clean-card">
                   <CardContent className="p-5">
-                    <p className="text-xs text-muted-foreground">Avg Response Time</p>
-                    <p className="text-2xl font-semibold mt-1">{Math.round(overview.avgResponseTime)}ms</p>
-                    <p className="text-sm text-muted-foreground mt-1">{formatNumber(overview.totalTokens)} tokens</p>
+                    <p className="text-[12px] font-medium text-muted-foreground">Avg Response Time</p>
+                    <p className="mono text-[24px] font-semibold mt-1 leading-none tracking-tight">
+                      {Math.round(overview.avgResponseTime)}ms
+                    </p>
+                    <p className="mono text-[12px] text-muted-foreground mt-2">
+                      {formatNumber(overview.totalTokens)} tokens
+                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -335,7 +357,7 @@ const Analytics = () => {
                         <XAxis dataKey="date" {...CHART_AXIS_PROPS} />
                         <YAxis {...CHART_AXIS_PROPS} />
                         <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [formatCurrency(value as number), 'Cost']} />
-                        <Line type="monotone" dataKey="cost" stroke="#f59e0b" strokeWidth={2} />
+                        <Line type="monotone" dataKey="cost" stroke="hsl(var(--warn-chart))" strokeWidth={2} />
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -417,7 +439,7 @@ const Analytics = () => {
                         <XAxis dataKey="type" {...CHART_AXIS_PROPS} />
                         <YAxis {...CHART_AXIS_PROPS} />
                         <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                        <Bar dataKey="count" fill="#ef4444" />
+                        <Bar dataKey="count" fill="hsl(var(--err-chart))" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -495,7 +517,7 @@ const Analytics = () => {
                         <XAxis dataKey="date" {...CHART_AXIS_PROPS} />
                         <YAxis {...CHART_AXIS_PROPS} />
                         <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [formatCurrency(value as number), 'Cost']} />
-                        <Line type="monotone" dataKey="cost" stroke="#f59e0b" strokeWidth={2} />
+                        <Line type="monotone" dataKey="cost" stroke="hsl(var(--warn-chart))" strokeWidth={2} />
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -523,7 +545,7 @@ const Analytics = () => {
                               <p className="text-muted-foreground text-sm">{suggestion.description}</p>
                             </div>
                             <div className="text-right">
-                              <div className="font-semibold text-green-600">
+                              <div className="font-semibold text-[hsl(var(--ok))] mono">
                                 {formatCurrency(suggestion.potentialSavings)}/mo
                               </div>
                               <div className="text-sm text-muted-foreground">
@@ -598,8 +620,8 @@ const Analytics = () => {
                       <XAxis dataKey="date" {...CHART_AXIS_PROPS} />
                       <YAxis {...CHART_AXIS_PROPS} />
                       <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                      <Line type="monotone" dataKey="avgLatency" stroke="#8b5cf6" name="Avg Latency" />
-                      <Line type="monotone" dataKey="p95Latency" stroke="#f59e0b" name="P95 Latency" />
+                      <Line type="monotone" dataKey="avgLatency" stroke="hsl(var(--violet))" name="Avg Latency" />
+                      <Line type="monotone" dataKey="p95Latency" stroke="hsl(var(--warn-chart))" name="P95 Latency" />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -612,12 +634,7 @@ const Analytics = () => {
         <TabsContent value="complexity" className="space-y-6">
           <Card className="clean-card">
             <CardContent className="p-10 text-center">
-              <Badge
-                variant="outline"
-                className="mb-3 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
-              >
-                Coming soon
-              </Badge>
+              <span className="chip chip-warn mb-3 inline-flex">Coming soon</span>
               <h3 className="text-lg font-semibold text-foreground mb-2">Complexity Insights</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 Per-prompt complexity scoring, tier distribution, and optimization opportunities
@@ -673,7 +690,7 @@ const Analytics = () => {
                         <XAxis dataKey="range" {...CHART_AXIS_PROPS} />
                         <YAxis {...CHART_AXIS_PROPS} />
                         <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                        <Bar dataKey="count" fill="#8b5cf6" />
+                        <Bar dataKey="count" fill="hsl(var(--violet))" />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -691,7 +708,7 @@ const Analytics = () => {
                         <XAxis dataKey="date" {...CHART_AXIS_PROPS} />
                         <YAxis {...CHART_AXIS_PROPS} domain={[0, 1]} />
                         <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [(value as number).toFixed(3), 'Avg Complexity']} />
-                        <Line type="monotone" dataKey="avgComplexity" stroke="#8b5cf6" strokeWidth={2} />
+                        <Line type="monotone" dataKey="avgComplexity" stroke="hsl(var(--violet))" strokeWidth={2} />
                       </LineChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -768,7 +785,9 @@ const Analytics = () => {
                     <div className="space-y-3">
                       {complexity.optimizationOpportunities.map((opp, i) => (
                         <div key={i} className="flex items-start gap-3 p-4 border border-border rounded-lg">
-                          <AlertTriangle className={`w-5 h-5 mt-0.5 ${opp.impact === 'high' ? 'text-red-500' : 'text-amber-500'}`} />
+                          <AlertTriangle
+                            className={`w-5 h-5 mt-0.5 ${opp.impact === 'high' ? 'text-[hsl(var(--err))]' : 'text-[hsl(var(--warn))]'}`}
+                          />
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-sm text-foreground">{opp.opportunity}</p>
@@ -790,12 +809,7 @@ const Analytics = () => {
         <TabsContent value="classifier" className="space-y-6">
           <Card className="clean-card">
             <CardContent className="p-10 text-center">
-              <Badge
-                variant="outline"
-                className="mb-3 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700/50 dark:text-amber-300 dark:bg-amber-950/40"
-              >
-                Coming soon
-              </Badge>
+              <span className="chip chip-warn mb-3 inline-flex">Coming soon</span>
               <h3 className="text-lg font-semibold text-foreground mb-2">Prompt Cohort Classifier</h3>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
                 Automatically group your traffic into prompt cohorts, see how each cohort is

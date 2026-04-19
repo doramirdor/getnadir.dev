@@ -153,23 +153,29 @@ export const LatencyChart = () => {
       <CardContent className="space-y-6">
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={latencyData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
-            <XAxis dataKey="name" stroke="hsl(220, 9%, 46%)" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="hsl(220, 9%, 46%)" fontSize={12} tickLine={false} axisLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid hsl(220, 13%, 91%)',
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
                 fontSize: '13px',
+                color: 'hsl(var(--foreground))',
               }}
               formatter={(value: number) => [`${value}ms`, '']}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line type="monotone" dataKey="avgLatency" stroke="hsl(152, 55%, 46%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(152, 55%, 46%)", strokeWidth: 0 }} name="Average" />
-            <Line type="monotone" dataKey="p95Latency" stroke="hsl(38, 92%, 50%)" strokeWidth={1.5} dot={{ r: 2.5, fill: "hsl(38, 92%, 50%)", strokeWidth: 0 }} name="P95" />
-            <Line type="monotone" dataKey="p99Latency" stroke="hsl(0, 72%, 51%)" strokeWidth={1.5} dot={{ r: 2.5, fill: "hsl(0, 72%, 51%)", strokeWidth: 0 }} name="P99" />
+            {/*
+              p50/p95/p99 colour mapping from the Nadir Design System
+              (LatencyChart in DashboardScreen.jsx): accent (brand-blue) /
+              warn-chart / err-chart. Primary-green is reserved for savings.
+            */}
+            <Line type="monotone" dataKey="avgLatency" stroke="hsl(var(--brand-blue))"  strokeWidth={1.5} dot={{ r: 2.5, fill: "hsl(var(--brand-blue))",  strokeWidth: 0 }} name="p50" />
+            <Line type="monotone" dataKey="p95Latency" stroke="hsl(var(--warn-chart))"  strokeWidth={1.5} dot={{ r: 2.5, fill: "hsl(var(--warn-chart))",  strokeWidth: 0 }} name="p95" />
+            <Line type="monotone" dataKey="p99Latency" stroke="hsl(var(--err-chart))"   strokeWidth={1.5} dot={{ r: 2.5, fill: "hsl(var(--err-chart))",   strokeWidth: 0 }} name="p99" />
           </LineChart>
         </ResponsiveContainer>
 
@@ -183,13 +189,13 @@ export const LatencyChart = () => {
               return (
                 <div key={model.model} className="flex items-center gap-3">
                   <span className="text-xs text-foreground w-40 truncate">{model.model}</span>
-                  <div className="flex-1 bg-muted rounded-full h-1.5">
+                  <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="h-1.5 rounded-full bg-primary/60"
-                      style={{ width: `${pct}%` }}
+                      className="h-1.5 rounded-full"
+                      style={{ width: `${pct}%`, background: "hsl(var(--brand-blue) / 0.7)" }}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground w-14 text-right">{model.avgLatency}ms</span>
+                  <span className="text-xs text-muted-foreground w-14 text-right mono">{model.avgLatency}ms</span>
                 </div>
               );
             })}
@@ -200,7 +206,7 @@ export const LatencyChart = () => {
         <div className="flex gap-6 pt-4 border-t border-border">
           <div>
             <p className="text-xs text-muted-foreground">Avg Response</p>
-            <p className="text-sm font-semibold text-foreground">{avgResponse.toFixed(2)}s</p>
+            <p className="text-sm font-semibold text-foreground mono">{avgResponse.toFixed(2)}s</p>
           </div>
           {fastestModel && (
             <div>

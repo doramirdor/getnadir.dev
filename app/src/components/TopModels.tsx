@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 
@@ -134,29 +133,31 @@ export const TopModels = () => {
           {models.map((model) => (
             <div key={model.name}>
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-foreground">{model.name}</span>
-                  <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground border-border px-1.5 py-0">
-                    {model.provider}
-                  </Badge>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[13px] font-medium text-foreground truncate">{model.name}</span>
+                  <span className="chip chip-neutral">{model.provider}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[13px] font-semibold text-foreground">{model.cost}</span>
+                  <span className="text-[13px] font-semibold text-foreground mono">{model.cost}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 mb-1.5">
-                <div className="flex-1 bg-muted rounded-full h-1.5">
+                {/* Progress bar — brand-blue at 70% per TopModels in DashboardScreen.jsx
+                    (`background: var(--accent), opacity: 0.7`). */}
+                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="h-1.5 rounded-full bg-primary/70 transition-all duration-500"
-                    style={{ width: `${model.usage}%` }}
+                    className="h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${model.usage}%`, background: "hsl(var(--brand-blue) / 0.7)" }}
                   />
                 </div>
-                <span className="text-[11px] text-muted-foreground w-20 text-right">{model.requests} req</span>
+                <span className="text-[11px] text-muted-foreground w-20 text-right mono">{model.requests} req</span>
               </div>
 
               <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                <span>{(model.avgComplexity * 100).toFixed(0)}% complexity</span>
+                <span className="mono">{(model.avgComplexity * 100).toFixed(0)}%</span>
+                <span>complexity</span>
+                <span className="text-muted-foreground/50">·</span>
                 <span>{model.dominantTier} tier</span>
               </div>
             </div>
