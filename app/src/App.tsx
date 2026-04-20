@@ -89,6 +89,17 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Capture first-touch attribution (ref / utm_*) once at app boot, so every
+// subsequent auth event can be broken down by signup source in PostHog.
+const AttributionCapture = () => {
+  useEffect(() => {
+    import("@/utils/attribution").then(({ captureAttributionFromUrl }) => {
+      captureAttributionFromUrl();
+    });
+  }, []);
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -101,6 +112,7 @@ const App = () => (
         <GlobalAsyncErrorHandler />
         <BrowserRouter>
           <ScrollToTop />
+          <AttributionCapture />
           <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public pages */}

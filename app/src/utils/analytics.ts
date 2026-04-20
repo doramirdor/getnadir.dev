@@ -4,6 +4,8 @@
  * This wrapper provides type safety and no-ops gracefully if PostHog isn't loaded.
  */
 
+import { getStoredAttribution } from "./attribution";
+
 declare global {
   interface Window {
     posthog?: {
@@ -61,12 +63,20 @@ export const trackWaitlistSignup = (method: "email" | "google" | "github", sourc
   capture("waitlist_signup", { method, source });
 
 // -- Auth events --
+// Auth events auto-include first-touch attribution so you can break down
+// signups by ref / utm_source in PostHog without extra wiring at call sites.
 export const trackAuthAttempt = (method: "email" | "google" | "github", mode: "signin" | "signup") =>
-  capture("auth_attempt", { method, mode });
+  capture("auth_attempt", { method, mode, ...getStoredAttribution() });
 
 export const trackAuthSuccess = (method: string, userId: string) => {
-  identify(userId);
-  capture("auth_success", { method });
+  const attribution = getStoredAttribution();
+  // Set person properties with $set_once so first-touch attribution sticks
+  // across future sessions (later signups from the same user cannot overwrite).
+  const personProps = Object.keys(attribution).length > 0
+    ? { $set_once: attribution }
+    : undefined;
+  identify(userId, personProps);
+  capture("auth_success", { method, ...attribution });
 };
 
 // -- Onboarding events --
