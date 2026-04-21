@@ -8,7 +8,9 @@
     "render:sidebyside": "remotion render src/index.ts SideBySide out/nadir-side-by-side.mp4",
     "render:sidebyside:gif": "remotion render src/index.ts SideBySide out/nadir-side-by-side.gif --codec=gif --every-nth-frame=2 --number-of-gif-loops=0",
     "render:chatrouter": "remotion render src/index.ts ChatRouter out/nadir-chat-router.mp4",
-    "render:chatrouter:gif": "remotion render src/index.ts ChatRouter out/nadir-chat-router.gif --codec=gif --every-nth-frame=2 --number-of-gif-loops=0"
+    "render:chatrouter:gif": "remotion render src/index.ts ChatRouter out/nadir-chat-router.gif --codec=gif --every-nth-frame=2 --number-of-gif-loops=0",
+    "render:chatrouter:light": "remotion render src/index.ts ChatRouterLight out/nadir-chat-router-light.mp4",
+    "render:chatrouter:light:gif": "remotion render src/index.ts ChatRouterLight out/nadir-chat-router-light.gif --codec=gif --every-nth-frame=2 --number-of-gif-loops=0"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.370",

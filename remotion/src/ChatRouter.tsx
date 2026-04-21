@@ -110,34 +110,125 @@ const TURN_WINDOWS: TurnWindow[] = (() => {
 })();
 
 // -----------------------------------------------------------------------------
-// Colors — match SideBySide.tsx palette
+// Theme palette. Two variants share the same shape so every component can
+// pull from `useTheme()` and render identically on a dark or light background.
 // -----------------------------------------------------------------------------
 
-const COLORS = {
+interface Theme {
+  bg: string;
+  bgLeft: string;
+  bgRight: string;
+  chatBgLeft: string;
+  chatBgRight: string;
+  red: string;
+  green: string;
+  cyan: string;
+  textPrimary: string;
+  muted: string;
+  mutedLight: string;
+  divider: string;
+  cardBg: string;
+  cardBorder: string;
+  rowDisabled: string;
+  userBubble: string;
+  userBubbleBorder: string;
+  botBubble: string;
+  botBubbleBorder: string;
+  userAvatarBg: string;
+  userAvatarText: string;
+  botAvatarBg: string;
+  botAvatarBorder: string;
+  tierSimple: string;
+  tierMid: string;
+  tierComplex: string;
+  tierBadgeText: string;
+  bannerBg: string;
+  bannerBorder: string;
+  bannerShadow: string;
+  bannerAccentBg: string;
+  bannerAccentBorder: string;
+  radialAccentOpacity: number;
+}
+
+const DARK_THEME: Theme = {
   bg: '#0a0a0f',
   bgLeft: '#0c0812',
   bgRight: '#080f12',
+  chatBgLeft: '#0a060e',
+  chatBgRight: '#060a0c',
   red: '#ff3b5c',
   green: '#00e89d',
   cyan: '#00e5ff',
-  white: '#f0f0f5',
+  textPrimary: '#f0f0f5',
   muted: '#6b7094',
   mutedLight: '#9498b8',
   divider: '#1a1a2e',
   cardBg: '#12121e',
   cardBorder: '#1e1e34',
+  rowDisabled: '#2a2f48',
   userBubble: '#1f2540',
+  userBubbleBorder: '#2a3052',
   botBubble: '#141420',
+  botBubbleBorder: '#1e1e34',
+  userAvatarBg: 'linear-gradient(135deg, #4c5a99, #2e3a66)',
+  userAvatarText: '#f0f0f5',
+  botAvatarBg: 'linear-gradient(135deg, #1a1f2e, #0f1420)',
+  botAvatarBorder: 'rgba(0,229,255,0.4)',
   tierSimple: '#00e89d',
   tierMid: '#ffaa20',
   tierComplex: '#ff5070',
+  tierBadgeText: '#061015',
+  bannerBg:
+    'linear-gradient(135deg, rgba(0,232,157,0.14) 0%, rgba(0,229,255,0.08) 100%)',
+  bannerBorder: 'rgba(0,232,157,0.5)',
+  bannerShadow: '0 20px 60px rgba(0,0,0,0.75)',
+  bannerAccentBg: 'rgba(0,232,157,0.1)',
+  bannerAccentBorder: 'rgba(0,232,157,0.4)',
+  radialAccentOpacity: 0.08,
 };
 
-const TIER_COLOR: Record<Tier, string> = {
-  simple: COLORS.tierSimple,
-  mid: COLORS.tierMid,
-  complex: COLORS.tierComplex,
+const LIGHT_THEME: Theme = {
+  bg: '#f7f8fa',
+  bgLeft: '#fef7f9',
+  bgRight: '#f0fbf7',
+  chatBgLeft: '#fff5f6',
+  chatBgRight: '#ecfdf5',
+  red: '#dc2626',
+  green: '#059669',
+  cyan: '#0891b2',
+  textPrimary: '#0f172a',
+  muted: '#64748b',
+  mutedLight: '#94a3b8',
+  divider: '#e2e8f0',
+  cardBg: '#ffffff',
+  cardBorder: '#e5e7eb',
+  rowDisabled: '#cbd5e1',
+  userBubble: '#e0e7ff',
+  userBubbleBorder: '#c7d2fe',
+  botBubble: '#ffffff',
+  botBubbleBorder: '#e5e7eb',
+  userAvatarBg: 'linear-gradient(135deg, #6366f1, #4338ca)',
+  userAvatarText: '#ffffff',
+  botAvatarBg: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+  botAvatarBorder: '#0891b2',
+  tierSimple: '#059669',
+  tierMid: '#d97706',
+  tierComplex: '#dc2626',
+  tierBadgeText: '#ffffff',
+  bannerBg:
+    'linear-gradient(135deg, rgba(5,150,105,0.12) 0%, rgba(8,145,178,0.08) 100%)',
+  bannerBorder: 'rgba(5,150,105,0.5)',
+  bannerShadow: '0 20px 60px rgba(15,23,42,0.18)',
+  bannerAccentBg: 'rgba(5,150,105,0.10)',
+  bannerAccentBorder: 'rgba(5,150,105,0.35)',
+  radialAccentOpacity: 0.05,
 };
+
+const ThemeContext = React.createContext<Theme>(DARK_THEME);
+const useTheme = () => React.useContext(ThemeContext);
+
+const tierColor = (theme: Theme, tier: Tier): string =>
+  tier === 'simple' ? theme.tierSimple : tier === 'mid' ? theme.tierMid : theme.tierComplex;
 
 const TIER_MODEL: Record<Tier, string> = {
   simple: 'Haiku',
@@ -233,6 +324,7 @@ function computeTurnStates(frame: number): TurnState[] {
 // -----------------------------------------------------------------------------
 
 const Avatar: React.FC<{ variant: 'user' | 'bot'; size?: number }> = ({ variant, size = 32 }) => {
+  const theme = useTheme();
   if (variant === 'user') {
     return (
       <div
@@ -240,12 +332,12 @@ const Avatar: React.FC<{ variant: 'user' | 'bot'; size?: number }> = ({ variant,
           width: size,
           height: size,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #4c5a99, #2e3a66)',
+          background: theme.userAvatarBg,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: size * 0.5,
-          color: COLORS.white,
+          color: theme.userAvatarText,
           fontWeight: 700,
           flexShrink: 0,
         }}
@@ -260,8 +352,8 @@ const Avatar: React.FC<{ variant: 'user' | 'bot'; size?: number }> = ({ variant,
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #1a1f2e, #0f1420)',
-        border: `1.5px solid ${COLORS.cyan}60`,
+        background: theme.botAvatarBg,
+        border: `1.5px solid ${theme.botAvatarBorder}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -275,6 +367,7 @@ const Avatar: React.FC<{ variant: 'user' | 'bot'; size?: number }> = ({ variant,
 };
 
 const TypingIndicator: React.FC<{ frame: number }> = ({ frame }) => {
+  const theme = useTheme();
   const dot = (offset: number) => {
     const phase = (frame + offset) * 0.2;
     const y = Math.sin(phase) * 3;
@@ -285,7 +378,7 @@ const TypingIndicator: React.FC<{ frame: number }> = ({ frame }) => {
           width: 6,
           height: 6,
           borderRadius: '50%',
-          background: COLORS.mutedLight,
+          background: theme.mutedLight,
           transform: `translateY(${y}px)`,
           opacity,
         }}
@@ -307,6 +400,7 @@ const Bubble: React.FC<{
   tierBadge?: Tier;
   showCursor?: boolean;
 }> = ({ variant, text, tierBadge, showCursor }) => {
+  const theme = useTheme();
   const isUser = variant === 'user';
   return (
     <div
@@ -323,13 +417,13 @@ const Bubble: React.FC<{
       <Avatar variant={variant} />
       <div
         style={{
-          background: isUser ? COLORS.userBubble : COLORS.botBubble,
-          color: COLORS.white,
+          background: isUser ? theme.userBubble : theme.botBubble,
+          color: theme.textPrimary,
           padding: '12px 16px',
           borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
           fontSize: 18,
           lineHeight: 1.45,
-          border: `1px solid ${isUser ? '#2a3052' : COLORS.cardBorder}`,
+          border: `1px solid ${isUser ? theme.userBubbleBorder : theme.botBubbleBorder}`,
           whiteSpace: 'pre-wrap',
           position: 'relative',
         }}
@@ -341,7 +435,7 @@ const Bubble: React.FC<{
               display: 'inline-block',
               width: 2,
               height: 16,
-              background: COLORS.cyan,
+              background: theme.cyan,
               marginLeft: 2,
               verticalAlign: 'text-bottom',
               animation: 'blink 1s infinite',
@@ -355,8 +449,8 @@ const Bubble: React.FC<{
               top: -10,
               right: isUser ? 'auto' : 10,
               left: isUser ? 10 : 'auto',
-              background: TIER_COLOR[tierBadge],
-              color: '#061015',
+              background: tierColor(theme, tierBadge),
+              color: theme.tierBadgeText,
               fontSize: 10,
               fontWeight: 800,
               padding: '2px 8px',
@@ -389,8 +483,12 @@ const CostPanel: React.FC<{
   frame: number;
   states: TurnState[];
 }> = ({ side, frame, states }) => {
+  const theme = useTheme();
   const isRight = side === 'right';
-  const headerColor = isRight ? COLORS.green : COLORS.red;
+  const headerColor = isRight ? theme.green : theme.red;
+  const radialAlpha = Math.round(theme.radialAccentOpacity * 255)
+    .toString(16)
+    .padStart(2, '0');
 
   // A turn counts toward the total only once the bot response has *landed*.
   // That way the cost ticks up at the exact moment the reply appears on screen.
@@ -423,7 +521,7 @@ const CostPanel: React.FC<{
         display: 'flex',
         flexDirection: 'column',
         padding: '28px 32px 20px',
-        background: isRight ? COLORS.bgRight : COLORS.bgLeft,
+        background: isRight ? theme.bgRight : theme.bgLeft,
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -432,7 +530,7 @@ const CostPanel: React.FC<{
         style={{
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(ellipse at 50% 20%, ${headerColor}08 0%, transparent 60%)`,
+          background: `radial-gradient(ellipse at 50% 20%, ${headerColor}${radialAlpha} 0%, transparent 60%)`,
           pointerEvents: 'none',
         }}
       />
@@ -460,7 +558,7 @@ const CostPanel: React.FC<{
             <span style={{ fontSize: 22, fontWeight: 800, color: headerColor, letterSpacing: -0.3 }}>
               {isRight ? 'With Nadir' : 'Without Nadir'}
             </span>
-            <span style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>
+            <span style={{ fontSize: 12, color: theme.muted, marginTop: 2 }}>
               {isRight
                 ? 'Route each turn to the right tier'
                 : 'GPT-5.4 high-reasoning on every turn'}
@@ -477,13 +575,13 @@ const CostPanel: React.FC<{
           justifyContent: 'space-between',
           marginBottom: 16,
           paddingBottom: 14,
-          borderBottom: `1px solid ${COLORS.cardBorder}`,
+          borderBottom: `1px solid ${theme.cardBorder}`,
         }}
       >
         <span
           style={{
             fontSize: 10,
-            color: COLORS.muted,
+            color: theme.muted,
             letterSpacing: 1.5,
             textTransform: 'uppercase',
           }}
@@ -509,7 +607,7 @@ const CostPanel: React.FC<{
           style={{
             display: 'flex',
             fontSize: 9,
-            color: COLORS.muted,
+            color: theme.muted,
             letterSpacing: 1.5,
             paddingBottom: 4,
           }}
@@ -533,13 +631,13 @@ const CostPanel: React.FC<{
                 alignItems: 'center',
                 fontSize: 15,
                 fontFamily: '"SF Mono", ui-monospace, monospace',
-                color: appeared ? COLORS.white : '#2a2f48',
+                color: appeared ? theme.textPrimary : theme.rowDisabled,
                 padding: '6px 0',
                 opacity: appeared ? 1 : 0.35,
                 transition: 'opacity 200ms',
               }}
             >
-              <span style={{ width: 36, color: COLORS.muted }}>{String(i + 1).padStart(2, '0')}</span>
+              <span style={{ width: 36, color: theme.muted }}>{String(i + 1).padStart(2, '0')}</span>
               {isRight && (
                 <span style={{ width: 80, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span
@@ -547,12 +645,12 @@ const CostPanel: React.FC<{
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      background: appeared ? TIER_COLOR[turn.tier] : COLORS.cardBorder,
+                      background: appeared ? tierColor(theme, turn.tier) : theme.cardBorder,
                     }}
                   />
                   <span
                     style={{
-                      color: appeared ? TIER_COLOR[turn.tier] : '#2a2f48',
+                      color: appeared ? tierColor(theme, turn.tier) : theme.rowDisabled,
                       fontSize: 11,
                       fontWeight: 700,
                       letterSpacing: 0.5,
@@ -562,7 +660,7 @@ const CostPanel: React.FC<{
                   </span>
                 </span>
               )}
-              <span style={{ flex: 1, color: appeared ? COLORS.mutedLight : '#2a2f48' }}>
+              <span style={{ flex: 1, color: appeared ? theme.mutedLight : theme.rowDisabled }}>
                 {appeared ? (isRight ? TIER_MODEL[turn.tier] : 'GPT-5.4') : '—'}
               </span>
               <span
@@ -570,7 +668,7 @@ const CostPanel: React.FC<{
                   width: 100,
                   textAlign: 'right',
                   fontWeight: 700,
-                  color: appeared ? headerColor : '#2a2f48',
+                  color: appeared ? headerColor : theme.rowDisabled,
                   textShadow: pulseStrength
                     ? `0 0 ${8 + pulseStrength * 10}px ${headerColor}90`
                     : 'none',
@@ -595,6 +693,7 @@ const ChatPanel: React.FC<{
   frame: number;
   states: TurnState[];
 }> = ({ side, frame, states }) => {
+  const theme = useTheme();
   const isRight = side === 'right';
 
   // Build the list of messages currently visible on screen.
@@ -628,8 +727,8 @@ const ChatPanel: React.FC<{
           <Avatar variant="bot" />
           <div
             style={{
-              background: COLORS.botBubble,
-              border: `1px solid ${COLORS.cardBorder}`,
+              background: theme.botBubble,
+              border: `1px solid ${theme.botBubbleBorder}`,
               borderRadius: '18px 18px 18px 4px',
             }}
           >
@@ -661,8 +760,8 @@ const ChatPanel: React.FC<{
         display: 'flex',
         flexDirection: 'column',
         padding: '20px 32px 28px',
-        background: isRight ? '#060a0c' : '#0a060e',
-        borderTop: `1px solid ${COLORS.divider}`,
+        background: isRight ? theme.chatBgRight : theme.chatBgLeft,
+        borderTop: `1px solid ${theme.divider}`,
         overflow: 'hidden',
         position: 'relative',
       }}
@@ -675,7 +774,7 @@ const ChatPanel: React.FC<{
           gap: 10,
           paddingBottom: 14,
           marginBottom: 14,
-          borderBottom: `1px solid ${COLORS.cardBorder}`,
+          borderBottom: `1px solid ${theme.cardBorder}`,
         }}
       >
         <div
@@ -683,14 +782,14 @@ const ChatPanel: React.FC<{
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: COLORS.tierSimple,
-            boxShadow: `0 0 8px ${COLORS.tierSimple}80`,
+            background: theme.tierSimple,
+            boxShadow: `0 0 8px ${theme.tierSimple}80`,
           }}
         />
-        <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.white }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: theme.textPrimary }}>
           Support Bot
         </span>
-        <span style={{ fontSize: 12, color: COLORS.muted }}>online</span>
+        <span style={{ fontSize: 12, color: theme.muted }}>online</span>
       </div>
 
       {/* Messages */}
@@ -715,6 +814,7 @@ const ChatPanel: React.FC<{
 // -----------------------------------------------------------------------------
 
 const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps }) => {
+  const theme = useTheme();
   if (frame < RESULTS_AT) return null;
 
   const progress = spring({
@@ -747,20 +847,19 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
         transform: `translate(-50%, -50%) scale(${scale})`,
         opacity,
         zIndex: 30,
-        background:
-          'linear-gradient(135deg, rgba(0,232,157,0.14) 0%, rgba(0,229,255,0.08) 100%)',
-        border: `2px solid ${COLORS.green}50`,
+        background: theme.bannerBg,
+        border: `2px solid ${theme.bannerBorder}`,
         borderRadius: 28,
         padding: '44px 64px',
         backdropFilter: 'blur(18px)',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.75)',
+        boxShadow: theme.bannerShadow,
         minWidth: 820,
       }}
     >
       <div
         style={{
           fontSize: 18,
-          color: COLORS.muted,
+          color: theme.muted,
           letterSpacing: 3,
           textTransform: 'uppercase',
           textAlign: 'center',
@@ -773,7 +872,7 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
         style={{
           fontSize: 64,
           fontWeight: 900,
-          color: COLORS.green,
+          color: theme.green,
           textAlign: 'center',
           letterSpacing: -2,
           marginBottom: 28,
@@ -787,7 +886,7 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
           display: 'flex',
           justifyContent: 'space-between',
           gap: 40,
-          borderTop: `1px solid ${COLORS.green}30`,
+          borderTop: `1px solid ${theme.bannerAccentBorder}`,
           paddingTop: 24,
         }}
       >
@@ -795,7 +894,7 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
           <div
             style={{
               fontSize: 11,
-              color: COLORS.muted,
+              color: theme.muted,
               letterSpacing: 1.5,
               textTransform: 'uppercase',
               marginBottom: 8,
@@ -812,8 +911,8 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
               marginBottom: 6,
             }}
           >
-            <span style={{ color: COLORS.muted }}>GPT-5.4 only</span>
-            <span style={{ color: COLORS.red, fontWeight: 700 }}>
+            <span style={{ color: theme.muted }}>GPT-5.4 only</span>
+            <span style={{ color: theme.red, fontWeight: 700 }}>
               {formatUsd(monthlyGpt)}/mo
             </span>
           </div>
@@ -825,8 +924,8 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
               fontSize: 18,
             }}
           >
-            <span style={{ color: COLORS.muted }}>With Nadir</span>
-            <span style={{ color: COLORS.green, fontWeight: 700 }}>
+            <span style={{ color: theme.muted }}>With Nadir</span>
+            <span style={{ color: theme.green, fontWeight: 700 }}>
               {formatUsd(monthlyNadir)}/mo
             </span>
           </div>
@@ -835,21 +934,21 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
               marginTop: 16,
               padding: '12px 16px',
               borderRadius: 10,
-              background: 'rgba(0,232,157,0.1)',
-              border: `1px solid ${COLORS.green}40`,
+              background: theme.bannerAccentBg,
+              border: `1px solid ${theme.bannerAccentBorder}`,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
-            <span style={{ fontSize: 14, color: COLORS.white, fontWeight: 600 }}>
+            <span style={{ fontSize: 14, color: theme.textPrimary, fontWeight: 600 }}>
               You keep
             </span>
             <span
               style={{
                 fontSize: 28,
                 fontWeight: 900,
-                color: COLORS.green,
+                color: theme.green,
                 fontFamily: '"SF Mono", monospace',
                 letterSpacing: -1,
               }}
@@ -865,7 +964,7 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
           textAlign: 'center',
           marginTop: 28,
           fontSize: 16,
-          color: COLORS.cyan,
+          color: theme.cyan,
           letterSpacing: 3,
           textTransform: 'uppercase',
           fontWeight: 700,
@@ -907,7 +1006,10 @@ const Side: React.FC<{ side: 'left' | 'right'; frame: number; states: TurnState[
 // Top-level composition
 // -----------------------------------------------------------------------------
 
-export const ChatRouter: React.FC = () => {
+export type ChatRouterMode = 'dark' | 'light';
+
+export const ChatRouter: React.FC<{ mode?: ChatRouterMode }> = ({ mode = 'dark' }) => {
+  const theme = mode === 'light' ? LIGHT_THEME : DARK_THEME;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const states = computeTurnStates(frame);
@@ -917,28 +1019,30 @@ export const ChatRouter: React.FC = () => {
   });
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: COLORS.bg,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
-      }}
-    >
-      <div
+    <ThemeContext.Provider value={theme}>
+      <AbsoluteFill
         style={{
-          display: 'flex',
-          width: '100%',
-          height: '100%',
-          opacity: introOpacity,
+          backgroundColor: theme.bg,
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
         }}
       >
-        <Side side="left" frame={frame} states={states} />
-        <div style={{ width: 4, background: COLORS.divider }} />
-        <Side side="right" frame={frame} states={states} />
-      </div>
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: '100%',
+            opacity: introOpacity,
+          }}
+        >
+          <Side side="left" frame={frame} states={states} />
+          <div style={{ width: 4, background: theme.divider }} />
+          <Side side="right" frame={frame} states={states} />
+        </div>
 
-      <ResultsBanner frame={frame} fps={fps} />
-    </AbsoluteFill>
+        <ResultsBanner frame={frame} fps={fps} />
+      </AbsoluteFill>
+    </ThemeContext.Provider>
   );
 };
 

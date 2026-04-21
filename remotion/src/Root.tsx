@@ -29,6 +29,16 @@ export const RemotionRoot: React.FC = () => {
         fps={30}
         width={1920}
         height={1080}
+        defaultProps={{ mode: 'dark' as const }}
+      />
+      <Composition
+        id="ChatRouterLight"
+        component={ChatRouter}
+        durationInFrames={720}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={{ mode: 'light' as const }}
       />
     </>
   );
