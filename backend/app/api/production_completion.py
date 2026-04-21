@@ -756,7 +756,6 @@ async def create_completion(
         # when a preset slug exists so auto-injection can decide to mark repeat prompts
         # even if the client didn't send cache_control itself.
         sticky_provider: Optional[str] = None
-        has_cache_control = any(getattr(msg, "cache_control", None) for msg in request.messages)
         preset_slug = user_config.get("slug")
         if preset_slug:
             try:
@@ -917,7 +916,6 @@ async def create_completion(
                 preset_slug,
                 sticky_provider,
             ):
-                has_cache_control = True
                 logger.debug(
                     "Auto-injected cache_control for user=%s preset=%s model=%s",
                     current_user.id, preset_slug, recommended_model,
