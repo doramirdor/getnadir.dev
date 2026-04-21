@@ -43,6 +43,112 @@ def _get_model_input_cost(model: str) -> float:
     return 0.0
 
 
+# Cache-read multipliers on base input price (provider-published).
+# Used only for routing comparisons; actual billing flows through litellm.completion_cost.
+_CACHE_READ_MULTIPLIER = {
+    "anthropic": 0.1,
+    "bedrock": 0.1,
+    "openai": 0.5,
+    "google": 0.25,
+    "gemini": 0.25,
+}
+
+
+def _effective_input_cost(model: str, expect_cache_hit: bool) -> float:
+    """Input cost per token adjusted for expected cache behavior.
+
+    When expect_cache_hit is True we blend a conservative 70% hit rate against the
+    provider's cache-read multiplier. Only used to compare routing candidates — not
+    to calculate billed cost.
+    """
+    base = _get_model_input_cost(model)
+    if not expect_cache_hit or base <= 0:
+        return base
+    mult = _CACHE_READ_MULTIPLIER.get(_provider_of(model), 1.0)
+    if mult >= 1.0:
+        return base
+    hit_rate = 0.7
+    return base * ((1 - hit_rate) + hit_rate * mult)
+
+
+# Providers whose caches we can mark via cache_control.
+# (OpenAI caches automatically without markup; Gemini/others don't support it.)
+_CACHE_CONTROL_PROVIDERS = {"anthropic", "bedrock"}
+
+
+def _min_cache_tokens(model: str) -> int:
+    """Minimum prompt length for the provider to cache. Haiku needs 2048, others 1024."""
+    return 2048 if "haiku" in model.lower() else 1024
+
+
+def _approx_token_count(text: str) -> int:
+    """Cheap length-based estimate (~4 chars/token) sufficient for threshold checks."""
+    return len(text) // 4 if text else 0
+
+
+def _has_cache_control(messages_dicts: List[Dict[str, Any]]) -> bool:
+    for msg in messages_dicts:
+        if msg.get("cache_control"):
+            return True
+        content = msg.get("content")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("cache_control"):
+                    return True
+    return False
+
+
+def _maybe_inject_cache_control(
+    messages_dicts: List[Dict[str, Any]],
+    model: str,
+    user_id: str,
+    preset_slug: Optional[str],
+    sticky_provider: Optional[str],
+) -> bool:
+    """Mark the system prompt as cacheable when the math clearly wins.
+
+    Conditions (all must hold):
+      - chosen model is Anthropic or Bedrock
+      - request has no cache_control already
+      - sticky provider matches the chosen model's provider (likely warm cache)
+      - identical system prompt was seen from this (user, preset) within TTL
+      - system prompt meets the provider's min-cacheable token threshold
+
+    Mutates messages_dicts in place. Returns True if a marker was added. Always records
+    the current system prompt so a later call can detect repetition.
+    """
+    if not preset_slug or _provider_of(model) not in _CACHE_CONTROL_PROVIDERS:
+        return False
+    if _has_cache_control(messages_dicts):
+        return False
+
+    system_msg = next((m for m in messages_dicts if m.get("role") == "system"), None)
+    if not system_msg:
+        return False
+    system_text = system_msg.get("content")
+    if not isinstance(system_text, str) or not system_text:
+        return False
+    if _approx_token_count(system_text) < _min_cache_tokens(model):
+        sticky_provider_cache.record_prompt(user_id, preset_slug, system_text)
+        return False
+
+    seen = sticky_provider_cache.seen_prompt(user_id, preset_slug, system_text)
+    sticky_provider_cache.record_prompt(user_id, preset_slug, system_text)
+
+    sp_match = sticky_provider and sticky_provider.lower() == _provider_of(model)
+    if not (seen and sp_match):
+        return False
+
+    system_msg["content"] = [
+        {
+            "type": "text",
+            "text": system_text,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+    return True
+
+
 def _map_tier_to_model(
     tier_name: str,
     selected_models: List[str],
@@ -164,14 +270,20 @@ def _apply_provider_preferences(
         ordered.extend(remaining)  # append providers not in the order list
         result = ordered
 
-    # Step 3: Apply sticky provider boost (move its models to front, after order)
-    # This is a soft boost for prompt-caching affinity — refines order within the
-    # already-filtered/ordered list rather than being overwritten by it.
-    if sticky_provider:
+    # Step 3: Cache-aware affinity. Compare effective prices assuming the sticky
+    # provider is warm vs. alternatives cold; sticky wins only when its cached
+    # price actually beats the cheapest cold alternative. Stable on ties so the
+    # existing order from step 2 is preserved.
+    if sticky_provider and not (prefs and prefs.order):
         sp = sticky_provider.lower()
-        sticky_models = [m for m in result if _provider_of(m) == sp]
-        other_models = [m for m in result if _provider_of(m) != sp]
-        result = sticky_models + other_models
+        indexed = list(enumerate(result))
+
+        def _score(item):
+            idx, m = item
+            warm = _provider_of(m) == sp
+            return (_effective_input_cost(m, expect_cache_hit=warm), idx)
+
+        result = [m for _, m in sorted(indexed, key=_score)]
 
     return result
 
@@ -638,11 +750,13 @@ async def create_completion(
                     },
                 )
 
-        # P0 #4: Read sticky provider for cache-hit affinity
+        # P0 #4: Read sticky provider for cache-hit affinity. Fetched unconditionally
+        # when a preset slug exists so auto-injection can decide to mark repeat prompts
+        # even if the client didn't send cache_control itself.
         sticky_provider: Optional[str] = None
         has_cache_control = any(getattr(msg, "cache_control", None) for msg in request.messages)
         preset_slug = user_config.get("slug")
-        if has_cache_control and preset_slug:
+        if preset_slug:
             try:
                 sticky_provider = sticky_provider_cache.get(str(current_user.id), preset_slug)
                 if sticky_provider:
@@ -756,6 +870,25 @@ async def create_completion(
 
         # Build messages dicts once, preserving cache_control for prompt caching
         messages_dicts = [msg.dict(exclude_none=True) for msg in request.messages]
+
+        # Auto-inject cache_control for repeat system prompts on Anthropic/Bedrock.
+        # Guards inside the helper ensure we only mark when a cache hit is likely.
+        try:
+            preset_slug_for_cache = user_config.get("slug")
+            if _maybe_inject_cache_control(
+                messages_dicts,
+                recommended_model,
+                str(current_user.id),
+                preset_slug_for_cache,
+                sticky_provider,
+            ):
+                has_cache_control = True
+                logger.debug(
+                    "Auto-injected cache_control for user=%s preset=%s model=%s",
+                    current_user.id, preset_slug_for_cache, recommended_model,
+                )
+        except Exception as ci_err:
+            logger.debug("cache_control auto-inject skipped: %s", ci_err)
 
         # LAYER: Context Optimize — apply optimization + truncation
         # Activated by: layer setting ("safe"/"aggressive") OR per-request transforms
@@ -919,8 +1052,9 @@ async def create_completion(
                 **extra_kwargs
             )
 
-        # P0 #4: Store sticky provider after successful call (only for standard routing path)
-        if has_cache_control and preset_slug and not use_preset_router:
+        # P0 #4: Store sticky provider after any successful standard-routing call so
+        # the next request can use it for cache-aware routing and auto-injection.
+        if preset_slug and not use_preset_router:
             try:
                 actual_provider = response.get("provider", "")
                 if actual_provider and actual_provider != "unknown":
