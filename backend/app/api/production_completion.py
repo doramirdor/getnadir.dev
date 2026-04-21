@@ -45,12 +45,12 @@ def _get_model_input_cost(model: str) -> float:
 
 # Cache-read multipliers on base input price (provider-published).
 # Used only for routing comparisons; actual billing flows through litellm.completion_cost.
+# Keyed by the values extract_provider() actually returns — Claude-on-Bedrock comes back
+# as "anthropic" because the model string contains "claude".
 _CACHE_READ_MULTIPLIER = {
     "anthropic": 0.1,
-    "bedrock": 0.1,
     "openai": 0.5,
     "google": 0.25,
-    "gemini": 0.25,
 }
 
 
@@ -71,9 +71,11 @@ def _effective_input_cost(model: str, expect_cache_hit: bool) -> float:
     return base * ((1 - hit_rate) + hit_rate * mult)
 
 
-# Providers whose caches we can mark via cache_control.
+# Providers whose caches we can mark via cache_control. Claude-on-Bedrock is covered
+# by "anthropic" because extract_provider() returns "anthropic" for any model name
+# containing "claude", including bedrock/us.anthropic.claude-*.
 # (OpenAI caches automatically without markup; Gemini/others don't support it.)
-_CACHE_CONTROL_PROVIDERS = {"anthropic", "bedrock"}
+_CACHE_CONTROL_PROVIDERS = {"anthropic"}
 
 
 def _min_cache_tokens(model: str) -> int:
@@ -868,27 +870,13 @@ async def create_completion(
             system_message = preset_system_prompt
             logger.debug(f"Injected preset system_prompt for user {current_user.id}")
 
-        # Build messages dicts once, preserving cache_control for prompt caching
+        # Build messages dicts once, preserving cache_control for prompt caching.
+        # Mirror the preset-router path: if a preset system_prompt is active and no
+        # system role exists yet, insert it so downstream consumers (auto-inject,
+        # optimize, logging) all see the real system prompt.
         messages_dicts = [msg.dict(exclude_none=True) for msg in request.messages]
-
-        # Auto-inject cache_control for repeat system prompts on Anthropic/Bedrock.
-        # Guards inside the helper ensure we only mark when a cache hit is likely.
-        try:
-            preset_slug_for_cache = user_config.get("slug")
-            if _maybe_inject_cache_control(
-                messages_dicts,
-                recommended_model,
-                str(current_user.id),
-                preset_slug_for_cache,
-                sticky_provider,
-            ):
-                has_cache_control = True
-                logger.debug(
-                    "Auto-injected cache_control for user=%s preset=%s model=%s",
-                    current_user.id, preset_slug_for_cache, recommended_model,
-                )
-        except Exception as ci_err:
-            logger.debug("cache_control auto-inject skipped: %s", ci_err)
+        if preset_system_prompt and not any(m.get("role") == "system" for m in messages_dicts):
+            messages_dicts.insert(0, {"role": "system", "content": preset_system_prompt})
 
         # LAYER: Context Optimize — apply optimization + truncation
         # Activated by: layer setting ("safe"/"aggressive") OR per-request transforms
@@ -916,6 +904,26 @@ async def create_completion(
                     (optimize_result.tokens_saved / max(optimize_result.original_tokens, 1)) * 100,
                     ", ".join(optimize_result.optimizations_applied),
                 )
+
+        # Auto-inject cache_control for repeat system prompts on Anthropic/Bedrock.
+        # Runs AFTER optimize so the content string we hash and mark matches exactly
+        # what the provider sees. Guards inside the helper ensure we only mark when
+        # a cache hit is likely (repeat + sticky match + min-token threshold).
+        try:
+            if _maybe_inject_cache_control(
+                messages_dicts,
+                recommended_model,
+                str(current_user.id),
+                preset_slug,
+                sticky_provider,
+            ):
+                has_cache_control = True
+                logger.debug(
+                    "Auto-injected cache_control for user=%s preset=%s model=%s",
+                    current_user.id, preset_slug, recommended_model,
+                )
+        except Exception as ci_err:
+            logger.debug("cache_control auto-inject skipped: %s", ci_err)
 
         # Determine routing strategy
         sort_strategy = user_config.get("sort_strategy", "smart-routing")
