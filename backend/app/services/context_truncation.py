@@ -383,24 +383,89 @@ def truncate_middle_out(
         tail = remaining
         middle = []
 
-    # Drop messages from the front of middle until we fit.
-    # Incremental approach: compute head+tail tokens once, track middle running total.
+    # Drop messages from the front of middle until we fit, but keep a reference
+    # to what was dropped so we can inject a compact breadcrumb afterwards.
     head_tail_tokens = _count_tokens(model, head + tail)
     middle_tokens = _count_tokens(model, middle) if middle else 0
+    dropped_msgs: List[Dict[str, Any]] = []
 
     while middle and (head_tail_tokens + middle_tokens) > target_tokens:
         dropped_msg_tokens = _count_tokens(model, [middle[0]])
         middle_tokens -= dropped_msg_tokens
+        dropped_msgs.append(middle[0])
         middle = middle[1:]
 
-    result = head + middle + tail
-    final_tokens = head_tail_tokens + middle_tokens
+    # If we dropped anything, replace it with a single compressed "recap"
+    # system message so the model still has breadcrumbs from older turns.
+    # Drop additional middle turns if needed to make room for the recap.
+    recap_included = False
+    recap_msg = _build_recap_message(dropped_msgs) if dropped_msgs else None
+    if recap_msg is not None:
+        recap_tokens = _count_tokens(model, [recap_msg])
+        while middle and (head_tail_tokens + middle_tokens + recap_tokens) > target_tokens:
+            dropped_msg_tokens = _count_tokens(model, [middle[0]])
+            middle_tokens -= dropped_msg_tokens
+            dropped_msgs.append(middle[0])
+            middle = middle[1:]
+            recap_msg = _build_recap_message(dropped_msgs)
+            recap_tokens = _count_tokens(model, [recap_msg])
 
-    dropped = len(messages) - len(result)
+        if head_tail_tokens + middle_tokens + recap_tokens <= target_tokens:
+            result = head + [recap_msg] + middle + tail
+            final_tokens = head_tail_tokens + middle_tokens + recap_tokens
+            recap_included = True
+        else:
+            # Recap still doesn't fit even with all middle gone — skip it.
+            result = head + middle + tail
+            final_tokens = head_tail_tokens + middle_tokens
+    else:
+        result = head + middle + tail
+        final_tokens = head_tail_tokens + middle_tokens
+
+    dropped = len(dropped_msgs)
     if dropped > 0:
         logger.info(
-            "truncate_middle_out: dropped %d messages (%d -> %d), final tokens=%d",
-            dropped, len(messages), len(result), final_tokens,
+            "truncate_middle_out: dropped %d messages (%d -> %d, recap=%s), final tokens=%d",
+            dropped, len(messages), len(result),
+            "yes" if recap_included else "no",
+            final_tokens,
         )
 
     return result
+
+
+# Max chars per dropped turn when building the recap. Keeps the recap bounded
+# regardless of how large individual dropped messages were.
+_RECAP_SNIPPET_CHARS = 160
+_RECAP_MAX_TURNS = 20
+
+
+def _build_recap_message(dropped: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Build a single system message summarizing dropped middle turns.
+
+    Deterministic (no LLM call). Keeps the first and last snippets of each
+    dropped turn so named entities, file paths, and numbers survive.
+    """
+    if not dropped:
+        return None
+
+    lines: List[str] = [
+        f"[Context recap — {len(dropped)} earlier turn(s) trimmed to fit window]:"
+    ]
+    shown = dropped[:_RECAP_MAX_TURNS]
+    for msg in shown:
+        role = msg.get("role", "user")
+        content = str(msg.get("content", "")).strip()
+        if len(content) > _RECAP_SNIPPET_CHARS:
+            half = _RECAP_SNIPPET_CHARS // 2
+            snippet = content[: half].strip() + " … " + content[-half:].strip()
+        else:
+            snippet = content
+        snippet = re.sub(r"\s+", " ", snippet)
+        lines.append(f"- {role}: {snippet}")
+
+    if len(dropped) > _RECAP_MAX_TURNS:
+        lines.append(f"- (+{len(dropped) - _RECAP_MAX_TURNS} more turns omitted)")
+
+    return {"role": "system", "content": "\n".join(lines)}

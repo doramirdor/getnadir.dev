@@ -83,23 +83,26 @@ def main() -> None:
         preview = m["content"][:60].replace("\n", " ")
         print(f"  [{i}] {m['role']:9s} | {preview}")
 
-    print_section("4. WHAT GOT DROPPED vs KEPT")
-    kept_contents = {m["content"] for m in truncated}
-    dropped = [m for m in big_convo if m["content"] not in kept_contents]
-    print(f"Kept:    {len(truncated)} (head anchors + last 2)")
-    print(f"Dropped: {len(dropped)} (middle turns)")
-    if dropped:
-        print("\nDropped message roles (oldest-first):")
-        for m in dropped:
-            preview = m["content"][:50].replace("\n", " ")
-            print(f"  - {m['role']:9s} | {preview}")
+    print_section("4. RECAP MESSAGE INJECTED FOR DROPPED TURNS")
+    recap = next(
+        (m for m in truncated
+         if m["role"] == "system" and m["content"].startswith("[Context recap")),
+        None,
+    )
+    if recap:
+        print("A synthetic system message was inserted so the model still sees")
+        print("what earlier turns were about:\n")
+        print(recap["content"])
+    else:
+        print("No recap was generated (nothing was dropped).")
 
     print_section("SUMMARY")
     print("- Payload format: JSON body with a 'messages' array (OpenAI schema).")
     print("- Client is responsible for replaying the full history each turn.")
     print("- If it fits the context window: the model sees EVERY prior turn.")
     print("- If it doesn't fit: middle-out truncation keeps system + first")
-    print("  user message + last 2 messages; drops oldest middle turns first.")
+    print("  user message + last 2 messages, and injects a deterministic recap")
+    print("  system message summarizing the dropped middle turns.")
 
 
 if __name__ == "__main__":
