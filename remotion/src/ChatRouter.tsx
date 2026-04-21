@@ -9,7 +9,7 @@ import {
 
 // -----------------------------------------------------------------------------
 // Story: same customer support conversation runs on two backends simultaneously.
-// Left  = GPT-5.4 high-reasoning on every turn (no routing, always-flagship).
+// Left  = hand-tiered GPT stack (GPT-5-mini / GPT-5.2 / GPT-5.4 per tier).
 // Right = Nadir routes each turn to the right tier (Haiku / Sonnet / Opus).
 // The cost accumulators on each side diverge in real time.
 // -----------------------------------------------------------------------------
@@ -25,26 +25,32 @@ interface Turn {
   costNadir: number;
 }
 
+// Per-turn cost (USD). Both columns reflect the same *tier-appropriate*
+// model on each side — cheap for simple, mid for mid, flagship for complex.
+// Left column: the OpenAI ladder (GPT-5-mini / GPT-5.2 / GPT-5.4).
+// Right column: what Nadir auto-routes to on the Claude ladder.
+// Story: even a hand-tiered GPT stack costs meaningfully more than Nadir
+// auto-routing Claude, turn for turn.
 const TURNS: Turn[] = [
   {
     user: 'Hi 👋',
     bot: 'Hi there! How can I help you today?',
     tier: 'simple',
-    costGpt: 0.0012,
+    costGpt: 0.00012,
     costNadir: 0.00008,
   },
   {
     user: "What's the status of my order #4829?",
     bot: "Out for delivery, arriving Thursday by 5pm.\nTracking: 1Z45A2FG8Q",
     tier: 'simple',
-    costGpt: 0.0043,
+    costGpt: 0.00055,
     costNadir: 0.00038,
   },
   {
     user: 'Can I change the shipping address?',
     bot: "Yes, as long as it hasn't been handed to the courier. What's the new address?",
     tier: 'mid',
-    costGpt: 0.0081,
+    costGpt: 0.0045,
     costNadir: 0.00284,
   },
   {
@@ -53,7 +59,7 @@ const TURNS: Turn[] = [
     bot:
       "Found it. Your card update triggered a re-auth before the old charge settled, a classic double-pull.\nI'm refunding $99 to the Visa (5 to 7 business days) and flagging your account so this can't repeat. Anything else?",
     tier: 'complex',
-    costGpt: 0.0312,
+    costGpt: 0.0485,
     costNadir: 0.0118,
   },
 ];
@@ -230,11 +236,20 @@ const useTheme = () => React.useContext(ThemeContext);
 const tierColor = (theme: Theme, tier: Tier): string =>
   tier === 'simple' ? theme.tierSimple : tier === 'mid' ? theme.tierMid : theme.tierComplex;
 
-const TIER_MODEL: Record<Tier, string> = {
+const NADIR_MODEL: Record<Tier, string> = {
   simple: 'Haiku',
   mid: 'Sonnet',
   complex: 'Opus',
 };
+
+const GPT_MODEL: Record<Tier, string> = {
+  simple: 'GPT-5-mini',
+  mid: 'GPT-5.2',
+  complex: 'GPT-5.4',
+};
+
+// Backwards-compat alias: Nadir side used to be the only tiered column.
+const TIER_MODEL = NADIR_MODEL;
 
 const TIER_LABEL: Record<Tier, string> = {
   simple: 'SIMPLE',
@@ -504,7 +519,7 @@ const CostPanel: React.FC<{
         ? {
             index: i,
             turn,
-            model: isRight ? TIER_MODEL[turn.tier] : 'GPT-5.4',
+            model: isRight ? NADIR_MODEL[turn.tier] : GPT_MODEL[turn.tier],
             amount: isRight ? turn.costNadir : turn.costGpt,
             highlighted,
           }
@@ -560,8 +575,8 @@ const CostPanel: React.FC<{
             </span>
             <span style={{ fontSize: 12, color: theme.muted, marginTop: 2 }}>
               {isRight
-                ? 'Route each turn to the right tier'
-                : 'GPT-5.4 high-reasoning on every turn'}
+                ? 'Nadir auto-routes on the Claude ladder'
+                : 'Hand-tiered on the OpenAI ladder'}
             </span>
           </div>
         </div>
@@ -661,7 +676,7 @@ const CostPanel: React.FC<{
                 </span>
               )}
               <span style={{ flex: 1, color: appeared ? theme.mutedLight : theme.rowDisabled }}>
-                {appeared ? (isRight ? TIER_MODEL[turn.tier] : 'GPT-5.4') : '—'}
+                {appeared ? (isRight ? NADIR_MODEL[turn.tier] : GPT_MODEL[turn.tier]) : '—'}
               </span>
               <span
                 style={{
@@ -911,7 +926,7 @@ const ResultsBanner: React.FC<{ frame: number; fps: number }> = ({ frame, fps })
               marginBottom: 6,
             }}
           >
-            <span style={{ color: theme.muted }}>GPT-5.4 only</span>
+            <span style={{ color: theme.muted }}>OpenAI stack</span>
             <span style={{ color: theme.red, fontWeight: 700 }}>
               {formatUsd(monthlyGpt)}/mo
             </span>
