@@ -70,8 +70,8 @@ export function QuickstartContent() {
           <a href="/auth?mode=signup" className="text-primary underline underline-offset-2">
             getnadir.com/auth
           </a>
-          . The free tier gives you 15 requests/day with your own API keys (BYOK).
-          Subscribe to Pro for unlimited requests and hosted keys.
+          . The free tier gives you 50 requests/month on shared keys, unlimited with BYOK.
+          After 50, Pro kicks in at $9/mo plus a variable savings fee (cancel anytime).
         </P>
       </div>
 
@@ -1688,7 +1688,7 @@ export function ProFeaturesContent() {
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-semibold text-foreground">Free (Hosted)</td>
                 <td className="px-4 py-3">Free</td>
-                <td className="px-4 py-3">Hosted proxy, 15 requests/day (BYOK only), web dashboard, intelligent routing</td>
+                <td className="px-4 py-3">Hosted proxy, 50 requests/month on shared keys (unlimited with BYOK), web dashboard, intelligent routing</td>
               </tr>
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-semibold text-foreground">Pro</td>

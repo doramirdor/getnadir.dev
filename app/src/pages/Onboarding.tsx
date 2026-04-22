@@ -379,9 +379,9 @@ console.log(response.choices[0].message.content);`;
           {/* ═══ STEP 0: Subscribe (Pro trial first — this is the default path) ═══ */}
           {currentStep === 0 && (
             <div className="space-y-5">
-              <h2 className="text-lg font-semibold text-foreground">Start your 30-day Pro trial</h2>
+              <h2 className="text-lg font-semibold text-foreground">Start free, pay after 50 requests</h2>
               <p className="text-sm text-muted-foreground">
-                Full Pro access for 30 days. No credit card required to sign up. We only earn when we cut your bill.
+                Full Pro access from the first request. Cancel anytime. We only earn when we cut your bill.
               </p>
 
               {/* Promo highlight */}

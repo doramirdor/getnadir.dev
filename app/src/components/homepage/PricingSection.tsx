@@ -27,7 +27,7 @@ const TIERS: Tier[] = [
     blurb: "Perfect for side projects and trying Nadir out.",
     features: [
       "Hosted proxy (api.getnadir.com)",
-      "Fifteen requests per day on our keys",
+      "50 requests per month on our keys",
       "Unlimited with BYOK",
       "Intelligent routing",
       "Dashboard and analytics",
@@ -39,7 +39,7 @@ const TIERS: Tier[] = [
   {
     name: "Pro",
     price: "$9",
-    period: "per month after 30-day trial, plus variable savings fee",
+    period: "per month, plus variable savings fee",
     blurb: "For production teams routing real traffic.",
     features: [
       "Everything in Free, no request cap",
@@ -49,7 +49,7 @@ const TIERS: Tier[] = [
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start 30-day trial",
+    cta: "Start free, pay after 50 requests",
     ctaType: "signup",
     highlighted: true,
   },

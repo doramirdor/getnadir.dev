@@ -168,14 +168,15 @@ nadirclaw optimize payload.json`}
           </div>
           <div className="p-6 rounded-xl border-2 border-[#0066ff] bg-white">
             <h3 className="font-semibold mb-1">Nadir Pro (Hosted)</h3>
-            <p className="text-xs text-[#999] mb-4">$9/mo + savings fee</p>
+            <p className="text-xs text-[#999] mb-4">50 free req/mo, then $9/mo + savings fee</p>
             <ul className="space-y-2">
               {[
                 "Everything in self-host",
+                "50 requests/month free on our keys",
+                "Pay-per-savings after 50 (cancel anytime)",
                 "Hosted proxy, zero setup",
                 "Web dashboard and analytics",
                 "Semantic cache and dedup",
-                "Use our keys or bring your own",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-[#444]">
                   <Check className="w-4 h-4 text-[#0066ff] shrink-0" /> {f}

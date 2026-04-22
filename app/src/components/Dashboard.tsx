@@ -8,6 +8,7 @@ import { UsageChart } from "@/components/UsageChart";
 import { LatencyChart } from "@/components/LatencyChart";
 import { RecentActivity } from "@/components/RecentActivity";
 import { TopModels } from "@/components/TopModels";
+import { DailyQuotaBar } from "@/components/DailyQuotaBar";
 
 export const Dashboard = () => {
   const [liveEvents, setLiveEvents] = useState<any[]>([]);
@@ -84,6 +85,9 @@ export const Dashboard = () => {
           </span>
         </div>
       </div>
+
+      {/* Daily free-trial quota */}
+      <DailyQuotaBar />
 
       {/* Metrics Grid */}
       <MetricsGrid />

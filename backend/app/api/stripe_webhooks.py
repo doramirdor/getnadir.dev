@@ -199,6 +199,22 @@ async def _handle_checkout_session_completed(data: dict) -> None:
         "Checkout completed: user=%s subscription=%s", user_id, subscription_id
     )
 
+    # Server-side conversion event. Pairs with the client-side
+    # `checkout_start` to close the funnel. The browser PostHog snippet
+    # can't see this moment because the user is on checkout.stripe.com
+    # when Stripe confirms payment.
+    await posthog_client.capture(
+        distinct_id=user_id,
+        event="checkout_success",
+        properties={
+            "plan": "pro",
+            "subscription_id": subscription_id,
+            "session_id": session.get("id"),
+            "amount_total": session.get("amount_total"),
+            "currency": session.get("currency"),
+        },
+    )
+
 
 async def _handle_subscription_created(data: dict) -> None:
     """Handle customer.subscription.created."""
@@ -216,6 +232,8 @@ async def _handle_subscription_created(data: dict) -> None:
 
     user_id = customer_row.data[0]["user_id"]
 
+    plan = _plan_from_subscription(sub)
+
     await _upsert_subscription_tables(
         user_id=user_id,
         customer_id=customer_id,
@@ -224,10 +242,30 @@ async def _handle_subscription_created(data: dict) -> None:
         period_start_epoch=_period(sub, "current_period_start"),
         period_end_epoch=_period(sub, "current_period_end"),
         cancel_at_period_end=sub.get("cancel_at_period_end", False),
-        plan=_plan_from_subscription(sub),
+        plan=plan,
     )
 
     logger.info("Subscription created: user=%s sub=%s status=%s", user_id, subscription_id, sub_status)
+
+    # Funnel event — user is now a paying subscriber. `checkout_success`
+    # fires first (payment confirmed); this fires right after with the
+    # plan + billing interval attached so we can segment the cohort.
+    items = (sub.get("items") or {}).get("data") or []
+    price = items[0].get("price", {}) if items else {}
+    recurring = price.get("recurring") or {}
+    await posthog_client.capture(
+        distinct_id=user_id,
+        event="subscription_created",
+        properties={
+            "plan": plan,
+            "status": sub_status,
+            "subscription_id": subscription_id,
+            "price_id": price.get("id"),
+            "billing_interval": recurring.get("interval"),
+            "unit_amount": price.get("unit_amount"),
+            "currency": price.get("currency"),
+        },
+    )
 
 
 async def _handle_subscription_deleted(data: dict) -> None:
@@ -256,6 +294,21 @@ async def _handle_subscription_deleted(data: dict) -> None:
     ).eq("stripe_subscription_id", subscription_id).execute())
 
     logger.info("Subscription deleted: user=%s sub=%s", user_id, subscription_id)
+
+    # Final churn signal — subscription is actually terminated, not just
+    # scheduled to cancel at period end. Captures cancellation reasons
+    # provided via Stripe Billing Portal when available.
+    cancellation = sub.get("cancellation_details") or {}
+    await posthog_client.capture(
+        distinct_id=user_id,
+        event="subscription_canceled",
+        properties={
+            "subscription_id": subscription_id,
+            "reason": cancellation.get("reason"),
+            "feedback": cancellation.get("feedback"),
+            "canceled_at": sub.get("canceled_at"),
+        },
+    )
 
 
 async def _handle_invoice_paid(data: dict) -> None:

@@ -25,7 +25,7 @@ const TIERS: Tier[] = [
     blurb: "Perfect for side projects and trying Nadir out.",
     features: [
       "Hosted proxy (api.getnadir.com)",
-      "Fifteen requests per day on our keys",
+      "50 requests per month on our keys",
       "Unlimited with BYOK",
       "Intelligent routing",
       "Dashboard and analytics",
@@ -48,7 +48,7 @@ const TIERS: Tier[] = [
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start 30-day free trial",
+    cta: "Start free, pay after 50 requests",
     ctaAction: "link",
     ctaLink: "/auth?mode=signup",
     highlighted: true,
@@ -132,7 +132,7 @@ export default function Pricing() {
         name: "Free",
         price: "0",
         priceCurrency: "USD",
-        description: "Hosted proxy with BYOK, 15 requests per day on shared keys, dashboard, and analytics.",
+        description: "Hosted proxy with BYOK, 50 requests per month on shared keys, dashboard, and analytics.",
         url: "https://getnadir.com/auth?mode=signup",
       },
       {

@@ -22,7 +22,7 @@ export const BottomCta = () => {
             </button>
           </SignupDialog>
           <p className="text-[13px] text-[#86868b] m-0 tracking-[-0.01em]">
-            No credit card. Cancel anytime.
+            Cancel anytime.
           </p>
         </div>
       </div>

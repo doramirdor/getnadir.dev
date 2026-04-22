@@ -111,7 +111,7 @@ export const HeroSection = () => {
           </a>
         </div>
         <p className="text-[13px] text-[#86868b] mb-3">
-          Free to start. No credit card. Bring your own keys.
+          Free to start. Cancel anytime. Bring your own keys.
         </p>
         <p className="text-[12px] text-[#86868b] mb-16 md:mb-20 tracking-[-0.005em]">
           One URL &middot; OpenAI compatible &middot; Open source

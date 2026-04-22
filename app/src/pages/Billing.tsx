@@ -281,7 +281,7 @@ function ProjectedSavingsHero({
               disabled={subscribing}
               className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
-              {subscribing ? "Opening checkout…" : "or upgrade to Pro now — $9/mo"}
+              {subscribing ? "Opening checkout…" : "or upgrade to Pro now, $9/mo"}
             </button>
           </div>
         </div>
@@ -543,7 +543,7 @@ const Billing = () => {
           >
             <div>
               <p className="text-sm font-medium text-[hsl(var(--ok-strong))]">
-                You saved <span className="mono">${formatUSD(currentSavings)}</span> vs always-Opus &mdash; spent <span className="mono">${formatUSD(currentSpent)}</span>
+                You saved <span className="mono">${formatUSD(currentSavings)}</span> vs always-complex, spent <span className="mono">${formatUSD(currentSpent)}</span>
               </p>
               <p className="text-xs text-[hsl(var(--ok))]">
                 Net after <span className="mono">${formatUSD(fee.variable)}</span> variable fee: <b className="mono">${formatUSD(netSavings)}</b>
@@ -762,7 +762,10 @@ const Billing = () => {
                   <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Hosted proxy (api.getnadir.com)
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> 15 requests/day (BYOK only)
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> 50 requests/month on shared keys
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Unlimited with BYOK
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Intelligent routing
