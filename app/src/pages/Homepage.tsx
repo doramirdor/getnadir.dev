@@ -19,8 +19,8 @@ const Homepage = () => {
   return (
     <MarketingLayout>
       <SEO
-        title="Nadir: Cut your LLM bill up to 40%"
-        description="Nadir routes every prompt to the cheapest model that can handle it. OpenAI compatible. Open source. Cut your Claude, GPT, and Gemini spend with a two-line change."
+        title="Nadir: Cut your LLM bill up to 47%"
+        description="Nadir routes every prompt to the cheapest model that can handle it. OpenAI compatible. Open source. Cut your Claude, GPT, and Gemini spend by up to 47% with a two-line change."
         path="/"
       />
       <HeroSection />

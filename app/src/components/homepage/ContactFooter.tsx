@@ -41,7 +41,7 @@ export const ContactFooter = () => {
               </span>
             </div>
             <p className="text-[12px] text-[#6e6e73] m-0 leading-[1.55] max-w-[260px]">
-              Intelligent LLM router. Open source. Cut API costs up to 40%.
+              Intelligent LLM router. Open source. Cut API costs up to 47%.
             </p>
           </div>
           {Object.entries(GROUPS).map(([title, links]) => (

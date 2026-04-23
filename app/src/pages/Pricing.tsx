@@ -124,7 +124,7 @@ export default function Pricing() {
     "@type": "Product",
     name: "Nadir",
     description:
-      "Intelligent LLM router that cuts Claude, GPT, and Gemini API costs up to 40 percent with automatic prompt-level model selection.",
+      "Intelligent LLM router that cuts Claude, GPT, and Gemini API costs up to 47 percent with automatic prompt-level model selection.",
     brand: { "@type": "Brand", name: "Nadir" },
     offers: [
       {
@@ -301,7 +301,7 @@ export default function Pricing() {
       <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
           {[
-            { value: "Up to 40%", label: "Cost savings on a realistic prompt mix." },
+            { value: "Up to 47%", label: "Cost savings on a realistic prompt mix." },
             { value: "96%", label: "Routing accuracy on our 50-prompt benchmark." },
             { value: "< 10 ms", label: "Classifier overhead. Faster than a DNS lookup." },
           ].map((s, i) => (

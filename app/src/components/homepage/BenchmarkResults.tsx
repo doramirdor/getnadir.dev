@@ -51,7 +51,7 @@ export const BenchmarkResults = () => {
         {/* Hero stats */}
         <div className="grid md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-8 md:mb-16">
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 40%</div>
+            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 47%</div>
             <div className="text-sm text-[#666]">cost savings</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">

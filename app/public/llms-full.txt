@@ -2,7 +2,7 @@
 
 > Nadir is an open-source, intelligent LLM router. It classifies every prompt
 > by complexity and routes it to the cheapest model that can still handle
-> it. Teams cut their Claude, GPT, and Gemini spend by up to 40 percent
+> it. Teams cut their Claude, GPT, and Gemini spend by up to 47 percent
 > without changing application code.
 
 This is the full-content version of https://getnadir.com/llms.txt, written
@@ -228,8 +228,9 @@ LangChain, OpenAI SDK, Anthropic SDK (via drop-in base URL).
 ## Key facts at a glance
 
 - License: MIT (NadirClaw core). Proprietary (hosted platform).
-- Typical savings: up to 40 percent on a realistic prompt mix. 38
-  percent average on our 50-prompt benchmark.
+- Typical savings: up to 47 percent on a realistic prompt mix (Wide &
+  Deep asymmetric classifier vs always-Opus, 0 percent catastrophic
+  routes). 38 percent average on our 50-prompt benchmark.
 - Routing accuracy: 96 percent agreement with human labels.
 - Classifier overhead: under 10 ms per request.
 - Input token reduction (Context Optimize): 29 to 71 percent measured.
