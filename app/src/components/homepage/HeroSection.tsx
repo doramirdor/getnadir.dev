@@ -83,21 +83,10 @@ export const HeroSection = () => {
   return (
     <section className="pt-20 md:pt-32 pb-16 md:pb-20 text-center">
       <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
-        {/* Concrete benchmark eyebrow. 47% is the verified number from our
-            Wide & Deep asym λ=20 eval vs always-Opus, 0% catastrophic routes.
-            Replace "47%" with an aggregate of real customer savings once we
-            have enough signal in savings_tracking to anonymize. */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-[#028a3e]/[0.08] border border-[#028a3e]/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#028a3e]" />
-          <span className="text-[12px] font-semibold text-[#028a3e] tracking-[-0.005em]">
-            47% average savings on our benchmark &middot; 0% catastrophic routes
-          </span>
-        </div>
-
         <h1 className="text-[44px] sm:text-[64px] md:text-[80px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 max-w-[920px] mx-auto text-[#1d1d1f]">
           Cut your LLM bill
           <br />
-          <span className="text-[#86868b]">by 47%.</span>
+          <span className="text-[#86868b]">up to 47%.</span>
         </h1>
 
         <p className="text-lg md:text-[21px] text-[#424245] max-w-[620px] mx-auto mb-11 leading-[1.42] tracking-[-0.01em]">
