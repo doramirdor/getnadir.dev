@@ -49,7 +49,7 @@ const TIERS: Tier[] = [
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start free, pay after 50 requests",
+    cta: "Start with 1 month free",
     ctaType: "signup",
     highlighted: true,
   },

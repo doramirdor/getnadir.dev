@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { trackAuthSuccess } from '@/utils/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -33,7 +34,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       case 'SIGNED_IN':
       case 'INITIAL_SESSION':
-        // Normal sign-in flow.
+        // Central PostHog identify point. Per-page callers (Auth.tsx email
+        // signin, AuthCallback.tsx OAuth) previously raced the Supabase URL
+        // hash exchange and silently dropped identify on OAuth returns,
+        // leaving those users as anonymous PostHog distinct_ids. Because
+        // `person_profiles: 'identified_only'` is set in index.html, no
+        // identify means no person row and the user becomes invisible in
+        // the funnel. Firing here guarantees identify on every sign-in
+        // path. trackAuthSuccess is idempotent per (userId, tab session)
+        // via sessionStorage so per-page callers don't double-capture.
+        if (newSession?.user) {
+          const provider =
+            (newSession.user.app_metadata?.provider as string | undefined) ?? 'email';
+          trackAuthSuccess(provider, newSession.user.id);
+        }
         break;
 
       default:

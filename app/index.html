@@ -62,7 +62,55 @@
         var h = window.location.hostname;
         var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '[::1]' || h.endsWith('.local');
         if (isLocal) return;
-        posthog.init('phc_OK7tEfer6lcaiok8bcsssUGcqi4Sapsx57wOl6VsI4x',{api_host:'https://us.i.posthog.com', person_profiles: 'identified_only'})
+
+        // Strip sensitive data from URLs before PostHog captures it.
+        // Supabase OAuth redirects to /auth/callback with the access_token,
+        // refresh_token, and provider_token in the URL hash. Without this
+        // scrubber those live credentials get captured verbatim on every
+        // $pageview, which is effectively a credential leak to our analytics
+        // vendor. Strip the hash (and the ?code= query param that the PKCE
+        // flow uses) for any auth-related path. Also scrub Stripe Checkout
+        // return URLs which contain session_id.
+        function sanitizeUrl(url) {
+          if (!url || typeof url !== 'string') return url;
+          try {
+            var u = new URL(url);
+            var p = u.pathname || '';
+            if (p.indexOf('/auth/callback') === 0 || p.indexOf('/auth') === 0) {
+              u.hash = '';
+              // PKCE flow uses ?code=...&state=...; both are sensitive.
+              u.searchParams.delete('code');
+              u.searchParams.delete('state');
+              u.searchParams.delete('access_token');
+              u.searchParams.delete('refresh_token');
+              u.searchParams.delete('token');
+            }
+            // Stripe Checkout return URL carries session_id (usable by anyone
+            // with the publishable key to look up the customer). Not as hot
+            // as a JWT but still not for analytics.
+            u.searchParams.delete('session_id');
+            return u.toString();
+          } catch (_) {
+            return url;
+          }
+        }
+
+        posthog.init('phc_OK7tEfer6lcaiok8bcsssUGcqi4Sapsx57wOl6VsI4x', {
+          api_host: 'https://us.i.posthog.com',
+          person_profiles: 'identified_only',
+          // PostHog's recommended hook for redacting property values before
+          // they leave the browser. Applies to every event, including
+          // autocaptured $pageview / $pageleave / $autocapture.
+          sanitize_properties: function (properties) {
+            if (properties && properties.$current_url) {
+              properties.$current_url = sanitizeUrl(properties.$current_url);
+            }
+            if (properties && properties.$referrer) {
+              properties.$referrer = sanitizeUrl(properties.$referrer);
+            }
+            return properties;
+          },
+        });
       })();
     </script>
 

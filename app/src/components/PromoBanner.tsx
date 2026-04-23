@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
+import { SignupDialog } from "@/components/marketing/SignupDialog";
 
 const DISMISS_KEY = "nadir_promo_banner_dismissed";
 
@@ -27,12 +28,18 @@ export default function PromoBanner() {
           </code>
           {" "}at checkout
         </span>
-        <Link
-          to="/auth?mode=signup"
-          className="inline-flex items-center px-3 py-1 bg-white text-[#0a0a0a] text-xs font-semibold rounded-md hover:bg-gray-100 transition-colors no-underline ml-1"
-        >
-          Get started
-        </Link>
+        {/* Opens the SignupDialog modal in place rather than full-page navigating
+            to /auth. Keeps the homepage context (incl. campaign referrer) and
+            cuts a load off the signup flow — the biggest drop in our funnel is
+            homepage → auth page. */}
+        <SignupDialog ctaLabel="promo_get_started" ctaLocation="promo_banner">
+          <button
+            type="button"
+            className="inline-flex items-center px-3 py-1 bg-white text-[#0a0a0a] text-xs font-semibold rounded-md hover:bg-gray-100 transition-colors ml-1 border-0 cursor-pointer"
+          >
+            Get started
+          </button>
+        </SignupDialog>
         <Link
           to="/terms#promotions"
           className="text-white/60 text-xs hover:text-white/80 transition-colors no-underline ml-1"

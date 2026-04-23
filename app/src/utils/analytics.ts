@@ -69,6 +69,22 @@ export const trackAuthAttempt = (method: "email" | "google" | "github", mode: "s
   capture("auth_attempt", { method, mode, ...getStoredAttribution() });
 
 export const trackAuthSuccess = (method: string, userId: string) => {
+  // Idempotent per (userId, tab session). The central AuthProvider listener
+  // fires this on every SIGNED_IN / INITIAL_SESSION as a safety net for OAuth
+  // signups where the per-page caller races the Supabase hash exchange; the
+  // guard ensures returning-user page loads and per-page callers don't
+  // double-capture auth_success for the same identity in one tab.
+  if (typeof window !== "undefined") {
+    try {
+      const key = `nadir_auth_tracked_${userId}`;
+      if (window.sessionStorage.getItem(key)) return;
+      window.sessionStorage.setItem(key, "1");
+    } catch {
+      // sessionStorage disabled (private mode, corporate policy). Fall
+      // through and fire anyway — a duplicate capture is cheaper than a
+      // silent drop.
+    }
+  }
   const attribution = getStoredAttribution();
   // Set person properties with $set_once so first-touch attribution sticks
   // across future sessions (later signups from the same user cannot overwrite).

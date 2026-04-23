@@ -376,71 +376,65 @@ console.log(response.choices[0].message.content);`;
       {/* Step Content */}
       <Card className="clean-card">
         <CardContent className="pt-6 space-y-4">
-          {/* ═══ STEP 0: Subscribe (Pro trial first — this is the default path) ═══ */}
+          {/* ═══ STEP 0: Default to Free, Pro trial is secondary (Option A) ═══
+              Free tier already delivers the core product (routing, dashboard,
+              analytics, unlimited BYOK). Defaulting here removes the Stripe
+              Checkout card wall that was the #1 abandonment point — users get
+              into the dashboard, make their first call, see real savings, then
+              we upsell Pro with their own data as the pitch. */}
           {currentStep === 0 && (
             <div className="space-y-5">
-              <h2 className="text-lg font-semibold text-foreground">Start free, pay after 50 requests</h2>
+              <h2 className="text-lg font-semibold text-foreground">Welcome — let's get you routing</h2>
               <p className="text-sm text-muted-foreground">
-                Full Pro access from the first request. Cancel anytime. We only earn when we cut your bill.
+                You're on the Free plan. Make your first call, see real savings in the dashboard, upgrade to Pro when it's worth it.
               </p>
 
-              {/* Promo highlight */}
-              <div className="p-5 bg-primary/5 border-2 border-primary/20 rounded-xl text-center space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
-                  <Gift className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold text-primary">30-day Pro trial</span>
+              {/* What's included on Free */}
+              <div className="p-5 bg-primary/5 border border-primary/15 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">Free plan &middot; active now</span>
+                  <span className="text-xs text-muted-foreground">Cancel anytime</span>
                 </div>
-                <div>
-                  <p className="text-3xl font-bold text-foreground">
-                    <span className="line-through text-muted-foreground text-lg mr-2">$9/mo</span>
-                    $0
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    for your first 30 days. Only pay for what we save you after that.
-                  </p>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                  <code className="bg-muted px-2 py-0.5 rounded font-mono font-bold">FIRST1</code>
-                  <span>applied automatically</span>
+                <div className="space-y-2">
+                  {[
+                    "Hosted proxy on api.getnadir.com",
+                    "Intelligent routing across all major LLM providers",
+                    "Unlimited requests with your own API keys (BYOK)",
+                    "50 requests/mo on our shared keys",
+                    "Web dashboard with real savings analytics",
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="w-4 h-4 text-primary shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* What's included */}
-              <div className="space-y-2">
-                {[
-                  "Intelligent routing across all major LLM providers",
-                  "Web dashboard with real-time analytics",
-                  "Context optimization to reduce token costs",
-                  "Automatic fallback chains for reliability",
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="w-4 h-4 text-primary shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Subscribe CTA */}
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleSubscribe}
-                disabled={subscribing}
-              >
-                {subscribing ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Redirecting to checkout...</>
-                ) : (
-                  "Start 30-day Pro trial"
-                )}
+              {/* Primary CTA — continue to dashboard on Free */}
+              <Button className="w-full" size="lg" onClick={nextStep}>
+                Continue to dashboard
               </Button>
 
-              {/* Skip to Free */}
-              <div className="text-center">
+              {/* Secondary — optional Pro trial for users who are already sold */}
+              <div className="p-4 bg-muted/40 border border-border rounded-xl space-y-2">
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Already sure you want Pro?</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Start a 30-day Pro trial now — adds semantic cache, context optimization, fallback chains, and priority support. Uses promo code <code className="bg-background px-1.5 py-0.5 rounded font-mono font-bold">FIRST1</code> so your first month is $0.
+                </p>
                 <button
-                  onClick={nextStep}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                  onClick={handleSubscribe}
+                  disabled={subscribing}
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5 disabled:opacity-60"
                 >
-                  Start on Free instead
+                  {subscribing ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Redirecting to checkout...</>
+                  ) : (
+                    <>Start 30-day Pro trial <span>›</span></>
+                  )}
                 </button>
               </div>
             </div>

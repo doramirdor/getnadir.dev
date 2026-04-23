@@ -28,7 +28,7 @@ export const DemoVideo = () => {
             to="/auth?mode=signup"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-md text-[15px] font-semibold hover:bg-[#333] hover:-translate-y-px hover:shadow-lg transition-all no-underline"
           >
-            Start free, pay after 50 requests
+            Start with 1 month free
           </Link>
           <p className="text-[13px] text-[#999] mt-3">
             Cancel anytime. Only pay for what we save you.
