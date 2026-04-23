@@ -1,13 +1,15 @@
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Check, Copy, Link2 } from "lucide-react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
-import { SavingsCalculator } from "@/components/marketing/SavingsCalculator";
+import { SavingsCalculator, computeSavings } from "@/components/marketing/SavingsCalculator";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
+import { useToast } from "@/hooks/use-toast";
 import { trackCtaClick, trackPageView } from "@/utils/analytics";
 
 const FACTS: [string, string][] = [
-  ["Up to 40%", "Typical cost reduction on a realistic prompt mix."],
+  ["Up to 47%", "Verified savings on our benchmark vs always-Opus, 0% catastrophic routes."],
   ["96%", "Routing accuracy on our 50-prompt benchmark."],
   ["< 10 ms", "Classifier overhead. Faster than a DNS lookup."],
 ];
@@ -31,18 +33,97 @@ const FAQS: [string, string][] = [
   ],
 ];
 
+const DEFAULT_SPEND = 5000;
+const SPEND_MIN = 100;
+const SPEND_MAX = 50_000;
+
+/** Parse `?spend=NNNN` into a clamped integer, falling back to the default. */
+function parseSpend(raw: string | null): number {
+  if (!raw) return DEFAULT_SPEND;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_SPEND;
+  return Math.min(Math.max(Math.round(n), SPEND_MIN), SPEND_MAX);
+}
+
 export default function Calculator() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [spend, setSpend] = useState(() => parseSpend(searchParams.get("spend")));
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  // Debounce URL writes so we don't spam history entries while the user drags.
+  const urlWriteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     trackPageView("calculator");
   }, []);
 
+  // Keep URL in sync with the current spend. We use replace (not push) so the
+  // back button doesn't get littered with one entry per slider tick.
+  const handleSpendChange = useCallback(
+    (next: number) => {
+      setSpend(next);
+      if (urlWriteTimer.current) clearTimeout(urlWriteTimer.current);
+      urlWriteTimer.current = setTimeout(() => {
+        setSearchParams(
+          (prev) => {
+            const params = new URLSearchParams(prev);
+            if (next === DEFAULT_SPEND) {
+              params.delete("spend");
+            } else {
+              params.set("spend", String(next));
+            }
+            return params;
+          },
+          { replace: true },
+        );
+      }, 250);
+    },
+    [setSearchParams],
+  );
+
+  // Clean up any trailing timer on unmount so React doesn't yell at us.
+  useEffect(
+    () => () => {
+      if (urlWriteTimer.current) clearTimeout(urlWriteTimer.current);
+    },
+    [],
+  );
+
+  const result = useMemo(() => computeSavings({ spend }), [spend]);
+  const netPerMonth = Math.round(result.netSavings);
+  const netPerYear = netPerMonth * 12;
+
+  // Dynamic SEO strings. Link unfurls on Twitter, LinkedIn, etc. read the
+  // rendered HTML via their crawlers — when the page pre-renders server-side
+  // (future: Vercel Edge Function for OG), these props become the social
+  // card. For now they already flow into the <title> and meta description
+  // on client navigation, which updates the browser tab and in-app share
+  // sheets on iOS/Android.
+  const seoTitle = `Save $${netPerMonth.toLocaleString()}/mo with Nadir — LLM Cost Calculator`;
+  const seoDescription = `At $${spend.toLocaleString()}/mo on LLMs, Nadir's intelligent routing keeps ${`$${netPerMonth.toLocaleString()}`} in your pocket every month after fees — about $${netPerYear.toLocaleString()}/year.`;
+
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/calculator?spend=${spend}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      trackCtaClick("copy_calculator_link", "calculator_share");
+      toast({
+        title: "Link copied",
+        description: "Share it — the person you send it to sees the exact same number.",
+      });
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Clipboard API can fail in older browsers or non-HTTPS contexts. Fall
+      // back to a prompt so the user can still grab the URL manually.
+      window.prompt("Copy this link:", url);
+    }
+  };
+
   return (
     <MarketingLayout>
-      <SEO
-        title="LLM Cost Calculator - Nadir"
-        description="Estimate how much Nadir's intelligent routing can cut from your monthly Claude, GPT, and Gemini bill. Pay only when we save you money."
-        path="/calculator"
-      />
+      <SEO title={seoTitle} description={seoDescription} path="/calculator" />
 
       {/* Hero */}
       <section className="pt-20 md:pt-32 pb-12 md:pb-16 text-center">
@@ -57,9 +138,35 @@ export default function Calculator() {
       </section>
 
       {/* Calculator */}
-      <section className="pb-20 md:pb-28">
+      <section className="pb-12 md:pb-16">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
-          <SavingsCalculator />
+          <SavingsCalculator initialSpend={spend} onSpendChange={handleSpendChange} />
+
+          {/* Year-at-a-glance + share */}
+          <div className="max-w-[880px] mx-auto mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+            <p className="text-[14px] text-[#424245] tracking-[-0.005em] text-center sm:text-left">
+              That's about{" "}
+              <span className="font-semibold text-[#028a3e]">${netPerYear.toLocaleString()}</span>{" "}
+              saved per year at this spend level.
+            </p>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-black/[0.12] text-[#1d1d1f] rounded-full text-[13px] font-medium hover:bg-black/[0.03] transition-colors tracking-[-0.005em]"
+              aria-label="Copy shareable link to this calculation"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5" /> Copied
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-3.5 h-3.5" /> Share this number
+                </>
+              )}
+            </button>
+          </div>
+
           <p className="text-center text-[13px] text-[#86868b] mt-6 tracking-[-0.005em]">
             Numbers are estimates, not a quote. Your actual savings depend on your prompt mix and benchmark model.
           </p>
@@ -117,12 +224,12 @@ export default function Calculator() {
             Start free, route your first request in two lines of code, and watch the real savings show up in your dashboard.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <SignupDialog ctaLabel="start_saving" ctaLocation="calculator_bottom">
+            <SignupDialog ctaLabel="claim_savings" ctaLocation="calculator_bottom">
               <button
                 type="button"
                 className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#333] transition-colors tracking-[-0.01em]"
               >
-                Start saving
+                Claim my ${netPerMonth.toLocaleString()}/mo
               </button>
             </SignupDialog>
             <Link
