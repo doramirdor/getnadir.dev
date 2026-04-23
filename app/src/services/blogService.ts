@@ -334,7 +334,7 @@ We're training a confidence-aware analyzer that escalates uncertain classificati
 
   "nadir-vs-always-premium": `## When Nadir helps most
 
-**High volume, mixed complexity:** If you're making 1000+ API calls/day and many are simple lookups, formatting, or basic Q&A, routing saves the most. Typical savings: 30-40%.
+**High volume, mixed complexity:** If you're making 1000+ API calls/day and many are simple lookups, formatting, or basic Q&A, routing saves the most. Typical savings: 30-47%, depending on your simple-to-complex mix.
 
 **Agentic workflows:** Claude Code, Cursor, Aider - these tools make hundreds of calls per session. Many are simple (read file, check status). Routing + context optimization can cut costs 50%+.
 
