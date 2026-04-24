@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
-import { Link } from "react-router-dom";
-import { trackPageView } from "@/utils/analytics";
+import { SignupDialog } from "@/components/marketing/SignupDialog";
+import { trackCtaClick, trackPageView } from "@/utils/analytics";
 
 export default function Optimize() {
   useEffect(() => { trackPageView("optimize"); }, []);
@@ -13,14 +13,28 @@ export default function Optimize() {
         description="Lossless context optimization that trims bloated LLM payloads before they hit your bill. Safe mode free, aggressive mode on Pro."
         path="/optimize"
       />
-      <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
           Context Optimize
         </h1>
         <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Routes to the right model, then trims bloated context before it hits your bill.
-          Safe mode is lossless. Aggressive mode adds semantic dedup.
+          Your prompts are bloated. Tool schemas, chat history, redundant system prompts, pretty-printed JSON. Context Optimize trims the fat before it hits the provider so the same behavior costs 30-70% less and fits inside tighter context windows.
         </p>
+      </section>
+
+      <section className="max-w-4xl mx-auto px-6 pb-12">
+        <div className="grid sm:grid-cols-3 gap-4">
+          {[
+            { k: "30-70%", v: "fewer input tokens on typical agent payloads" },
+            { k: "Zero quality loss", v: "in safe mode. Transforms are fully lossless." },
+            { k: "Longer context", v: "fits more history in the same window, fewer context-limit errors" },
+          ].map((s) => (
+            <div key={s.k} className="p-5 bg-white border border-[#e5e5e5] rounded-xl">
+              <div className="text-xl font-bold text-[#0a0a0a]">{s.k}</div>
+              <div className="text-sm text-[#666] mt-1">{s.v}</div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Modes */}
@@ -93,12 +107,15 @@ export default function Optimize() {
       <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
         <h3 className="text-2xl font-bold mb-2">Ready to optimize?</h3>
         <p className="text-[#666] mb-6">Sign up for Nadir Pro and start cutting your LLM costs.</p>
-        <Link
-          to="/auth?mode=signup"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
-        >
-          Sign Up
-        </Link>
+        <SignupDialog ctaLabel="start_saving" ctaLocation="solution_optimize_bottom">
+          <button
+            type="button"
+            onClick={() => trackCtaClick("start_saving", "solution_optimize_bottom")}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all"
+          >
+            Start saving
+          </button>
+        </SignupDialog>
       </section>
     </MarketingLayout>
   );

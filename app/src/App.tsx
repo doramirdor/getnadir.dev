@@ -39,6 +39,11 @@ const Playground = lazy(() => import("./pages/Playground"));
 const Compare = lazy(() => import("./pages/Compare"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Calculator = lazy(() => import("./pages/Calculator"));
+const Solutions = lazy(() => import("./pages/Solutions"));
+const SolutionRouting = lazy(() => import("./pages/solutions/Routing"));
+const SolutionFallback = lazy(() => import("./pages/solutions/Fallback"));
+const SolutionAnalytics = lazy(() => import("./pages/solutions/SolutionAnalytics"));
+const SolutionClustering = lazy(() => import("./pages/solutions/Clustering"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -128,6 +133,12 @@ const App = () => (
             <Route path="/self-host" element={<OpenClaw />} />
             <Route path="/openclaw" element={<OpenClaw />} />
             <Route path="/optimize" element={<Optimize />} />
+            <Route path="/solutions" element={<Solutions />} />
+            <Route path="/solutions/optimize" element={<Optimize />} />
+            <Route path="/solutions/routing" element={<SolutionRouting />} />
+            <Route path="/solutions/fallback" element={<SolutionFallback />} />
+            <Route path="/solutions/analytics" element={<SolutionAnalytics />} />
+            <Route path="/solutions/clustering" element={<SolutionClustering />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/compare/:competitor" element={<Compare />} />
             <Route path="/contact" element={<Contact />} />

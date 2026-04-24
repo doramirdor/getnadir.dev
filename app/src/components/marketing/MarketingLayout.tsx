@@ -1,17 +1,45 @@
 import { useNavigate, Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Menu, X, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import PromoBanner from "@/components/PromoBanner";
 import { ContactFooter } from "@/components/homepage/ContactFooter";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
-import { trackGitHubClick } from "@/utils/analytics";
+import { trackCtaClick, trackGitHubClick } from "@/utils/analytics";
+
+const SOLUTION_LINKS = [
+  {
+    to: "/optimize",
+    label: "Context Optimize",
+    desc: "Trim bloated payloads. Up to 70% fewer tokens.",
+  },
+  {
+    to: "/solutions/routing",
+    label: "LLM Routing",
+    desc: "Cheapest model that still handles the prompt.",
+  },
+  {
+    to: "/solutions/fallback",
+    label: "Fallback",
+    desc: "Provider down? Reroute to a healthy peer.",
+  },
+  {
+    to: "/solutions/analytics",
+    label: "Analytics",
+    desc: "Per-request spend, latency, and quality.",
+  },
+  {
+    to: "/solutions/clustering",
+    label: "Prompt Clustering",
+    desc: "See the real shape of your LLM traffic.",
+    tag: "Soon",
+  },
+];
 
 const NAV_LINKS = [
   { to: "/pricing", label: "Pricing" },
   { to: "/calculator", label: "Calculator" },
   { to: "/docs", label: "Docs" },
   { to: "/self-host", label: "Self-host" },
-  { to: "/optimize", label: "Optimize" },
   { to: "/blog", label: "Blog" },
 ];
 
@@ -67,6 +95,96 @@ const GitHubStarButton = ({ compact = false }: { compact?: boolean }) => {
   );
 };
 
+const SolutionsDropdown = () => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const openNow = () => {
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    setOpen(true);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpen(false), 120);
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={openNow}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1 text-[#1d1d1f] text-[13.5px] font-normal opacity-80 hover:opacity-100 transition-opacity"
+      >
+        Solutions
+        <ChevronDown
+          className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50"
+        >
+          <div className="w-[360px] rounded-xl border border-black/[0.08] bg-white shadow-[0_20px_40px_-12px_rgba(0,0,0,0.18)] overflow-hidden">
+            <div className="p-2">
+              <Link
+                to="/solutions"
+                onClick={() => { trackCtaClick("solutions_nav", "header_dropdown_all"); setOpen(false); }}
+                className="flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-semibold text-[#0a0a0a] hover:bg-[#f4f4f5] no-underline"
+              >
+                <span>All solutions</span>
+                <span className="text-[#999]">→</span>
+              </Link>
+              <div className="h-px bg-black/[0.06] my-1" />
+              {SOLUTION_LINKS.map((s) => (
+                <Link
+                  key={s.to}
+                  to={s.to}
+                  onClick={() => { trackCtaClick("solutions_nav", `header_dropdown_${s.to}`); setOpen(false); }}
+                  className="block px-3 py-2.5 rounded-lg hover:bg-[#f4f4f5] no-underline"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13.5px] font-medium text-[#0a0a0a]">
+                      {s.label}
+                    </span>
+                    {s.tag && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#0066ff] bg-[#0066ff]/10 px-1.5 py-0.5 rounded-full">
+                        {s.tag}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[12px] text-[#666] mt-0.5">{s.desc}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -100,6 +218,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
               aria-label="Main navigation"
               className="hidden md:flex items-center gap-8"
             >
+              <SolutionsDropdown />
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.to}
@@ -160,6 +279,32 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-black/[0.06] bg-white">
             <nav className="max-w-[1160px] mx-auto px-4 py-3 flex flex-col gap-1">
+              <div className="px-3 pt-1 pb-1 text-[11px] uppercase tracking-wider font-semibold text-[#999]">
+                Solutions
+              </div>
+              <Link
+                to="/solutions"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-[#1d1d1f] text-[14px] font-semibold py-2 px-3 rounded-md hover:bg-gray-50 transition-colors no-underline"
+              >
+                All solutions
+              </Link>
+              {SOLUTION_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between text-[#1d1d1f] text-[14px] font-normal py-2 px-3 rounded-md hover:bg-gray-50 transition-colors no-underline"
+                >
+                  <span>{link.label}</span>
+                  {link.tag && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#0066ff] bg-[#0066ff]/10 px-1.5 py-0.5 rounded-full">
+                      {link.tag}
+                    </span>
+                  )}
+                </Link>
+              ))}
+              <div className="h-px bg-black/[0.06] my-2" />
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.to}
