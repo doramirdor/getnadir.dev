@@ -28,10 +28,11 @@ import { Link, useSearchParams } from "react-router-dom";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
-function calculateFee(totalSavings: number) {
-  const base = 9;
-  const first2k = Math.min(totalSavings, 2000) * 0.25;
-  const above2k = Math.max(totalSavings - 2000, 0) * 0.10;
+function calculateFee(totalSavings: number, isActive: boolean) {
+  // Free plan owes nothing. The $9 base only applies once subscribed.
+  const base = isActive ? 9 : 0;
+  const first2k = isActive ? Math.min(totalSavings, 2000) * 0.25 : 0;
+  const above2k = isActive ? Math.max(totalSavings - 2000, 0) * 0.10 : 0;
   const variable = first2k + above2k;
   return { base, first2k, above2k, variable, total: base + variable };
 }
@@ -298,7 +299,7 @@ const Billing = () => {
   const [canceling, setCanceling] = useState(false);
   const [promoCode, setPromoCode] = useState(searchParams.get("promo") || "");
   const { toast } = useToast();
-  const { apiKey } = useApiKey();
+  const { apiKey, requireApiKey } = useApiKey();
   const queryClient = useQueryClient();
 
   useEffect(() => { trackBillingView(); }, []);
@@ -351,32 +352,53 @@ const Billing = () => {
   const invoices = invoicesData ?? [];
   const currentSavings = savingsSummary?.total_savings_usd ?? 0;
   const currentSpent = savingsSummary?.total_spent_usd ?? 0;
-  const fee = calculateFee(currentSavings);
+  const isActive = subscription?.status === "active";
+  const fee = calculateFee(currentSavings, isActive);
   // Net savings excludes the flat base fee (billed separately as a subscription).
   const netSavings = currentSavings - fee.variable;
-  const isActive = subscription?.status === "active";
   const isCanceling = subscription?.cancel_at_period_end === true;
 
-  const handleSubscribe = async () => {
-    if (!apiKey) {
-      toast({ title: "Error", description: "API key is required to subscribe." });
-      return;
-    }
+  const handleSubscribe = async (overridePromo?: string) => {
     setSubscribing(true);
     try {
+      // Backend /v1/billing/checkout authenticates with the Supabase JWT, not
+      // an API key. This means a user who's just signed in can start checkout
+      // without ever creating a key (which is exactly the new-signup flow).
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData.session) {
+        throw new Error("You're signed out. Please sign in and try again.");
+      }
+      const accessToken = sessionData.session.access_token;
+
       const checkoutBody: Record<string, unknown> = {
         plan_id: "pro",
         success_url: `${window.location.origin}/dashboard/billing?status=success`,
         cancel_url: `${window.location.origin}/dashboard/billing?status=cancelled`,
       };
-      if (promoCode.trim()) {
-        checkoutBody.promo_code = promoCode.trim();
+      const effectivePromo =
+        typeof overridePromo === "string" && overridePromo.trim()
+          ? overridePromo.trim()
+          : promoCode.trim();
+      if (effectivePromo) {
+        checkoutBody.promo_code = effectivePromo;
       }
-      const data = await billingRequest<{ checkout_url: string }>(
-        "/v1/billing/checkout",
-        apiKey,
-        { method: "POST", body: checkoutBody }
-      );
+      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(checkoutBody),
+      });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody.detail) detail = errBody.detail;
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
+      const data = (await res.json()) as { checkout_url: string };
       // Fire the tracking event *before* navigation — window.location.href
       // tears down the PostHog snippet immediately and any capture() call
       // made after the assignment is lost.
@@ -420,6 +442,18 @@ const Billing = () => {
     }
   };
 
+  // Auto-start checkout when arriving from the global FreePlanBanner
+  // (?autostart=1). Checkout is authenticated by the Supabase session, so
+  // we don't need an API key — runs once per arrival.
+  const [autostartAttempted, setAutostartAttempted] = useState(false);
+  useEffect(() => {
+    if (autostartAttempted) return;
+    if (searchParams.get("autostart") !== "1") return;
+    if (subscription?.status === "active") return;
+    setAutostartAttempted(true);
+    handleSubscribe(searchParams.get("promo") || "FIRST1");
+  }, [searchParams, subscription, autostartAttempted]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -431,7 +465,7 @@ const Billing = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       {/* Header */}
       <div>
         <h1 className="page-title">Billing</h1>
@@ -496,7 +530,7 @@ const Billing = () => {
       </div>
 
       {/* Current Month Fee Breakdown */}
-      <Card className="clean-card">
+      <Card className="clean-card order-2">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -547,7 +581,8 @@ const Billing = () => {
               </p>
               <p className="text-xs text-[hsl(var(--ok))]">
                 Net after <span className="mono">${formatUSD(fee.variable)}</span> variable fee: <b className="mono">${formatUSD(netSavings)}</b>
-                <span className="opacity-75"> (the $9 base is billed separately)</span>
+                {isActive && <span className="opacity-75"> (the $9 base is billed separately)</span>}
+                {!isActive && <span className="opacity-75"> (Free plan, no fees)</span>}
               </p>
             </div>
             {!isActive && (
@@ -607,7 +642,7 @@ const Billing = () => {
 
       {/* Invoice History */}
       {invoices.length > 0 && (
-        <Card className="clean-card">
+        <Card className="clean-card order-2">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-muted-foreground" />
@@ -669,7 +704,7 @@ const Billing = () => {
       )}
 
       {/* How Pricing Works */}
-      <Card className="clean-card">
+      <Card className="clean-card order-2">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Info className="w-5 h-5 text-muted-foreground" />
@@ -738,8 +773,8 @@ const Billing = () => {
         </CardContent>
       </Card>
 
-      {/* Plan Comparison — only show when not subscribed */}
-      {!isActive && <div>
+      {/* Plan Comparison — moved before fee breakdown for free users via order-1 */}
+      {!isActive && <div className="order-1">
         <h2 className="text-lg font-semibold text-foreground mb-4">Plans</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {/* Free / Open Source */}

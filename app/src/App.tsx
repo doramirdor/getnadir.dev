@@ -36,6 +36,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const OpenClaw = lazy(() => import("./pages/OpenClaw"));
 const Optimize = lazy(() => import("./pages/Optimize"));
 const Playground = lazy(() => import("./pages/Playground"));
+const Clusters = lazy(() => import("./pages/Clusters"));
 const Compare = lazy(() => import("./pages/Compare"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Calculator = lazy(() => import("./pages/Calculator"));
@@ -155,6 +156,7 @@ const App = () => (
               <Route path="logs" element={<Logs />} />
               <Route path="settings" element={<Settings />} />
               <Route path="playground" element={<Playground />} />
+              <Route path="clusters" element={<Clusters />} />
               <Route path="help" element={<FAQ />} />
               <Route path="onboarding" element={<Onboarding />} />
             </Route>

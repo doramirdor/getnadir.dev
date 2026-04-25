@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   Play,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,7 @@ const mainMenuItems = [
   { id: "dashboard", label: "Dashboard", icon: Activity, path: "/dashboard" },
   { id: "analytics", label: "Analytics", icon: TrendingUp, path: "/dashboard/analytics" },
   { id: "savings", label: "Savings", icon: TrendingDown, path: "/dashboard/savings" },
+  { id: "clusters", label: "Clusters", icon: Network, path: "/dashboard/clusters", badge: "soon" },
 ];
 
 const manageMenuItems = [
@@ -101,7 +103,20 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
                   strokeWidth={1.5}
                 />
                 {(!isCollapsed || isMobile) && (
-                  <span className="text-[13px]">{item.label}</span>
+                  <>
+                    <span className="text-[13px]">{item.label}</span>
+                    {(item as any).badge && (
+                      <span
+                        className="ml-auto text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                        style={{
+                          background: "hsl(var(--brand-blue-soft))",
+                          color: "hsl(var(--brand-blue-strong))",
+                        }}
+                      >
+                        {(item as any).badge}
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
             </li>

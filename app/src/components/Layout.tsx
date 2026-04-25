@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
+import FreePlanBanner from "@/components/FreePlanBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { lazy } from "react";
 const Auth = lazy(() => import("@/pages/Auth"));
@@ -110,13 +111,16 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      <Sidebar activeItem={getCurrentPage()} />
-      <main className={cn("flex-1 min-w-0", isMobile && "pt-14")}>
-        <div className="h-full max-w-6xl mx-auto px-4 md:px-8 py-8">
-          <Outlet />
-        </div>
-      </main>
+    <div className="min-h-screen bg-background flex flex-col w-full">
+      <FreePlanBanner />
+      <div className="flex-1 flex w-full">
+        <Sidebar activeItem={getCurrentPage()} />
+        <main className={cn("flex-1 min-w-0", isMobile && "pt-14")}>
+          <div className="h-full max-w-6xl mx-auto px-4 md:px-8 py-8">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

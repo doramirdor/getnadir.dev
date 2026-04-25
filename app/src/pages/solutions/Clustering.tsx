@@ -3,16 +3,56 @@ import { Link } from "react-router-dom";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { trackCtaClick, trackPageView, trackWaitlistSignup } from "@/utils/analytics";
+import { supabase } from "@/integrations/supabase/client";
 
-const MOCK_CLUSTERS = [
-  { name: "Summarize customer ticket", size: 38214, avg: "$0.0031", model: "Haiku 4.5", save: 0.71, tag: "support" },
-  { name: "Generate product description", size: 21987, avg: "$0.0058", model: "Sonnet 4.6", save: 0.48, tag: "marketing" },
-  { name: "Classify intent", size: 18402, avg: "$0.0009", model: "Haiku 4.5", save: 0.83, tag: "routing" },
-  { name: "Extract structured data from PDF", size: 12044, avg: "$0.018", model: "Opus 4.6", save: 0.22, tag: "ocr" },
-  { name: "Code review, repo context", size: 8712, avg: "$0.041", model: "Opus 4.6", save: 0.14, tag: "engineering" },
-  { name: "Translate EN to JA", size: 6530, avg: "$0.0021", model: "Haiku 4.5", save: 0.68, tag: "i18n" },
-  { name: "SQL generation", size: 5218, avg: "$0.012", model: "Sonnet 4.6", save: 0.36, tag: "analytics" },
+// Each cluster carries a routing mix because individual prompts inside a
+// cluster can still escalate via the content gate when complexity warrants —
+// a "summarize ticket" prompt with 14k tokens of legal-flagged content goes
+// to Opus even though the cluster's centroid is judged-safe on Haiku.
+type RoutingMix = { haiku: number; sonnet: number; opus: number };
+
+const TIER_COLOR = {
+  haiku: "#00a86b",
+  sonnet: "#0066ff",
+  opus: "#f59e0b",
+};
+
+const MOCK_CLUSTERS: Array<{
+  name: string;
+  size: number;
+  avg: string;
+  centroid: "Haiku 4.5" | "Sonnet 4.6" | "Opus 4.6";
+  mix: RoutingMix;
+  save: number;
+  tag: string;
+}> = [
+  { name: "Summarize customer ticket", size: 38214, avg: "$0.0031", centroid: "Haiku 4.5", mix: { haiku: 0.84, sonnet: 0.13, opus: 0.03 }, save: 0.71, tag: "support" },
+  { name: "Generate product description", size: 21987, avg: "$0.0058", centroid: "Sonnet 4.6", mix: { haiku: 0.18, sonnet: 0.74, opus: 0.08 }, save: 0.48, tag: "marketing" },
+  { name: "Classify intent", size: 18402, avg: "$0.0009", centroid: "Haiku 4.5", mix: { haiku: 0.97, sonnet: 0.03, opus: 0 }, save: 0.83, tag: "routing" },
+  { name: "Extract structured data from PDF", size: 12044, avg: "$0.018", centroid: "Opus 4.6", mix: { haiku: 0, sonnet: 0.11, opus: 0.89 }, save: 0.22, tag: "ocr" },
+  { name: "Code review, repo context", size: 8712, avg: "$0.041", centroid: "Opus 4.6", mix: { haiku: 0, sonnet: 0.06, opus: 0.94 }, save: 0.14, tag: "engineering" },
+  { name: "Translate EN to JA", size: 6530, avg: "$0.0021", centroid: "Haiku 4.5", mix: { haiku: 0.91, sonnet: 0.08, opus: 0.01 }, save: 0.68, tag: "i18n" },
+  { name: "SQL generation", size: 5218, avg: "$0.012", centroid: "Sonnet 4.6", mix: { haiku: 0.04, sonnet: 0.78, opus: 0.18 }, save: 0.36, tag: "analytics" },
 ];
+
+const RoutingMixBar = ({ mix }: { mix: RoutingMix }) => {
+  const segs = [
+    { key: "haiku", color: TIER_COLOR.haiku, pct: mix.haiku, label: "Haiku" },
+    { key: "sonnet", color: TIER_COLOR.sonnet, pct: mix.sonnet, label: "Sonnet" },
+    { key: "opus", color: TIER_COLOR.opus, pct: mix.opus, label: "Opus" },
+  ].filter((s) => s.pct > 0);
+  return (
+    <div className="flex h-1.5 w-28 rounded overflow-hidden bg-[#e5e5e5]">
+      {segs.map((s) => (
+        <div
+          key={s.key}
+          style={{ width: `${s.pct * 100}%`, background: s.color }}
+          title={`${s.label} ${(s.pct * 100).toFixed(0)}%`}
+        />
+      ))}
+    </div>
+  );
+};
 
 const Bubble = ({
   x,
@@ -42,12 +82,31 @@ export default function SolutionClustering() {
   }, []);
   const [email, setEmail] = useState("");
   const [joined, setJoined] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleWaitlist = (source: string) => (e: React.FormEvent) => {
+  const handleWaitlist = (source: string) => async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    trackWaitlistSignup("email", source);
-    setJoined(true);
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("waitlist").insert({
+        email: trimmed,
+        source: `solutions_clustering_${source}`,
+        user_id: user?.id ?? null,
+        metadata: { page: "/solutions/clustering" },
+      });
+      if (error && error.code !== "23505") throw error;
+      trackWaitlistSignup("email", source);
+      setJoined(true);
+    } catch {
+      // Silent failure on the marketing page — still flip the UI so the user isn't blocked.
+      trackWaitlistSignup("email", source);
+      setJoined(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -91,10 +150,10 @@ export default function SolutionClustering() {
           />
           <button
             type="submit"
-            disabled={joined}
+            disabled={joined || submitting}
             className="px-5 py-2.5 bg-[#0a0a0a] text-white rounded-lg text-[14px] font-semibold hover:bg-[#333] transition-all disabled:opacity-60"
           >
-            {joined ? "You're on the list" : "Join waitlist"}
+            {joined ? "You're on the list" : submitting ? "Saving..." : "Join waitlist"}
           </button>
         </form>
       </section>
@@ -217,7 +276,21 @@ export default function SolutionClustering() {
       </section>
 
       <section className="max-w-5xl mx-auto px-6 pb-16">
-        <h2 className="text-2xl font-bold mb-6 text-center">Top clusters, drill-down</h2>
+        <h2 className="text-2xl font-bold mb-2 text-center">Top clusters, drill-down</h2>
+        <p className="text-center text-[#666] mb-4 max-w-2xl mx-auto">
+          A cluster groups prompts by semantic similarity, not complexity. Inside one cluster, the routing mix shows how prompts split across models — outliers (long context, sensitive content) still escalate via the content gate.
+        </p>
+        <div className="flex items-center justify-center gap-4 mb-6 text-[12px] text-[#666]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: TIER_COLOR.haiku }} /> Haiku
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: TIER_COLOR.sonnet }} /> Sonnet
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ background: TIER_COLOR.opus }} /> Opus
+          </span>
+        </div>
         <div className="bg-white border border-[#e5e5e5] rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-[#f8f8f8] text-[#666]">
@@ -226,7 +299,7 @@ export default function SolutionClustering() {
                 <th className="text-left px-5 py-3 font-medium">Tag</th>
                 <th className="text-right px-5 py-3 font-medium">Prompts</th>
                 <th className="text-right px-5 py-3 font-medium">Avg cost</th>
-                <th className="text-left px-5 py-3 font-medium">Routed to</th>
+                <th className="text-left px-5 py-3 font-medium">Routing mix</th>
                 <th className="text-right px-5 py-3 font-medium">Potential save</th>
               </tr>
             </thead>
@@ -241,7 +314,18 @@ export default function SolutionClustering() {
                   </td>
                   <td className="px-5 py-3 text-right tabular-nums">{c.size.toLocaleString()}</td>
                   <td className="px-5 py-3 text-right tabular-nums text-[#666]">{c.avg}</td>
-                  <td className="px-5 py-3 text-[#666]">{c.model}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <RoutingMixBar mix={c.mix} />
+                      <span className="text-[11px] text-[#666] tabular-nums whitespace-nowrap">
+                        {c.mix.haiku > 0 && <span className="text-[#00a86b] font-medium">{Math.round(c.mix.haiku * 100)}%</span>}
+                        {c.mix.haiku > 0 && (c.mix.sonnet > 0 || c.mix.opus > 0) && " / "}
+                        {c.mix.sonnet > 0 && <span className="text-[#0066ff] font-medium">{Math.round(c.mix.sonnet * 100)}%</span>}
+                        {c.mix.sonnet > 0 && c.mix.opus > 0 && " / "}
+                        {c.mix.opus > 0 && <span className="text-[#f59e0b] font-medium">{Math.round(c.mix.opus * 100)}%</span>}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-right">
                     <span className="inline-flex items-center gap-2">
                       <div className="w-16 h-1.5 bg-[#e5e5e5] rounded overflow-hidden">
@@ -260,6 +344,77 @@ export default function SolutionClustering() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-6 pb-16">
+        <h2 className="text-2xl font-bold mb-2 text-center">Recommendations, per cluster</h2>
+        <p className="text-center text-[#666] mb-8 max-w-2xl mx-auto">
+          Every cluster comes with concrete, applicable suggestions. One click and the change ships through the same router that's already serving your traffic.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {[
+            {
+              cluster: "Summarize customer ticket",
+              tag: "support",
+              title: "Cap output tokens at 200",
+              impact: "~$38/mo",
+              body: "Avg output is 110 tokens; current max is 1024. Capping trims wasted spend without changing 99% of outputs.",
+            },
+            {
+              cluster: "Summarize customer ticket",
+              tag: "support",
+              title: "Enable semantic cache for support summaries",
+              impact: "~$64/mo",
+              body: "Detected 18% near-duplicate ratio. Caching past similarity 0.92 saves the long tail.",
+            },
+            {
+              cluster: "SQL generation",
+              tag: "analytics",
+              title: "Pre-compact schema context",
+              impact: "~$47/mo",
+              body: "60% of input tokens is schema dump. Compacting via column allowlist trims spend without hurting accuracy.",
+            },
+            {
+              cluster: "Generate product description",
+              tag: "marketing",
+              title: "Promote tagline sub-cluster to Haiku",
+              impact: "~$88/mo",
+              body: "~3.2k tagline prompts judge-eligible for Haiku. Splitting them out drops cost without touching brand voice.",
+            },
+            {
+              cluster: "Extract structured data from PDF",
+              tag: "ocr",
+              title: "Pre-OCR with Tesseract, route to Sonnet",
+              impact: "~$220/mo",
+              body: "11% already work on Sonnet when text is pre-extracted. Adding a Tesseract pre-pass could lift that to 60%.",
+            },
+            {
+              cluster: "Code review with repo context",
+              tag: "engineering",
+              title: "Split single-file diffs into a sub-cluster",
+              impact: "~$95/mo",
+              body: "~6% of requests are <500 LOC, judge-eligible for Sonnet. Promoting the sub-cluster cuts cost on the easy lane.",
+            },
+          ].map((r) => (
+            <div
+              key={r.cluster + r.title}
+              className="p-5 bg-white border border-[#e5e5e5] rounded-xl"
+              style={{ borderLeftWidth: 3, borderLeftColor: "#0066ff" }}
+            >
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[11px] font-medium bg-[#f4f4f5] text-[#666] px-2 py-0.5 rounded-full">
+                  {r.tag} · {r.cluster}
+                </span>
+                <span className="text-[12px] font-mono text-[#00a86b] font-semibold whitespace-nowrap">{r.impact}</span>
+              </div>
+              <h3 className="font-semibold mb-1">{r.title}</h3>
+              <p className="text-sm text-[#666]">{r.body}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-[12px] text-[#999] mt-6">
+          Recommendations are auto-generated from cluster judge results, token usage, and content-gate behavior. Apply with a click — Nadir wires the change into your router.
+        </p>
       </section>
 
       <section className="max-w-5xl mx-auto px-6 pb-16">
