@@ -73,10 +73,31 @@ async def require_active_subscription(
         return current_user
 
     if sub_status == "past_due":
+        # Hosted mode is usage-billed against our AWS Bedrock account.
+        # We do NOT extend grace to Hosted: a declining card means we'd be
+        # paying Bedrock costs for ~3 weeks of Stripe smart retries with no
+        # revenue. BYOK gets the grace period (no cost to us).
+        if current_user.key_mode == "hosted":
+            logger.warning(
+                "User %s past_due on Hosted — rejecting until card is updated",
+                current_user.id,
+            )
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "error": "payment_past_due",
+                    "message": (
+                        "Your payment is past due. Update your payment method to "
+                        "continue using Nadir's hosted API keys, or switch to BYOK "
+                        "(bring your own keys) to keep going for free."
+                    ),
+                    "upgrade_url": "https://getnadir.com/dashboard/billing",
+                },
+            )
         request.state.subscription_plan = current_user.subscription_plan
         request.state.rate_limit_rpm = 60
         request.state.subscription_warning = "Your payment is past due. Please update your payment method."
-        logger.warning("User %s has past_due subscription — allowing with grace period", current_user.id)
+        logger.warning("User %s has past_due subscription on BYOK — allowing with grace period", current_user.id)
         return current_user
 
     # ── Unsubscribed user ──────────────────────────────────────────

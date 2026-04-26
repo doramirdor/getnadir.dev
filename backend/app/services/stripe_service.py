@@ -58,14 +58,41 @@ class StripeService:
                 )
                 logger.info("Created Stripe coupon '%s'", self.PROMO_COUPON_ID)
 
-            # Ensure promotion code exists
+            # Ensure promotion code exists AND is restricted to first-time
+            # customers + capped max_redemptions. We've previously seen abuse
+            # vectors where a determined user signs up with multiple emails to
+            # keep claiming a free first month. first_time_transaction=true
+            # tells Stripe to reject the code for any customer that already
+            # has a successful charge on the account.
+            #
+            # Stripe does not allow modifying `restrictions` or
+            # `max_redemptions` on an existing PromotionCode. So if a legacy
+            # unrestricted FIRST1 exists, we deactivate it and create a new
+            # one with the same human-facing code.
             existing = stripe.PromotionCode.list(code=self.PROMO_CODE, limit=1)
+            needs_recreate = False
             if existing.data:
-                logger.info("Stripe promo code '%s' already exists", self.PROMO_CODE)
-            else:
+                p = existing.data[0]
+                restrictions = (p.get("restrictions") or {}) if isinstance(p, dict) else (p.restrictions or {})
+                first_time = restrictions.get("first_time_transaction") if isinstance(restrictions, dict) else getattr(restrictions, "first_time_transaction", False)
+                if not first_time:
+                    logger.warning(
+                        "Existing promo code '%s' is unrestricted — deactivating and recreating with first_time_transaction",
+                        self.PROMO_CODE,
+                    )
+                    try:
+                        stripe.PromotionCode.modify(p.id, active=False)
+                    except Exception as deactivate_err:
+                        logger.error("Failed to deactivate legacy promo code %s: %s", p.id, deactivate_err)
+                    needs_recreate = True
+                else:
+                    logger.info("Stripe promo code '%s' already exists with first_time_transaction restriction", self.PROMO_CODE)
+
+            if not existing.data or needs_recreate:
                 # stripe SDK v14 rejects the `coupon` kwarg in
                 # PromotionCode.create due to a param-mapping bug.
-                # Fall back to a direct HTTP POST.
+                # Fall back to a direct HTTP POST. Stripe encodes nested
+                # objects as bracket-notation form params.
                 import urllib.request
                 import urllib.parse
                 import json as _json
@@ -73,6 +100,12 @@ class StripeService:
                 data = urllib.parse.urlencode({
                     "coupon": self.PROMO_COUPON_ID,
                     "code": self.PROMO_CODE,
+                    # Hard cap total uses. We'd rather mint FIRST2 / FIRST3 for
+                    # specific campaigns than leave an open-ended freebie.
+                    "max_redemptions": "1000",
+                    # Reject the code for customers that already have a
+                    # successful charge — kills the multi-email farm vector.
+                    "restrictions[first_time_transaction]": "true",
                 }).encode()
                 req = urllib.request.Request(
                     "https://api.stripe.com/v1/promotion_codes", data=data
@@ -80,7 +113,7 @@ class StripeService:
                 req.add_header("Authorization", f"Bearer {settings.STRIPE_SECRET_KEY}")
                 resp = urllib.request.urlopen(req)
                 result = _json.loads(resp.read())
-                logger.info("Created Stripe promo code '%s': %s", self.PROMO_CODE, result["id"])
+                logger.info("Created Stripe promo code '%s': %s (first_time_transaction=true, max_redemptions=1000)", self.PROMO_CODE, result["id"])
         except Exception as e:
             logger.error("Failed to ensure promotion code: %s", e)
 

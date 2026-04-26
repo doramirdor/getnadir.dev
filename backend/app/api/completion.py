@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.auth.supabase_auth import get_current_user, UserSession, check_user_budget, check_rate_limit
 from app.middleware.subscription_guard import require_active_subscription
+from app.middleware.hosted_budget import enforce_hosted_budget_or_402
 from app.schemas.completion import (
     CompletionRequest, CompletionResponse, PlaygroundRequest,
     RecommendationRequest, RecommendationResponse,
@@ -71,6 +72,11 @@ async def chat_completion(
     x_tag: Optional[str] = Header(None, alias="X-Tag")
 ) -> CompletionResponse:
     """Generate chat completion with OpenAI compatibility and optional Nadir recommendations."""
+    # Hosted-mode users: enforce per-user daily Bedrock spend cap before doing
+    # any work. Mirrors the same gate on /v1/production/completions so a single
+    # active subscriber can't burn unlimited AWS spend on the legacy route.
+    await enforce_hosted_budget_or_402(current_user)
+
     # Determine mode - check headers first, then request body
     nadir_mode = x_nadir_mode or request.nadir_mode or "standard"
     if request.model == "auto" or nadir_mode == "recommendation":
@@ -442,6 +448,9 @@ async def enhanced_completion(
     current_user: UserSession = Depends(require_active_subscription),
 ) -> Dict[str, Any]:
     """Enhanced completion endpoint with full control over the flow."""
+    # Hosted-mode users: enforce daily spend cap before processing.
+    await enforce_hosted_budget_or_402(current_user)
+
     # Check rate limit
     await check_rate_limit(current_user.id)
     

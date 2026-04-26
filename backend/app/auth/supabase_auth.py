@@ -137,6 +137,7 @@ class UserSession:
         self.api_key_config = user_data.get("api_key_config", {})  # Store the API key configuration used
         # Subscription / billing
         self.subscription_status: str = user_data.get("subscription_status", "inactive")  # active, past_due, canceled, inactive
+        self.subscription_created_at: Optional[str] = user_data.get("subscription_created_at")  # ISO timestamp; used to detect trial month
         self.subscription_plan: str = user_data.get("subscription_plan", "free")  # free, pro, enterprise
         # Key mode: "byok" = user's own provider keys, "hosted" = Nadir's Bedrock keys
         self.key_mode: str = user_data.get("key_mode", "hosted")
@@ -230,7 +231,7 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
         )
         subscription_future = asyncio.to_thread(
-            lambda: supabase.table("subscriptions").select("status").eq("user_id", user_id).execute()
+            lambda: supabase.table("subscriptions").select("status, created_at").eq("user_id", user_id).execute()
         )
         provider_keys_future = asyncio.to_thread(
             lambda: supabase.table("provider_keys").select("provider, encrypted_key").eq("user_id", user_id).execute()
@@ -252,9 +253,11 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         # Resolve subscription status (default to inactive/free if not found)
         sub_status = "inactive"
         sub_plan = "free"
+        sub_created_at = None
         if not isinstance(subscription_response, Exception) and getattr(subscription_response, 'data', None):
             sub_status = subscription_response.data[0].get("status", "inactive")
             sub_plan = "pro" if sub_status == "active" else "free"
+            sub_created_at = subscription_response.data[0].get("created_at")
 
         # Resolve provider keys (for BYOK mode)
         user_provider_keys: Dict[str, str] = {}
@@ -291,6 +294,7 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             "api_key_config": api_key_data,  # Store the full API key configuration
             "subscription_status": sub_status,
             "subscription_plan": sub_plan,
+            "subscription_created_at": sub_created_at,
             "key_mode": key_mode,
             "provider_api_keys": user_provider_keys,
             "store_prompts": store_prompts,
