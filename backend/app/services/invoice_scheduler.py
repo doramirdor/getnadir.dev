@@ -67,49 +67,75 @@ async def run_monthly_invoicing() -> dict:
                 user_id, period_start, period_end
             )
 
-            if invoice.savings_fee_usd <= 0:
+            # Skip only when there's nothing billable on top of the base fee.
+            # A Hosted-only user can have $0 savings fee but still owe a
+            # Bedrock pass-through markup, so check both lines.
+            if invoice.savings_fee_usd <= 0 and invoice.hosted_markup_fee_usd <= 0:
                 logger.info(
-                    "User %s: no savings fee (savings=$%.2f) — skipping",
+                    "User %s: no savings or Hosted markup fee — skipping",
                     user_id,
-                    invoice.total_savings_usd,
                 )
                 skipped += 1
                 continue
 
-            # Store invoice record in the database
+            # Store invoice record in the database (includes both fee fields)
             await billing_service.generate_and_store_invoice(
                 user_id, period_start, period_end
             )
 
-            # Attach usage-based line item to their next Stripe invoice
-            amount_cents = int(round(invoice.savings_fee_usd * 100))
-            description = (
-                f"Nadir savings fee ({period_start.strftime('%b %Y')}): "
-                f"${invoice.total_savings_usd:.2f} saved, "
-                f"${invoice.savings_fee_usd:.2f} fee"
-            )
+            period_label = period_start.strftime('%b %Y')
+            invoiced_lines: list[str] = []
 
-            item_id = await stripe_service.create_usage_invoice_item(
-                user_id=user_id,
-                amount_cents=amount_cents,
-                description=description,
-            )
-
-            if item_id:
-                logger.info(
-                    "User %s: invoiced $%.2f savings fee (Stripe item %s)",
-                    user_id,
-                    invoice.savings_fee_usd,
-                    item_id,
+            # Line 1: savings fee (% of savings vs benchmark)
+            if invoice.savings_fee_usd > 0:
+                amount_cents = int(round(invoice.savings_fee_usd * 100))
+                description = (
+                    f"Nadir savings fee ({period_label}): "
+                    f"${invoice.total_savings_usd:.2f} saved, "
+                    f"${invoice.savings_fee_usd:.2f} fee"
                 )
-            else:
-                logger.warning(
-                    "User %s: invoice stored but no Stripe customer — "
-                    "savings fee $%.2f not attached to Stripe",
-                    user_id,
-                    invoice.savings_fee_usd,
+                item_id = await stripe_service.create_usage_invoice_item(
+                    user_id=user_id,
+                    amount_cents=amount_cents,
+                    description=description,
                 )
+                if item_id:
+                    invoiced_lines.append(f"savings ${invoice.savings_fee_usd:.2f} ({item_id})")
+                else:
+                    logger.warning(
+                        "User %s: savings fee $%.2f not attached (no Stripe customer)",
+                        user_id, invoice.savings_fee_usd,
+                    )
 
+            # Line 2: Hosted Bedrock pass-through (raw cost × 1.20)
+            # We bill the markup as a single line so the user sees: "Bedrock
+            # usage: $X cost + $Y markup". Raw cost is a pass-through; the
+            # markup is our margin.
+            if invoice.hosted_markup_fee_usd > 0:
+                bedrock_total_cents = int(round(
+                    (invoice.hosted_cost_usd + invoice.hosted_markup_fee_usd) * 100
+                ))
+                description = (
+                    f"Hosted Bedrock usage ({period_label}): "
+                    f"${invoice.hosted_cost_usd:.2f} cost + "
+                    f"${invoice.hosted_markup_fee_usd:.2f} markup"
+                )
+                item_id = await stripe_service.create_usage_invoice_item(
+                    user_id=user_id,
+                    amount_cents=bedrock_total_cents,
+                    description=description,
+                )
+                if item_id:
+                    invoiced_lines.append(
+                        f"hosted ${invoice.hosted_cost_usd:.2f}+${invoice.hosted_markup_fee_usd:.2f} ({item_id})"
+                    )
+                else:
+                    logger.warning(
+                        "User %s: Hosted markup $%.2f not attached (no Stripe customer)",
+                        user_id, invoice.hosted_markup_fee_usd,
+                    )
+
+            logger.info("User %s: invoiced — %s", user_id, "; ".join(invoiced_lines) or "(nothing attached)")
             processed += 1
 
         except Exception as e:

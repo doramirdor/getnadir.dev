@@ -52,6 +52,11 @@ class InvoiceItem(BaseModel):
     total_savings_usd: float
     base_fee_usd: float
     savings_fee_usd: float
+    # Raw AWS Bedrock cost we paid for the user's Hosted-mode requests in
+    # this period. Zero for BYOK-only users. Pass-through, not margin.
+    hosted_cost_usd: float = 0.0
+    # 20% markup on hosted_cost_usd — our margin on Hosted usage.
+    hosted_markup_fee_usd: float = 0.0
     total_invoice_usd: float
     status: str
     created_at: str
@@ -147,7 +152,11 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
         if not sub_id:
             raise HTTPException(status_code=400, detail="No Stripe subscription found")
 
-        # ── Charge pending savings fee before cancellation ──────────
+        # ── Charge pending fees before cancellation ─────────────────
+        # We attach BOTH the savings fee AND the Hosted Bedrock markup on
+        # cancel. Without this, a user could sign up via FIRST1, burn AWS
+        # Bedrock spend on Hosted mode for ~30 days, then cancel — leaving
+        # us holding the Bedrock bill with no offsetting revenue.
         try:
             from datetime import date, timedelta
 
@@ -160,10 +169,13 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
                 current_user.id, period_start, period_end
             )
 
+            period_label = period_start.strftime('%b %Y')
+            stored_invoice = False
+
             if invoice.savings_fee_usd > 0:
                 amount_cents = int(round(invoice.savings_fee_usd * 100))
                 description = (
-                    f"Nadir savings fee (partial {period_start.strftime('%b %Y')}): "
+                    f"Nadir savings fee (partial {period_label}): "
                     f"${invoice.total_savings_usd:.2f} saved, "
                     f"${invoice.savings_fee_usd:.2f} fee"
                 )
@@ -174,18 +186,44 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
                 )
                 logger.info(
                     "Attached pending savings fee $%.2f for user %s before cancellation",
-                    invoice.savings_fee_usd,
-                    current_user.id,
+                    invoice.savings_fee_usd, current_user.id,
                 )
 
-                # Store the partial-month invoice
+            if invoice.hosted_markup_fee_usd > 0:
+                bedrock_total_cents = int(round(
+                    (invoice.hosted_cost_usd + invoice.hosted_markup_fee_usd) * 100
+                ))
+                description = (
+                    f"Hosted Bedrock usage (partial {period_label}): "
+                    f"${invoice.hosted_cost_usd:.2f} cost + "
+                    f"${invoice.hosted_markup_fee_usd:.2f} markup"
+                )
+                await stripe_service.create_usage_invoice_item(
+                    user_id=current_user.id,
+                    amount_cents=bedrock_total_cents,
+                    description=description,
+                )
+                logger.info(
+                    "Attached pending Hosted markup $%.2f (raw $%.2f) for user %s before cancellation",
+                    invoice.hosted_markup_fee_usd, invoice.hosted_cost_usd, current_user.id,
+                )
+
+            if invoice.savings_fee_usd > 0 or invoice.hosted_markup_fee_usd > 0:
+                # Store the partial-month invoice for audit trail.
                 await billing_service.generate_and_store_invoice(
                     current_user.id, period_start, period_end
+                )
+                stored_invoice = True
+
+            if not stored_invoice:
+                logger.info(
+                    "User %s: no pending fees to charge before cancellation",
+                    current_user.id,
                 )
         except Exception as fee_err:
             # Log but don't block cancellation — user still has the right to cancel
             logger.error(
-                "Failed to attach pending savings fee for user %s: %s",
+                "Failed to attach pending fees for user %s: %s",
                 current_user.id, fee_err,
             )
 

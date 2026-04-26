@@ -1336,6 +1336,9 @@ async def create_completion(
                                 prompt_tokens=prompt_tokens,
                                 completion_tokens=completion_tokens,
                                 complexity_tier=complexity_tier,
+                                # Stamp the request mode so the monthly billing
+                                # rollup can apply the Hosted Bedrock markup.
+                                key_mode=current_user.key_mode,
                             )
                         except Exception as sav_err:
                             logger.warning("Savings tracking failed for %s: %s", request_id, sav_err)
