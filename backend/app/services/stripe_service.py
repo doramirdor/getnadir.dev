@@ -169,6 +169,13 @@ class StripeService:
             "cancel_url": cancel_url,
             "metadata": {"nadir_user_id": user_id},
             "allow_promotion_codes": True,
+            # Hosted mode (Nadir-managed Bedrock keys) is usage-billed: the
+            # customer pays per API call beyond the included quota. We MUST
+            # have a card on file even when FIRST1 zeroes the first invoice.
+            # Without this, Stripe can skip card collection on a
+            # 100%-off-first-invoice subscription, leaving us unable to bill
+            # subsequent usage. Always force the card.
+            "payment_method_collection": "always",
         }
 
         # Apply promo code if provided

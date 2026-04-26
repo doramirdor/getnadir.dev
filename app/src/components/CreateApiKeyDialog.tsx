@@ -41,11 +41,14 @@ import {
   ArrowDown,
   CircleCheck,
   Loader2,
+  Lock,
+  Crown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -165,9 +168,66 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
   // Step 1
   const [keyName, setKeyName] = useState("");
   const [nameError, setNameError] = useState("");
-  const [mode, setMode] = useState<IntegrationMode>("hosted");
+  // Default to BYOK — Hosted (Nadir-managed Bedrock keys) is a Pro-only feature.
+  // Free accounts bring their own provider keys; if they pick Hosted we
+  // intercept "Next" and send them to Stripe checkout with FIRST1.
+  const [mode, setMode] = useState<IntegrationMode>("byok");
   const [configuredProviders, setConfiguredProviders] = useState<string[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
+  const [redirectingToCheckout, setRedirectingToCheckout] = useState(false);
+
+  // Pro gate — Hosted mode requires an active subscription.
+  const { data: subscription } = useQuery({
+    queryKey: ["subscription", "create-api-key-dialog", user?.id],
+    enabled: !!user?.id && open,
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("user_subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+    staleTime: 60_000,
+  });
+  const isPro = subscription?.status === "active";
+
+  const startProCheckout = async () => {
+    setRedirectingToCheckout(true);
+    try {
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData.session) throw new Error("Please sign in to upgrade.");
+
+      // Return to whichever page launched the dialog (admin /api-keys or
+      // /onboarding). Both pages listen for ?upgraded=true and re-open the
+      // wizard so the user can finish picking Hosted mode and create the key.
+      const returnPath = window.location.pathname;
+      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({
+          plan_id: "pro",
+          promo_code: "FIRST1",
+          success_url: `${window.location.origin}${returnPath}?upgraded=true`,
+          cancel_url: `${window.location.origin}${returnPath}`,
+        }),
+      });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try { const j = await res.json(); if (j.detail) detail = j.detail; } catch { /* ignore */ }
+        throw new Error(detail);
+      }
+      const data = (await res.json()) as { checkout_url: string };
+      window.location.href = data.checkout_url;
+    } catch (e: any) {
+      toast({ variant: "destructive", title: "Couldn't start checkout", description: e.message });
+      setRedirectingToCheckout(false);
+    }
+  };
 
   // Step 2: Routing + models
   const [routingEnabled, setRoutingEnabled] = useState(true);
@@ -392,7 +452,22 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
     return canProceedStep(s);
   };
 
-  const handleNext = () => { if (validateStep(step)) setStep((s) => Math.min(s + 1, STEP_TITLES.length - 1)); };
+  // On the Name & Mode step, if a free user selected Hosted, "Next" should
+  // route them to Stripe checkout (FIRST1) instead of advancing the wizard.
+  // Hosted requires an active subscription — the Pro lock is enforced here,
+  // not later in the flow, so free users see the price wall before they
+  // configure routing or generate a key.
+  const needsUpgradeForHosted =
+    stepType(step) === "Name & Mode" && mode === "hosted" && !isPro;
+
+  const handleNext = () => {
+    if (!validateStep(step)) return;
+    if (needsUpgradeForHosted) {
+      void startProCheckout();
+      return;
+    }
+    setStep((s) => Math.min(s + 1, STEP_TITLES.length - 1));
+  };
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
   const moveFallback = (idx: number, dir: "up" | "down") => {
@@ -508,31 +583,52 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
               <Label className="text-sm font-medium">Mode</Label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: "byok" as const, icon: Key, label: "BYOK", desc: "Use your own provider API keys" },
-                  { id: "hosted" as const, icon: Zap, label: "Hosted", desc: "Use Nadir's Bedrock keys" },
-                ].map(({ id, icon: Icon, label, desc }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setMode(id)}
-                    className={`p-4 border-2 rounded-xl text-left transition-all ${
-                      mode === id ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Icon className={`w-4 h-4 ${mode === id ? "text-primary" : "text-muted-foreground"}`} />
-                      <span className="font-semibold text-sm">{label}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{desc}</p>
-                  </button>
-                ))}
+                  { id: "byok" as const, icon: Key, label: "BYOK", desc: "Use your own provider API keys", proOnly: false },
+                  { id: "hosted" as const, icon: Zap, label: "Hosted", desc: "Use Nadir's Bedrock keys", proOnly: true },
+                ].map(({ id, icon: Icon, label, desc, proOnly }) => {
+                  const locked = proOnly && !isPro;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setMode(id)}
+                      className={`relative p-4 border-2 rounded-xl text-left transition-all ${
+                        mode === id ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      {locked && (
+                        <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                          <Crown className="w-3 h-3" /> Pro
+                        </span>
+                      )}
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon className={`w-4 h-4 ${mode === id ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="font-semibold text-sm">{label}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{desc}</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {mode === "hosted" && (
+            {mode === "hosted" && isPro && (
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800 rounded-lg text-xs text-blue-700 dark:text-blue-400">
                 <Zap className="w-3.5 h-3.5 flex-shrink-0" />
                 Powered by AWS Bedrock - currently supporting Anthropic Claude models.
+              </div>
+            )}
+
+            {mode === "hosted" && !isPro && (
+              <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg text-xs text-amber-800 dark:text-amber-300">
+                <Lock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold mb-0.5">Hosted is a Pro feature.</p>
+                  <p>
+                    Free accounts use BYOK with their own provider keys. Click <strong>Next</strong> to start your Pro
+                    trial — first month is $0 with code <code className="mono font-semibold">FIRST1</code>.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -976,8 +1072,17 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onClose} disabled={submitting}>Cancel</Button>
             {step < STEP_TITLES.length - 1 ? (
-              <Button onClick={handleNext} disabled={!canProceedStep(step)}>
-                Next <ChevronRight className="w-4 h-4 ml-1" />
+              <Button
+                onClick={handleNext}
+                disabled={!canProceedStep(step) || redirectingToCheckout}
+              >
+                {redirectingToCheckout ? (
+                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Redirecting to checkout...</>
+                ) : needsUpgradeForHosted ? (
+                  <><Crown className="w-4 h-4 mr-1" /> Start Pro trial <ChevronRight className="w-4 h-4 ml-1" /></>
+                ) : (
+                  <>Next <ChevronRight className="w-4 h-4 ml-1" /></>
+                )}
               </Button>
             ) : (
               <Button onClick={handleCreate} disabled={submitting}>

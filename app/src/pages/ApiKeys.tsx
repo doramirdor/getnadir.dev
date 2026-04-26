@@ -51,6 +51,22 @@ const ApiKeys = () => {
     fetchApiKeys();
   }, []);
 
+  // Returning from Stripe checkout after upgrading mid-wizard — re-open the
+  // create dialog so the user can finish picking Hosted mode + finalize the
+  // key. The Pro gate inside CreateApiKeyDialog will now allow Hosted because
+  // the subscription is active.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgraded") === "true") {
+      setShowCreateDialog(true);
+      toast({
+        title: "Pro trial active",
+        description: "You can now create a Hosted API key.",
+      });
+      window.history.replaceState({}, "", "/dashboard/api-keys");
+    }
+  }, [toast]);
+
   const fetchApiKeys = async () => {
     try {
       const { data, error } = await supabase

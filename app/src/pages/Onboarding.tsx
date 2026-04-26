@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +9,6 @@ import {
   ChevronRight,
   Key,
   Zap,
-  CreditCard,
   Copy,
   Check,
   Loader2,
@@ -24,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { useAuth } from "@/hooks/useAuth";
 import { trackOnboardingStep, trackOnboardingComplete, trackApiKeyCreated } from "@/utils/analytics";
+import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -36,48 +35,23 @@ async function sha256(message: string): Promise<string> {
 
 type Mode = "byok" | "hosted";
 
-// Subscribe is the first step — new users land on the 30-day Pro trial
-// offer before anything else. Choosing Free / BYOK is still possible (the
-// Subscribe step has a "skip" option), but the default path is Pro.
+// Two-step onboarding: subscribe (Pro trial offer) → configure & create key.
+// Mode selection, provider keys, routing, and fallback configuration all live
+// inside the CreateApiKeyDialog wizard so the user actually configures their
+// key (rather than getting an empty one with no routing/fallbacks set).
 const STEPS = [
   { id: "subscribe", label: "Start Pro trial", icon: Gift },
-  { id: "mode", label: "Choose Mode", icon: Zap },
-  { id: "api-key", label: "Get API Key", icon: Key },
+  { id: "api-key", label: "Configure API Key", icon: Key },
 ];
 
 const NADIR_API_HOST = "api.getnadir.com";
 
-function isKeyFormatValid(provider: string, key: string): boolean {
-  if (!key.trim()) return false;
-  switch (provider) {
-    case "openai":
-      return key.startsWith("sk-") && key.length > 20;
-    case "anthropic":
-      return key.startsWith("sk-ant-") && key.length > 20;
-    case "google":
-      return key.length > 10;
-    case "openrouter":
-      return key.startsWith("sk-or-") && key.length > 20;
-    case "groq":
-      return key.startsWith("gsk_") && key.length > 20;
-    default:
-      return key.length > 10;
-  }
-}
-
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [mode, setMode] = useState<Mode>("byok");
-  const [apiKeyName, setApiKeyName] = useState("Default Key");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [providerKeys, setProviderKeys] = useState({
-    openai: "",
-    anthropic: "",
-    google: "",
-    openrouter: "",
-    groq: "",
-  });
   const [showCelebration, setShowCelebration] = useState(false);
   const [testingKey, setTestingKey] = useState(false);
   const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
@@ -89,68 +63,44 @@ const Onboarding = () => {
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
-  const handleCreateApiKey = async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+  // Called by CreateApiKeyDialog with the full configured key payload.
+  // The dialog has already saved any new BYOK provider keys via JWT; this
+  // handler just inserts the api_keys row with the user's full config
+  // (selected models, routing tier assignments, fallback chain).
+  const handleCreateApiKey = async (config: {
+    name: string;
+    selected_models: string[];
+    benchmark_model: string;
+    model_parameters: Record<string, any>;
+  }) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
 
-      // Save BYOK provider keys first (via JWT — no API key needed)
-      if (mode === "byok") {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) throw new Error("Not authenticated");
+    const keyValue = `ndr_${crypto.randomUUID().replace(/-/g, "").slice(0, 32)}`;
+    const keyHash = await sha256(keyValue);
 
-        const keysToSave = Object.entries(providerKeys).filter(([_, v]) => v.trim());
-        for (const [provider, key] of keysToSave) {
-          const resp = await fetch(`${API_BASE}/v1/provider-keys/setup`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ provider, api_key: key }),
-          });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.detail || `Failed to save ${provider} key`);
-          }
-        }
-        if (keysToSave.length > 0) {
-          toast({
-            title: "Provider keys saved",
-            description: `${keysToSave.length} provider key(s) configured.`,
-          });
-        }
-      }
+    const { error } = await supabase.from("api_keys").insert({
+      user_id: user.id,
+      name: config.name,
+      key_hash: keyHash,
+      prefix: keyValue.slice(0, 8),
+      is_active: true,
+      selected_models: config.selected_models,
+      benchmark_model: config.benchmark_model,
+      model_parameters: config.model_parameters,
+    });
 
-      // Create Nadir API key
-      const keyValue = `ndr_${crypto.randomUUID().replace(/-/g, "").slice(0, 32)}`;
-      const keyHash = await sha256(keyValue);
-
-      const { error } = await supabase.from("api_keys").insert({
-        user_id: user.id,
-        name: apiKeyName,
-        key_hash: keyHash,
-        prefix: keyValue.slice(0, 8),
-        is_active: true,
-        model_parameters: {
-          key_mode: mode,
-          layers: { routing: true, fallback: true, optimize: "off" },
-        },
-      });
-
-      if (error) throw error;
-      setCreatedApiKey(keyValue);
-      setSessionApiKey(keyValue);
-      trackApiKeyCreated("onboarding");
-      toast({
-        title: "API Key Created",
-        description: "Your API key is ready to use.",
-      });
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Error", description: e.message });
-    }
+    if (error) throw error;
+    setMode((config.model_parameters?.key_mode as Mode) || "byok");
+    setCreatedApiKey(keyValue);
+    setSessionApiKey(keyValue);
+    trackApiKeyCreated("onboarding");
+    toast({
+      title: "API Key Created",
+      description: "Your key is configured and ready to use.",
+    });
   };
 
   const handleCopy = (text: string) => {
@@ -218,12 +168,19 @@ const Onboarding = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("subscribed") === "true") {
-      // User just came back from successful Stripe checkout. Advance past the
-      // Subscribe step (step 0) to Choose Mode (step 1); they'll finish at
-      // Create API Key (step 2).
+      // User just came back from Stripe checkout. Advance to the API key
+      // configuration step (the only step left in the new 2-step flow).
       setCurrentStep(1);
       toast({ title: "Pro trial active!", description: "30 days of full Pro access. Let's finish setting up." });
       // Clean URL
+      window.history.replaceState({}, "", "/dashboard/onboarding");
+    }
+    // Came back from the in-dialog Pro upgrade (user picked Hosted mid-wizard).
+    // Re-open the create dialog on the API key step so they can finish.
+    if (params.get("upgraded") === "true") {
+      setCurrentStep(1);
+      setCreateDialogOpen(true);
+      toast({ title: "Pro trial active", description: "Finish creating your Hosted API key." });
       window.history.replaceState({}, "", "/dashboard/onboarding");
     }
     const stepParam = params.get("step");
@@ -440,117 +397,19 @@ console.log(response.choices[0].message.content);`;
             </div>
           )}
 
-          {/* ═══ STEP 1: Choose Mode ═══ */}
+          {/* ═══ STEP 1: Configure & create API key (full wizard) ═══
+              We deliberately use the same multi-step CreateApiKeyDialog wizard
+              that lives on the API Keys page. Generating an "empty" default
+              key during onboarding is misleading — the meaningful work is
+              choosing providers, routing tiers, and fallback chains. The
+              dialog walks the user through all of that. */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">How do you want to use Nadir?</h2>
+              <h2 className="text-lg font-semibold text-foreground">Configure your Nadir API key</h2>
               <p className="text-sm text-muted-foreground">
-                Choose how you want to connect to LLM providers. You can change this anytime.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={() => setMode("byok")}
-                  className={`p-5 border-2 rounded-xl text-left transition-all ${
-                    mode === "byok" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Key className="w-5 h-5 text-primary" />
-                    <p className="font-semibold text-foreground">Bring Your Own Keys</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Use your existing provider API keys (OpenAI, Anthropic, Google). You pay providers directly.
-                  </p>
-                </button>
-                <button
-                  onClick={() => setMode("hosted")}
-                  className={`p-5 border-2 rounded-xl text-left transition-all ${
-                    mode === "hosted" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <CreditCard className="w-5 h-5 text-primary" />
-                    <p className="font-semibold text-foreground">Use Nadir Keys</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    No provider accounts needed. Start immediately with zero setup.
-                  </p>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ═══ STEP 3: Create API Key ═══ */}
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-foreground">Create your Nadir API key</h2>
-              <p className="text-sm text-muted-foreground">
-                This key authenticates your requests to the Nadir router at {NADIR_API_HOST}.
+                Pick your providers, set up routing across model tiers, and configure a fallback chain. Your key authenticates requests to {NADIR_API_HOST}.
               </p>
 
-              {/* BYOK: Provider key inputs */}
-              {mode === "byok" && !createdApiKey && (
-                <div className="space-y-3 p-4 bg-muted/30 border border-border rounded-xl">
-                  <p className="text-sm font-medium text-foreground">Connect your providers</p>
-                  <p className="text-xs text-muted-foreground">
-                    Add at least one provider key. You can add more later from Integrations.
-                  </p>
-                  {[
-                    { key: "openai", label: "OpenAI API Key", placeholder: "sk-..." },
-                    { key: "anthropic", label: "Anthropic API Key", placeholder: "sk-ant-..." },
-                    { key: "google", label: "Google AI API Key", placeholder: "AI..." },
-                    { key: "openrouter", label: "OpenRouter API Key", placeholder: "sk-or-..." },
-                    { key: "groq", label: "Groq API Key", placeholder: "gsk_..." },
-                  ].map((provider) => {
-                    const value = providerKeys[provider.key as keyof typeof providerKeys];
-                    const valid = isKeyFormatValid(provider.key, value);
-                    const showValidation = value.trim().length > 0;
-                    return (
-                      <div key={provider.key} className="space-y-1">
-                        <Label className="text-xs">{provider.label}</Label>
-                        <div className="relative">
-                          <Input
-                            type="password"
-                            placeholder={provider.placeholder}
-                            value={value}
-                            onChange={(e) =>
-                              setProviderKeys({ ...providerKeys, [provider.key]: e.target.value })
-                            }
-                            className={
-                              showValidation
-                                ? valid
-                                  ? "pr-9 border-green-400 focus-visible:ring-green-400"
-                                  : "pr-9 border-orange-300 focus-visible:ring-orange-300"
-                                : ""
-                            }
-                          />
-                          {showValidation && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              {valid ? (
-                                <CircleCheck className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <span className="text-xs text-orange-400">check format</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <p className="text-xs text-muted-foreground">
-                    Keys are encrypted at rest.
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>Key Name</Label>
-                <Input
-                  value={apiKeyName}
-                  onChange={(e) => setApiKeyName(e.target.value)}
-                  placeholder="My API Key"
-                />
-              </div>
               {createdApiKey ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
@@ -612,14 +471,20 @@ console.log(response.choices[0].message.content);`;
                   </div>
                 </div>
               ) : (
-                <Button onClick={handleCreateApiKey}>
-                  <Key className="w-4 h-4 mr-2" /> Generate API Key
+                <Button onClick={() => setCreateDialogOpen(true)} size="lg">
+                  <Key className="w-4 h-4 mr-2" /> Configure & generate key
                 </Button>
               )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <CreateApiKeyDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreate={handleCreateApiKey}
+      />
 
       {/* Navigation */}
       <div className="flex justify-between">
