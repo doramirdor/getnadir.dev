@@ -773,20 +773,36 @@ async def create_completion(
                 sticky_provider=sticky_provider,
             )
 
-            # Map complexity tier → appropriate model from user's selected_models
-            # The ranker may overwrite the classifier's tier, so extract from
-            # the raw reasoning string or complexity_score as authoritative source.
+            # Map complexity tier → appropriate model from user's selected_models.
+            # The classifier's structured `extracted_metrics.tier` is the
+            # authoritative source (1=simple, 2=medium, 3+=complex). Reasoning
+            # text and complexity_score are only used when the structured tier
+            # is missing — substring matching on free text was producing false
+            # "complex" routes for trivially short prompts.
             complexity_score = complexity_analysis_result.get("complexity_score", 0)
             reasoning = complexity_analysis_result.get("reasoning", "").lower()
+            extracted_metrics = complexity_analysis_result.get("extracted_metrics") or {}
+            extracted_tier = extracted_metrics.get("tier") if isinstance(extracted_metrics, dict) else None
 
-            # Primary: parse tier from the classifier's reasoning text
-            if "complex" in reasoning and "simple" not in reasoning.split("complex")[0][-10:]:
+            tier_name: Optional[str] = None
+            try:
+                tier_int = int(extracted_tier) if extracted_tier is not None else None
+            except (TypeError, ValueError):
+                tier_int = None
+
+            if tier_int is not None:
+                if tier_int <= 1:
+                    tier_name = "simple"
+                elif tier_int == 2:
+                    tier_name = "medium"
+                else:
+                    tier_name = "complex"
+            elif "complex" in reasoning and "simple" not in reasoning.split("complex")[0][-10:]:
                 tier_name = "complex"
             elif "medium" in reasoning or "moderate" in reasoning:
                 tier_name = "medium"
             elif "simple" in reasoning:
                 tier_name = "simple"
-            # Fallback: use complexity_score (0.0=simple, 0.5=medium, 1.0=complex)
             elif complexity_score >= 0.7:
                 tier_name = "complex"
             elif complexity_score >= 0.3:

@@ -59,6 +59,14 @@ class CostCalculationService:
         "claude-sonnet-4": {"input": 0.006, "output": 0.03},
         "claude-opus-4": {"input": 0.018, "output": 0.09},
         "claude-haiku-4": {"input": 0.001, "output": 0.005},
+        # Claude 4.5 / 4.6 family — kept in sync with LiteLLM list pricing.
+        # Bedrock variants charge the same list price as Anthropic-direct;
+        # the Hosted markup is applied separately at invoice time.
+        "claude-opus-4-6": {"input": 0.005, "output": 0.025},
+        "claude-sonnet-4-6": {"input": 0.003, "output": 0.015},
+        "claude-haiku-4-5": {"input": 0.001, "output": 0.005},
+        "claude-opus-4-5": {"input": 0.015, "output": 0.075},
+        "claude-sonnet-4-5": {"input": 0.003, "output": 0.015},
         
         # Google Gemini Models
         "gemini-pro": {"input": 0.0005, "output": 0.0015},
@@ -201,18 +209,45 @@ class CostCalculationService:
             return self.SMART_ROUTING_FEE
     
     def _find_model_key(self, model: str) -> str:
-        """Find the best matching model key in pricing data."""
+        """Find the best matching model key in pricing data.
+
+        Strips provider/region prefixes (e.g. ``bedrock/us.anthropic.``) so
+        ``bedrock/us.anthropic.claude-opus-4-6-v1`` resolves to the same
+        entry as ``claude-opus-4-6``. Uses longest-substring matching to avoid
+        a single-character segment (e.g. ``"4"`` from ``gpt-4``) matching
+        unrelated models.
+        """
         model_lower = model.lower()
-        
+
         # Direct match
         if model_lower in self.MODEL_PRICING:
             return model_lower
-        
-        # Partial match - find models that contain the search term
-        for key in self.MODEL_PRICING.keys():
-            if key in model_lower or any(part in model_lower for part in key.split("-")):
-                return key
-        
+
+        # Strip known provider prefixes ("bedrock/...", "openrouter/...")
+        # and regional/provider segments like "us.anthropic." that come
+        # before the actual model id.
+        stripped = model_lower
+        for prefix in ("bedrock/", "openrouter/", "anthropic/"):
+            if stripped.startswith(prefix):
+                stripped = stripped[len(prefix):]
+                break
+        # Drop region/provider tokens such as "us.anthropic." → keep the
+        # model id portion only.
+        if "." in stripped and "/" not in stripped:
+            stripped = stripped.rsplit(".", 1)[-1]
+        if stripped in self.MODEL_PRICING:
+            return stripped
+
+        # Substring match — prefer the longest pricing key that is contained
+        # in the (stripped) model name. Skip "default" and require at least
+        # 4 chars so a stray "4" or "o3" doesn't bleed across families.
+        candidates = [
+            k for k in self.MODEL_PRICING
+            if k != "default" and len(k) >= 4 and k in stripped
+        ]
+        if candidates:
+            return max(candidates, key=len)
+
         # No match found, use default
         return "default"
     
