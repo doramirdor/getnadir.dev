@@ -26,7 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { trackPageView, trackPlaygroundSend } from "@/utils/analytics";
+import { trackPageView, trackPlaygroundSend, trackPlaygroundResult } from "@/utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -178,7 +178,8 @@ export default function Playground() {
         mode,
       }, controller.signal);
 
-      setElapsed(Date.now() - startTime);
+      const latencyMs = Date.now() - startTime;
+      setElapsed(latencyMs);
       setRawJson(data);
 
       if (mode === "analysis") {
@@ -188,6 +189,10 @@ export default function Playground() {
           model_used: data.recommendation?.selected_model,
           strategy: data.recommendation?.strategy,
           complexity_score: data.complexity_analysis?.extracted_metrics?.complexity_score,
+        });
+        trackPlaygroundResult(mode, "success", {
+          latency_ms: latencyMs,
+          model_used: data.recommendation?.selected_model,
         });
       } else {
         // Full completion
@@ -205,11 +210,23 @@ export default function Playground() {
           selection_reasoning: data.nadir?.model_analysis,
           nadir: data.nadir,
         });
+        trackPlaygroundResult(mode, "success", {
+          latency_ms: data.latency_ms || latencyMs,
+          model_used: data.model_used || data.model,
+        });
       }
     } catch (error: any) {
-      if (error.name === "AbortError") return; // Superseded by a newer request
-      setElapsed(Date.now() - startTime);
+      if (error.name === "AbortError") {
+        trackPlaygroundResult(mode, "abort", { latency_ms: Date.now() - startTime });
+        return; // Superseded by a newer request
+      }
+      const latencyMs = Date.now() - startTime;
+      setElapsed(latencyMs);
       setResponse(`Error: ${error.message}`);
+      trackPlaygroundResult(mode, "error", {
+        latency_ms: latencyMs,
+        error: String(error?.message || error).slice(0, 200),
+      });
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }

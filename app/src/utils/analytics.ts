@@ -141,6 +141,12 @@ export const trackCheckoutCancel = (plan: string) =>
 export const trackPlaygroundSend = (mode: string) =>
   capture("playground_send", { mode });
 
+export const trackPlaygroundResult = (
+  mode: string,
+  outcome: "success" | "error" | "abort",
+  details?: { status?: number; latency_ms?: number; error?: string; model_used?: string },
+) => capture("playground_result", { mode, outcome, ...details });
+
 // -- GitHub events --
 export const trackGitHubClick = (location: string) =>
   capture("github_click", { location });

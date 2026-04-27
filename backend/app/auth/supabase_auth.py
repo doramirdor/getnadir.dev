@@ -103,6 +103,49 @@ class _AuthTTLCache:
 auth_cache = _AuthTTLCache(maxsize=1000, ttl=5.0)
 
 
+# ---------------------------------------------------------------------------
+# Throttled "last_used_at" bumping for api_keys
+# ---------------------------------------------------------------------------
+# We refresh `api_keys.last_used_at` on auth so the dashboard can tell whether
+# a key has ever been integrated. To avoid write-storms, we throttle per-key
+# updates to at most one every BUMP_INTERVAL_SEC seconds.
+BUMP_INTERVAL_SEC = 60.0
+_last_bump_at: Dict[str, float] = {}
+_last_bump_lock = threading.Lock()
+
+
+def _schedule_last_used_bump(api_key_id: str) -> None:
+    """Fire-and-forget update of api_keys.last_used_at, throttled per key."""
+    if not api_key_id:
+        return
+    now = time.monotonic()
+    with _last_bump_lock:
+        prev = _last_bump_at.get(api_key_id)
+        if prev is not None and (now - prev) < BUMP_INTERVAL_SEC:
+            return
+        _last_bump_at[api_key_id] = now
+
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).isoformat()
+
+    async def _bump():
+        try:
+            await asyncio.to_thread(
+                lambda: supabase.table("api_keys")
+                .update({"last_used_at": ts})
+                .eq("id", api_key_id)
+                .execute()
+            )
+        except Exception as e:
+            logger.warning("Failed to bump api_keys.last_used_at for %s: %s", api_key_id, e)
+
+    try:
+        asyncio.get_running_loop().create_task(_bump())
+    except RuntimeError:
+        # No running loop (shouldn't happen inside a FastAPI handler) — skip silently
+        pass
+
+
 # Initialize Supabase client with validation
 if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
     logger.critical(
@@ -304,6 +347,9 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
 
         # Store in the TTL cache for subsequent requests with the same key
         auth_cache.set(api_key_hash, session)
+
+        # Throttled bump of api_keys.last_used_at (fire-and-forget)
+        _schedule_last_used_bump(api_key_data.get("id"))
 
         return session
 

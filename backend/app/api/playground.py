@@ -12,13 +12,14 @@ import uuid
 import time
 from datetime import datetime
 
-from app.auth.supabase_auth import get_current_user
-# from app.services.supabase_unified_llm_service import SupabaseUnifiedLLMService
+from app.auth.supabase_auth import get_current_user, validate_jwt, supabase, UserSession
+from app.services.supabase_unified_llm_service import SupabaseUnifiedLLMService
 # from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
 from app.database.supabase_db import supabase_db
 from pydantic import BaseModel, Field
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+import asyncio
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -660,6 +661,156 @@ async def get_complexity_examples():
     except Exception as e:
         logger.error(f"Error getting complexity examples: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class DashboardPlaygroundRequest(BaseModel):
+    """Dashboard playground request — JWT-authenticated, picks an API key by id."""
+    key_id: str = Field(..., description="ID of the api_keys row whose preset config to apply")
+    messages: List[Dict[str, Any]] = Field(..., description="Chat messages")
+    model: Optional[str] = Field("auto", description="Model override, or 'auto' for routing")
+    temperature: float = Field(0.7, ge=0, le=2)
+    max_tokens: Optional[int] = Field(1024, ge=1, le=32000)
+    mode: str = Field("completion", description="'completion' (call LLM) or 'analysis' (route only)")
+
+
+async def _hydrate_session_for_key(user_id: str, key_id: str) -> UserSession:
+    """Build a UserSession from a Supabase auth user + an owned api_keys row."""
+    key_resp = await asyncio.to_thread(
+        lambda: supabase.table("api_keys")
+        .select("*")
+        .eq("id", key_id)
+        .eq("user_id", user_id)
+        .eq("is_active", True)
+        .execute()
+    )
+    if not key_resp.data:
+        raise HTTPException(status_code=404, detail="API key not found or inactive")
+    api_key_data = key_resp.data[0]
+
+    profile_future = asyncio.to_thread(
+        lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
+    )
+    sub_future = asyncio.to_thread(
+        lambda: supabase.table("subscriptions").select("status, created_at").eq("user_id", user_id).execute()
+    )
+    pk_future = asyncio.to_thread(
+        lambda: supabase.table("provider_keys").select("provider, encrypted_key").eq("user_id", user_id).execute()
+    )
+    profile_resp, sub_resp, pk_resp = await asyncio.gather(
+        profile_future, sub_future, pk_future, return_exceptions=True
+    )
+
+    profile_data = profile_resp.data[0] if not isinstance(profile_resp, Exception) and getattr(profile_resp, "data", None) else {}
+
+    sub_status, sub_plan, sub_created = "inactive", "free", None
+    if not isinstance(sub_resp, Exception) and getattr(sub_resp, "data", None):
+        sub_status = sub_resp.data[0].get("status", "inactive")
+        sub_plan = "pro" if sub_status == "active" else "free"
+        sub_created = sub_resp.data[0].get("created_at")
+
+    user_provider_keys: Dict[str, str] = {}
+    if not isinstance(pk_resp, Exception) and getattr(pk_resp, "data", None):
+        from app.services.key_encryption import decrypt_key
+        for pk in pk_resp.data:
+            user_provider_keys[pk["provider"]] = decrypt_key(pk["encrypted_key"])
+
+    key_mode_override = (
+        (api_key_data.get("model_parameters") or {}).get("key_mode")
+        or (profile_data.get("model_parameters") or {}).get("key_mode")
+    )
+    key_mode = key_mode_override or ("byok" if user_provider_keys else "hosted")
+    privacy_cfg = (profile_data.get("model_parameters") or {}).get("privacy") or {}
+
+    return UserSession({
+        "id": user_id,
+        "email": profile_data.get("email"),
+        "name": profile_data.get("name"),
+        "benchmark_model": api_key_data.get("benchmark_model"),
+        "allowed_providers": [],
+        "allowed_models": api_key_data.get("selected_models", []),
+        "budget_limit": sum(profile_data.get("provider_budgets", {}).values()) if profile_data.get("provider_budgets") else None,
+        "budget_used": profile_data.get("cost_this_month", 0.0),
+        "clusters": [],
+        "api_key_config": api_key_data,
+        "subscription_status": sub_status,
+        "subscription_plan": sub_plan,
+        "subscription_created_at": sub_created,
+        "key_mode": key_mode,
+        "provider_api_keys": user_provider_keys,
+        "store_prompts": bool(privacy_cfg.get("store_prompts", True)),
+    })
+
+
+@router.post("/v1/dashboard/playground")
+async def dashboard_playground(
+    request: DashboardPlaygroundRequest,
+    current_user: UserSession = Depends(validate_jwt),
+):
+    """
+    Dashboard playground endpoint. JWT-authenticated, selects API key by id.
+
+    Two modes:
+    - "analysis": runs only complexity analysis + routing decision (no LLM call)
+    - "completion": full routed completion through the unified service
+    """
+    session = await _hydrate_session_for_key(str(current_user.id), request.key_id)
+    service = SupabaseUnifiedLLMService(session)
+
+    user_messages = [m.get("content", "") for m in request.messages if m.get("role") == "user"]
+    if not user_messages:
+        raise HTTPException(status_code=400, detail="No user message in request")
+    prompt = user_messages[-1]
+    system_message = next((m.get("content", "") for m in request.messages if m.get("role") == "system"), "")
+
+    if request.mode == "analysis":
+        selected_model, reasoning, complexity_analysis = await service._select_best_model(
+            prompt=prompt,
+            system_message=system_message or None,
+        )
+        return {
+            "recommendation": {
+                "selected_model": selected_model,
+                "strategy": complexity_analysis.get("strategy") or complexity_analysis.get("model_selection_type"),
+                "reasoning": reasoning,
+            },
+            "complexity_analysis": {
+                "extracted_metrics": {
+                    "complexity_score": complexity_analysis.get("complexity_score"),
+                },
+                "analyzer_used": complexity_analysis.get("analyzer_used"),
+                "raw": complexity_analysis,
+            },
+        }
+
+    model_arg = None if request.model in (None, "", "auto") else request.model
+    result = await service.process_prompt(
+        prompt=prompt,
+        system_message=system_message or None,
+        model=model_arg,
+        temperature=request.temperature,
+        max_tokens=request.max_tokens,
+        funnel_tag="playground",
+    )
+
+    content = result.get("response", "")
+    usage = result.get("usage") or {}
+    cost = result.get("cost") or {}
+    complexity = result.get("complexity_analysis") or {}
+    return {
+        "choices": [{"message": {"role": "assistant", "content": content}}],
+        "model_used": result.get("model_used"),
+        "model": result.get("model_used"),
+        "provider": result.get("provider"),
+        "usage": usage,
+        "cost_usd": cost.get("total_cost_usd"),
+        "estimated_cost_usd": cost.get("total_cost_usd"),
+        "latency_ms": result.get("latency_ms"),
+        "nadir": {
+            "complexity_score": complexity.get("complexity_score"),
+            "mode": complexity.get("strategy") or complexity.get("model_selection_type"),
+            "model_analysis": result.get("model_selection_reasoning"),
+        },
+    }
 
 
 @router.get("/playground", response_class=HTMLResponse)
