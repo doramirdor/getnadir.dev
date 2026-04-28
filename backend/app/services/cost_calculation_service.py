@@ -59,10 +59,11 @@ class CostCalculationService:
         "claude-sonnet-4": {"input": 0.006, "output": 0.03},
         "claude-opus-4": {"input": 0.018, "output": 0.09},
         "claude-haiku-4": {"input": 0.001, "output": 0.005},
-        # Claude 4.5 / 4.6 family — kept in sync with LiteLLM list pricing.
+        # Claude 4.5 / 4.6 family — kept in sync with Anthropic list pricing.
         # Bedrock variants charge the same list price as Anthropic-direct;
         # the Hosted markup is applied separately at invoice time.
-        "claude-opus-4-6": {"input": 0.005, "output": 0.025},
+        # Opus 4 family list price is $15/M in, $75/M out across 4-5 and 4-6.
+        "claude-opus-4-6": {"input": 0.015, "output": 0.075},
         "claude-sonnet-4-6": {"input": 0.003, "output": 0.015},
         "claude-haiku-4-5": {"input": 0.001, "output": 0.005},
         "claude-opus-4-5": {"input": 0.015, "output": 0.075},

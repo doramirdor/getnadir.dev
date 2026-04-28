@@ -411,7 +411,36 @@ async def get_user_config_from_api_key(current_user: UserSession, model_override
                         detail=f"Preset configuration '{slug}' not found"
                     )
             else:
-                # Direct model specification
+                # Direct model specification.
+                #
+                # OpenAI-compatible SDKs require a `model` field on every request,
+                # so a routing-enabled key would be silently bypassed any time the
+                # caller lets their SDK auto-fill it (or copy-pastes a Bedrock
+                # cross-region profile name). When `layers.routing=true` and the
+                # override is a Claude variant, treat it as a hint: run the
+                # classifier across the key's selected_models instead of pinning.
+                # Non-Claude models (e.g. gpt-4o) and routing-disabled keys still
+                # honor the override exactly.
+                resolved_layers = _resolve_layers(api_key_config.get("model_parameters", {}))
+                if resolved_layers.get("routing") and "claude" in (model_override or "").lower():
+                    logger.info(
+                        "Routing-enabled key for user %s: model '%s' is a Claude variant, "
+                        "deferring to classifier instead of pinning.",
+                        current_user.id, model_override,
+                    )
+                    user_config = {
+                        "selected_models": api_key_config.get("selected_models", []),
+                        "benchmark_model": api_key_config.get("benchmark_model"),
+                        "load_balancing_policy": api_key_config.get("load_balancing_policy", "round-robin"),
+                        "use_fallback": api_key_config.get("use_fallback", True),
+                        "model_parameters": api_key_config.get("model_parameters", {}),
+                        "slug": api_key_config.get("slug"),
+                        "api_key_name": api_key_config.get("name", "default"),
+                        "sort_strategy": api_key_config.get("sort_strategy", "smart-routing"),
+                        "layers": resolved_layers,
+                    }
+                    return user_config
+
                 user_config = {
                     "selected_models": [model_override],
                     "benchmark_model": api_key_config.get("benchmark_model"),
@@ -420,7 +449,7 @@ async def get_user_config_from_api_key(current_user: UserSession, model_override
                     "model_parameters": api_key_config.get("model_parameters", {}),
                     "slug": None,
                     "api_key_name": api_key_config.get("name", "default"),
-                    "layers": _resolve_layers(api_key_config.get("model_parameters", {})),
+                    "layers": resolved_layers,
                 }
                 logger.debug(f"Using direct model override '{model_override}' for user {current_user.id}")
                 return user_config
@@ -1324,42 +1353,60 @@ async def create_completion(
                 prompt_tokens = usage_dict.get("prompt_tokens", 0)
                 completion_tokens = usage_dict.get("completion_tokens", 0)
 
+                # For hosted-mode users, the apples-to-apples benchmark is the
+                # Bedrock-prefixed equivalent of the configured benchmark model.
+                # Pricing resolves identically for the bare and prefixed names
+                # (per cost_calculation_service._find_model_key prefix-stripping),
+                # but the displayed value on the Savings dashboard reflects the
+                # real comparison: hosted users would have paid us for hosted
+                # Bedrock Opus, not direct Anthropic Opus.
+                display_benchmark = benchmark_model
+                if (
+                    current_user.key_mode == "hosted"
+                    and benchmark_model
+                    and not benchmark_model.startswith("bedrock/")
+                    and "claude" in benchmark_model.lower()
+                ):
+                    display_benchmark = f"bedrock/us.anthropic.{benchmark_model}-v1"
+
                 # Estimate what the same request would have cost on the benchmark model
                 benchmark_breakdown = cost_service.calculate_comprehensive_cost(
-                    model=benchmark_model,
+                    model=display_benchmark,
                     tokens_in=prompt_tokens,
                     tokens_out=completion_tokens,
                 )
                 benchmark_cost = benchmark_breakdown.total_cost
 
-                if benchmark_cost != routed_cost:
-                    savings_svc = SavingsBillingService(supabase_db.client)
-                    complexity_tier = str(
-                        complexity_analysis_result.get("extracted_metrics", {}).get("tier", "unknown")
-                        if isinstance(complexity_analysis_result.get("extracted_metrics"), dict)
-                        else complexity_analysis_result.get("strategy", "unknown")
-                    )
+                # Always emit a savings_tracking row (even when savings == 0)
+                # so the monthly invoice rollup can sum hosted_cost_usd
+                # accurately for the Hosted markup line.
+                savings_svc = SavingsBillingService(supabase_db.client)
+                complexity_tier = str(
+                    complexity_analysis_result.get("extracted_metrics", {}).get("tier", "unknown")
+                    if isinstance(complexity_analysis_result.get("extracted_metrics"), dict)
+                    else complexity_analysis_result.get("strategy", "unknown")
+                )
 
-                    async def _track_savings():
-                        try:
-                            await savings_svc.track_request_savings(
-                                user_id=str(current_user.id),
-                                request_id=request_id,
-                                benchmark_model=benchmark_model,
-                                benchmark_cost=benchmark_cost,
-                                routed_model=response.get("model_used", "unknown"),
-                                routed_cost=routed_cost,
-                                prompt_tokens=prompt_tokens,
-                                completion_tokens=completion_tokens,
-                                complexity_tier=complexity_tier,
-                                # Stamp the request mode so the monthly billing
-                                # rollup can apply the Hosted Bedrock markup.
-                                key_mode=current_user.key_mode,
-                            )
-                        except Exception as sav_err:
-                            logger.warning("Savings tracking failed for %s: %s", request_id, sav_err)
+                async def _track_savings():
+                    try:
+                        await savings_svc.track_request_savings(
+                            user_id=str(current_user.id),
+                            request_id=request_id,
+                            benchmark_model=display_benchmark,
+                            benchmark_cost=benchmark_cost,
+                            routed_model=response.get("model_used", "unknown"),
+                            routed_cost=routed_cost,
+                            prompt_tokens=prompt_tokens,
+                            completion_tokens=completion_tokens,
+                            complexity_tier=complexity_tier,
+                            # Stamp the request mode so the monthly billing
+                            # rollup can apply the Hosted Bedrock markup.
+                            key_mode=current_user.key_mode,
+                        )
+                    except Exception as sav_err:
+                        logger.warning("Savings tracking failed for %s: %s", request_id, sav_err)
 
-                    background_tasks.add_task(_track_savings)
+                background_tasks.add_task(_track_savings)
             except Exception as sav_setup_err:
                 logger.debug("Savings tracking setup skipped: %s", sav_setup_err)
 

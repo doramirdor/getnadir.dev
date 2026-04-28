@@ -180,10 +180,13 @@ class SavingsBillingService:
         """
         savings = benchmark_cost - routed_cost
 
-        # Skip zero-diff (same model routed to benchmark)
-        if savings == 0:
-            return
-
+        # Note: zero-diff rows are intentionally kept (rather than short-circuited)
+        # so the monthly invoice rollup can sum hosted_cost_usd accurately for the
+        # Hosted Bedrock markup. With pricing parity between bedrock/<model> and
+        # the bare Anthropic-direct entry, hosted users who pin a model will land
+        # at savings == 0 on every request — skipping those rows would zero out
+        # the markup we charge ourselves on AWS spend. Negative savings still log
+        # a warning (real signal of inverted tier pricing).
         if savings < 0:
             logger.warning(
                 "Negative savings for request %s: routed %s ($%.6f) > benchmark %s ($%.6f). "

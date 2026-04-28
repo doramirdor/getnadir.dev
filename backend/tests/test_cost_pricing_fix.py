@@ -65,16 +65,20 @@ def test_bedrock_and_anthropic_opus_4_6_price_identically(svc: CostCalculationSe
     )
 
 
-def test_bedrock_opus_not_priced_as_gpt4(svc: CostCalculationService):
-    """Concrete numeric guard against the regression: GPT-4 = $30/$60 per M
-    would yield $0.00168 for 8/24 tokens. We must be cheaper than that.
+def test_bedrock_opus_resolves_to_claude_entry(svc: CostCalculationService):
+    """Concrete guard against the regression where ``_find_model_key`` matched
+    ``gpt-4`` because of the shared ``"4"`` token. The fix is "resolves to a
+    Claude entry," not "is cheaper than GPT-4" — at Opus list price ($15/$75/M)
+    output-heavy prompts are legitimately more expensive than GPT-4 ($30/$60/M).
     """
-    cost = svc._calculate_llm_cost("bedrock/us.anthropic.claude-opus-4-6-v1", 8, 24)
-    gpt4_cost = (8 * 0.03 / 1000) + (24 * 0.06 / 1000)  # 0.00168
-    assert cost < gpt4_cost, (
-        f"Bedrock Claude must not price as GPT-4 ($30/$60/M); "
-        f"got ${cost:.6f}, GPT-4 would be ${gpt4_cost:.6f}"
+    key = svc._find_model_key("bedrock/us.anthropic.claude-opus-4-6-v1")
+    assert key == "claude-opus-4-6", (
+        f"Bedrock Opus must resolve to the claude-opus-4-6 entry; got {key!r}"
     )
+    # And the priced cost matches the bare Anthropic-direct entry exactly.
+    direct_cost = svc._calculate_llm_cost("claude-opus-4-6", 8, 24)
+    bedrock_cost = svc._calculate_llm_cost("bedrock/us.anthropic.claude-opus-4-6-v1", 8, 24)
+    assert direct_cost == bedrock_cost
 
 
 def test_sonnet_and_haiku_bedrock_parity(svc: CostCalculationService):
