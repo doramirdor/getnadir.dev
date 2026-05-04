@@ -135,9 +135,12 @@
         fbq('track', 'PageView');
       })();
     </script>
-    <noscript><img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=192619435429741&ev=PageView&noscript=1"
-    /></noscript>
+    <!--
+      Note: the standard Meta Pixel <noscript> <img> fallback is intentionally
+      omitted. HTML5 disallows <img> inside <noscript> in <head> (parse5 rejects
+      it), and the app is a JS-required SPA, so the no-JS path renders an
+      empty div anyway and gains nothing from the fallback beacon.
+    -->
 
     <!-- Google Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
