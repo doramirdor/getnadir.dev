@@ -7,11 +7,11 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self';
-        script-src  'self' 'unsafe-inline' https://*.posthog.com https://*.i.posthog.com;
+        script-src  'self' 'unsafe-inline' https://*.posthog.com https://*.i.posthog.com https://connect.facebook.net;
         style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src     'self' data: https:;
         font-src    'self' data: https://fonts.gstatic.com;
-        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.github.com https://*.posthog.com https://*.i.posthog.com https://api.getnadir.com;
+        connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.github.com https://*.posthog.com https://*.i.posthog.com https://api.getnadir.com https://www.facebook.com https://connect.facebook.net;
         frame-src   https://*.tella.tv;
         object-src  'none';
         base-uri    'self';
@@ -113,6 +113,31 @@
         });
       })();
     </script>
+
+    <!-- Meta (Facebook) Pixel — base code fires PageView on every load.
+         CompleteRegistration is fired from useAuth.tsx when a user with a
+         fresh `created_at` is seen (i.e. an actual new signup, not a login).
+         Skipped on localhost / dev builds via the same gate as PostHog. -->
+    <script>
+      (function(){
+        var h = window.location.hostname;
+        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '[::1]' || h.endsWith('.local');
+        if (isLocal) return;
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '192619435429741');
+        fbq('track', 'PageView');
+      })();
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=192619435429741&ev=PageView&noscript=1"
+    /></noscript>
 
     <!-- Google Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -12,6 +12,7 @@ declare global {
       capture: (event: string, properties?: Record<string, unknown>) => void;
       identify: (distinctId: string, properties?: Record<string, unknown>) => void;
     };
+    fbq?: (...args: unknown[]) => void;
   }
 }
 
@@ -67,6 +68,24 @@ export const trackWaitlistSignup = (method: "email" | "google" | "github", sourc
 // signups by ref / utm_source in PostHog without extra wiring at call sites.
 export const trackAuthAttempt = (method: "email" | "google" | "github", mode: "signin" | "signup") =>
   capture("auth_attempt", { method, mode, ...getStoredAttribution() });
+
+/**
+ * Fires the Meta Pixel CompleteRegistration conversion. Deduped per user via
+ * localStorage so the email-confirm round trip (signup -> mail link -> new
+ * tab) doesn't miss it and a later login doesn't double-count it.
+ */
+export const trackSignupConversion = (userId: string, method: string) => {
+  if (shouldSuppressCapture()) return;
+  if (typeof window === "undefined") return;
+  try {
+    const key = `nadir_fb_registration_${userId}`;
+    if (window.localStorage.getItem(key)) return;
+    window.localStorage.setItem(key, "1");
+  } catch {
+    // localStorage unavailable; firing once per page is still better than nothing.
+  }
+  window.fbq?.("track", "CompleteRegistration", { method });
+};
 
 export const trackAuthSuccess = (method: string, userId: string) => {
   // Idempotent per (userId, tab session). The central AuthProvider listener

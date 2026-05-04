@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { trackAuthSuccess } from '@/utils/analytics';
+import { trackAuthSuccess, trackSignupConversion } from '@/utils/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -47,6 +47,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const provider =
             (newSession.user.app_metadata?.provider as string | undefined) ?? 'email';
           trackAuthSuccess(provider, newSession.user.id);
+
+          // Meta Pixel CompleteRegistration: fire once per user when their
+          // account is fresh (created within the last 10 minutes). Distinguishes
+          // a real signup from every subsequent login. trackSignupConversion is
+          // deduped via localStorage so the email-verify redirect doesn't miss it.
+          const createdAt = newSession.user.created_at;
+          if (createdAt) {
+            const ageMs = Date.now() - new Date(createdAt).getTime();
+            if (ageMs >= 0 && ageMs < 10 * 60 * 1000) {
+              trackSignupConversion(newSession.user.id, provider);
+            }
+          }
         }
         break;
 
