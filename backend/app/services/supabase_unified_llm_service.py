@@ -288,6 +288,38 @@ class SupabaseUnifiedLLMService:
                 if _k in kwargs:
                     llm_extra_kwargs[_k] = kwargs[_k]
 
+            # BYOK key injection. Internal callers (dashboard playground, etc.)
+            # hydrate user_session.provider_api_keys but don't pre-resolve the
+            # per-model key. Without this fallback, BYOK completions hit
+            # LiteLLM's env-var path and fail with AuthenticationError when
+            # the routing provider key isn't set in the server env.
+            # production_completion.py passes api_key explicitly; respect that.
+            if "api_key" in kwargs:
+                llm_extra_kwargs["api_key"] = kwargs["api_key"]
+            elif (
+                getattr(self.user_session, "key_mode", None) == "byok"
+                and getattr(self.user_session, "provider_api_keys", None)
+            ):
+                user_keys = self.user_session.provider_api_keys or {}
+                if "/" in litellm_model:
+                    routing_provider = litellm_model.split("/", 1)[0].lower()
+                else:
+                    routing_provider = self._extract_provider(litellm_model).lower()
+                provider_key_map = {"bedrock": "aws", "aws": "aws", "gemini": "google"}
+                key_name = provider_key_map.get(routing_provider, routing_provider)
+                user_key = user_keys.get(key_name)
+                if user_key:
+                    llm_extra_kwargs["api_key"] = user_key
+                    logger.debug(
+                        "BYOK: injected user %s key for model %s",
+                        key_name, litellm_model,
+                    )
+                else:
+                    logger.warning(
+                        "BYOK: no %s key on file for user %s (model %s)",
+                        key_name, self.user_session.id, litellm_model,
+                    )
+
             # Map reasoning config to provider-specific params
             reasoning_cfg = kwargs.get("reasoning")
             if reasoning_cfg:

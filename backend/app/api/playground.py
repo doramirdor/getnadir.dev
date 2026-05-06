@@ -690,8 +690,11 @@ async def _hydrate_session_for_key(user_id: str, key_id: str) -> UserSession:
     profile_future = asyncio.to_thread(
         lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
     )
+    # `subscriptions` is the legacy mirror; `user_subscriptions` is the
+    # source-of-truth table updated by the Stripe webhook. Reading the
+    # legacy one let stale data leak into the playground session.
     sub_future = asyncio.to_thread(
-        lambda: supabase.table("subscriptions").select("status, created_at").eq("user_id", user_id).execute()
+        lambda: supabase.table("user_subscriptions").select("status, created_at").eq("user_id", user_id).execute()
     )
     pk_future = asyncio.to_thread(
         lambda: supabase.table("provider_keys").select("provider, encrypted_key").eq("user_id", user_id).execute()

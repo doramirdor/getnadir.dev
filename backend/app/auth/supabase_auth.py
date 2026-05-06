@@ -273,8 +273,10 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         profile_future = asyncio.to_thread(
             lambda: supabase.table("profiles").select("*").eq("id", user_id).execute()
         )
+        # Read from `user_subscriptions` (the source-of-truth table updated
+        # by the Stripe webhook). `subscriptions` is the legacy mirror.
         subscription_future = asyncio.to_thread(
-            lambda: supabase.table("subscriptions").select("status, created_at").eq("user_id", user_id).execute()
+            lambda: supabase.table("user_subscriptions").select("status, created_at").eq("user_id", user_id).execute()
         )
         provider_keys_future = asyncio.to_thread(
             lambda: supabase.table("provider_keys").select("provider, encrypted_key").eq("user_id", user_id).execute()
@@ -486,6 +488,13 @@ async def log_usage_event(
     try:
         # Use the new comprehensive logging RPC function with write permissions
         logger.debug(f"log_usage_event called for user {user_id}, request {request_id}, cost ${cost}")
+        # The RPC does not accept p_error. Without this, error rows landed
+        # in usage_logs with no failure signal, making BYOK auth failures
+        # invisible to support and analytics. Surface the error in metadata.
+        rpc_metadata = dict(metadata or {})
+        if error:
+            rpc_metadata["error"] = error
+            rpc_metadata.setdefault("has_error", True)
         try:
             result = await asyncio.to_thread(
                 lambda: supabase.rpc("log_usage_comprehensive", {
@@ -501,7 +510,7 @@ async def log_usage_event(
                     "p_response": response,
                     "p_latency_ms": latency_ms,
                     "p_cluster_id": cluster_id,
-                    "p_metadata": metadata
+                    "p_metadata": rpc_metadata
                 }).execute()
             )
             
