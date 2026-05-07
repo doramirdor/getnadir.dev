@@ -147,6 +147,20 @@ class StripeService:
         )
 
         logger.info("Created Stripe customer %s for user %s", customer.id, user_id)
+
+        # If this user has any queued referral credits (earned before they had
+        # a Stripe customer), apply them to the new customer's balance now so
+        # the next invoice picks them up.
+        try:
+            from app.services import referral_service
+
+            await referral_service.drain_pending_credits(user_id, customer.id)
+        except Exception as e:
+            logger.error(
+                "Failed to drain pending referral credits for user %s: %s",
+                user_id, e,
+            )
+
         return customer.id
 
     async def get_customer_id(self, user_id: str) -> Optional[str]:
@@ -220,6 +234,31 @@ class StripeService:
                 logger.info("Applying promo code '%s' to checkout for user %s", promo_code, user_id)
             else:
                 logger.warning("Invalid or inactive promo code '%s' for user %s", promo_code, user_id)
+
+        # If this user signed up via a referral and hasn't redeemed the free
+        # month yet, auto-apply the referral coupon. Skipped when an explicit
+        # promo_code was passed so the user doesn't get to stack discounts.
+        if "discounts" not in session_params:
+            try:
+                from app.services import referral_service
+
+                referral = await referral_service.get_referral_for_referee(user_id)
+                if referral and not referral.get("referee_rewarded_at"):
+                    session_params.pop("allow_promotion_codes", None)
+                    session_params["discounts"] = [
+                        {"coupon": referral_service.REFERRAL_REFEREE_COUPON_ID}
+                    ]
+                    # Threaded into Checkout metadata so the webhook handler
+                    # for checkout.session.completed can mark the row.
+                    session_params["metadata"]["nadir_referral_id"] = referral["id"]
+                    logger.info(
+                        "Applying referral free-month coupon for referee %s (referral=%s)",
+                        user_id, referral["id"],
+                    )
+            except Exception as e:
+                logger.error(
+                    "Failed to apply referral coupon for user %s: %s", user_id, e
+                )
 
         session = stripe.checkout.Session.create(**session_params)
 

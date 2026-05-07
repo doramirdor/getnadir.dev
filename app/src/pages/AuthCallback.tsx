@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { trackAuthSuccess } from "@/utils/analytics";
+import { getStoredAttribution } from "@/utils/attribution";
+import { redeemReferralCode } from "@/services/referralsApi";
 
 /**
  * Handles the OAuth callback from Supabase.
@@ -35,6 +37,13 @@ const AuthCallback = () => {
         // only runs for OAuth so passing the provider is the right label.
         const provider = session.user.app_metadata?.provider ?? "oauth";
         trackAuthSuccess(provider, session.user.id);
+
+        // Redeem any referral code captured before signup. Idempotent on
+        // the backend, so safe to call on every callback.
+        const ref = getStoredAttribution().ref;
+        if (ref) {
+          redeemReferralCode(ref).catch(() => {});
+        }
         navigate("/dashboard", { replace: true });
       } else {
         // If no session yet, the onAuthStateChange listener in AuthProvider

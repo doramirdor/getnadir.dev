@@ -16,6 +16,7 @@ import {
   Menu,
   Play,
   Network,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,7 @@ const manageMenuItems = [
 const accountMenuItems = [
   { id: "logs", label: "Logs", icon: FileText, path: "/dashboard/logs" },
   { id: "billing", label: "Billing", icon: CreditCard, path: "/dashboard/billing" },
+  { id: "referrals", label: "Refer & earn", icon: Gift, path: "/dashboard/referrals" },
   { id: "settings", label: "Settings", icon: Settings, path: "/dashboard/settings" },
 ];
 

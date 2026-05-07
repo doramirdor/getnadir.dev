@@ -14,7 +14,7 @@ import stripe
 from fastapi import APIRouter, HTTPException, Request, status
 
 from app.auth.supabase_auth import supabase
-from app.services import posthog_client
+from app.services import posthog_client, referral_service
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -199,6 +199,18 @@ async def _handle_checkout_session_completed(data: dict) -> None:
         "Checkout completed: user=%s subscription=%s", user_id, subscription_id
     )
 
+    # If this checkout used a referral coupon, mark the referee as rewarded
+    # so the dashboard can flip the referral row to "subscribed" state.
+    referral_id = session.get("metadata", {}).get("nadir_referral_id")
+    if referral_id:
+        try:
+            await referral_service.mark_referee_rewarded(referral_id)
+        except Exception as e:
+            logger.error(
+                "Failed to mark referee_rewarded for referral %s: %s",
+                referral_id, e,
+            )
+
     # Server-side conversion event. Pairs with the client-side
     # `checkout_start` to close the funnel. The browser PostHog snippet
     # can't see this moment because the user is on checkout.stripe.com
@@ -354,6 +366,18 @@ async def _handle_invoice_paid(data: dict) -> None:
         amount_usd,
         invoice.get("id"),
     )
+
+    # Referral conversion: the *first* invoice paid by a referee with amount
+    # > 0 is the trigger for crediting the referrer. amount_paid==0 invoices
+    # are the free-month coupon cycle and don't count. grant_referrer_reward
+    # is idempotent: it only fires once per referral row.
+    if amount_paid > 0:
+        try:
+            await referral_service.grant_referrer_reward(user_id)
+        except Exception as e:
+            logger.error(
+                "Failed to grant referrer reward for referee %s: %s", user_id, e
+            )
 
 
 async def _handle_subscription_updated(data: dict) -> None:

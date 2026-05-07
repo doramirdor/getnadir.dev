@@ -23,6 +23,7 @@ const Logs = lazy(() => import("./pages/Logs"));
 const Settings = lazy(() => import("./pages/Settings"));
 const IntegrationsBYOK = lazy(() => import("./pages/IntegrationsBYOK"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Referrals = lazy(() => import("./pages/Referrals"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Savings = lazy(() => import("./pages/Savings"));
 const Blog = lazy(() => import("./pages/Blog"));
@@ -159,6 +160,7 @@ const App = () => (
               <Route path="clusters" element={<Clusters />} />
               <Route path="help" element={<FAQ />} />
               <Route path="onboarding" element={<Onboarding />} />
+              <Route path="referrals" element={<Referrals />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

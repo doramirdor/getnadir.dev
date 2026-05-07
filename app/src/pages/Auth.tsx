@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight } from "lucide-react";
 import { trackAuthAttempt, trackAuthSuccess } from "@/utils/analytics";
+import { getStoredAttribution } from "@/utils/attribution";
+import { redeemReferralCode } from "@/services/referralsApi";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
@@ -92,6 +94,14 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        // If we have a referral code from the landing URL, attempt to redeem
+        // it. Fire-and-forget — failures shouldn't block signup. We only have
+        // a session yet if email confirmation is disabled; otherwise the
+        // redeem call from AuthCallback (post-confirm) handles it.
+        const ref = getStoredAttribution().ref;
+        if (ref && data.session) {
+          redeemReferralCode(ref).catch(() => {});
+        }
         toast({
           title: "Account created",
           description: "Check your email to confirm your account.",
