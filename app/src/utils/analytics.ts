@@ -86,11 +86,10 @@ export const trackSignupConversion = (userId: string, method: string) => {
     // localStorage unavailable; firing once per page is still better than nothing.
   }
   window.fbq?.("track", "CompleteRegistration", { method });
-  // LinkedIn Insight Tag — fire a generic track signal on signup. Without a
-  // configured conversion_id this still registers as activity for the
-  // partner ID so LinkedIn Campaign Manager rules matching the signup
-  // route can attribute the conversion.
-  window.lintrk?.("track");
+  // LinkedIn Insight Tag — fire the signup conversion. The ID is the
+  // event-specific conversion configured in LinkedIn Campaign Manager
+  // for the Nadir signup action.
+  window.lintrk?.("track", { conversion_id: 27393514 });
 };
 
 export const trackAuthSuccess = (method: string, userId: string) => {
