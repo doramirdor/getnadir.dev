@@ -142,38 +142,6 @@
       empty div anyway and gains nothing from the fallback beacon.
     -->
 
-    <!-- LinkedIn Insight Tag — base script fires PageView on every load and
-         registers the partner ID so server-side conversion rules in LinkedIn
-         Campaign Manager can match signup page views. A custom signup signal
-         is also fired from utils/analytics.ts via window.lintrk("track").
-         Skipped on localhost / dev builds via the same gate as Meta Pixel. -->
-    <script>
-      (function(){
-        var h = window.location.hostname;
-        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '[::1]' || h.endsWith('.local');
-        if (isLocal) return;
-        window._linkedin_partner_id = "9116842";
-        window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
-        window._linkedin_data_partner_ids.push(window._linkedin_partner_id);
-        (function(l){
-          if (!l) {
-            window.lintrk = function(a,b){window.lintrk.q.push([a,b])};
-            window.lintrk.q = [];
-          }
-          var s = document.getElementsByTagName("script")[0];
-          var b = document.createElement("script");
-          b.type = "text/javascript"; b.async = true;
-          b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
-          s.parentNode.insertBefore(b, s);
-        })(window.lintrk);
-      })();
-    </script>
-    <!--
-      The LinkedIn <noscript> <img> beacon is intentionally omitted for the
-      same reason as the Meta Pixel fallback above: HTML5 disallows <img>
-      inside <noscript> in <head>, and this app is a JS-required SPA.
-    -->
-
     <!-- Google Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -349,5 +317,36 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- LinkedIn Insight Tag — placed right before </body> per LinkedIn's
+         install instructions. Base script fires PageView on every load and
+         registers the partner ID so Campaign Manager conversion rules can
+         match signup page views. A custom signup signal is also fired from
+         utils/analytics.ts via window.lintrk("track"). Skipped on
+         localhost / dev builds via the same gate as Meta Pixel. -->
+    <script>
+      (function(){
+        var h = window.location.hostname;
+        var isLocal = h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '[::1]' || h.endsWith('.local');
+        if (isLocal) return;
+        window._linkedin_partner_id = "9116842";
+        window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+        window._linkedin_data_partner_ids.push(window._linkedin_partner_id);
+        (function(l){
+          if (!l) {
+            window.lintrk = function(a,b){window.lintrk.q.push([a,b])};
+            window.lintrk.q = [];
+          }
+          var s = document.getElementsByTagName("script")[0];
+          var b = document.createElement("script");
+          b.type = "text/javascript"; b.async = true;
+          b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
+          s.parentNode.insertBefore(b, s);
+        })(window.lintrk);
+      })();
+    </script>
+    <noscript>
+      <img height="1" width="1" style="display:none;" alt="" src="https://px.ads.linkedin.com/collect/?pid=9116842&fmt=gif" />
+    </noscript>
   </body>
 </html>
