@@ -244,6 +244,7 @@ class StripeService:
 
                 referral = await referral_service.get_referral_for_referee(user_id)
                 if referral and not referral.get("referee_rewarded_at"):
+                    referral_service._ensure_referee_coupon()
                     session_params.pop("allow_promotion_codes", None)
                     session_params["discounts"] = [
                         {"coupon": referral_service.REFERRAL_REFEREE_COUPON_ID}

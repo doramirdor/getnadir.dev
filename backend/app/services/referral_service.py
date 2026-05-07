@@ -20,6 +20,12 @@ from app.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# Mirror stripe_service.py: set the API key at module load. We can't rely on
+# stripe_service.py to have been imported first — main.py imports
+# stripe_webhooks (which imports this file) before billing_api/stripe_service.
+if settings.STRIPE_SECRET_KEY:
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
 
 # Stripe coupon used for the referee's free first month. Distinct from FIRST1
 # so we can report referral redemptions separately and so it isn't subject to
@@ -28,11 +34,19 @@ logger = logging.getLogger(__name__)
 # uniqueness in referrals already prevents double-claim).
 REFERRAL_REFEREE_COUPON_ID = "referral-free-month"
 
+_coupon_ensured = False
+
 
 def _ensure_referee_coupon() -> None:
-    """Create the referral coupon if it doesn't exist."""
-    if not settings.STRIPE_SECRET_KEY:
+    """
+    Create the referral coupon if it doesn't exist. Lazy-fired on first
+    use so any Stripe-side failure can't crash module import or worker boot.
+    Idempotent: only attempts once per process.
+    """
+    global _coupon_ensured
+    if _coupon_ensured or not settings.STRIPE_SECRET_KEY:
         return
+    _coupon_ensured = True  # set first so a single transient failure doesn't retry forever
     try:
         stripe.Coupon.retrieve(REFERRAL_REFEREE_COUPON_ID)
     except stripe.error.InvalidRequestError:
@@ -46,9 +60,8 @@ def _ensure_referee_coupon() -> None:
             logger.info("Created Stripe coupon '%s'", REFERRAL_REFEREE_COUPON_ID)
         except Exception as e:
             logger.error("Failed to create referral coupon: %s", e)
-
-
-_ensure_referee_coupon()
+    except Exception as e:
+        logger.error("Failed to verify referral coupon: %s", e)
 
 
 async def _db(fn):
