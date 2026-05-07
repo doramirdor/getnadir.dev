@@ -13,6 +13,7 @@ declare global {
       identify: (distinctId: string, properties?: Record<string, unknown>) => void;
     };
     fbq?: (...args: unknown[]) => void;
+    lintrk?: (action: string, properties?: Record<string, unknown>) => void;
   }
 }
 
@@ -85,6 +86,11 @@ export const trackSignupConversion = (userId: string, method: string) => {
     // localStorage unavailable; firing once per page is still better than nothing.
   }
   window.fbq?.("track", "CompleteRegistration", { method });
+  // LinkedIn Insight Tag — fire a generic track signal on signup. Without a
+  // configured conversion_id this still registers as activity for the
+  // partner ID so LinkedIn Campaign Manager rules matching the signup
+  // route can attribute the conversion.
+  window.lintrk?.("track");
 };
 
 export const trackAuthSuccess = (method: string, userId: string) => {
