@@ -205,20 +205,20 @@ export default function BlogPost() {
       <div className="container mx-auto px-6 py-8">
         <Button
           variant="ghost"
-          className="mb-8 hover:bg-muted"
-          onClick={() => navigate("/")}
+          className="mb-8 hover:bg-muted text-[#028a3e]"
+          onClick={() => navigate("/blog")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
+          All posts
         </Button>
 
         <article className="max-w-4xl mx-auto">
           {/* Header */}
           <header className="text-center mb-12 border-b border-border pb-8">
-            <div className="inline-block px-3 py-1 bg-[#0a0a0a] text-white text-sm font-mono rounded mb-6">
+            <div className="inline-block px-3 py-1 bg-[rgba(48,209,88,0.10)] text-[#028a3e] text-[12px] font-semibold uppercase tracking-[0.1em] rounded mb-6">
               {post.thumbnail}
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight">
+            <h1 className="text-[40px] md:text-[56px] font-semibold text-[#1d1d1f] mb-6 leading-[1.05] tracking-[-0.034em] [text-wrap:balance]">
               {post.title}
             </h1>
 
@@ -262,16 +262,22 @@ export default function BlogPost() {
           </div>
 
           {/* CTA */}
-          <div className="bg-card border rounded-lg p-8 text-center">
-            <h3 className="text-2xl font-semibold text-foreground mb-2">
-              Want to learn more?
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Try Nadir's intelligent LLM routing platform and start optimizing
-              your AI costs today.
+          <div className="bg-[#fbfbfd] border border-black/[0.06] rounded-2xl p-10 text-center">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
+              Done reading?
             </p>
-            <Button onClick={() => navigate("/dashboard")} size="lg">
-              Get Started Free
+            <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
+              Put it to work on your traffic.
+            </h3>
+            <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[520px] mx-auto">
+              Two lines of code, one base URL. The savings dashboard shows the real delta against always-Opus, per request.
+            </p>
+            <Button
+              onClick={() => navigate("/auth?mode=signup")}
+              size="lg"
+              className="rounded-full bg-[#1d1d1f] hover:bg-[#000] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
+            >
+              Start free, bring your own keys
             </Button>
           </div>
         </article>

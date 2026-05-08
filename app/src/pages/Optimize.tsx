@@ -14,11 +14,25 @@ export default function Optimize() {
         path="/optimize"
       />
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Context Optimize
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Context Optimize · Pre-route compression
+        </p>
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          Your prompts are bloated.{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            Trim them before they bill.
+          </span>
         </h1>
-        <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Your prompts are bloated. Tool schemas, chat history, redundant system prompts, pretty-printed JSON. Context Optimize trims the fat before it hits the provider so the same behavior costs 30-70% less and fits inside tighter context windows.
+        <p className="text-lg md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em]">
+          Tool schemas, chat history, redundant system prompts, pretty-printed JSON. Context Optimize cuts 30 to 70% of input tokens before the request hits the provider. Same behavior, smaller bill, fewer context-limit errors.
         </p>
       </section>
 
@@ -56,7 +70,7 @@ export default function Optimize() {
             <p className="text-xs text-[#999] mt-2">Available in open source (free)</p>
           </div>
 
-          <div className="p-6 bg-[#0a0a0a] text-white rounded-xl ring-2 ring-[#0066ff] flex flex-col">
+          <div className="p-6 bg-[#0a0a0a] text-white rounded-xl ring-2 ring-[#028a3e] flex flex-col">
             <h3 className="text-lg font-semibold mb-2">Aggressive mode</h3>
             <p className="text-sm text-gray-300 mb-4">Everything in safe + semantic deduplication for maximum savings.</p>
             <ul className="space-y-2 text-sm text-gray-300 flex-1">
@@ -69,7 +83,7 @@ export default function Optimize() {
             <div className="mt-4 bg-gray-800 border border-gray-700 rounded-lg p-3 font-mono text-xs">
               <span className="text-gray-500">$</span> nadirclaw serve --optimize aggressive
             </div>
-            <p className="text-xs text-[#0066ff] mt-2">Pro plan only - advanced algorithms</p>
+            <p className="text-xs text-[#028a3e] mt-2">Pro plan only - advanced algorithms</p>
           </div>
         </div>
       </section>
@@ -89,7 +103,7 @@ export default function Optimize() {
               <span className="text-sm text-[#666] w-32 shrink-0">{bar.label}</span>
               <div className="flex-1 h-6 bg-[#e5e5e5] rounded overflow-hidden">
                 <div
-                  className="h-full bg-[#0066ff] rounded text-white text-[11px] font-semibold flex items-center justify-center"
+                  className="h-full bg-[#028a3e] rounded text-white text-[11px] font-semibold flex items-center justify-center"
                   style={{ width: `${bar.remaining}%` }}
                 >
                   {bar.remaining}%
@@ -105,15 +119,22 @@ export default function Optimize() {
 
       {/* CTA */}
       <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
-        <h3 className="text-2xl font-bold mb-2">Ready to optimize?</h3>
-        <p className="text-[#666] mb-6">Sign up for Nadir Pro and start cutting your LLM costs.</p>
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Ready to trim?
+        </p>
+        <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
+          Cut input tokens before your next deploy.
+        </h3>
+        <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[560px] mx-auto">
+          Safe mode is free in NadirClaw. Aggressive mode ships with Pro. No SDK changes, just one config flag.
+        </p>
         <SignupDialog ctaLabel="start_saving" ctaLocation="solution_optimize_bottom">
           <button
             type="button"
             onClick={() => trackCtaClick("start_saving", "solution_optimize_bottom")}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all"
+            className="inline-flex items-center gap-2 px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
           >
-            Start saving
+            Start free, bring your own keys
           </button>
         </SignupDialog>
       </section>

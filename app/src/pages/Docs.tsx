@@ -44,11 +44,11 @@ export default function Docs() {
       <div className="container mx-auto px-6 pt-8 pb-16 max-w-7xl">
         <Button
           variant="ghost"
-          className="mb-6 hover:bg-muted"
+          className="mb-6 hover:bg-muted text-[#028a3e]"
           onClick={() => navigate("/")}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
+          Back to home
         </Button>
 
         <div className="flex gap-10">

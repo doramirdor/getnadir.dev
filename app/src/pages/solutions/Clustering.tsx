@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 type RoutingMix = { haiku: number; sonnet: number; opus: number };
 
 const TIER_COLOR = {
-  haiku: "#00a86b",
+  haiku: "#028a3e",
   sonnet: "#0066ff",
   opus: "#f59e0b",
 };
@@ -118,18 +118,29 @@ export default function SolutionClustering() {
       />
 
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-10 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0066ff]/10 text-[12px] font-semibold text-[#0066ff] mb-5">
-          Coming soon
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(48,209,88,0.10)] text-[12px] font-semibold uppercase tracking-[0.1em] text-[#028a3e] mb-5">
+          Prompt Clustering · Coming soon
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Prompt Clustering
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          See the actual shape{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            of your traffic.
+          </span>
         </h1>
-        <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Most teams have no idea what shape their LLM traffic actually takes. Prompt Clustering groups semantically similar prompts, flags duplicates, and shows you exactly which workloads are driving your bill, which ones are quietly eating your quality, and which ones can be auto-handled without a human in the loop.
+        <p className="text-lg md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em] mb-8">
+          Most teams have no idea what their LLM traffic actually looks like. Prompt Clustering groups semantically similar prompts, flags duplicates, and shows which workloads drive your bill, which ones eat your quality, and which ones can be auto-handled without a human in the loop.
         </p>
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#e5e5e5] bg-white text-[12px] text-[#666] mb-8">
           <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00a86b]" /> Works as a proxy
+            <span className="w-1.5 h-1.5 rounded-full bg-[#028a3e]" /> Works as a proxy
           </span>
           <span className="text-[#ccc]">·</span>
           <span className="flex items-center gap-1.5">
@@ -175,12 +186,12 @@ export default function SolutionClustering() {
                 </pattern>
               </defs>
               <rect width="720" height="320" fill="url(#grid)" />
-              <Bubble x={150} y={110} r={46} label="Summarize tickets" color="#00a86b" />
+              <Bubble x={150} y={110} r={46} label="Summarize tickets" color="#028a3e" />
               <Bubble x={290} y={180} r={32} label="Product copy" color="#0066ff" />
-              <Bubble x={210} y={240} r={26} label="Intent classify" color="#00a86b" />
+              <Bubble x={210} y={240} r={26} label="Intent classify" color="#028a3e" />
               <Bubble x={430} y={100} r={24} label="PDF extract" color="#7c3aed" />
               <Bubble x={540} y={180} r={20} label="Code review" color="#7c3aed" />
-              <Bubble x={620} y={95} r={16} label="Translate" color="#00a86b" />
+              <Bubble x={620} y={95} r={16} label="Translate" color="#028a3e" />
               <Bubble x={470} y={240} r={14} label="SQL gen" color="#0066ff" />
             </svg>
           </div>
@@ -330,7 +341,7 @@ export default function SolutionClustering() {
                     <span className="inline-flex items-center gap-2">
                       <div className="w-16 h-1.5 bg-[#e5e5e5] rounded overflow-hidden">
                         <div
-                          className="h-full bg-[#00a86b] rounded"
+                          className="h-full bg-[#028a3e] rounded"
                           style={{ width: `${Math.round(c.save * 100)}%` }}
                         />
                       </div>

@@ -9,6 +9,8 @@ type Tier = {
   price: string;
   period: string;
   blurb: string;
+  /** One-line "math proof" under the price — concrete numbers a buyer can map to themselves. */
+  proof: string;
   features: string[];
   cta: string;
   // ctaType: "signup" opens the SignupDialog (Pro trial by default).
@@ -24,7 +26,8 @@ const TIERS: Tier[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    blurb: "Perfect for side projects and trying Nadir out.",
+    blurb: "For side projects, weekend hacks, and kicking the tires.",
+    proof: "Free, even with your own keys.",
     features: [
       "Hosted proxy (api.getnadir.com)",
       "50 requests per month on our keys",
@@ -32,15 +35,16 @@ const TIERS: Tier[] = [
       "Intelligent routing",
       "Dashboard and analytics",
     ],
-    cta: "Start free",
+    cta: "Start free, no card",
     ctaType: "signup",
     highlighted: false,
   },
   {
     name: "Pro",
     price: "$9",
-    period: "per month, plus variable savings fee",
+    period: "per month + variable savings fee",
     blurb: "For production teams routing real traffic.",
+    proof: "Routes a $5K/mo Anthropic bill for ~$430/mo. You keep the other ~$2,070.",
     features: [
       "Everything in Free, no request cap",
       "Hosted keys or BYOK",
@@ -49,7 +53,7 @@ const TIERS: Tier[] = [
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start with 1 month free",
+    cta: "Start free, save by tomorrow",
     ctaType: "signup",
     highlighted: true,
   },
@@ -58,6 +62,7 @@ const TIERS: Tier[] = [
     price: "Custom",
     period: "volume pricing",
     blurb: "For scale, compliance, and dedicated infrastructure.",
+    proof: "Volume rates and a 99.9% SLA. Talk to a human.",
     features: [
       "Everything in Pro",
       "SSO and SAML",
@@ -94,11 +99,14 @@ export const PricingSection = () => {
     <section className="py-24 md:py-36">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+          <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
+            Pricing that pays for itself
+          </p>
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
             Flat base. You keep the savings.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            Start free. Upgrade when you are ready. Cancel anytime.
+            $9/mo gets you the router. We take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay $9.
           </p>
         </div>
 
@@ -138,7 +146,7 @@ export const PricingSection = () => {
                 >
                   {tier.blurb}
                 </p>
-                <div className="flex items-baseline gap-2 mb-9">
+                <div className="flex items-baseline gap-2 mb-3">
                   <span className="text-[48px] md:text-[56px] font-semibold tracking-[-0.035em] leading-none">
                     {tier.price}
                   </span>
@@ -149,6 +157,12 @@ export const PricingSection = () => {
                     {tier.period}
                   </span>
                 </div>
+                <p
+                  className="text-[13px] m-0 mb-9 leading-[1.5] tracking-[-0.005em]"
+                  style={{ color: highlighted ? "#30d158" : "#028a3e" }}
+                >
+                  {tier.proof}
+                </p>
                 <ul className="list-none p-0 m-0 mb-9 flex-1">
                   {tier.features.map((f) => (
                     <li
@@ -196,6 +210,9 @@ export const PricingSection = () => {
             );
           })}
         </div>
+        <p className="mt-10 text-center text-[13px] text-[#6e6e73] tracking-[-0.005em]">
+          No card to start &middot; Cancel anytime &middot; BYOK on every tier &middot; First month free with code <span className="font-mono text-[#1d1d1f] bg-black/[0.04] px-1.5 py-0.5 rounded">FIRST1</span>
+        </p>
       </div>
     </section>
   );

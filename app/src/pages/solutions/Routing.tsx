@@ -50,23 +50,37 @@ export default function SolutionRouting() {
       />
 
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          LLM Routing
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          LLM Routing · The decision engine
+        </p>
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          Cheapest model that{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            can still handle it.
+          </span>
         </h1>
-        <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Every prompt goes to the cheapest model that can still handle it. Opus only when Opus is actually needed, Haiku when Haiku is enough, and a learned classifier deciding in under 10ms.
+        <p className="text-lg md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em] mb-8">
+          Opus only when Opus is actually needed. Haiku when Haiku is enough. A trained classifier deciding in under 10 milliseconds, on every request.
         </p>
       </section>
 
       <section className="max-w-4xl mx-auto px-6 pb-16">
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { k: "Up to 47%", v: "cheaper than always-Opus on the same traffic mix" },
+            { k: "47%", v: "cheaper than always-Opus on the same traffic mix", accent: true },
             { k: "< 10ms", v: "added latency for the routing decision" },
             { k: "0%", v: "catastrophic routes in our internal eval" },
           ].map((s) => (
-            <div key={s.k} className="p-5 bg-white border border-[#e5e5e5] rounded-xl">
-              <div className="text-2xl font-bold text-[#0a0a0a]">{s.k}</div>
+            <div key={s.k} className="p-5 bg-white border border-black/[0.06] rounded-xl">
+              <div className="text-[28px] font-semibold tracking-[-0.025em]" style={{ color: s.accent ? "#028a3e" : "#1d1d1f" }}>{s.k}</div>
               <div className="text-sm text-[#666] mt-1">{s.v}</div>
             </div>
           ))}
@@ -113,7 +127,7 @@ export default function SolutionRouting() {
           </div>
           <div className="p-5 bg-white border border-[#e5e5e5] rounded-xl">
             <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-[#0066ff]" />
+              <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
               <span className="font-semibold">Everyday tier</span>
             </div>
             <p className="text-sm text-[#666]">
@@ -208,17 +222,22 @@ export default function SolutionRouting() {
       </section>
 
       <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
-        <h3 className="text-2xl font-bold mb-2">Cut your LLM bill this week</h3>
-        <p className="text-[#666] mb-6">
-          Typical Nadir account sees measurable savings inside 48 hours. First month is free, you only pay on what we save you.
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Measurable in 48 hours
+        </p>
+        <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
+          Put the classifier on your traffic.
+        </h3>
+        <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[560px] mx-auto">
+          Typical account sees real savings within two days. First month is free. You only pay on what we save you.
         </p>
         <SignupDialog ctaLabel="start_saving" ctaLocation="solution_routing_bottom">
           <button
             type="button"
             onClick={() => trackCtaClick("start_saving", "solution_routing_bottom")}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all"
+            className="inline-flex items-center gap-2 px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
           >
-            Start saving
+            Start free, bring your own keys
           </button>
         </SignupDialog>
       </section>

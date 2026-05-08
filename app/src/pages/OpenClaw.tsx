@@ -17,32 +17,42 @@ export default function OpenClaw() {
 
       {/* Hero */}
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f0f0f0] text-xs font-medium text-[#666] mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgba(48,209,88,0.10)] text-[12px] font-semibold uppercase tracking-[0.1em] text-[#028a3e] mb-5">
           <Github className="w-3.5 h-3.5" />
-          MIT Licensed, Free Forever
+          MIT licensed · Free forever · Self-host
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          NadirClaw
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          The router,{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            on your hardware.
+          </span>
         </h1>
-        <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Run your own LLM router. Self-hosted, local-first, unlimited requests.
-          Route simple prompts to cheaper models and cut API costs up to 40%.
+        <p className="text-lg md:text-[19px] text-[#424245] max-w-[640px] mx-auto mb-10 leading-[1.5] tracking-[-0.005em]">
+          NadirClaw is the open-source core. Same routing logic, runs on your machine, stores nothing in the cloud, supports unlimited requests.
         </p>
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center flex-wrap gap-3">
           <a
             href="https://github.com/NadirRouter/NadirClaw"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all no-underline"
+            className="inline-flex items-center gap-2 px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] no-underline shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
           >
             <Github className="w-4 h-4" />
             View on GitHub
           </a>
           <Link
             to="/docs"
-            className="inline-flex items-center gap-2 px-6 py-3 border border-[#e5e5e5] rounded-lg text-[15px] font-semibold hover:border-[#0a0a0a] transition-all no-underline text-[#0a0a0a]"
+            className="inline-flex items-center gap-2 px-6 py-[14px] border border-black/[0.12] rounded-full text-[15px] font-medium hover:bg-black/[0.03] transition-colors no-underline text-[#1d1d1f] tracking-[-0.01em]"
           >
-            Read the Docs
+            Read the docs <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
@@ -73,7 +83,7 @@ curl http://localhost:4000/v1/chat/completions \\
         <div className="grid md:grid-cols-2 gap-6">
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
             <div className="flex items-center gap-2 mb-2">
-              <Cpu className="w-4 h-4 text-[#0066ff]" />
+              <Cpu className="w-4 h-4 text-[#028a3e]" />
               <h3 className="text-sm font-semibold">4-tier intelligent routing</h3>
             </div>
             <p className="text-sm text-[#666]">
@@ -83,7 +93,7 @@ curl http://localhost:4000/v1/chat/completions \\
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-[#0066ff]" />
+              <Zap className="w-4 h-4 text-[#028a3e]" />
               <h3 className="text-sm font-semibold">Context optimization</h3>
             </div>
             <p className="text-sm text-[#666]">
@@ -93,7 +103,7 @@ curl http://localhost:4000/v1/chat/completions \\
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
             <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-[#0066ff]" />
+              <Shield className="w-4 h-4 text-[#028a3e]" />
               <h3 className="text-sm font-semibold">Automatic fallback chains</h3>
             </div>
             <p className="text-sm text-[#666]">
@@ -103,7 +113,7 @@ curl http://localhost:4000/v1/chat/completions \\
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">
             <div className="flex items-center gap-2 mb-2">
-              <Terminal className="w-4 h-4 text-[#0066ff]" />
+              <Terminal className="w-4 h-4 text-[#028a3e]" />
               <h3 className="text-sm font-semibold">CLI dashboard</h3>
             </div>
             <p className="text-sm text-[#666]">
@@ -139,7 +149,7 @@ nadirclaw optimize payload.json`}
         </div>
         <p className="text-xs text-[#999] text-center mt-3">
           Off by default -- zero overhead when disabled.{" "}
-          <Link to="/optimize" className="text-[#0066ff] hover:underline">
+          <Link to="/optimize" className="text-[#028a3e] hover:underline">
             See full benchmark results and aggressive mode
           </Link>
         </p>
@@ -179,7 +189,7 @@ nadirclaw optimize payload.json`}
                 "Semantic cache and dedup",
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-[#444]">
-                  <Check className="w-4 h-4 text-[#0066ff] shrink-0" /> {f}
+                  <Check className="w-4 h-4 text-[#028a3e] shrink-0" /> {f}
                 </li>
               ))}
             </ul>
@@ -203,15 +213,15 @@ nadirclaw optimize payload.json`}
           </p>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg bg-white border border-[#e5e5e5]">
-              <div className="text-xs font-semibold text-[#0066ff] mb-1">1. Install</div>
+              <div className="text-xs font-semibold text-[#028a3e] mb-1">1. Install</div>
               <code className="text-xs bg-[#f5f5f5] px-1.5 py-0.5 rounded font-mono">pip install nadirclaw</code>
             </div>
             <div className="p-4 rounded-lg bg-white border border-[#e5e5e5]">
-              <div className="text-xs font-semibold text-[#0066ff] mb-1">2. Onboard</div>
+              <div className="text-xs font-semibold text-[#028a3e] mb-1">2. Onboard</div>
               <code className="text-xs bg-[#f5f5f5] px-1.5 py-0.5 rounded font-mono">nadirclaw openclaw onboard</code>
             </div>
             <div className="p-4 rounded-lg bg-white border border-[#e5e5e5]">
-              <div className="text-xs font-semibold text-[#0066ff] mb-1">3. Use it</div>
+              <div className="text-xs font-semibold text-[#028a3e] mb-1">3. Use it</div>
               <code className="text-xs bg-[#f5f5f5] px-1.5 py-0.5 rounded font-mono">/model nadirclaw/auto</code>
             </div>
           </div>

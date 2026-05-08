@@ -30,7 +30,7 @@ const TIERS: Tier[] = [
       "Intelligent routing",
       "Dashboard and analytics",
     ],
-    cta: "Start free",
+    cta: "Start free, no card",
     ctaAction: "link",
     ctaLink: "/auth?mode=signup",
     highlighted: false,
@@ -38,7 +38,7 @@ const TIERS: Tier[] = [
   {
     name: "Pro",
     price: "$9",
-    period: "per month, plus variable savings fee",
+    period: "per month + variable savings fee",
     blurb: "For production teams routing real traffic.",
     features: [
       "Everything in Free, no request cap",
@@ -48,7 +48,7 @@ const TIERS: Tier[] = [
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start with 1 month free",
+    cta: "Start free, save by tomorrow",
     ctaAction: "link",
     ctaLink: "/auth?mode=signup",
     highlighted: true,
@@ -180,12 +180,15 @@ export default function Pricing() {
       <section className="pt-20 md:pt-28 pb-16 md:pb-20">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
           <div className="text-center mb-10 md:mb-14">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
-              Pricing
+            <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
+              Pricing that pays for itself
             </div>
-            <h1 className="text-[32px] sm:text-[44px] md:text-[52px] font-semibold leading-[1.06] tracking-[-0.03em] text-[#1d1d1f] max-w-[720px] mx-auto">
+            <h1 className="text-[32px] sm:text-[44px] md:text-[52px] font-semibold leading-[1.06] tracking-[-0.03em] text-[#1d1d1f] max-w-[720px] mx-auto mb-5">
               Pick your tier. We only earn when we cut your bill.
             </h1>
+            <p className="text-[16px] md:text-[18px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em]">
+              $9 base. 25% of the first $2K of monthly savings, 10% above. If we save you nothing, you pay $9.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
             {TIERS.map((tier) => {
@@ -286,10 +289,19 @@ export default function Pricing() {
       */}
       <section className="pb-20 md:pb-28 text-center">
         <div className="max-w-[920px] mx-auto px-6 sm:px-8">
-          <h2 className="text-[32px] sm:text-[40px] md:text-[52px] font-semibold leading-[1.06] tracking-[-0.03em] mb-5 text-[#1d1d1f]">
-            Simple pricing.
-            <br />
-            <span className="text-[#86868b]">You keep the savings.</span>
+          <h2 className="text-[32px] sm:text-[40px] md:text-[52px] font-semibold leading-[1.06] tracking-[-0.03em] mb-5 text-[#1d1d1f] [text-wrap:balance]">
+            Simple pricing.{" "}
+            <span
+              className="px-[0.05em]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+                WebkitBoxDecorationBreak: "clone",
+                boxDecorationBreak: "clone",
+              }}
+            >
+              You keep the savings.
+            </span>
           </h2>
           <p className="text-[17px] md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.45] tracking-[-0.01em]">
             Start free with your own keys. Upgrade when you need hosted routing. We only earn when we cut your bill.
@@ -301,7 +313,7 @@ export default function Pricing() {
       <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
           {[
-            { value: "Up to 47%", label: "Cost savings on a realistic prompt mix." },
+            { value: "47%", label: "Lower bill on a realistic prompt mix.", accent: true },
             { value: "96%", label: "Routing accuracy on our 50-prompt benchmark." },
             { value: "< 10 ms", label: "Classifier overhead. Faster than a DNS lookup." },
           ].map((s, i) => (
@@ -310,7 +322,10 @@ export default function Pricing() {
               className="text-center px-2 md:px-4 md:border-l md:first:border-l-0 border-black/[0.08]"
               style={{ borderLeftColor: i === 0 ? "transparent" : undefined }}
             >
-              <div className="text-[36px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[1.05] mb-3 text-[#1d1d1f]">
+              <div
+                className="text-[36px] sm:text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[1.05] mb-3"
+                style={{ color: (s as { accent?: boolean }).accent ? "#028a3e" : "#1d1d1f" }}
+              >
                 {s.value}
               </div>
               <div className="text-[14px] sm:text-[15px] text-[#424245] tracking-[-0.01em] max-w-[280px] mx-auto leading-[1.45]">
@@ -328,6 +343,9 @@ export default function Pricing() {
       <section className="py-24 md:py-36 bg-[#fbfbfd] border-y border-black/[0.06]">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+            <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
+              How the math works
+            </p>
             <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
               You only pay when we save.
             </h2>

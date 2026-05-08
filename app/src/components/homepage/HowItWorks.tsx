@@ -8,7 +8,7 @@ const CodeBlock = ({ label, children, accent }: CodeBlockProps) => (
   <div className="bg-white border border-black/[0.08] rounded-[14px] overflow-hidden">
     <div
       className="px-5 py-3 border-b border-black/[0.06] bg-[#fbfbfd] text-[11px] font-semibold uppercase tracking-[0.14em]"
-      style={{ color: accent ? "#0071e3" : "#86868b" }}
+      style={{ color: accent ? "#028a3e" : "#86868b" }}
     >
       {label}
     </div>
@@ -20,8 +20,8 @@ const CodeBlock = ({ label, children, accent }: CodeBlockProps) => (
 
 const HighlightedLine = ({ children }: { children: React.ReactNode }) => (
   <span
-    className="block w-full -mx-3 pl-3 border-l-2 border-[#0071e3]"
-    style={{ background: "rgba(0,113,227,0.08)" }}
+    className="block w-full -mx-3 pl-3 border-l-2 border-[#028a3e]"
+    style={{ background: "rgba(48,209,88,0.10)" }}
   >
     {children}
   </span>
@@ -29,19 +29,26 @@ const HighlightedLine = ({ children }: { children: React.ReactNode }) => (
 
 const Step = ({
   num,
+  time,
   title,
   desc,
   children,
 }: {
   num: string;
+  time: string;
   title: string;
   desc: string;
   children: React.ReactNode;
 }) => (
   <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-start mb-16 last:mb-0">
     <div>
-      <div className="text-[13px] font-medium text-[#86868b] mb-3.5 tracking-[-0.005em]">
-        Step {num}
+      <div className="flex items-center gap-3 mb-3.5">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#1d1d1f] text-white text-[12px] font-semibold tracking-[-0.005em]">
+          {num}
+        </span>
+        <span className="text-[12px] font-semibold text-[#028a3e] uppercase tracking-[0.1em]">
+          {time}
+        </span>
       </div>
       <h3 className="text-[26px] md:text-[32px] font-semibold tracking-[-0.026em] m-0 mb-4 text-[#1d1d1f] leading-[1.15]">
         {title}
@@ -67,13 +74,13 @@ export const HowItWorks = () => {
           </p>
         </div>
 
-        <Step num="01" title="Swap your base URL." desc="Point your existing OpenAI client at Nadir. Your prompts, your streaming, your tool calls, all untouched.">
+        <Step num="01" time="~ 30 seconds" title="Swap your base URL." desc="Point your existing OpenAI client at Nadir. Your prompts, your streaming, your tool calls, all untouched.">
           <CodeBlock label="Python" accent>
             <span className="text-[#aa0d91]">import</span>{" openai\n\n"}
             {"client = openai.OpenAI(\n"}
             <HighlightedLine>
               {"    "}<span className="text-[#86868b]">base_url=</span>
-              <span className="text-[#0071e3]">"https://api.getnadir.com/v1"</span>
+              <span className="text-[#028a3e]">"https://api.getnadir.com/v1"</span>
               {",\n"}
             </HighlightedLine>
             {"    "}<span className="text-[#86868b]">api_key=</span>
@@ -82,12 +89,12 @@ export const HowItWorks = () => {
           </CodeBlock>
         </Step>
 
-        <Step num="02" title="Set model to auto." desc="Nadir reads the prompt and picks the right model for the job. You can still pin a model when you need to.">
+        <Step num="02" time="~ 30 seconds" title="Set model to auto." desc="Nadir reads the prompt and picks the cheapest model that can answer it well. Pin a model whenever you want full control.">
           <CodeBlock label="Request">
             {"response = client.chat.completions.create(\n"}
             <HighlightedLine>
               {"    "}<span className="text-[#86868b]">model=</span>
-              <span className="text-[#0071e3]">"auto"</span>
+              <span className="text-[#028a3e]">"auto"</span>
               {",\n"}
             </HighlightedLine>
             {"    "}<span className="text-[#86868b]">messages=</span>
@@ -95,7 +102,7 @@ export const HowItWorks = () => {
           </CodeBlock>
         </Step>
 
-        <Step num="03" title="Watch your bill drop." desc="Per request cost, latency, and routing decisions appear in the dashboard as traffic flows. No instrumentation required.">
+        <Step num="03" time="On your next request" title="Watch your bill drop." desc="Per-request cost, latency, and routing decisions appear in the dashboard the moment traffic flows. Zero instrumentation.">
           <CodeBlock label="Response headers">
             <span className="text-[#86868b]">x-nadir-routed-to:</span>
             {"    claude-haiku-4-5\n"}

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { trackFaqOpen } from "@/utils/analytics";
 
 const FAQS: [string, string][] = [
@@ -32,6 +33,9 @@ export const FAQSection = () => {
     <section className="py-24 md:py-36">
       <div className="max-w-[880px] mx-auto px-6 sm:px-8">
         <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+          <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
+            FAQ
+          </p>
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
             Answers, not hedges.
           </h2>
@@ -62,6 +66,16 @@ export const FAQSection = () => {
               </p>
             </details>
           ))}
+        </div>
+
+        <div className="mt-12 md:mt-14 text-center">
+          <p className="text-[14px] text-[#6e6e73] tracking-[-0.005em]">
+            Still have a question?{" "}
+            <Link to="/contact" className="text-[#028a3e] font-medium underline-offset-2 hover:underline">
+              Talk to us
+            </Link>
+            {" — we read every email."}
+          </p>
         </div>
       </div>
     </section>

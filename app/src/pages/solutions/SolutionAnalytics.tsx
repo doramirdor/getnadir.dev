@@ -17,11 +17,25 @@ export default function SolutionAnalytics() {
       />
 
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Analytics
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Analytics · Cost, latency, and quality, per request
+        </p>
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          Walk into finance review{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            with the actual number.
+          </span>
         </h1>
-        <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Walk into the next finance review with the exact dollar figure you saved, the exact model mix that saved it, and the exact requests you'd route differently next month. Every Nadir account gets this on day one.
+        <p className="text-lg md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em] mb-8">
+          The exact dollar figure you saved. The exact model mix that saved it. The exact requests you'd route differently next month. Every Nadir account gets this on day one.
         </p>
       </section>
 
@@ -32,7 +46,7 @@ export default function SolutionAnalytics() {
         </p>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { label: "Saved this month", value: "$4,812", sub: "vs always-Opus 4.6", color: "#00a86b" },
+            { label: "Saved this month", value: "$4,812", sub: "vs always-Opus 4.6", color: "#028a3e" },
             { label: "Requests routed", value: "1.8M", sub: "across 3 providers", color: "#0066ff" },
             { label: "Catastrophic routes", value: "0.00%", sub: "quality stayed flat", color: "#7c3aed" },
           ].map((k) => (
@@ -52,7 +66,7 @@ export default function SolutionAnalytics() {
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#0066ff] mb-1">For finance</div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#028a3e] mb-1">For finance</div>
             <h3 className="text-lg font-semibold mb-2">"What did LLMs cost us this month, and is it going up or down?"</h3>
             <p className="text-sm text-[#666] mb-3">
               Actual dollar spend vs always-Opus benchmark, broken down by product surface, team, or API key. Trendlines, forecast, burn rate, and a one-click export for your monthly accruals.
@@ -64,7 +78,7 @@ export default function SolutionAnalytics() {
             </ul>
           </div>
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#0066ff] mb-1">For product</div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#028a3e] mb-1">For product</div>
             <h3 className="text-lg font-semibold mb-2">"Which features are expensive, and are they worth it?"</h3>
             <p className="text-sm text-[#666] mb-3">
               Spend and quality per feature, per user cohort, per prompt cluster. See which workloads drive cost, which drive value, and which quietly do neither.
@@ -76,7 +90,7 @@ export default function SolutionAnalytics() {
             </ul>
           </div>
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#0066ff] mb-1">For on-call</div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#028a3e] mb-1">For on-call</div>
             <h3 className="text-lg font-semibold mb-2">"Is it our app, or is it the provider?"</h3>
             <p className="text-sm text-[#666] mb-3">
               p50, p95, p99 latency by provider and model. Fallback events, rolling health scores, and a timeline you can drop into an incident doc in seconds.
@@ -88,7 +102,7 @@ export default function SolutionAnalytics() {
             </ul>
           </div>
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#0066ff] mb-1">For legal and security</div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#028a3e] mb-1">For legal and security</div>
             <h3 className="text-lg font-semibold mb-2">"Where did this prompt go, and who saw it?"</h3>
             <p className="text-sm text-[#666] mb-3">
               Full audit trail per request. Opt-in prompt storage with SHA-256 hashing when off. User-scoped RLS on every log row. SOC 2 controls in progress.
@@ -135,7 +149,7 @@ export default function SolutionAnalytics() {
         <h2 className="text-2xl font-bold mb-6 text-center">Routed mix, last 30 days</h2>
         <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
           <div className="flex h-10 w-full rounded overflow-hidden text-[11px] font-semibold text-white">
-            <div className="bg-[#00a86b] flex items-center justify-center" style={{ width: "58%" }}>Haiku 58%</div>
+            <div className="bg-[#028a3e] flex items-center justify-center" style={{ width: "58%" }}>Haiku 58%</div>
             <div className="bg-[#0066ff] flex items-center justify-center" style={{ width: "31%" }}>Sonnet 31%</div>
             <div className="bg-[#7c3aed] flex items-center justify-center" style={{ width: "11%" }}>Opus 11%</div>
           </div>
@@ -146,17 +160,22 @@ export default function SolutionAnalytics() {
       </section>
 
       <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
-        <h3 className="text-2xl font-bold mb-2">Stop guessing what LLMs cost you</h3>
-        <p className="text-[#666] mb-6">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Day one, not week six
+        </p>
+        <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
+          Stop guessing what LLMs cost you.
+        </h3>
+        <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[560px] mx-auto">
           Route your first prompt and the dashboard populates immediately. The first monthly report writes itself.
         </p>
         <SignupDialog ctaLabel="start_saving" ctaLocation="solution_analytics_bottom">
           <button
             type="button"
             onClick={() => trackCtaClick("start_saving", "solution_analytics_bottom")}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all"
+            className="inline-flex items-center gap-2 px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
           >
-            Start saving
+            Start free, bring your own keys
           </button>
         </SignupDialog>
       </section>

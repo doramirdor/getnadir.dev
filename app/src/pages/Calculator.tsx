@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { trackCtaClick, trackPageView } from "@/utils/analytics";
 
 const FACTS: [string, string][] = [
-  ["Up to 47%", "Verified savings on our benchmark vs always-Opus, 0% catastrophic routes."],
+  ["47%", "Verified savings on our benchmark vs always-Opus, 0% catastrophic routes."],
   ["96%", "Routing accuracy on our 50-prompt benchmark."],
   ["< 10 ms", "Classifier overhead. Faster than a DNS lookup."],
 ];
@@ -128,11 +128,25 @@ export default function Calculator() {
       {/* Hero */}
       <section className="pt-20 md:pt-32 pb-12 md:pb-16 text-center">
         <div className="max-w-[920px] mx-auto px-6 sm:px-8">
-          <h1 className="text-[44px] sm:text-[60px] md:text-[76px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f]">
-            How much would you save?
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+            Savings calculator · No signup
+          </p>
+          <h1 className="text-[44px] sm:text-[60px] md:text-[76px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f] [text-wrap:balance]">
+            How much would{" "}
+            <span
+              className="px-[0.05em]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+                WebkitBoxDecorationBreak: "clone",
+                boxDecorationBreak: "clone",
+              }}
+            >
+              you save?
+            </span>
           </h1>
           <p className="text-lg md:text-[21px] text-[#424245] max-w-[640px] mx-auto leading-[1.42] tracking-[-0.01em]">
-            Drag the slider. See the net savings after our fee, on your actual monthly LLM spend.
+            Drag the slider to your monthly LLM spend. The number on the right is what you'd keep, after our fee, on a typical prompt mix.
           </p>
         </div>
       </section>
@@ -217,17 +231,20 @@ export default function Calculator() {
       {/* CTA */}
       <section className="pb-32 md:pb-40">
         <div className="max-w-[760px] mx-auto px-6 sm:px-8 text-center">
-          <h2 className="text-[32px] md:text-[44px] font-semibold tracking-[-0.03em] text-[#1d1d1f] mb-4 leading-[1.1]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
             Like the number?
+          </p>
+          <h2 className="text-[32px] md:text-[44px] font-semibold tracking-[-0.03em] text-[#1d1d1f] mb-4 leading-[1.1] [text-wrap:balance]">
+            Start banking it on your next request.
           </h2>
           <p className="text-[17px] md:text-[19px] text-[#424245] mb-8 leading-[1.45] tracking-[-0.008em]">
-            Start free, route your first request in two lines of code, and watch the real savings show up in your dashboard.
+            Two lines of code, one base URL. The savings dashboard shows the real delta against always-Opus, per request.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <SignupDialog ctaLabel="claim_savings" ctaLocation="calculator_bottom">
               <button
                 type="button"
-                className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#333] transition-colors tracking-[-0.01em]"
+                className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
               >
                 Claim my ${netPerMonth.toLocaleString()}/mo
               </button>
@@ -240,6 +257,9 @@ export default function Calculator() {
               See pricing
             </Link>
           </div>
+          <p className="mt-5 text-[12px] text-[#6e6e73] tracking-[-0.005em]">
+            No credit card. Bring your own keys. Cancel anytime.
+          </p>
         </div>
       </section>
     </MarketingLayout>

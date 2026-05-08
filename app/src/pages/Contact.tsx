@@ -103,14 +103,14 @@ export default function Contact() {
       <section className="max-w-[1040px] mx-auto px-6 sm:px-8 py-16 md:py-24">
         <div className="grid md:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16">
           <div>
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
-              Contact
-            </div>
-            <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
+              Contact · Real humans, one business day
+            </p>
+            <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
               Let's talk.
             </h1>
             <p className="text-lg md:text-[20px] text-[#424245] leading-[1.45] tracking-[-0.01em] mb-10 max-w-[460px]">
-              Tell us about your workload. We reply within one business day.
+              Tell us about your workload. Bigger spend, custom routing models, SSO/SAML, on-prem, an unusual integration. We read every email, and we reply within a business day.
             </p>
 
             <div className="space-y-6 text-[14px] text-[#1d1d1f]">
@@ -120,7 +120,7 @@ export default function Contact() {
                 </div>
                 <a
                   href="mailto:info@getnadir.com"
-                  className="inline-flex items-center gap-2 text-[#1d1d1f] no-underline hover:text-[#0071e3] transition-colors"
+                  className="inline-flex items-center gap-2 text-[#1d1d1f] no-underline hover:text-[#028a3e] transition-colors"
                 >
                   <Mail className="h-4 w-4" />
                   info@getnadir.com
@@ -132,7 +132,7 @@ export default function Contact() {
                 </div>
                 <p className="text-[#424245] leading-[1.55] m-0">
                   Already on Nadir? Open a ticket from{" "}
-                  <Link to="/dashboard/help" className="text-[#0071e3] hover:underline">
+                  <Link to="/dashboard/help" className="text-[#028a3e] hover:underline">
                     Help &amp; support
                   </Link>
                   .
@@ -144,11 +144,11 @@ export default function Contact() {
                 </div>
                 <p className="text-[#424245] leading-[1.55] m-0">
                   Want to try first?{" "}
-                  <Link to="/auth?mode=signup" className="text-[#0071e3] hover:underline">
+                  <Link to="/auth?mode=signup" className="text-[#028a3e] hover:underline">
                     Create an account
                   </Link>{" "}
                   or browse{" "}
-                  <Link to="/pricing" className="text-[#0071e3] hover:underline">
+                  <Link to="/pricing" className="text-[#028a3e] hover:underline">
                     pricing
                   </Link>
                   .

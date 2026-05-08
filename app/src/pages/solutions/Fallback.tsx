@@ -17,11 +17,25 @@ export default function SolutionFallback() {
       />
 
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Fallback
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Fallback · Reliability without paging
+        </p>
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          A provider goes down.{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            Your app does not.
+          </span>
         </h1>
-        <p className="text-xl text-[#666] max-w-2xl mx-auto mb-8">
-          Anthropic rate-limited you. OpenAI is 5xx-ing. Your users don't care. Nadir reroutes to a healthy model in the same quality tier, automatically, and your app stays up while your competitors post status-page apologies.
+        <p className="text-lg md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em] mb-8">
+          Anthropic rate-limited you. OpenAI is 5xx-ing. Your users don't care. Nadir reroutes to a healthy model in the same quality tier, automatically, while your competitors post status-page apologies.
         </p>
       </section>
 
@@ -94,7 +108,7 @@ export default function SolutionFallback() {
                           className="h-full rounded"
                           style={{
                             width: `${r.h * 100}%`,
-                            background: r.h > 0.95 ? "#00a86b" : "#f5a524",
+                            background: r.h > 0.95 ? "#028a3e" : "#f5a524",
                           }}
                         />
                       </div>
@@ -105,12 +119,12 @@ export default function SolutionFallback() {
                   <td className="px-5 py-3">
                     <span
                       className={`inline-flex items-center gap-1.5 text-[12px] font-medium ${
-                        r.s === "ok" ? "text-[#00a86b]" : "text-[#f5a524]"
+                        r.s === "ok" ? "text-[#028a3e]" : "text-[#f5a524]"
                       }`}
                     >
                       <span
                         className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: r.s === "ok" ? "#00a86b" : "#f5a524" }}
+                        style={{ background: r.s === "ok" ? "#028a3e" : "#f5a524" }}
                       />
                       {r.s}
                     </span>
@@ -126,15 +140,22 @@ export default function SolutionFallback() {
       </section>
 
       <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
-        <h3 className="text-2xl font-bold mb-2">Stop babysitting providers</h3>
-        <p className="text-[#666] mb-6">Turn on fallback once and forget about it.</p>
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          Set it once
+        </p>
+        <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
+          Stop babysitting providers.
+        </h3>
+        <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[560px] mx-auto">
+          Turn on fallback once and forget about it. Every reroute is logged, so your dashboard knows what your on-call doesn't have to.
+        </p>
         <SignupDialog ctaLabel="start_saving" ctaLocation="solution_fallback_bottom">
           <button
             type="button"
             onClick={() => trackCtaClick("start_saving", "solution_fallback_bottom")}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a0a0a] text-white rounded-lg text-[15px] font-semibold hover:bg-[#333] transition-all"
+            className="inline-flex items-center gap-2 px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
           >
-            Start saving
+            Start free, bring your own keys
           </button>
         </SignupDialog>
       </section>

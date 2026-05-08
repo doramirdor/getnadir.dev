@@ -45,12 +45,14 @@ export default function Compare() {
         />
         <div className="max-w-[1040px] mx-auto px-6 sm:px-8 py-16 md:py-24">
           <div className="mb-12">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
+              Honest comparisons, no hand-waving
+            </p>
             <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-4">
               Nadir vs alternatives
             </h1>
             <p className="text-lg md:text-[21px] text-[#424245] leading-[1.4] tracking-[-0.01em] max-w-[720px]">
-              Honest deep dives on every LLM gateway and router we get compared
-              to. Updated as the products change.
+              Deep dives on every LLM gateway, router, and model recommender we get compared to. Where they're better. Where we are. Updated as the products change.
             </p>
           </div>
 
@@ -60,7 +62,7 @@ export default function Compare() {
             their borders and lean on a subtle off-white fill for separation.
           */}
           <section className="mb-16">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#028a3e] mb-3">
               Why teams pick Nadir
             </div>
             <h2 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.02em] text-[#1d1d1f] leading-[1.1] mb-3 max-w-[720px]">
@@ -84,7 +86,7 @@ export default function Compare() {
                   <p className="text-[14px] text-[#424245] leading-[1.6] mb-3">
                     {pillar.body}
                   </p>
-                  <div className="text-[12px] font-mono text-[#0071e3] leading-[1.5]">
+                  <div className="text-[12px] font-mono text-[#028a3e] leading-[1.5]">
                     {pillar.proof}
                   </div>
                 </div>
@@ -117,7 +119,7 @@ export default function Compare() {
                 <p className="text-[14px] text-[#424245] leading-[1.55] mb-3">
                   {p.tagline}
                 </p>
-                <div className="text-[13px] text-[#0071e3] font-medium">
+                <div className="text-[13px] text-[#028a3e] font-medium">
                   Read comparison &rarr;
                 </div>
               </Link>
@@ -232,7 +234,7 @@ export default function Compare() {
 
         {page.keyAdvantages && page.keyAdvantages.length > 0 && (
           <section className="mb-12">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#028a3e] mb-3">
               Why Nadir, not {page.competitor}
             </div>
             <h2 className="text-[28px] md:text-[32px] font-semibold tracking-[-0.02em] text-[#1d1d1f] mb-6 max-w-[700px]">
@@ -254,7 +256,7 @@ export default function Compare() {
                     {adv.body}
                   </p>
                   {adv.proof && (
-                    <div className="text-[12px] font-mono text-[#0071e3] leading-[1.5] pt-3 border-t border-black/[0.05]">
+                    <div className="text-[12px] font-mono text-[#028a3e] leading-[1.5] pt-3 border-t border-black/[0.05]">
                       {adv.proof}
                     </div>
                   )}
@@ -273,8 +275,8 @@ export default function Compare() {
               {page.theirPricing}
             </p>
           </div>
-          <div className="bg-[rgba(0,113,227,0.04)] border border-[rgba(0,113,227,0.2)] rounded-2xl p-6">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-2">
+          <div className="bg-[rgba(48,209,88,0.06)] border border-[rgba(48,209,88,0.2)] rounded-2xl p-6">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#028a3e] mb-2">
               Nadir pricing
             </div>
             <p className="text-[14px] text-[#1d1d1f] leading-[1.6] whitespace-pre-line">
@@ -294,7 +296,7 @@ export default function Compare() {
                   <th className="text-left px-5 py-3 font-semibold text-[13px] text-[#1d1d1f]">
                     Feature
                   </th>
-                  <th className="text-left px-5 py-3 font-semibold text-[13px] text-[#0071e3] bg-[rgba(0,113,227,0.04)]">
+                  <th className="text-left px-5 py-3 font-semibold text-[13px] text-[#028a3e] bg-[rgba(48,209,88,0.06)]">
                     Nadir
                   </th>
                   <th className="text-left px-5 py-3 font-semibold text-[13px] text-[#1d1d1f]">
@@ -315,7 +317,7 @@ export default function Compare() {
                     <td className="px-5 py-4 text-[#1d1d1f] font-medium align-top">
                       {row.feature}
                     </td>
-                    <td className="px-5 py-4 text-[#1d1d1f] bg-[rgba(0,113,227,0.02)] align-top">
+                    <td className="px-5 py-4 text-[#1d1d1f] bg-[rgba(48,209,88,0.04)] align-top">
                       {row.nadir}
                     </td>
                     <td className="px-5 py-4 text-[#424245] align-top">
@@ -361,8 +363,8 @@ export default function Compare() {
               ))}
             </ul>
           </div>
-          <div className="bg-[rgba(0,113,227,0.04)] border border-[rgba(0,113,227,0.2)] rounded-2xl p-6">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
+          <div className="bg-[rgba(48,209,88,0.06)] border border-[rgba(48,209,88,0.2)] rounded-2xl p-6">
+            <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#028a3e] mb-3">
               Pick Nadir when
             </div>
             <ul className="space-y-2.5">

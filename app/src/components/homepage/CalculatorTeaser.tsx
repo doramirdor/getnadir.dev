@@ -25,11 +25,16 @@ export const CalculatorTeaser = () => {
     <section className="py-20 md:py-28">
       <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
         <div className="text-center mb-10 md:mb-14">
+          <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
+            Estimate your savings · No signup
+          </p>
           <h2 className="text-[36px] sm:text-[48px] md:text-[60px] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f] mb-5">
-            See your number.
+            See what Nadir would save you,
+            <br className="hidden sm:block" />
+            <span className="text-[#1d1d1f]"> before you sign up.</span>
           </h2>
           <p className="text-[17px] md:text-[19px] text-[#424245] max-w-[620px] mx-auto leading-[1.45] tracking-[-0.008em]">
-            Drag the slider. This is the net you'd keep after our fee, on a typical prompt mix.
+            Drag the slider to your monthly LLM spend. The number on the right is what you'd keep after our fee, on a typical prompt mix.
           </p>
         </div>
 
@@ -66,8 +71,8 @@ export const CalculatorTeaser = () => {
               See full math <span className="ml-1 text-[14px]">›</span>
             </Link>
           </div>
-          <p className="mt-4 text-[12px] text-[#86868b] tracking-[-0.005em]">
-            Free to start. Bring your own keys. Cancel anytime.
+          <p className="mt-4 text-[12px] text-[#6e6e73] tracking-[-0.005em]">
+            No credit card. Bring your own keys. Cancel anytime.
           </p>
         </div>
       </div>

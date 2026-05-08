@@ -144,11 +144,25 @@ export default function Solutions() {
         path="/solutions"
       />
       <section className="max-w-[1160px] mx-auto px-6 sm:px-8 pt-20 pb-8 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-          Solutions
+        <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
+          One router, five products
+        </p>
+        <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+          Pick what you need.{" "}
+          <span
+            className="px-[0.05em]"
+            style={{
+              backgroundImage:
+                "linear-gradient(transparent 64%, rgba(48,209,88,0.34) 64%, rgba(48,209,88,0.34) 92%, transparent 92%)",
+              WebkitBoxDecorationBreak: "clone",
+              boxDecorationBreak: "clone",
+            }}
+          >
+            Layer in the rest.
+          </span>
         </h1>
-        <p className="text-lg sm:text-xl text-[#666] max-w-2xl mx-auto">
-          One router, five products. Pick what you need, layer in the rest when you want more savings or more reliability.
+        <p className="text-lg md:text-[21px] text-[#424245] max-w-[640px] mx-auto leading-[1.4] tracking-[-0.01em]">
+          Routing is the headline. Caching, fallback, analytics, and clustering are the parts that keep your bill down and your app up.
         </p>
       </section>
 
@@ -166,7 +180,7 @@ export default function Solutions() {
                   <Icon name={s.icon} />
                 </div>
                 {s.tag && (
-                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#0066ff] bg-[#0066ff]/10 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#028a3e] bg-[#028a3e]/10 px-2 py-0.5 rounded-full">
                     {s.tag}
                   </span>
                 )}

@@ -19,11 +19,16 @@ export default function Blog() {
         description="Practical guides to cutting LLM API costs with intelligent routing and context optimization."
         path="/blog"
       />
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-4xl font-semibold text-foreground">Blog</h1>
-          <p className="text-xl text-muted-foreground">
-            Insights on LLM routing, optimization, and AI infrastructure
+      <div className="container mx-auto px-6 pt-20 pb-16">
+        <div className="text-center max-w-[760px] mx-auto mb-14 md:mb-20">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
+            Field notes · Engineering blog
+          </p>
+          <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
+            How we cut LLM bills, in detail.
+          </h1>
+          <p className="text-lg md:text-[21px] text-[#424245] leading-[1.4] tracking-[-0.01em]">
+            Routing trade-offs, classifier internals, real benchmark numbers. Written by the engineers shipping it.
           </p>
         </div>
 

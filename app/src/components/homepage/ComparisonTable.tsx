@@ -30,11 +30,14 @@ export const ComparisonTable = () => {
     <section className="py-24 md:py-36">
       <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
         <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+          <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
+            Compared to every other gateway
+          </p>
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
-            What the other gateways are missing.
+            The other gateways list models. Nadir picks one.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            The routing gateways you already know, with the pieces that actually lower your bill.
+            OpenRouter, Requesty, and Portkey hand you a catalogue. Nadir ships the routing decision.
           </p>
         </div>
 
@@ -49,7 +52,7 @@ export const ComparisonTable = () => {
                   <th
                     key={c}
                     className="text-center px-6 py-5 font-semibold text-[14px] text-[#1d1d1f] tracking-[-0.01em]"
-                    style={{ background: i === 0 ? "rgba(0,113,227,0.04)" : "transparent" }}
+                    style={{ background: i === 0 ? "rgba(48,209,88,0.06)" : "transparent" }}
                   >
                     {c}
                   </th>
@@ -67,7 +70,7 @@ export const ComparisonTable = () => {
                     <td
                       key={i}
                       className="text-center px-6 py-[18px]"
-                      style={{ background: i === 0 ? "rgba(0,113,227,0.04)" : "transparent" }}
+                      style={{ background: i === 0 ? "rgba(48,209,88,0.06)" : "transparent" }}
                     >
                       {renderCell(v)}
                     </td>
@@ -87,7 +90,7 @@ export const ComparisonTable = () => {
         <div className="mt-12 md:mt-16 bg-[#fbfbfd] border border-black/[0.06] rounded-[18px] p-8 md:p-10">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
             <div className="max-w-[640px]">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0071e3] mb-3">
+              <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#028a3e] mb-3">
                 Why choose Nadir?
               </div>
               <h3 className="text-[24px] md:text-[28px] font-semibold tracking-[-0.02em] text-[#1d1d1f] leading-[1.15] mb-3">
