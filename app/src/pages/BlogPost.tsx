@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Calendar, User, Tag } from "lucide-react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
@@ -50,13 +50,22 @@ export default function BlogPost() {
         const trimmed = paragraph.trim();
         if (!trimmed) return null;
 
+        if (/^-{3,}$/.test(trimmed)) {
+          return (
+            <hr
+              key={index}
+              className="my-10 border-0 h-px bg-border"
+            />
+          );
+        }
+
         if (trimmed.startsWith("### ")) {
           return (
             <h3
               key={index}
               className="text-xl font-semibold text-foreground mt-6 mb-3"
             >
-              {trimmed.replace("### ", "")}
+              {formatInline(trimmed.replace("### ", ""))}
             </h3>
           );
         }
@@ -66,7 +75,7 @@ export default function BlogPost() {
               key={index}
               className="text-2xl font-semibold text-foreground mt-8 mb-4"
             >
-              {trimmed.replace("## ", "")}
+              {formatInline(trimmed.replace("## ", ""))}
             </h2>
           );
         }
@@ -181,18 +190,76 @@ export default function BlogPost() {
       .filter(Boolean);
   };
 
-  const formatInline = (text: string) => {
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-        return (
-          <strong key={i} className="font-bold text-foreground">
-            {part.slice(2, -2)}
+  const formatInline = (text: string): React.ReactNode[] => {
+    // Tokenizer for inline markdown: links, bold, italic, inline code.
+    // Order matters: links first (to avoid * inside link text being parsed as italic),
+    // then bold (**) before italic (*) so ** wins.
+    const pattern =
+      /(\[[^\]]+\]\([^)]+\))|(\*\*[^*]+\*\*)|(`[^`]+`)|(\*[^*\n]+\*)/g;
+    const nodes: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    let key = 0;
+
+    while ((match = pattern.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        nodes.push(text.slice(lastIndex, match.index));
+      }
+      const token = match[0];
+
+      if (token.startsWith("[") && token.includes("](")) {
+        const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
+        if (linkMatch) {
+          const [, label, href] = linkMatch;
+          const isExternal = /^https?:\/\//.test(href);
+          nodes.push(
+            <a
+              key={key++}
+              href={href}
+              {...(isExternal
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+              className="text-[#028a3e] underline underline-offset-2 decoration-[#028a3e]/40 hover:decoration-[#028a3e] transition-colors"
+            >
+              {label}
+            </a>
+          );
+        } else {
+          nodes.push(token);
+        }
+      } else if (token.startsWith("**") && token.endsWith("**")) {
+        nodes.push(
+          <strong key={key++} className="font-bold text-foreground">
+            {token.slice(2, -2)}
           </strong>
         );
+      } else if (token.startsWith("`") && token.endsWith("`")) {
+        nodes.push(
+          <code
+            key={key++}
+            className="px-1.5 py-0.5 rounded bg-muted text-foreground text-[0.9em] font-mono"
+          >
+            {token.slice(1, -1)}
+          </code>
+        );
+      } else if (token.startsWith("*") && token.endsWith("*")) {
+        nodes.push(
+          <em key={key++} className="italic">
+            {formatInline(token.slice(1, -1))}
+          </em>
+        );
+      } else {
+        nodes.push(token);
       }
-      return part;
-    });
+
+      lastIndex = match.index + token.length;
+    }
+
+    if (lastIndex < text.length) {
+      nodes.push(text.slice(lastIndex));
+    }
+
+    return nodes;
   };
 
   return (
