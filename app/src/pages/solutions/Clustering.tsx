@@ -21,7 +21,7 @@ const MOCK_CLUSTERS: Array<{
   name: string;
   size: number;
   avg: string;
-  centroid: "Haiku 4.5" | "Sonnet 4.6" | "Opus 4.6";
+  centroid: "Haiku 4.5" | "Sonnet 4.6" | "Opus 4.7";
   mix: RoutingMix;
   save: number;
   tag: string;
@@ -29,8 +29,8 @@ const MOCK_CLUSTERS: Array<{
   { name: "Summarize customer ticket", size: 38214, avg: "$0.0031", centroid: "Haiku 4.5", mix: { haiku: 0.84, sonnet: 0.13, opus: 0.03 }, save: 0.71, tag: "support" },
   { name: "Generate product description", size: 21987, avg: "$0.0058", centroid: "Sonnet 4.6", mix: { haiku: 0.18, sonnet: 0.74, opus: 0.08 }, save: 0.48, tag: "marketing" },
   { name: "Classify intent", size: 18402, avg: "$0.0009", centroid: "Haiku 4.5", mix: { haiku: 0.97, sonnet: 0.03, opus: 0 }, save: 0.83, tag: "routing" },
-  { name: "Extract structured data from PDF", size: 12044, avg: "$0.018", centroid: "Opus 4.6", mix: { haiku: 0, sonnet: 0.11, opus: 0.89 }, save: 0.22, tag: "ocr" },
-  { name: "Code review, repo context", size: 8712, avg: "$0.041", centroid: "Opus 4.6", mix: { haiku: 0, sonnet: 0.06, opus: 0.94 }, save: 0.14, tag: "engineering" },
+  { name: "Extract structured data from PDF", size: 12044, avg: "$0.018", centroid: "Opus 4.7", mix: { haiku: 0, sonnet: 0.11, opus: 0.89 }, save: 0.22, tag: "ocr" },
+  { name: "Code review, repo context", size: 8712, avg: "$0.041", centroid: "Opus 4.7", mix: { haiku: 0, sonnet: 0.06, opus: 0.94 }, save: 0.14, tag: "engineering" },
   { name: "Translate EN to JA", size: 6530, avg: "$0.0021", centroid: "Haiku 4.5", mix: { haiku: 0.91, sonnet: 0.08, opus: 0.01 }, save: 0.68, tag: "i18n" },
   { name: "SQL generation", size: 5218, avg: "$0.012", centroid: "Sonnet 4.6", mix: { haiku: 0.04, sonnet: 0.78, opus: 0.18 }, save: 0.36, tag: "analytics" },
 ];

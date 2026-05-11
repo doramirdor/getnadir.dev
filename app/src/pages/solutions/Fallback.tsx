@@ -43,7 +43,7 @@ export default function SolutionFallback() {
         <h2 className="text-2xl font-bold mb-6 text-center">What you get</h2>
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { k: "Zero downtime", v: "during provider incidents that would otherwise 5xx your users" },
+            { k: "Fewer 5xx incidents", v: "during provider outages that would otherwise reach your users" },
             { k: "Less on-call", v: "no more midnight pages for rate limits and transient 429s" },
             { k: "Revenue saved", v: "every failed request is a cart abandoned, a user frustrated, a ticket filed" },
           ].map((s) => (

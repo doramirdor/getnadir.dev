@@ -18,7 +18,7 @@ export const StatBand = () => {
     <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         <p className="text-[12px] text-[#6e6e73] uppercase tracking-[0.12em] font-semibold text-center mb-10 md:mb-12">
-          Numbers that matter, measured on real traffic
+          Numbers from our 50-prompt eval, with the math shown
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
           {STATS.map((s, i) => (

@@ -313,7 +313,7 @@ export default function Pricing() {
       <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
           {[
-            { value: "47%", label: "Lower bill on a realistic prompt mix.", accent: true },
+            { value: "47%", label: "Lower bill on our 50-prompt eval, no Opus-prompt quality drop.", accent: true },
             { value: "96%", label: "Routing accuracy on our 50-prompt benchmark." },
             { value: "< 10 ms", label: "Classifier overhead. Faster than a DNS lookup." },
           ].map((s, i) => (
@@ -335,7 +335,7 @@ export default function Pricing() {
           ))}
         </div>
         <p className="text-center text-[13px] text-[#86868b] mt-8 tracking-[-0.005em]">
-          Benchmarked on real-world prompts. Quality verified by LLM judge.
+          Numbers from our 50-prompt eval. Quality verified by LLM judge. Your savings vary with your workload.
         </p>
       </section>
 

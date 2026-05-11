@@ -46,7 +46,7 @@ export default function SolutionAnalytics() {
         </p>
         <div className="grid md:grid-cols-3 gap-4">
           {[
-            { label: "Saved this month", value: "$4,812", sub: "vs always-Opus 4.6", color: "#028a3e" },
+            { label: "Saved this month", value: "$4,812", sub: "vs always-Opus 4.7", color: "#028a3e" },
             { label: "Requests routed", value: "1.8M", sub: "across 3 providers", color: "#0066ff" },
             { label: "Catastrophic routes", value: "0.00%", sub: "quality stayed flat", color: "#7c3aed" },
           ].map((k) => (
@@ -57,6 +57,9 @@ export default function SolutionAnalytics() {
             </div>
           ))}
         </div>
+        <p className="text-xs text-[#999] mt-4 text-center">
+          Illustrative. Your numbers populate the moment you start routing.
+        </p>
       </section>
 
       <section className="max-w-4xl mx-auto px-6 pb-16">

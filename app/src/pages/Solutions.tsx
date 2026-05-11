@@ -34,7 +34,7 @@ const SOLUTIONS: Solution[] = [
     icon: "route",
     bullets: [
       "Up to 47% savings vs always-Opus",
-      "Haiku, Sonnet, Opus 4.6",
+      "Haiku 4.5, Sonnet 4.6, Opus 4.7",
       "Tuned per workload",
     ],
   },

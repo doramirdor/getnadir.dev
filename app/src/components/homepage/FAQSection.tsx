@@ -74,7 +74,7 @@ export const FAQSection = () => {
             <Link to="/contact" className="text-[#028a3e] font-medium underline-offset-2 hover:underline">
               Talk to us
             </Link>
-            {" — we read every email."}
+            {". We read every email."}
           </p>
         </div>
       </div>

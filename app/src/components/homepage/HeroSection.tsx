@@ -114,7 +114,7 @@ export const HeroSection = () => {
               <span className="text-[#1d1d1f] font-medium"> Haiku for classifications. Sonnet for refactors. Opus only when it has to think.</span>
             </p>
             <p className="text-[15px] md:text-[16px] text-[#6e6e73] mb-9 leading-[1.55] tracking-[-0.005em]">
-              Teams cut their Anthropic bill ~47% on our eval set, with zero quality drop on prompts that actually need Opus.
+              Classifier overhead under 10 ms per request. Zero quality drop on prompts that actually need Opus. See the savings stat below.
             </p>
 
             <div className="flex gap-4 items-center flex-wrap mb-5">

@@ -75,7 +75,7 @@ export default function SolutionRouting() {
       <section className="max-w-4xl mx-auto px-6 pb-16">
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { k: "47%", v: "cheaper than always-Opus on the same traffic mix", accent: true },
+            { k: "47%", v: "cheaper than always-Opus on our 50-prompt eval", accent: true },
             { k: "< 10ms", v: "added latency for the routing decision" },
             { k: "0%", v: "catastrophic routes in our internal eval" },
           ].map((s) => (
@@ -150,7 +150,7 @@ export default function SolutionRouting() {
         <h2 className="text-2xl font-bold mb-6 text-center">How the router stays honest</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <h3 className="text-lg font-semibold mb-3">It's trained on real traffic</h3>
+            <h3 className="text-lg font-semibold mb-3">It's a trained model, not if-statements</h3>
             <p className="text-sm text-[#666]">
               The router is a trained model, not a handful of if-statements. It's learned from hundreds of thousands of labeled prompts, and it keeps learning from your workloads once you opt in.
             </p>
@@ -212,10 +212,10 @@ export default function SolutionRouting() {
           <div><span className="text-[#ff7b72]">from</span> openai <span className="text-[#ff7b72]">import</span> OpenAI</div>
           <div>client = OpenAI(</div>
           <div>&nbsp;&nbsp;base_url=<span className="text-[#a5d6ff]">"https://api.getnadir.com/v1"</span>,</div>
-          <div>&nbsp;&nbsp;api_key=<span className="text-[#a5d6ff]">"nad_..."</span>,</div>
+          <div>&nbsp;&nbsp;api_key=<span className="text-[#a5d6ff]">"ndr_..."</span>,</div>
           <div>)</div>
           <div className="mt-3">client.chat.completions.create(</div>
-          <div>&nbsp;&nbsp;model=<span className="text-[#a5d6ff]">"nadir-auto"</span>,  <span className="text-gray-500"># router picks Haiku / Sonnet / Opus</span></div>
+          <div>&nbsp;&nbsp;model=<span className="text-[#a5d6ff]">"auto"</span>,  <span className="text-gray-500"># router picks Haiku / Sonnet / Opus</span></div>
           <div>&nbsp;&nbsp;messages=[...],</div>
           <div>)</div>
         </div>

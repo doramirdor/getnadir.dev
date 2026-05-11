@@ -50,9 +50,15 @@ export const CalculatorTeaser = () => {
         <div className="mt-8 md:mt-10 text-center">
           <p className="text-[14px] md:text-[15px] text-[#424245] mb-6 tracking-[-0.008em]">
             That's <span className="font-semibold text-[#028a3e]">${netPerYear.toLocaleString()}</span>{" "}
-            back in your pocket every year &middot; or roughly{" "}
-            <span className="font-semibold text-[#1d1d1f]">{Math.round(netPerYear / 8400)}</span>{" "}
-            weeks of engineering time.
+            back in your pocket every year
+            {Math.round(netPerYear / 8400) >= 1 && (
+              <>
+                {" "}&middot; or roughly{" "}
+                <span className="font-semibold text-[#1d1d1f]">{Math.round(netPerYear / 8400)}</span>{" "}
+                {Math.round(netPerYear / 8400) === 1 ? "week" : "weeks"} of engineering time
+              </>
+            )}
+            .
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <SignupDialog ctaLabel="claim_savings" ctaLocation="homepage_calculator">
