@@ -4,6 +4,7 @@ import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { trackCtaClick, trackPageView, trackPricingView } from "@/utils/analytics";
 import { SavingsCalculator } from "@/components/marketing/SavingsCalculator";
+import { SignupDialog } from "@/components/marketing/SignupDialog";
 
 type Tier = {
   name: string;
@@ -12,7 +13,7 @@ type Tier = {
   blurb: string;
   features: string[];
   cta: string;
-  ctaAction: "link" | "contact";
+  ctaAction: "signup" | "contact";
   ctaLink?: string;
   highlighted: boolean;
 };
@@ -31,8 +32,7 @@ const TIERS: Tier[] = [
       "Dashboard and analytics",
     ],
     cta: "Start free, no card",
-    ctaAction: "link",
-    ctaLink: "/auth?mode=signup",
+    ctaAction: "signup",
     highlighted: false,
   },
   {
@@ -49,8 +49,7 @@ const TIERS: Tier[] = [
       "Priority email support",
     ],
     cta: "Start free, save by tomorrow",
-    ctaAction: "link",
-    ctaLink: "/auth?mode=signup",
+    ctaAction: "signup",
     highlighted: true,
   },
   {
@@ -260,13 +259,14 @@ export default function Pricing() {
                       {tier.cta}
                     </Link>
                   ) : (
-                    <Link
-                      to={tier.ctaLink!}
-                      onClick={() => trackCtaClick(tierCtaKey(tier.name), "pricing_page")}
-                      className={`${ctaClass} ${ctaColors}`}
+                    <SignupDialog
+                      ctaLabel={tierCtaKey(tier.name)}
+                      ctaLocation="pricing_page"
                     >
-                      {tier.cta}
-                    </Link>
+                      <button type="button" className={`${ctaClass} ${ctaColors}`}>
+                        {tier.cta}
+                      </button>
+                    </SignupDialog>
                   )}
                 </div>
               );
