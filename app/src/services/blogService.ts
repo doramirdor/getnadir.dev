@@ -15,6 +15,36 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "enterprise-ai-costs-routing-2026",
+    title: "Enterprise AI costs dropped 67% this year. Routing is the reason.",
+    date: "2026-05-12",
+    author: "Dor Amir",
+    excerpt: "Between Q1 2025 and Q1 2026, average enterprise cost per million tokens fell from $18.40 to $6.07. Token price cuts explain half of it. The other half is multi-model routing, now used by 42% of enterprises. We break down the data, the economics, and what separates the teams saving 87% from the ones still overpaying.",
+    thumbnail: "Research",
+    tags: ["Enterprise", "Cost Optimization", "Routing", "2026 Trends"],
+    readingTime: "7 min read",
+  },
+  {
+    id: "opus-4-7-tokenizer-hidden-cost",
+    title: "Opus 4.7 costs more than 4.6. Anthropic just did not change the price.",
+    date: "2026-05-11",
+    author: "Dor Amir",
+    excerpt: "Claude Opus 4.7 ships a new tokenizer that produces up to 35% more tokens from the same text. The rate card says $5/$25 per million tokens, unchanged from 4.6. Your bill went up anyway. We break down the real numbers and what model routing does about it.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "Anthropic", "Tokenizer", "Pricing"],
+    readingTime: "6 min read",
+  },
+  {
+    id: "agentic-ai-token-costs",
+    title: "Your AI agents are burning tokens. Here is where the money goes.",
+    date: "2026-05-11",
+    author: "Dor Amir",
+    excerpt: "Agentic workloads consume 5 to 30x more tokens than a chatbot. Per-token prices fell 80% last year, yet enterprise LLM bills keep climbing. We break down why, with data from Stanford, Microsoft Research, and production traces.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "Agentic AI", "Tokens"],
+    readingTime: "7 min read",
+  },
+  {
     id: "ocr-closed-loop-routing",
     title: "OCR: our new closed-loop routing algorithm",
     date: "2026-04-04",
@@ -77,6 +107,286 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "enterprise-ai-costs-routing-2026": `## The 67% drop nobody expected
+
+Between Q1 2025 and Q1 2026, the average enterprise cost per million tokens fell from $18.40 to $6.07. That is a 67% year-over-year reduction.
+
+Token prices did fall. Anthropic cut Opus pricing. OpenAI launched cheaper tiers. Google pushed Flash pricing below $0.10 per million tokens. But price cuts alone do not explain a 67% drop in actual spend per token.
+
+The other half of the story is multi-model routing. Enterprises stopped sending every request to a frontier model and started matching each request to the cheapest model that could handle it.
+
+## The multi-model shift
+
+In Q1 2025, the average enterprise used 2.1 models in production. One year later, that number is 4.7. Thirty-seven percent of enterprises now run five or more models. And 42% have deployed a middleware or routing layer to manage model selection automatically.
+
+This is not a gradual shift. The number of models per enterprise more than doubled in twelve months. The catalyst was a combination of model proliferation (more good options at every price point), cost pressure (inference now constitutes 85% of enterprise AI budgets according to Gartner), and tooling maturity (routing middleware that actually works in production).
+
+The teams that adopted tiered routing early saw the biggest gains. Enterprises fully implementing tiered routing achieved median blended costs of $2.31 per million tokens, compared to $18.40 for frontier-only deployments. That is an 87.4% reduction.
+
+## Why single-model deployments are expensive
+
+The logic is straightforward. Most enterprise API traffic is not complex reasoning. Industry benchmarks consistently show that 60 to 85% of requests can be handled by budget-tier models without quality degradation.
+
+When every request goes to a frontier model at $5 to $15 per million tokens, you are paying frontier rates for tasks like formatting output, parsing errors, answering FAQs, and generating boilerplate code. A budget model at $0.10 to $1.00 per million tokens handles these identically.
+
+Microsoft Research published findings in 2026 showing that routing architectures can reduce frontier model calls by 40% without measurable quality degradation. The savings come not from cutting corners, but from recognizing that most work does not need the most powerful tool.
+
+## The FinOps Foundation noticed
+
+The FinOps Foundation identified AI as the fastest-growing spend category in their 2026 State of FinOps report. The number that stands out: 73% of respondents reported that AI costs exceeded their original budget projections.
+
+This is driving a shift in how teams measure AI economics. The old metric, cost per token, is being replaced by cost per successful interaction. A cheap model that fails and retries three times can cost more than an expensive model that succeeds on the first try. Token cost alone does not capture this.
+
+The teams with the best economics track three things:
+
+- **Cost per completed task,** not cost per token
+- **Success rate per model per task type,** to calibrate routing thresholds
+- **Retry cost,** which compounds because each retry carries the full accumulated context
+
+This is why static rules like "send everything under 100 tokens to Haiku" plateau at 88 to 93% accuracy. The routing decision depends on task complexity, not input length.
+
+## What a routing layer actually does
+
+A routing layer sits between your application and the LLM providers. For each request, it:
+
+1. Classifies the request complexity (typically under 10ms)
+2. Selects the cheapest model that can handle that complexity level
+3. Forwards the request to the selected provider
+4. Returns the response with cost metadata
+
+The classifier is the critical piece. A trained classifier that evaluates semantic complexity, not just surface features like token count, is what separates 96% routing accuracy from 85%.
+
+The overhead matters too. If classification adds 500ms to every request, the latency tax offsets the cost savings. Production routing layers need sub-10ms classification. This is achievable with lightweight models like DistilBERT embeddings and centroid matching.
+
+## The ROI math for a typical enterprise
+
+Here is what the numbers look like for a team spending $10,000 per month on LLM APIs with a mixed workload:
+
+| Request type | Share of traffic | Without routing | With routing | Monthly cost (before) | Monthly cost (after) |
+|---|---|---|---|---:|---:|
+| Simple (formatting, lookups, FAQ) | 50% | Opus ($5/MTok) | Haiku ($1/MTok) | $5,000 | $1,000 |
+| Medium (code gen, explanations) | 35% | Opus ($5/MTok) | Sonnet ($3/MTok) | $3,500 | $2,100 |
+| Complex (architecture, debugging) | 15% | Opus ($5/MTok) | Opus ($5/MTok) | $1,500 | $1,500 |
+| **Total** | **100%** | | | **$10,000** | **$4,600** |
+
+That is 54% savings with zero quality degradation on the complex tasks. The 15% that genuinely needs frontier reasoning still gets it.
+
+Gartner forecasts worldwide AI spending at $2.52 trillion in 2026. If even a fraction of that is inference spend that could be routed more efficiently, the aggregate savings run into billions.
+
+## How to evaluate routing for your workload
+
+Not every workload benefits equally. Here is a quick diagnostic:
+
+**Routing helps most when:**
+
+- Your prompt mix includes 40%+ simple or medium-complexity requests
+- You make more than a few hundred API calls per day
+- You run agentic workflows (coding assistants, multi-step chains)
+- Your monthly LLM spend exceeds $500
+
+**Routing helps least when:**
+
+- Nearly every request requires complex reasoning (legal analysis, medical diagnosis)
+- You are already on the cheapest available model
+- Your volume is too low for the savings to matter
+
+The fastest way to check: pull a week of API logs, bucket each request by complexity, and calculate what the cost would have been if simple requests went to Haiku and medium requests went to Sonnet. If the theoretical savings exceed 30%, routing pays for itself immediately.
+
+## The market is moving fast
+
+The LLM middleware and gateway market is growing at a 49.6% compound annual growth rate through 2034. Routing is becoming standard infrastructure, not a nice-to-have optimization.
+
+Nadir routes each request in under 10ms and shows the savings per request in the \`x-nadir-cost-saved\` response header. The open-source core (NadirClaw) runs locally with no data leaving your machine. The hosted platform adds trained classifiers, analytics, and billing. Both are OpenAI-compatible: change the base URL, set \`model="auto"\`, and routing starts on the next request.
+
+---
+
+*Sources: [Open Source For You, "Enterprise AI Costs Crash 67%"](https://www.opensourceforu.com/2026/05/enterprise-ai-costs-crash-67-as-open-source-models-and-multi-model-routing-go-mainstream/) (May 2026). [Index.dev, "LLM Enterprise Adoption Statistics"](https://www.index.dev/blog/llm-enterprise-adoption-statistics) (2026). [FinOps Foundation, "State of FinOps 2026"](https://data.finops.org/) (2026). [Gartner, "Worldwide AI Spending Forecast"](https://www.gartner.com/en/newsroom/press-releases/2026-1-15-gartner-says-worldwide-ai-spending-will-total-2-point-5-trillion-dollars-in-2026) (January 2026). Microsoft Research, routing architecture benchmarks (2026). Anthropic, OpenAI, Google model pricing as of May 2026.*`,
+
+  "opus-4-7-tokenizer-hidden-cost": `## Same price per token. More tokens per request.
+
+On April 16, 2026, Anthropic released Claude Opus 4.7. The rate card stayed at $5 per million input tokens and $25 per million output tokens, identical to Opus 4.6. No price increase announcement. No billing change email.
+
+But Opus 4.7 ships with a new tokenizer. The same input text now produces up to 35% more tokens than it did on 4.6. More tokens at the same price per token means a higher bill per request.
+
+This is not a bug. The new tokenizer improves how the model processes text, and the quality gains in Opus 4.7 are real. But if you are budgeting based on the rate card alone, your forecasts are wrong.
+
+## The numbers
+
+OpenRouter published an analysis based on over one million requests from users who switched from Opus 4.6 to 4.7. The findings:
+
+- **Production-scale prompts (10K+ tokens):** 32 to 34% more tokens for the same input text
+- **Short prompts (under 2K tokens):** 42 to 45% more tokens, but Opus 4.7 generates 62% fewer output tokens on these queries, so the net cost is actually lower
+- **Real-world cost increase:** 12 to 27% higher per-request cost for prompts above 2K tokens
+
+The pattern is clear. Short prompts got cheaper because Opus 4.7 is more concise on them. Long prompts got more expensive because the tokenizer inflation dominates.
+
+Simon Willison built a token counter that compares models side by side. The same code snippet that tokenizes to 1,000 tokens on Opus 4.6 becomes 1,320 to 1,350 tokens on 4.7. The same English paragraph jumps from 500 to 580 tokens. Structured data like JSON and XML sees the highest inflation.
+
+## Prompt caching absorbs some of it
+
+Anthropic's prompt caching discounts cached input tokens by 90%. Since the new tokenizer inflates all tokens equally, cached and uncached, the 90% discount means extra cached tokens cost almost nothing.
+
+OpenRouter's data shows this clearly. For prompts over 128K tokens, 93% of the extra tokens land in the cache. The effective cost increase on these long-context requests is small, around 2 to 5%.
+
+The problem is the mid-range. Prompts between 2K and 30K tokens, which is where most agentic coding turns fall, see the full 12 to 27% increase. These prompts are long enough for the tokenizer inflation to matter but often too varied for caching to help.
+
+## Why this hits agentic workloads hardest
+
+Agentic coding sessions (Claude Code, Cursor, Aider, Windsurf, Codex) are exactly the workloads in the worst spot. A typical session looks like this:
+
+| Turn | Input tokens (Opus 4.6) | Input tokens (Opus 4.7) | Increase |
+|------|------------------------|------------------------|----------|
+| 10 | ~12,000 | ~15,800 | +32% |
+| 20 | ~22,000 | ~29,000 | +32% |
+| 30 | ~32,000 | ~42,200 | +32% |
+| 40 | ~40,000 | ~52,800 | +32% |
+
+At $5 per million input tokens, a 40-turn session that cost $4.53 on Opus 4.6 now costs roughly $5.98 on 4.7. That is a 32% increase on a session that never changed. Scale that across a team running hundreds of sessions per week and the difference is thousands of dollars per month.
+
+The retry tax compounds it further. When an agent hits a test failure at turn 35 and retries three times, each retry carries 35,000+ tokens of accumulated context. Those three retries cost $0.53 on 4.6 and $0.70 on 4.7. The tokenizer tax applies to wasted work too.
+
+## The fix is not staying on 4.6
+
+Opus 4.6 is still available, and some teams have pinned to it to avoid the cost increase. This is a short-term workaround, not a strategy. Anthropic will eventually deprecate 4.6, and the quality improvements in 4.7 are genuine. The new tokenizer exists because it helps the model perform better.
+
+The real question is: does every request in your workload need Opus at all?
+
+## Where model routing changes the math
+
+The tokenizer inflation only applies to requests that hit Opus 4.7. Sonnet 4.6 and Haiku 4.5 use the same tokenizer as before. Their token counts have not changed.
+
+In a typical agentic workload, 60 to 70% of turns are low complexity: reading files, checking status, formatting output, parsing errors. These are tasks that Haiku handles correctly at $1 per million input tokens with the old tokenizer. Another 20 to 30% are medium complexity, and Sonnet handles them at $3 per million input tokens, also with the old tokenizer.
+
+Only 5 to 15% of turns actually need Opus-level reasoning. Those are the only turns that pay the tokenizer tax.
+
+Here is what that looks like on the same 40-turn session:
+
+| Segment | Turns | Model (routed) | Cost (all Opus 4.7) | Cost (routed) |
+|---------|-------|----------------|--------------------:|---------------:|
+| File reads, status checks | 25 | Haiku 4.5 ($1/M) | $3.95 | $0.45 |
+| Code generation, tests | 10 | Sonnet 4.6 ($3/M) | $1.45 | $0.84 |
+| Architecture, debugging | 5 | Opus 4.7 ($5/M) | $1.32 | $1.32 |
+| **Total** | **40** | | **$6.72** | **$2.61** |
+
+Without routing, the tokenizer change increased the session cost from $4.53 (all Opus 4.6) to $6.72 (all Opus 4.7), a 48% jump. With routing, the session costs $2.61, which is 42% less than the old all-Opus-4.6 baseline and 61% less than all-Opus-4.7.
+
+Routing does not avoid the tokenizer tax. It limits the tax to the requests that actually benefit from the model that charges it.
+
+## Three things you can do today
+
+**1. Audit which requests actually need Opus.** Pull your API logs and check how many of your requests are classification, formatting, or simple Q&A. Most teams find that 60%+ of their calls do not need a frontier model. Those calls should not be paying frontier tokenizer rates.
+
+**2. Use prompt caching on everything you can.** The 90% cache discount absorbs most of the tokenizer inflation for repeated content. System prompts, tool schemas, and few-shot examples should all be cached. This is good practice regardless of routing.
+
+**3. Route per request.** A trained classifier that evaluates each prompt and sends it to the cheapest capable model turns the tokenizer tax from a blanket 12 to 27% increase into a 2 to 5% increase on the subset of requests that need Opus. The classifier overhead is under 10 ms per request.
+
+## The bigger picture
+
+Tokenizer changes are not one-time events. As model architectures evolve, tokenizers will change again. GPT-5.5 already had its own tokenizer adjustment earlier this year. Building a workflow that depends on stable token counts for a specific model version is fragile.
+
+Model routing insulates you from this. When the tokenizer changes, when the pricing changes, when a new model drops, the router re-evaluates each request against the current landscape. You do not need to rewrite your cost model every time a provider ships an update.
+
+Nadir evaluates each request in under 10 ms and routes to the cheapest model that can handle it. The \`x-nadir-cost-saved\` response header shows the savings on every request. Change your base URL, set \`model="auto"\`, and the tokenizer tax stops being your problem.
+
+---
+
+*Sources: [OpenRouter, "Opus 4.7's New Tokenizer: What It Actually Costs"](https://openrouter.ai/announcements/opus-47-tokenizer-analysis) (April 2026). [Finout, "Claude Opus 4.7 Pricing: The Real Cost Story"](https://www.finout.io/blog/claude-opus-4.7-pricing-the-real-cost-story-behind-the-unchanged-price-tag) (2026). [Simon Willison, "Claude Token Counter, now with model comparisons"](https://simonwillison.net/2026/apr/20/claude-token-counts/) (April 2026). [CloudZero, "Claude Opus 4.7 Pricing: What It Actually Costs"](https://www.cloudzero.com/blog/claude-opus-4-7-pricing/) (2026). Anthropic Claude model pricing as of May 2026.*`,
+
+  "agentic-ai-token-costs": `## The paradox: prices fall, bills rise
+
+LLM API prices dropped roughly 80% between early 2025 and early 2026. Anthropic cut Opus pricing from $15/$75 per million tokens to $5/$25 with the 4.6 release. OpenAI, Google, and DeepSeek all followed with aggressive cuts of their own.
+
+Yet enterprise LLM spend is accelerating. The reason is not that teams are wasting money on chatbots. It is that the workloads changed. The shift from single-turn chat to multi-step agentic workflows multiplied token consumption per task by 5 to 30x, according to Gartner's March 2026 analysis. Falling prices times rising volume equals a bigger bill.
+
+## Where the tokens actually go
+
+A standard chatbot interaction sends a prompt, gets a response, and is done. An agentic workflow is different. The agent reads the task, calls a tool, reads the output, decides what to do next, calls another tool, reads that output, and repeats. Every turn re-sends the full conversation history as input tokens.
+
+Microsoft Research quantified this in their April 2026 paper on agentic coding tasks. The numbers are striking:
+
+- Agentic coding tasks consume **1,000x more tokens** than code reasoning or code chat tasks
+- A typical coding session uses roughly **1 million input tokens and 40,000 output tokens**, a 25:1 ratio
+- The same agent on the same task can vary by **up to 30x** in total token consumption between runs
+
+Stanford's Digital Economy Lab confirmed the pattern. Their research found that input tokens, not output tokens, drive the cost. An agent at turn 1 might send 5,000 input tokens. By turn 30, it carries 25,000 to 35,000 tokens of accumulated context on every single API call. By turn 50, the context is so large that each retry loop costs more than the first ten turns combined.
+
+## The context accumulation tax
+
+Vantage published a detailed breakdown of where agentic coding costs hide. The key insight: context accumulates, and every API call pays the full accumulated price.
+
+Here is what a typical agentic coding session looks like:
+
+| Turn | Input tokens | Cumulative cost driver |
+|------|-------------|----------------------|
+| 1 | ~5,000 | System prompt + task description |
+| 10 | ~12,000 | + file reads, tool schemas, initial edits |
+| 20 | ~22,000 | + test output, error messages, first retry |
+| 30 | ~32,000 | + second retry cycle, more file reads |
+| 40 | ~40,000 | + third retry, accumulated conversation |
+
+When the agent hits a test failure at turn 35 and retries three times, those three retries each carry 35,000+ input tokens. That retry loop alone can cost more than the first twenty turns of the session.
+
+The model choice compounds this. A retry loop at turn 40 on Opus ($5/M input) costs 5x what the same loop costs on Haiku ($1/M input). Teams that default every request to a premium model pay the premium rate on wasted retry work, not just productive work.
+
+## Why "just use a cheaper model" does not work
+
+The obvious response is to run everything on the cheapest model. But that breaks on complex tasks. A coding agent using Haiku to architect a distributed system will produce bad output, retry more, and potentially cost more in wasted tokens than if it had used Opus from the start.
+
+The real distribution of agentic work looks like this:
+
+- **60 to 70% of turns are low complexity.** Reading files, checking status, formatting output, running tests, parsing error messages. These are classification-grade tasks that Haiku handles correctly.
+- **20 to 30% are medium complexity.** Writing a function, explaining a bug, generating a test. Sonnet handles these well.
+- **5 to 15% are genuinely hard.** Architecture decisions, complex debugging, multi-file refactors where the agent needs to reason across a large codebase. These need Opus or an equivalent frontier model.
+
+Pinning everything to one model means either overpaying on the 70% (all Opus) or degrading quality on the 15% (all Haiku). Neither is a good trade.
+
+## The math on per-turn routing
+
+Model routing evaluates each turn independently and sends it to the cheapest model that can handle it. Applied to agentic sessions, the savings compound because the expensive turns (high context, high token count) are exactly the ones most likely to be low complexity.
+
+Consider a 40-turn agentic coding session on Opus at $5/M input tokens:
+
+| Segment | Turns | Avg input tokens | Model (routed) | Cost (all Opus) | Cost (routed) |
+|---------|-------|-----------------|----------------|-----------------|---------------|
+| File reads, status checks | 25 | 18,000 | Haiku ($1/M) | $2.25 | $0.45 |
+| Code generation, tests | 10 | 28,000 | Sonnet ($3/M) | $1.40 | $0.84 |
+| Architecture, debugging | 5 | 35,000 | Opus ($5/M) | $0.88 | $0.88 |
+| **Total** | **40** | | | **$4.53** | **$2.17** |
+
+That is a 52% reduction on input tokens alone. Multiply by hundreds of sessions per week across a team, and the difference is five figures per month.
+
+The classifier overhead is under 10 ms per turn. In a session where each turn takes 2 to 30 seconds for the LLM to respond, 10 ms is noise.
+
+## What the research says about routing
+
+The industry is converging on this approach. A 2026 survey found that 37% of enterprises now use five or more models in production. The teams seeing the best results treat model selection like air traffic control, routing each request to the right destination rather than sending everything to the same runway.
+
+Multiple independent analyses put the savings from intelligent routing at 40 to 60% for mixed-complexity workloads. That aligns with our own benchmarks: Nadir's \`wide_deep_asym\` router with lambda=20 saves 47% versus always-Opus on a 50-prompt eval set, with 0% catastrophic routes.
+
+The key is that routing must be automatic and per-request. Manual rules break as prompt distributions shift. Static classifiers plateau at 88 to 93% accuracy. A trained classifier that adapts to live response quality (what we call Outcome-Conditioned Routing) closes the gap.
+
+## Practical steps to cut your agentic AI bill
+
+**1. Audit your token distribution.** Before optimizing, measure. Pull your API logs and bucket requests by input token count and task type. Most teams discover that 60%+ of their API calls are low-complexity turns that do not need a frontier model.
+
+**2. Route per request, not per session.** Pinning an entire session to one model wastes money on low-complexity turns. Per-turn routing catches the file reads, status checks, and formatting tasks that accumulate through a session.
+
+**3. Compress context before it compounds.** Minifying JSON, deduplicating tool schemas, and trimming old conversation turns can cut input tokens 30 to 60% on long sessions. These transforms are lossless. The model receives the same information in fewer tokens.
+
+**4. Watch the retry tax.** If your agent retries failed tasks on a premium model, those retries carry the full accumulated context at premium rates. Routing retries to a cheaper model when the retry is a simple fix (syntax error, missing import) saves disproportionately.
+
+**5. Measure cost per completed task, not cost per token.** A cheaper model that fails and retries five times can cost more than an expensive model that succeeds on the first try. Track task completion cost, not just per-token price.
+
+## The bottom line
+
+Per-token prices will keep falling. That is not going to fix your bill. The shift to agentic workloads changed the unit economics: more turns, more context per turn, more tokens per task. The lever that matters now is not the price of a token. It is how many tokens each task consumes, and whether each of those tokens is hitting the right model.
+
+Nadir routes each turn to the cheapest model that can handle it. The classifier adds under 10 ms. The savings show up on the first request, in the \`x-nadir-cost-saved\` response header. No SDK swap, no refactor. Change the base URL, set \`model="auto"\`, and let the router do the work.
+
+---
+
+*Sources: [Stanford Digital Economy Lab, "How are AI agents spending your tokens?"](https://digitaleconomy.stanford.edu/news/how-are-ai-agents-spending-your-tokens/) (May 2026). [Microsoft Research, "How Do AI Agents Spend Your Money?"](https://arxiv.org/abs/2604.22750) (April 2026). [Vantage, "The Hidden Cost Driver in Agentic Coding Sessions"](https://www.vantage.sh/blog/agentic-coding-costs) (2026). Gartner, "Agentic AI Token Consumption Analysis" (March 2026). Anthropic Claude model pricing as of May 2026.*`,
+
   "ocr-closed-loop-routing": `## The problem with static routing
 
 Every LLM router today works the same way: train a classifier, deploy it, and hope the world doesn't change. The best static routers reach 88-93% accuracy on standard benchmarks. That sounds good until you realize it means 7-12% of your requests are either wasting money (routed to an expensive model unnecessarily) or sacrificing quality (routed to a cheap model that can't handle the task).

@@ -117,7 +117,7 @@ export default function BlogPost() {
                               key={ci}
                               className="border border-border px-4 py-2"
                             >
-                              {cell}
+                              {formatInline(cell)}
                             </td>
                           ))}
                         </tr>
