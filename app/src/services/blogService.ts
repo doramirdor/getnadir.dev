@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "ai-jevons-paradox-token-costs",
+    title: "Tokens got 280x cheaper. Your AI bill still tripled. Here is why.",
+    date: "2026-05-13",
+    author: "Dor Amir",
+    excerpt: "Between 2024 and 2026, per-token prices fell by 99.7%. Enterprise AI spend tripled to $37 billion anyway. The culprit is the Jevons Paradox applied to inference: cheaper tokens made agentic workflows viable, and agentic workflows consume 5 to 30x more tokens per task. We break down the real numbers and the only lever that actually fixes the bill.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "Jevons Paradox", "Agentic AI", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "enterprise-ai-costs-routing-2026",
     title: "Enterprise AI costs dropped 67% this year. Routing is the reason.",
     date: "2026-05-12",
@@ -107,6 +117,121 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "ai-jevons-paradox-token-costs": `## The Jevons Paradox, applied to tokens
+
+In 1865, William Stanley Jevons observed that making coal engines more efficient did not reduce coal consumption. It increased it. Cheaper energy per unit made new uses viable, and total demand outpaced the efficiency gains.
+
+The same thing happened to LLM tokens between 2024 and 2026.
+
+Per-token prices fell by roughly 99.7% in two years. Anthropic dropped Opus from $15/$75 per million tokens to $5/$25. OpenAI released GPT-4o mini at a fraction of GPT-4's cost. Google pushed Gemini Flash below $0.10 per million tokens. DeepSeek and open-source models compressed the bottom end even further.
+
+Enterprise AI spend tripled anyway. Global AI spending is on track to hit $2 trillion in 2026, according to Gartner. Inference now accounts for 85% of enterprise AI budgets, up from roughly 60% in 2024. The FinOps Foundation's 2026 State of FinOps report found that 73% of respondents said AI costs exceeded their original budget projections.
+
+Cheaper tokens did not reduce the bill. They changed what was possible. And what became possible consumes far more tokens per task.
+
+## What changed: the shift to agentic workloads
+
+In 2024, most production LLM usage was single-turn: a user sends a prompt, the model responds, done. One API call per interaction, predictable token counts, manageable costs.
+
+By 2026, the dominant pattern is agentic. A coding assistant reads a task, calls a tool, reads the output, decides what to do next, calls another tool, reads that output, retries if the test fails, and repeats. A single task that used to be one API call now triggers 10 to 50 calls, each carrying the full accumulated context.
+
+Microsoft Research quantified this in April 2026. Their analysis of agentic coding tasks found:
+
+- Agentic coding tasks consume **1,000x more tokens** than equivalent code chat tasks
+- A typical session uses roughly **1 million input tokens and 40,000 output tokens**
+- The same agent on the same task can vary by **up to 30x** in total token consumption between runs
+
+Stanford's Digital Economy Lab confirmed the pattern from a different angle. Their research showed that input tokens, not output tokens, drive the cost. By turn 30 of an agentic session, every API call carries 25,000 to 35,000 tokens of accumulated context. By turn 50, each retry loop costs more than the first ten turns combined.
+
+Gartner's March 2026 analysis put the multiplier at 5 to 30x more tokens per task for agentic workflows compared to single-turn chat. That range depends on the task complexity and the agent framework, but even the low end (5x) overwhelms a 10x price reduction.
+
+## The math that explains your bill
+
+Here is a simplified version of what happened to a typical enterprise between 2024 and 2026:
+
+| Factor | 2024 | 2026 | Change |
+|---|---|---|---|
+| Average cost per million tokens | $15.00 | $5.00 | -67% |
+| Average tokens per task (single-turn) | 2,000 | 2,000 | 0% |
+| Average tokens per task (agentic) | N/A | 50,000 | New workload |
+| Share of workload that is agentic | 5% | 45% | +40pp |
+| Monthly API calls | 50,000 | 200,000 | +300% |
+
+The per-token price dropped 67%. But the number of tokens per task grew 25x for nearly half the workload, and total call volume quadrupled as teams automated more with agents. The bill went up, not down.
+
+This is the Jevons Paradox in action. Cheap tokens made it economically feasible to run agents on tasks that nobody would have automated at $15 per million tokens. Once the price crossed a threshold, usage exploded. The efficiency gain (cheaper tokens) was more than offset by the demand increase (more tokens per task, more tasks automated).
+
+## Where the money actually goes
+
+NavyaAI published a detailed cost analysis in May 2026 breaking down where enterprise AI budgets land. The finding that surprised most teams: 72% of costs hide outside the obvious inference line item.
+
+The breakdown looks roughly like this for a team running agentic workloads:
+
+- **Context accumulation (35-45% of cost).** Every turn in an agentic session re-sends the full conversation history. A 40-turn session where the agent reads files, runs tests, and retries failures can accumulate 40,000+ input tokens per call by the end. The last ten turns of a session often cost more than the first thirty.
+
+- **Retry loops (15-25% of cost).** When an agent produces code that fails a test, it retries. Each retry carries the full accumulated context plus the error message. Three retries at turn 35 of a session cost more than the entire first ten turns. And retries happen on the premium model, because the agent does not know the fix is simple.
+
+- **Tool schema overhead (10-15% of cost).** Agentic frameworks inject tool definitions into every API call. A coding agent with 20 tools might add 3,000 to 5,000 tokens of schema to every single request, regardless of whether those tools are relevant to the current step.
+
+- **Actual productive reasoning (20-30% of cost).** The tokens that directly contribute to solving the user's problem represent less than a third of total spend.
+
+This distribution is why "just negotiate a volume discount" does not fix the problem. The waste is structural, baked into how agentic workflows accumulate context. A 20% volume discount on a bill that is 70% waste still leaves most of the waste intact.
+
+## Why cheaper models alone do not fix it
+
+The intuitive response is to switch everything to the cheapest model. Run Haiku at $1 per million tokens instead of Opus at $5, and the 5x price difference should absorb the token growth.
+
+In practice, this breaks on complex tasks. A coding agent using Haiku to architect a distributed system produces worse output, fails more tests, triggers more retries, and can end up costing more in wasted tokens than Opus would have. The retries compound: each failed attempt adds to the context, making subsequent attempts more expensive regardless of the model.
+
+The real distribution of agentic work, based on production traces, looks like this:
+
+- **60 to 70% of turns are low complexity.** File reads, status checks, formatting output, parsing errors. These are classification-grade tasks.
+- **20 to 30% are medium complexity.** Writing a function, generating a test, explaining a bug.
+- **5 to 15% are genuinely hard.** Architecture decisions, multi-file refactors, complex debugging.
+
+Running everything on Opus means paying frontier rates for file reads. Running everything on Haiku means degrading quality on the 15% of turns that actually need reasoning power. Neither option addresses the structural problem.
+
+## The lever that works: per-request model routing
+
+If 65% of tokens in a session hit a model that is 5x more expensive than necessary, and you fix that, you cut the bill roughly in half without touching the complex tasks that need the expensive model.
+
+This is what intelligent model routing does. A classifier evaluates each request (not each session, each individual API call) and sends it to the cheapest model that can handle that complexity level. The overhead is under 10 milliseconds per request.
+
+Here is what routing does to a typical 40-turn agentic session:
+
+| Segment | Turns | Model (no routing) | Model (routed) | Cost (no routing) | Cost (routed) |
+|---|---|---|---|---:|---:|
+| File reads, status checks | 25 | Opus ($5/M) | Haiku ($1/M) | $2.25 | $0.45 |
+| Code generation, tests | 10 | Opus ($5/M) | Sonnet ($3/M) | $1.40 | $0.84 |
+| Architecture, debugging | 5 | Opus ($5/M) | Opus ($5/M) | $0.88 | $0.88 |
+| **Total** | **40** | | | **$4.53** | **$2.17** |
+
+That is 52% savings. The five turns that genuinely need Opus still get Opus. The 25 turns that are reading files no longer pay frontier rates for it.
+
+Scale this across a team running 200 sessions per week: the difference is roughly $19,000 per month. At 500 sessions per week, it crosses $47,000 per month. These are real numbers from production deployments.
+
+## The industry is already moving
+
+The shift is happening fast. In Q1 2025, the average enterprise used 2.1 models in production. One year later, that number is 4.7. Thirty-seven percent of enterprises now run five or more models. And 42% have deployed a routing or gateway layer to manage model selection.
+
+The fully optimized enterprises (those using multi-model routing with trained classifiers) achieved blended costs of $2.31 per million tokens in Q1 2026, compared to $18.40 for frontier-only deployments a year earlier. That is an 87.4% reduction.
+
+The LLM middleware and gateway market is growing at a 49.6% compound annual growth rate through 2034. Routing is becoming standard infrastructure. The question for most teams is not whether to adopt it, but when.
+
+## What you can do this week
+
+**1. Measure your actual token distribution.** Pull a week of API logs. Bucket each request by complexity (simple lookup vs. code generation vs. hard reasoning). Most teams discover that 60%+ of their calls do not need a frontier model.
+
+**2. Calculate your theoretical savings.** Take the simple and medium requests from step 1 and price them at Haiku ($1/M) and Sonnet ($3/M) rates instead of Opus ($5/M). If the gap exceeds $500/month, routing pays for itself immediately.
+
+**3. Start routing.** Nadir evaluates each request in under 10 ms and routes to the cheapest model that can handle it. The open-source core (NadirClaw) runs locally with zero data leaving your machine. The hosted platform adds trained classifiers, analytics, and billing. Both are OpenAI-compatible: change the base URL, set \`model="auto"\`, and routing starts on the next request.
+
+The Jevons Paradox is not going away. Tokens will keep getting cheaper, and that will keep enabling new use cases that consume more of them. The only durable strategy is to make sure each token hits the right model for the job.
+
+---
+
+*Sources: [NavyaAI, "Tokens got 99.7% cheaper. So why did your AI bill triple?"](https://www.navyaai.com/reports/ai-cost-report-token-prices-vs-ai-bill) (May 2026). [Stanford Digital Economy Lab, "How are AI agents spending your tokens?"](https://digitaleconomy.stanford.edu/news/how-are-ai-agents-spending-your-tokens/) (May 2026). [Microsoft Research, "How Do AI Agents Spend Your Money?"](https://arxiv.org/abs/2604.22750) (April 2026). [FinOps Foundation, "State of FinOps 2026"](https://data.finops.org/) (2026). [Gartner, Worldwide AI Spending Forecast](https://www.gartner.com/en/newsroom/press-releases/2026-1-15-gartner-says-worldwide-ai-spending-will-total-2-point-5-trillion-dollars-in-2026) (January 2026). [VentureBeat, "Cheaper tokens, bigger bills"](https://venturebeat.com/orchestration/cheaper-tokens-bigger-bills-the-new-math-of-ai-infrastructure) (2026). Anthropic, OpenAI, Google model pricing as of May 2026.*`,
+
   "enterprise-ai-costs-routing-2026": `## The 67% drop nobody expected
 
 Between Q1 2025 and Q1 2026, the average enterprise cost per million tokens fell from $18.40 to $6.07. That is a 67% year-over-year reduction.
