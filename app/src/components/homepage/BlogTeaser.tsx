@@ -1,35 +1,35 @@
 const posts = [
   {
-    date: "April 4, 2026",
+    date: "May 14, 2026",
     tag: "Research",
-    title: "OCR: our new closed-loop routing algorithm",
+    title: "56% of AI teams have no cost guardrails. Here is what the other 44% do.",
     excerpt:
-      "Static routers plateau at 88-93% accuracy. We built a closed-loop algorithm that learns from every response, adapts to model changes, and cuts costs 43% with zero quality loss.",
-    href: "/blog/ocr-closed-loop-routing",
+      "The FinOps Foundation surveyed 1,192 organizations. Fewer than half have financial guardrails for AI. The ones that do spend 3.2x less per completed task.",
+    href: "/blog/finops-for-ai-cost-governance",
   },
   {
-    date: "March 24, 2026",
-    tag: "Benchmark",
-    title: "Routing benchmark: 96% accuracy, 38% savings",
-    excerpt:
-      "We ran 50 real-world prompts through Nadir's classifier. Simple prompts went to Gemini Flash, complex stayed on Sonnet. 96% routing accuracy.",
-    href: "/blog/50-prompt-benchmark",
-  },
-  {
-    date: "March 20, 2026",
+    date: "May 13, 2026",
     tag: "Deep Dive",
-    title: "Context Optimize saved 61% of input tokens on Opus",
+    title: "Tokens got 280x cheaper. Your AI bill still tripled. Here is why.",
     excerpt:
-      "Agentic sessions bloat context with repeated tool schemas and pretty-printed JSON. Lossless compression across 5 real scenarios.",
-    href: "/blog/context-optimize-savings",
+      "Per-token prices fell 99.7% in two years. Enterprise AI spend tripled anyway. The Jevons Paradox, applied to inference.",
+    href: "/blog/ai-jevons-paradox-token-costs",
   },
   {
-    date: "March 15, 2026",
-    tag: "Story",
-    title: "Why we built Nadir: the $0.45 docstring problem",
+    date: "May 12, 2026",
+    tag: "Research",
+    title: "Enterprise AI costs dropped 67% this year. Routing is the reason.",
     excerpt:
-      "We were paying Claude Opus prices for 'write a docstring'. That's when we decided to route simple prompts to cheaper models.",
-    href: "/blog/why-we-built-nadir",
+      "Average enterprise cost per million tokens fell from $18.40 to $6.07. Token price cuts explain half. Multi-model routing explains the rest.",
+    href: "/blog/enterprise-ai-costs-routing-2026",
+  },
+  {
+    date: "May 11, 2026",
+    tag: "Deep Dive",
+    title: "Opus 4.7 costs more than 4.6. Anthropic just did not change the price.",
+    excerpt:
+      "A new tokenizer produces up to 35% more tokens from the same text. Same rate card. Higher bill. We break down the real numbers.",
+    href: "/blog/opus-4-7-tokenizer-hidden-cost",
   },
 ];
 

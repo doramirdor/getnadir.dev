@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "finops-for-ai-cost-governance",
+    title: "56% of AI teams have no cost guardrails. Here is what the other 44% do.",
+    date: "2026-05-14",
+    author: "Dor Amir",
+    excerpt: "The FinOps Foundation surveyed 1,192 organizations managing $83 billion in cloud spend. Fewer than half have financial guardrails for AI. The ones that do spend 3.2x less per completed task. We break down the five practices that separate governed AI spend from ungoverned.",
+    thumbnail: "Research",
+    tags: ["FinOps", "Cost Optimization", "Enterprise", "2026 Trends"],
+    readingTime: "7 min read",
+  },
+  {
     id: "ai-jevons-paradox-token-costs",
     title: "Tokens got 280x cheaper. Your AI bill still tripled. Here is why.",
     date: "2026-05-13",
@@ -117,6 +127,98 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "finops-for-ai-cost-governance": `## The number that should worry every engineering leader
+
+The FinOps Foundation's 2026 State of FinOps report surveyed 1,192 organizations managing $83 billion in cloud spend. One finding stood out: only 44% of organizations have financial guardrails for AI workloads. The other 56% are running AI in production with no cost governance at all.
+
+This matters because AI is no longer a rounding error on the cloud bill. At AI-forward enterprises, AI workloads now account for 18% of total cloud spend, up from 4% in 2023. Inference alone constitutes 85% of enterprise AI budgets, according to Gartner. And 42% of enterprises say optimizing AI workflows is their top spending priority for 2026, overtaking expansion for the first time.
+
+The teams without guardrails are not spending less. They are spending blindly. And the gap between governed and ungoverned AI spend is widening.
+
+## What "no guardrails" actually looks like
+
+In most organizations without AI cost governance, the failure mode is the same: every request goes to a frontier model because nobody set up anything else.
+
+The engineering team picks Claude Opus or GPT-4.5 during prototyping because it works best. The prototype becomes the production system. Six months later, 60% of API calls are formatting output, parsing errors, and answering basic questions, all hitting a $5-per-million-token model when a $0.25 model would produce identical results.
+
+Nobody notices because there is no dashboard, no budget alert, no cost-per-task metric. The monthly bill arrives, someone says "AI is just expensive," and the cycle continues.
+
+The FinOps Foundation data confirms this pattern. Organizations without AI guardrails reported that costs exceeded projections by 30 to 50%. Not occasionally. Sixty-five percent of IT leaders reported this as a recurring problem.
+
+## The five practices that separate governed from ungoverned
+
+We analyzed the FinOps Foundation data alongside field reports from Deloitte's 2026 Tech Trends, Gartner's AI spending forecasts, and cost breakdowns from teams running production AI workloads. Five practices consistently separated the teams with controlled AI spend from those without.
+
+### 1. They measure cost per completed task, not cost per token
+
+The old metric, cost per million tokens, tells you what you paid. It does not tell you what you got. A cheap model that fails and retries five times can cost more than an expensive model that succeeds on the first try.
+
+Governed teams track cost per completed task. This metric captures the full picture: the successful call, the retries, the context accumulation, and the model that ultimately delivered the answer. It exposes waste that per-token metrics hide.
+
+A team at a fintech company shared their numbers at a FinOps meetup in April 2026. When they switched from tracking cost-per-token to cost-per-completed-task, they discovered that 23% of their inference spend was going to retry loops. The retries were invisible in their per-token dashboard because each individual retry was cheap. In aggregate, they were burning $4,200 per month on failed attempts.
+
+### 2. They set budgets per workload, not per team
+
+Most organizations that budget for AI at all set a team-level monthly cap. Engineering gets $15,000 per month for AI. When the bill approaches the cap, someone manually throttles usage.
+
+This is the cloud-computing equivalent of giving a department a gas card without tracking which vehicles are driving where. You know the total spend, but you cannot tell which workload is efficient and which is wasteful.
+
+Governed teams set budgets per workload or per application. The coding assistant gets one budget. The customer support bot gets another. The data pipeline gets a third. When one workload spikes, the alert is specific enough to act on.
+
+The FinOps Foundation found that organizations with workload-level budgets detected cost anomalies 4x faster than those with only team-level caps.
+
+### 3. They route per request, not per application
+
+This is the biggest lever. In a typical production workload, 60 to 70% of requests are low complexity: status checks, formatting, parsing, basic lookups. Another 20 to 30% are medium complexity. Only 5 to 15% genuinely need a frontier model.
+
+Ungoverned teams send everything to one model. Governed teams route each request to the cheapest model that can handle it.
+
+The price spread makes this consequential. Claude Haiku costs $1 per million input tokens. Claude Opus costs $5. That is a 5x difference on Anthropic's lineup alone. Across providers, the spread between the cheapest production-grade model and the most expensive is over 100x.
+
+IDC published a report in early 2026 calling model routing "the future of AI." Their data shows 37% of enterprises already use five or more models in production. The fully optimized ones, those using trained classifiers for automatic routing, achieved blended costs of $2.31 per million tokens. Frontier-only deployments averaged $18.40. That is an 87% difference.
+
+### 4. They monitor token distribution, not just total spend
+
+A monthly bill tells you how much you spent. It does not tell you where the tokens went. Governed teams instrument their AI workloads to track token distribution: how many tokens per request, how many requests per task, and what percentage of tokens are productive versus overhead.
+
+This is how teams discover structural waste. NavyaAI's May 2026 cost analysis found that in agentic workloads, only 20 to 30% of tokens directly contribute to solving the user's problem. The rest is context accumulation (35 to 45%), retry loops (15 to 25%), and tool schema overhead (10 to 15%).
+
+You cannot optimize what you cannot see. Teams that monitor token distribution find and fix waste patterns like bloated system prompts, redundant tool schemas, and unnecessary conversation history. Teams that only see the monthly total cannot.
+
+### 5. They treat model selection as infrastructure, not a developer choice
+
+In ungoverned organizations, the model choice is embedded in application code. A developer writes \`model="claude-opus-4-6"\` during development, and that string stays in production forever. Changing it requires a code change, a review, a deploy. So nobody changes it.
+
+Governed teams decouple model selection from application code. The application requests a completion with \`model="auto"\` or a capability level, and infrastructure handles the routing. When a cheaper model becomes available, or when a model's pricing changes, the routing layer adapts without touching application code.
+
+This is not just about cost. It is about operational resilience. When Anthropic ships a new tokenizer that inflates token counts by 35% (as happened with Opus 4.7 in April 2026), teams with infrastructure-level routing adjust once. Teams with hardcoded model strings adjust in every application, if they notice at all.
+
+## The cost of doing nothing
+
+Gartner projects worldwide AI spending at $2.52 trillion in 2026. Their more sobering projection: 40% of agentic AI projects will be scaled back or canceled by 2027 due to escalating costs and unclear ROI.
+
+The projects that get canceled are disproportionately the ungoverned ones. Not because the technology failed, but because the economics were never tracked well enough to demonstrate value. When the CFO asks "what are we getting for this $50,000 per month AI bill?" and the answer is "we are not sure," the project loses funding.
+
+Governed teams can answer that question. They know cost per completed task. They know which workloads are efficient and which need optimization. They can show that routing saved $18,000 last month or that context compression cut token waste by 40%. The numbers make the case for continued investment.
+
+## How to start this week
+
+If you are in the 56% without guardrails, here is a practical starting point:
+
+**Day 1: Instrument.** Pull a week of API logs. For each request, record the model, input tokens, output tokens, and whether the request was part of a retry. If your current setup does not log this, start logging it.
+
+**Day 3: Analyze.** Bucket each request by complexity. Count how many are simple lookups, formatting, or parsing versus genuine reasoning tasks. Calculate what the bill would have been if simple requests went to Haiku ($1/M) and medium requests went to Sonnet ($3/M). The gap between actual and theoretical spend is your optimization opportunity.
+
+**Day 5: Route.** Set up per-request routing. Nadir evaluates each request in under 10 ms and sends it to the cheapest model that can handle it. The integration is two lines: change the base URL and set \`model="auto"\`. The \`x-nadir-cost-saved\` response header shows the savings on every request, giving you the instrumentation from step 1 for free.
+
+**Day 7: Set a budget.** Pick your highest-volume workload and set a weekly budget alert. Not a hard cap, just a notification. When you know the baseline, you can set meaningful thresholds. When a threshold fires, you have the per-request data to diagnose why.
+
+The FinOps Foundation data is clear: organizations with AI cost governance spend less, detect problems faster, and keep their AI projects funded longer. The 44% that figured this out are pulling ahead. The gap will only grow as AI workloads scale.
+
+---
+
+*Sources: [FinOps Foundation, "State of FinOps 2026"](https://data.finops.org/) (2026, 1,192 organizations, $83B cloud spend surveyed). [Gartner, "Worldwide AI Spending Forecast"](https://www.gartner.com/en/newsroom/press-releases/2026-1-15-gartner-says-worldwide-ai-spending-will-total-2-point-5-trillion-dollars-in-2026) (January 2026). [Deloitte, "Tech Trends 2026: AI Infrastructure and Compute Strategy"](https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/ai-infrastructure-compute-strategy.html) (2026). [IDC, "The Future of AI is Model Routing"](https://www.idc.com/resource-center/blog/the-future-of-ai-is-model-routing/) (2026). [NavyaAI, "Tokens got 99.7% cheaper. So why did your AI bill triple?"](https://www.navyaai.com/reports/ai-cost-report-token-prices-vs-ai-bill) (May 2026). Anthropic, OpenAI, Google model pricing as of May 2026.*`,
+
   "ai-jevons-paradox-token-costs": `## The Jevons Paradox, applied to tokens
 
 In 1865, William Stanley Jevons observed that making coal engines more efficient did not reduce coal consumption. It increased it. Cheaper energy per unit made new uses viable, and total demand outpaced the efficiency gains.
