@@ -124,6 +124,7 @@ export default function Pricing() {
     name: "Nadir",
     description:
       "Intelligent LLM router that cuts Claude, GPT, and Gemini API costs up to 47 percent with automatic prompt-level model selection.",
+    image: "https://getnadir.com/og-image.png",
     brand: { "@type": "Brand", name: "Nadir" },
     offers: [
       {
@@ -131,6 +132,7 @@ export default function Pricing() {
         name: "Free",
         price: "0",
         priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
         description: "Hosted proxy with BYOK, 50 requests per month on shared keys, dashboard, and analytics.",
         url: "https://getnadir.com/auth?mode=signup",
       },
@@ -139,6 +141,7 @@ export default function Pricing() {
         name: "Pro",
         price: "9",
         priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
         description:
           "$9 per month base plus 25% of the first $2,000 of monthly savings and 10% above. Hosted keys or BYOK, semantic cache, fallback chains, context optimization.",
         priceSpecification: {
@@ -153,6 +156,7 @@ export default function Pricing() {
         "@type": "Offer",
         name: "Enterprise",
         priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
         description:
           "Volume pricing, SSO/SAML, custom routing models, dedicated infrastructure, 99.9% uptime SLA.",
         url: "https://getnadir.com/contact?reason=enterprise",
