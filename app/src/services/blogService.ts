@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "github-ai-agent-token-waste",
+    title: "GitHub's AI agents wasted 37% of their tokens. Yours probably waste more.",
+    date: "2026-05-15",
+    author: "Dor Amir",
+    excerpt: "In April 2026, GitHub audited token consumption across its agentic workflows and found that 37% of tokens were waste. Unused tool schemas, LLM calls for deterministic work, and unpruned context were the top offenders. We break down what they found, how they fixed it, and how to run the same audit on your own stack.",
+    thumbnail: "Deep Dive",
+    tags: ["Agentic AI", "Token Optimization", "Cost Optimization", "GitHub", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "finops-for-ai-cost-governance",
     title: "56% of AI teams have no cost guardrails. Here is what the other 44% do.",
     date: "2026-05-14",
@@ -127,6 +137,116 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "github-ai-agent-token-waste": `## GitHub runs AI agents at scale. The waste surprised them.
+
+GitHub Agentic Workflows launched in technical preview in February 2026. Within weeks, the system was processing millions of tokens per day across code review, CI/CD automation, and Copilot-powered development tasks. By mid-February, daily consumption peaked at 237.8 million tokens.
+
+Then the engineering team looked at where those tokens were actually going.
+
+In April 2026, GitHub published a detailed breakdown of their token efficiency work. The headline number: a 37% reduction in token consumption, achieved without removing features or degrading output quality. The savings came entirely from eliminating structural waste that had been invisible until they instrumented for it.
+
+The patterns they found are not unique to GitHub. They exist in every production agentic system. The difference is that most teams never measure.
+
+## Pattern 1: Unused tool registrations (10 to 15KB per turn)
+
+This was the single biggest source of waste GitHub identified. LLM APIs are stateless, so agent runtimes include the full JSON schema for every registered tool on every API call. If your agent has access to 40 MCP tools, those 40 tool definitions travel with every single request, whether the agent uses them or not.
+
+For GitHub's MCP server with 40 tools, this added 10 to 15KB of schema text per turn. In a 30-turn agentic session, that is 300 to 450KB of repeated tool definitions. At Opus pricing ($5 per million input tokens), those tool schemas alone cost $0.04 to $0.06 per session. Multiply by thousands of sessions per day and the waste adds up to four or five figures per month.
+
+The fix: register only the tools relevant to each workflow step, not the full catalog. A code review agent does not need deployment tools. A CI agent does not need code search tools. Scoping tool registrations per step cut schema overhead by 60 to 80% in GitHub's tests.
+
+Most agent frameworks make this hard by default. CrewAI, LangGraph, and AutoGen all register tools globally. Narrowing tool scope requires explicit per-agent or per-step configuration. It is worth the effort.
+
+## Pattern 2: LLM calls for deterministic work
+
+GitHub discovered that many of their "tool calls" were actually deterministic HTTP requests wrapped in an LLM roundtrip for no reason. Reading a file from a repository, fetching a pull request, listing issues. These are REST API calls with predictable inputs and outputs. Routing them through an LLM adds latency, tokens, and cost without adding intelligence.
+
+The solution was what GitHub calls "pre-agentic data downloads" and "CLI proxy substitution." Before the agent starts reasoning, a lightweight script fetches the data the agent will need via direct API calls. The agent receives the data as context rather than discovering and fetching it through tool use.
+
+This pattern applies broadly. If your agent calls a tool that always returns the same type of structured data (database lookups, API fetches, file reads), consider fetching that data before the LLM step and injecting it into the prompt. You save the tool-call roundtrip tokens (the LLM reasoning about which tool to call, the tool schema, the tool result parsing) while preserving the information.
+
+In GitHub's case, replacing MCP calls with direct GitHub CLI calls for data retrieval eliminated LLM involvement entirely for those steps. The data still reaches the agent. The agent still reasons about it. But the fetch itself no longer costs tokens.
+
+## Pattern 3: Context accumulation without pruning
+
+This pattern is well-documented but still underaddressed in production. Every turn in an agentic session re-sends the full conversation history as input tokens. By turn 20, each API call carries 20,000 to 25,000 tokens of context. By turn 40, it can reach 40,000 to 50,000 tokens per call.
+
+The problem is not the context itself. It is that much of the context is no longer relevant. A file listing from turn 3 that was used to pick a file to edit has no bearing on turn 35. An error message from turn 12 that was already resolved is dead weight at turn 25. But the accumulated history carries all of it, because pruning requires active management that most frameworks do not do by default.
+
+GitHub addressed this with structured context management: keeping system prompts, the current task state, and the most recent N turns while summarizing or dropping older history. The result was fewer input tokens per turn with no measurable quality degradation on task completion.
+
+For teams that cannot modify their agent framework's context management, there is a simpler lever. Lossless compression of the existing context (minifying JSON, deduplicating tool schemas, normalizing whitespace) can cut input tokens 30 to 60% on long sessions. This is what Nadir's Context Optimize does: the same information, fewer tokens, zero semantic loss.
+
+## Pattern 4: Retry loops at premium prices
+
+When an agent produces output that fails validation (a test failure, a malformed response, a type error), it retries. Each retry carries the full accumulated context plus the error message. Three retries at turn 35 of a session can cost more than the first ten turns combined.
+
+The cost problem is compounded by the model problem. Most agent frameworks retry on the same model that failed. A syntax error retry at turn 35, carrying 35,000 tokens of context, hits Opus at $5 per million input tokens. That same retry would succeed on Haiku at $1 per million input tokens, because fixing a syntax error does not require frontier reasoning.
+
+GitHub's optimization here was partly about reducing retries (better prompts, clearer tool schemas) and partly about routing retries to appropriate models. Both matter.
+
+The numbers on retries are significant. NavyaAI's May 2026 cost analysis found that retry loops account for 15 to 25% of total token spend in agentic workloads. At enterprise scale, that is tens of thousands of dollars per month spent on failed attempts, each paying full context prices on a premium model.
+
+## Pattern 5: Every turn hits the same model
+
+GitHub did not publish specific numbers on model routing, but the pattern is consistent across every production agentic system that has been audited. The distribution of work in agentic sessions follows a predictable curve:
+
+- 60 to 70% of turns are low complexity: file reads, status checks, output formatting, error parsing
+- 20 to 30% are medium complexity: code generation, test writing, bug explanations
+- 5 to 15% are genuinely hard: architecture decisions, multi-file refactors, complex debugging
+
+When every turn hits the same frontier model, the majority of your spend goes to tasks that do not need frontier capabilities. The price spread between Haiku ($1 per million input tokens) and Opus ($5 per million) is 5x. Across providers, the spread between the cheapest production-grade model and the most expensive exceeds 100x.
+
+Per-turn model routing addresses this directly. A classifier evaluates each API call independently (not each session, each individual call) and routes to the cheapest model capable of handling that complexity level.
+
+The industry data on this is converging. IDC's 2026 report on model routing found that enterprises using trained classifiers for automatic routing achieved blended costs of $2.31 per million tokens, compared to $18.40 for frontier-only deployments. Multiple independent analyses put savings from intelligent routing at 40 to 60% for mixed-complexity workloads.
+
+## How GitHub built the audit
+
+GitHub's approach was methodical. They built two components:
+
+**Instrumentation layer.** An API proxy captures token usage across all workflow runs in a normalized format. Every workflow outputs a \`token-usage.jsonl\` artifact with records containing input tokens, output tokens, cache-read tokens, cache-write tokens, model, provider, and timestamps.
+
+**Two daily automated workflows.** A Daily Token Usage Auditor reads token usage artifacts from recent runs, aggregates consumption by workflow, and flags workflows with significantly increased usage. A Daily Token Optimizer examines the workflow source and recent logs to create GitHub Issues describing concrete inefficiencies and proposing specific optimizations.
+
+This feedback loop is what made the 37% reduction possible. You cannot optimize what you cannot see. And manual audits do not scale. Automated daily auditing catches waste patterns as they appear, before they compound into five-figure monthly bills.
+
+## How to run this audit on your stack
+
+You do not need GitHub's infrastructure to find the same waste patterns. Here is a practical five-step process:
+
+**Step 1: Instrument token usage per request.** If your agent framework does not log per-request token counts, add logging. Record input tokens, output tokens, model, and a task identifier for each API call. Most LLM SDKs return token counts in the response metadata. A week of data is enough to identify patterns.
+
+**Step 2: Bucket requests by type.** Categorize each request: tool call, retry, reasoning, formatting, data fetch. Most teams discover that 40 to 60% of their token volume is structural overhead (tool schemas, context history, retries) rather than productive reasoning.
+
+**Step 3: Measure tool schema overhead.** Count how many tool definitions are included in each request and how many are actually invoked. If you are sending 30 tool schemas per request and using 2 on average, you have a 93% waste rate on tool schema tokens. Scope tool registrations to each agent or workflow step.
+
+**Step 4: Identify deterministic calls.** Flag any tool call where the input and output are both structured data with no reasoning involved (file reads, API fetches, database lookups). These can often be replaced with direct calls outside the LLM, injecting the results as context.
+
+**Step 5: Analyze the complexity distribution.** For each request that does involve LLM reasoning, assess the complexity. Are you paying $5 per million tokens for a model to format JSON? To parse an error message? To generate a simple status update? Per-request routing captures these mismatches automatically.
+
+## The compounding effect
+
+These five patterns do not just add up. They compound. Unused tool schemas inflate the context, which inflates the cost of retries, which all hit a model that is overqualified for the task. Fixing any one pattern reduces costs. Fixing all five compounds the savings.
+
+GitHub's 37% reduction came primarily from patterns 1 and 2 (tool schema pruning and deterministic call elimination). They left significant savings on the table from patterns 3, 4, and 5.
+
+A team that addresses all five can realistically target 50 to 65% total reduction. For a team spending $10,000 per month on AI inference, that is $5,000 to $6,500 back. The audit takes a week. The savings are permanent.
+
+## Where Nadir fits in
+
+Nadir addresses patterns 3 and 5 directly. Context Optimize handles context accumulation by applying lossless compression (JSON minification, schema deduplication, whitespace normalization) that cuts input tokens 30 to 60%. Per-request routing handles the model mismatch by classifying each API call in under 10 ms and routing to the cheapest model capable of handling it.
+
+The integration is two lines. Change the base URL, set \`model="auto"\`. The \`x-nadir-cost-saved\` response header shows the savings on every request. No SDK change, no framework swap.
+
+For teams that want to address all five patterns, start with the audit above. Fix the structural waste (patterns 1, 2, 3) first, because those savings apply regardless of model routing. Then add per-request routing (pattern 5) to capture the remaining optimization on the tokens that survive the audit.
+
+The 37% that GitHub found is not the ceiling. It is the floor for teams that have never looked.
+
+---
+
+*Sources: [GitHub Engineering, "Improving token efficiency in GitHub Agentic Workflows"](https://github.blog/ai-and-ml/github-copilot/improving-token-efficiency-in-github-agentic-workflows/) (April 2026). [GitHub Agentic Workflows, Daily Token Consumption Reports](https://github.com/github/gh-aw/discussions) (February-March 2026). [NavyaAI, "Tokens got 99.7% cheaper. So why did your AI bill triple?"](https://www.navyaai.com/reports/ai-cost-report-token-prices-vs-ai-bill) (May 2026). [IDC, "The Future of AI is Model Routing"](https://www.idc.com/resource-center/blog/the-future-of-ai-is-model-routing/) (2026). [Gartner, "Agentic AI Token Consumption Analysis"](https://www.gartner.com/en/newsroom) (March 2026). Anthropic, OpenAI, Google model pricing as of May 2026.*`,
+
   "finops-for-ai-cost-governance": `## The number that should worry every engineering leader
 
 The FinOps Foundation's 2026 State of FinOps report surveyed 1,192 organizations managing $83 billion in cloud spend. One finding stood out: only 44% of organizations have financial guardrails for AI workloads. The other 56% are running AI in production with no cost governance at all.
