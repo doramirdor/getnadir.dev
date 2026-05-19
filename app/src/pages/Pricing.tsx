@@ -118,6 +118,24 @@ export default function Pricing() {
 
   const tierCtaKey = (name: string) => `${name.toLowerCase()}_cta`;
 
+  const digitalDeliveryFields = {
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "US",
+      returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+    },
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      shippingRate: { "@type": "MonetaryAmount", value: "0", currency: "USD" },
+      shippingDestination: { "@type": "DefinedRegion", addressCountry: "US" },
+      deliveryTime: {
+        "@type": "ShippingDeliveryTime",
+        handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+        transitTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 0, unitCode: "DAY" },
+      },
+    },
+  };
+
   const pricingJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -135,6 +153,7 @@ export default function Pricing() {
         availability: "https://schema.org/InStock",
         description: "Hosted proxy with BYOK, 50 requests per month on shared keys, dashboard, and analytics.",
         url: "https://getnadir.com/auth?mode=signup",
+        ...digitalDeliveryFields,
       },
       {
         "@type": "Offer",
@@ -151,15 +170,7 @@ export default function Pricing() {
           billingDuration: "P1M",
         },
         url: "https://getnadir.com/auth?mode=signup",
-      },
-      {
-        "@type": "Offer",
-        name: "Enterprise",
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-        description:
-          "Volume pricing, SSO/SAML, custom routing models, dedicated infrastructure, 99.9% uptime SLA.",
-        url: "https://getnadir.com/contact?reason=enterprise",
+        ...digitalDeliveryFields,
       },
     ],
   };
