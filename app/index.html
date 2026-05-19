@@ -168,7 +168,22 @@
               "priceCurrency": "USD",
               "availability": "https://schema.org/InStock",
               "url": "https://getnadir.com/pricing",
-              "description": "Self-hosted with intelligent routing, context optimization (safe mode), CLI dashboard, and unlimited requests."
+              "description": "Self-hosted with intelligent routing, context optimization (safe mode), CLI dashboard, and unlimited requests.",
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "applicableCountry": "US",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+              },
+              "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" },
+                "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "US" },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" },
+                  "transitTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" }
+                }
+              }
             },
             {
               "@type": "Offer",
@@ -183,7 +198,22 @@
                 "priceCurrency": "USD",
                 "billingDuration": "P1M"
               },
-              "description": "Hosted proxy with advanced routing algorithms, semantic dedup, web dashboard, and analytics. $9 per month plus a variable savings fee (25% on the first $2K of monthly savings, 10% above)."
+              "description": "Hosted proxy with advanced routing algorithms, semantic dedup, web dashboard, and analytics. $9 per month plus a variable savings fee (25% on the first $2K of monthly savings, 10% above).",
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "applicableCountry": "US",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+              },
+              "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" },
+                "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "US" },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" },
+                  "transitTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" }
+                }
+              }
             }
           ],
           "license": "https://opensource.org/licenses/MIT",
