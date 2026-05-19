@@ -15,6 +15,26 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "flat-rate-ai-over-metered-billing",
+    title: "Flat-rate AI is over. Anthropic, GitHub, and Cursor all moved to metered billing in 30 days.",
+    date: "2026-05-19",
+    author: "Dor Amir",
+    excerpt: "In May 2026, Anthropic split agent usage into a metered credit pool. GitHub Copilot switched to usage-based AI Credits. Cursor shipped its own model at 1/10th the cost of frontier APIs. The flat-rate era is ending because agentic workloads consume 50x more tokens than chat. Every token now has a price tag, and routing is the most direct lever to control the bill.",
+    thumbnail: "Deep Dive",
+    tags: ["Pricing", "AI Billing", "Cost Optimization", "2026 Trends", "Routing"],
+    readingTime: "8 min read",
+  },
+  {
+    id: "deepseek-v4-pricing-war-routing",
+    title: "DeepSeek V4 costs 1/7th of Opus 4.7. The routing math just changed.",
+    date: "2026-05-18",
+    author: "Dor Amir",
+    excerpt: "DeepSeek V4 matches frontier benchmarks at $1.74/$3.48 per million tokens. Opus 4.7 and GPT-5.5 still charge $5/$25 and above. The output token gap is 7x. For teams running mixed-complexity workloads, the savings from routing simple queries to cheaper models just got dramatically larger. We break down the new pricing math and what it means for your bill.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "DeepSeek", "Pricing", "Routing", "2026 Trends"],
+    readingTime: "7 min read",
+  },
+  {
     id: "github-ai-agent-token-waste",
     title: "GitHub's AI agents wasted 37% of their tokens. Yours probably waste more.",
     date: "2026-05-15",
@@ -137,6 +157,255 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "flat-rate-ai-over-metered-billing": `## The subscription-to-metered shift happened in 30 days.
+
+In April and May 2026, three things happened within weeks of each other:
+
+1. GitHub announced that Copilot is moving to usage-based "AI Credits" billing on June 1.
+2. Anthropic split Claude Code and agent usage into a separate credit pool billed at full API rates, effective June 15.
+3. Cursor shipped Composer 2.5, an in-house model that costs 1/10th of frontier APIs, because even they could not stomach the per-token math.
+
+Each story looks different on the surface. Underneath, they all point to the same structural shift: flat-rate AI access is ending. Every token is getting a price tag. And the teams that route intelligently will pay a fraction of what everyone else pays.
+
+## What happened at GitHub
+
+GitHub Copilot launched in 2022 as a $10/month subscription. Use it as much as you want. That deal is expiring.
+
+Starting June 1, 2026, Copilot moves to usage-based billing. Each plan gets monthly "AI Credits" equal to its price: $10 for Pro, $19 for Business, $39 for Enterprise. Usage gets calculated based on actual token consumption at published per-model API rates. Code completions and Next Edit Suggestions stay free. Everything else, chat, CLI, agents, and Spaces, consumes credits.
+
+The developer reaction was not enthusiastic. Visual Studio Magazine's coverage captured the sentiment: you pay the same price, but you get less.
+
+The calculus changed because of agents. A code completion is a few hundred tokens. An agentic coding session can burn tens of thousands. GitHub cannot offer unlimited agentic compute at $10/month and stay profitable. So they metered it.
+
+[Source: GitHub Blog, "GitHub Copilot is moving to usage-based billing"](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/)
+
+## What happened at Anthropic
+
+On May 14, 2026, Anthropic announced that all programmatic and agent usage of Claude will be separated from the standard subscription pool. This includes the Agent SDK, \`claude -p\`, GitHub Actions, and third-party integrations like Zed and OpenClaw. Starting June 15, agent usage draws from a dedicated "Agent SDK Credit Pool" billed at full API rates.
+
+The credit caps: $20/month on Pro, $100/month on Max 5x, $200/month on Max 20x. No rollover.
+
+The backstory is instructive. Some Max subscribers were running $1,000 to $5,000 worth of agent compute per month on a $200 subscription. That is a 5x to 25x arbitrage. Anthropic closed it.
+
+For teams building with Claude's API directly, this changes nothing. They were already paying per token. But it signals something important: even the provider with the most popular coding agent decided that unlimited agentic access is unsustainable at flat-rate pricing.
+
+[Source: Axios, "Anthropic tightens Claude limits as OpenAI courts agent users," May 14, 2026](https://www.axios.com/2026/05/14/anthropic-claude-price-openai-tokens)
+
+[Source: InfoWorld, "Anthropic puts Claude agents on a meter," May 2026](https://www.infoworld.com/article/4171274/anthropic-puts-claude-agents-on-a-meter-across-its-subscriptions.html)
+
+## What happened at Cursor
+
+Cursor took a different approach to the same problem. Instead of metering access to frontier models, they built their own.
+
+On May 18, 2026, Cursor released Composer 2.5, an in-house coding model built on Moonshot's open-source Kimi K2.5 checkpoint. It costs $0.50/$2.50 per million tokens (input/output), compared to $5/$25 for Claude Opus 4.7. That is a 10x price difference.
+
+On coding benchmarks, Composer 2.5 scores within a few points of Opus 4.7 and GPT-5.5. It hits 79.8% on SWE-Bench Multilingual. A complex refactoring session costs $2 to $5 on Composer 2.5 versus $20 to $50 on Opus 4.7.
+
+This is vertical integration driven by unit economics. Cursor could not keep paying frontier API prices for every coding interaction. So they trained a model that handles most coding tasks at a fraction of the cost.
+
+[Source: Cursor Blog, "Introducing Composer 2.5," May 18, 2026](https://cursor.com/blog/composer-2-5)
+
+## The common thread
+
+These three stories share a single insight: AI at flat-rate pricing does not scale when agents are involved.
+
+A chatbot interaction is a few thousand tokens. An agentic coding session can be 50,000 to 500,000 tokens. When users shift from chat to agents, consumption can jump 50x while the subscription price stays the same. No business model survives that math.
+
+The industry response is playing out in three variants:
+
+| Strategy | Who | How it works |
+|----------|-----|-------------|
+| Meter everything | GitHub Copilot | Track tokens, charge per consumption, let users manage their budget |
+| Segment billing | Anthropic | Keep chat unlimited, cap agent usage at API rates |
+| Build cheaper models | Cursor | Train an in-house model at 1/10th the cost so margins work at scale |
+
+All three approaches share one assumption: every token has a cost, and that cost must be passed through or optimized away.
+
+## What this means for teams building with LLM APIs
+
+If you are building AI features, products, or internal tools using LLM APIs, the shift to metered billing does not affect you directly. You were already paying per token. But the industry-wide move validates something important: the per-token cost structure is permanent, and it is expanding to every surface.
+
+The question is not whether tokens will be metered. They already are. The question is how you respond.
+
+There are really only three strategies:
+
+**Use cheaper models for everything.** This works until you hit a task that requires frontier reasoning. Then quality drops and users notice. Cheap models do not throw errors on hard prompts. They return plausible-looking responses that are subtly wrong. You do not notice until a customer reports a bug or someone manually reviews the output.
+
+**Use the best model for everything.** This works until your bill scales linearly with usage and someone in finance asks why you are paying $25 per million output tokens to summarize emails.
+
+**Route each request to the cheapest model that can handle it.** Simple tasks go to Haiku or Flash. Mid-complexity tasks go to Sonnet. Only the genuinely hard problems go to Opus or GPT-5.5. Your bill reflects the actual complexity of your workload, not the price of your most expensive model.
+
+The third strategy is model routing. And the metered-billing era makes it more valuable, not less.
+
+## The routing math in a metered world
+
+A typical mixed workload breaks down like this:
+
+| Complexity tier | Share of requests | Example tasks |
+|----------------|-------------------|---------------|
+| Simple | 40-50% | Summarization, formatting, classification, extraction |
+| Mid-complexity | 30-35% | Multi-step reasoning, code generation, structured analysis |
+| Complex | 15-25% | Novel problem-solving, multi-file refactoring, research synthesis |
+
+If you send everything to Claude Opus 4.7 at $5/$25 per million tokens, you pay frontier prices for tasks that Haiku handles at $1/$5 per million tokens.
+
+Route the simple tier to Haiku and the mid tier to Sonnet, and you cut your bill by 40 to 55% with no measurable quality loss on the routed requests. At scale, the difference between routing and not routing can be thousands of dollars per month.
+
+This is not theoretical. In Nadir's 50-prompt production benchmark, a trained classifier routes with 96% accuracy and saves 47% versus always using the most expensive model, with zero catastrophic downgrades.
+
+## Why this matters more for agentic workloads
+
+Single-request savings are meaningful. Agentic savings are transformative.
+
+An agentic session with 30 turns re-sends the full context on every turn. Input tokens accumulate because each turn pays for all previous context. A session starting at 2,000 input tokens per turn can reach 30,000 by turn 30. Total input across 30 turns: roughly 480,000 tokens. Total output: roughly 150,000, assuming 5,000 per turn.
+
+At Opus 4.7 pricing, that single session costs $6.15. Route even half of those turns to a cheaper model and the cost drops to $3 to $4. Across hundreds of sessions per day, the savings compound into real money.
+
+This is exactly why GitHub metered Copilot and Anthropic capped Agent SDK credits. The per-session cost of agentic compute at frontier pricing is unsustainable at flat rates. And for teams paying API rates directly, routing is the primary lever to keep that cost under control.
+
+## What comes next
+
+The metered-billing trend will accelerate. OpenAI's API has always been usage-based. Anthropic and GitHub just joined for agentic usage. Google will follow. By the end of 2026, every major AI provider will charge per token for agent-class workloads.
+
+This is not a temporary market correction. Agentic workflows consume orders of magnitude more tokens than chat. Providers cannot subsidize that gap with subscription revenue. The math does not work.
+
+For teams building on LLM APIs, the implication is straightforward: your AI bill is now directly proportional to your token consumption. Routing is the most direct lever to reduce that consumption without reducing capability.
+
+The flat-rate era gave teams the luxury of not thinking about cost per request. That luxury is gone.
+
+## Sources
+
+- [GitHub Blog: GitHub Copilot is moving to usage-based billing](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/)
+- [Visual Studio Magazine: Devs Sound Off on Usage-Based Copilot Pricing](https://visualstudiomagazine.com/articles/2026/04/27/devs-sound-off-on-usage-based-copilot-pricing-change-you-will-get-less-but-pay-the-same-price.aspx)
+- [Axios: Anthropic tightens Claude limits as OpenAI courts agent users, May 14, 2026](https://www.axios.com/2026/05/14/anthropic-claude-price-openai-tokens)
+- [InfoWorld: Anthropic puts Claude agents on a meter](https://www.infoworld.com/article/4171274/anthropic-puts-claude-agents-on-a-meter-across-its-subscriptions.html)
+- [Cursor Blog: Introducing Composer 2.5, May 18, 2026](https://cursor.com/blog/composer-2-5)
+- [The Decoder: Cursor's Composer 2.5 matches frontier benchmarks at a fraction of the cost](https://the-decoder.com/cursors-composer-2-5-matches-opus-4-7-and-gpt-5-5-benchmarks-at-a-fraction-of-the-cost/)
+- [The Register: Microsoft's GitHub shifts to metered AI billing](https://www.theregister.com/2026/04/28/microsofts_github_shifts_to_metered/)`,
+  "deepseek-v4-pricing-war-routing": `## The frontier price gap just blew open.
+
+In May 2026, DeepSeek released V4. It scores within 2 to 3 points of Claude Opus 4.7 and GPT-5.5 on major benchmarks (MMLU-Pro, HumanEval, MATH-500). It costs a fraction of what they charge.
+
+Here is the current pricing for the three frontier-class models:
+
+| Model | Input ($/M tokens) | Output ($/M tokens) | Cached input ($/M tokens) |
+|-------|---------------------|----------------------|---------------------------|
+| Claude Opus 4.7 | $5.00 | $25.00 | $2.50 |
+| GPT-5.5 | $5.00 | $30.00 | $2.50 |
+| DeepSeek V4 | $1.74 | $3.48 | $0.435 |
+
+The input price gap is 3x. The output price gap is 7 to 9x. With cached input, DeepSeek V4 costs roughly 1/6th of the US frontier models.
+
+This is not a comparison between a frontier model and a budget model. DeepSeek V4 is a frontier model. It matches Opus 4.7 on reasoning benchmarks, trails by a small margin on creative writing, and leads on several code generation tasks. VentureBeat called it a direct challenge to US frontier pricing.
+
+The question is no longer whether cheaper models can handle serious workloads. They can. The question is which of your requests actually need the $25-per-million-output-tokens model.
+
+## Why the output token gap matters more than the input gap
+
+Most cost discussions focus on input tokens. That made sense when prompts were long and responses were short. It does not hold for 2026 workloads.
+
+Agentic systems generate substantial output. A coding agent that writes files, explains changes, and produces tool calls generates 2 to 5x more output tokens than input tokens on many turns. A RAG system that synthesizes long answers from retrieved context follows the same pattern. Chain-of-thought reasoning, which Opus 4.7 and GPT-5.5 both default to for complex queries, inflates output token counts further.
+
+When output tokens dominate your bill, the 7x gap between DeepSeek V4 ($3.48/M) and Opus 4.7 ($25/M) is the number that matters. On a workload that generates 1 million output tokens per day, the difference is $21.52 per day, or $645 per month, on output alone.
+
+For teams with agentic workloads where output is 3x input, roughly 75% of the total token cost comes from output tokens. The model you choose for output-heavy requests is the single biggest lever on your bill.
+
+## The new routing economics
+
+Intelligent routing has always saved money by sending low-complexity requests to cheaper models. The economics depended on two variables: the price spread between models and the percentage of requests that can safely go to the cheaper tier.
+
+Both variables just shifted in favor of routing.
+
+**The price spread widened.** Before DeepSeek V4, the practical spread between the cheapest capable model and the most expensive was roughly 5x (Haiku at $1/$5 vs. Opus at $5/$25). Now the spread between DeepSeek V4 and Opus 4.7 on output tokens is 7.2x. And DeepSeek V4 is not the floor. With volume discounts, DeepSeek V4-Pro drops to $0.435/$0.87, pushing the output spread to nearly 29x versus Opus 4.7.
+
+**The capable-cheap tier got more capable.** DeepSeek V4 handles tasks that previously required a true frontier model. Code review, multi-step reasoning, structured analysis. This means more of your traffic can safely route to the cheaper tier without quality loss.
+
+Here is what that looks like in practice. Assume a mixed workload of 100,000 requests per month, averaging 1,000 input tokens and 500 output tokens per request:
+
+| Routing strategy | Monthly cost | Savings vs. all-Opus |
+|------------------|-------------|----------------------|
+| All Opus 4.7 | $1,750 | baseline |
+| All DeepSeek V4 | $261 | 85% |
+| Routed: 60% DeepSeek V4, 30% Sonnet, 10% Opus | $466 | 73% |
+| Routed: 40% Haiku, 30% DeepSeek V4, 20% Sonnet, 10% Opus | $358 | 80% |
+
+The "all DeepSeek V4" row looks tempting. But quality matters. DeepSeek V4 trails Opus 4.7 on specific tasks: nuanced creative writing, complex multi-turn conversations with heavy context, and certain edge cases in code refactoring. The routed strategies preserve quality on hard requests while capturing most of the savings.
+
+## This compounds in agentic workflows
+
+Single-request savings are meaningful. Agentic savings are transformative. Here is why.
+
+An agentic session with 30 turns re-sends the full context on every turn. Input tokens accumulate linearly, but each turn pays for all previous context. A session that starts at 2,000 input tokens per turn can reach 30,000 by turn 30. Total input tokens across 30 turns: roughly 480,000. Total output tokens: roughly 150,000, assuming 5,000 output tokens per turn.
+
+At Opus 4.7 pricing, that single session costs $6.15. At DeepSeek V4 pricing, it costs $1.36. Difference: $4.79 per session.
+
+A team running 500 agentic sessions per day saves $2,395 per day, or $71,850 per month, by routing appropriate sessions to DeepSeek V4 instead of Opus 4.7. Even conservative routing (40% of sessions shifted to the cheaper model) saves $28,740 per month.
+
+The compounding is why agentic workloads are the highest-leverage target for routing. Each incremental turn amplifies the cost difference between models.
+
+## The quality tradeoff is not binary
+
+The temptation is to go all-in on DeepSeek V4 and pocket the 85% savings. Teams that do this will regret it within weeks.
+
+DeepSeek V4 performs within 2 to 3 percentage points of Opus 4.7 on aggregate benchmarks. But benchmarks are averages. Specific tasks show wider gaps:
+
+- **Complex multi-file code refactors.** Opus 4.7 maintains coherence across files better than DeepSeek V4 on refactors touching 5+ files with interdependencies.
+- **Nuanced instruction following.** Prompts with layered constraints (tone, format, audience, technical depth) see higher compliance rates on Opus 4.7.
+- **Long-context reasoning.** At 100K+ token contexts, Opus 4.7 shows better recall and synthesis, particularly on contradictory information in the source material.
+- **Safety-critical outputs.** Medical, legal, and financial content benefits from Opus 4.7's more conservative and thorough reasoning.
+
+The right strategy is not "cheapest model always" or "best model always." It is "cheapest model that can handle this specific request." That is what a trained classifier does. It reads the prompt, estimates the complexity, and routes accordingly. For the 60 to 70% of requests that are classifications, summaries, formatting, simple Q&A, and code completions, DeepSeek V4 or Haiku are more than sufficient. For the 10 to 15% that genuinely need frontier reasoning, Opus 4.7 is worth every token.
+
+## What changed for multi-provider strategies
+
+Before May 2026, most routing strategies operated within a single provider's model family. Route between Haiku, Sonnet, and Opus. Or between GPT-4o-mini and GPT-5. The models share tokenizers, API formats, and behavioral patterns. It is clean.
+
+DeepSeek V4 breaks that pattern. The savings are too large to ignore, but adding a second provider introduces complexity:
+
+**Tokenizer differences.** DeepSeek V4 uses a different tokenizer than Anthropic or OpenAI. The same prompt produces a different token count on each provider. Cost estimates need to account for this, and token-based budgets need normalization.
+
+**Behavioral differences.** System prompt handling, tool call formatting, and response style differ between providers. A prompt tuned for Claude may need adjustment for DeepSeek, particularly around structured output formatting.
+
+**Latency variance.** DeepSeek V4 latency varies by region and load. Teams routing latency-sensitive requests need to factor time-to-first-token into routing decisions, not just cost.
+
+**Availability.** DeepSeek API availability has historically been less consistent than Anthropic or OpenAI. A routing strategy that depends on DeepSeek V4 needs a failover chain.
+
+These are solvable problems. An LLM gateway that handles provider normalization, token counting, and failover abstracts the complexity away from your application code. You get multi-provider savings without multi-provider headaches.
+
+## The $690 billion backdrop
+
+This pricing war is happening against a staggering backdrop of AI infrastructure spending. Amazon, Alphabet, Microsoft, Meta, and Oracle are on track to spend over $600 billion on capex in 2026, the majority of it on AI infrastructure. Gartner projects worldwide AI spending at $2.5 trillion for the year.
+
+That spending creates pressure in both directions. Providers need to monetize their massive investments, which keeps frontier pricing high. At the same time, competitors like DeepSeek can undercut on price because their infrastructure costs are lower and they are willing to subsidize usage for market share.
+
+For buyers, this means the pricing spread will likely widen further before it narrows. New models from Chinese labs, European open-source projects, and specialized providers will continue to offer frontier-adjacent capabilities at a fraction of US frontier pricing.
+
+Routing becomes more valuable as the spread widens. A 3x price gap makes routing worth considering. A 7x gap makes it obvious. A 29x gap (DeepSeek V4-Pro volume pricing vs. Opus 4.7 output) makes it negligent not to route.
+
+## Practical next steps
+
+**If you are spending $1,000+ per month on LLM inference:**
+
+1. Audit your prompt complexity distribution. What percentage of your requests are classifications, summaries, simple Q&A, or formatting? If it is above 50%, routing will cut your bill substantially.
+
+2. Benchmark DeepSeek V4 on your actual workload. Run your last 1,000 production prompts through V4 and compare outputs to your current model. Track quality on a per-category basis, not in aggregate.
+
+3. Set up per-request routing. A classifier evaluates each prompt and sends it to the cheapest model that can handle it. Simple requests go to Haiku or DeepSeek V4. Complex requests stay on Opus 4.7. Everything in between goes to Sonnet.
+
+4. Monitor with per-request cost headers. After routing, every request should tell you what it cost and what it saved. Without observability, you are guessing.
+
+## Where Nadir fits
+
+Nadir's trained classifier evaluates each prompt in under 10 ms and routes to the cheapest model that can handle it. When the cheapest capable model is DeepSeek V4 instead of Sonnet, the savings per request jump from 2 to 3x to 7x on output tokens.
+
+The integration is two lines. Change the base URL, set \`model="auto"\`. Nadir handles provider normalization, tokenizer differences, and failover. The \`x-nadir-cost-saved\` response header on every request shows the difference.
+
+The wider the price gap between models, the more routing saves. DeepSeek V4 just made that gap the widest it has ever been.
+
+---
+
+*Sources: [VentureBeat, "DeepSeek V4 arrives with near state-of-the-art intelligence at 1/6th the cost of Opus 4.7"](https://venturebeat.com/technology/deepseek-v4-arrives-with-near-state-of-the-art-intelligence-at-1-6th-the-cost-of-opus-4-7-gpt-5-5) (May 2026). [MindStudio, "DeepSeek V4 vs GPT-5.5 vs Claude Opus 4.7 Pricing Comparison"](https://www.mindstudio.ai/blog/deepseek-v4-vs-gpt-55-vs-claude-opus-47-pricing) (May 2026). [DataCamp, "Claude Opus 4.7 vs DeepSeek V4"](https://www.datacamp.com/blog/deepseek-v4-vs-claude-opus-4-7) (May 2026). [Futurum, "AI Capex 2026: The $690B Infrastructure Sprint"](https://futurumgroup.com/insights/ai-capex-2026-the-690b-infrastructure-sprint/) (2026). [Gartner, "Worldwide AI Spending Will Total $2.5 Trillion in 2026"](https://www.gartner.com/en/newsroom/press-releases/2026-1-15-gartner-says-worldwide-ai-spending-will-total-2-point-5-trillion-dollars-in-2026) (January 2026). Anthropic, OpenAI, DeepSeek model pricing as of May 2026.*`,
+
   "github-ai-agent-token-waste": `## GitHub runs AI agents at scale. The waste surprised them.
 
 GitHub Agentic Workflows launched in technical preview in February 2026. Within weeks, the system was processing millions of tokens per day across code review, CI/CD automation, and Copilot-powered development tasks. By mid-February, daily consumption peaked at 237.8 million tokens.
