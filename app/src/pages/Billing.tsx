@@ -28,13 +28,38 @@ import { Link, useSearchParams } from "react-router-dom";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
-function calculateFee(totalSavings: number, isActive: boolean) {
+// Markup applied to raw AWS Bedrock cost for Hosted-mode requests. Must
+// stay in sync with HOSTED_COST_MARKUP in
+// backend/app/services/savings_billing_service.py.
+const HOSTED_COST_MARKUP = 0.20;
+
+function calculateFee(
+  totalSavings: number,
+  isActive: boolean,
+  hostedCost = 0
+) {
   // Free plan owes nothing. The $9 base only applies once subscribed.
   const base = isActive ? 9 : 0;
   const first2k = isActive ? Math.min(totalSavings, 2000) * 0.25 : 0;
   const above2k = isActive ? Math.max(totalSavings - 2000, 0) * 0.10 : 0;
   const variable = first2k + above2k;
-  return { base, first2k, above2k, variable, total: base + variable };
+  // Hosted Bedrock pass-through: user pays the raw AWS cost we incurred
+  // PLUS a 20% markup. Both are billed via a separate Stripe InvoiceItem
+  // on their next subscription invoice (handled by invoice_scheduler.py).
+  // Zero for BYOK-only users.
+  const hostedRawCost = isActive ? hostedCost : 0;
+  const hostedMarkup = isActive ? hostedCost * HOSTED_COST_MARKUP : 0;
+  const hostedTotal = hostedRawCost + hostedMarkup;
+  return {
+    base,
+    first2k,
+    above2k,
+    variable,
+    hostedRawCost,
+    hostedMarkup,
+    hostedTotal,
+    total: base + variable + hostedTotal,
+  };
 }
 
 // ── Supabase-direct savings summary (no API key required) ───────────────
@@ -42,6 +67,10 @@ function calculateFee(totalSavings: number, isActive: boolean) {
 async function fetchCurrentMonthSavings(): Promise<{
   total_savings_usd: number;
   total_spent_usd: number;
+  // Sum of routed_cost_usd for Hosted-mode requests only — the AWS Bedrock
+  // cost Nadir paid that the user will be billed for (cost + 20% markup) on
+  // their next invoice. Zero for BYOK-only users.
+  hosted_cost_usd: number;
   requests_routed: number;
 } | null> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -53,7 +82,7 @@ async function fetchCurrentMonthSavings(): Promise<{
 
   const { data } = await supabase
     .from("savings_tracking")
-    .select("routed_cost_usd, savings_usd")
+    .select("routed_cost_usd, savings_usd, key_mode")
     .eq("user_id", user.id)
     .gte("created_at", monthStart.toISOString())
     .lt("created_at", monthEnd.toISOString());
@@ -62,6 +91,13 @@ async function fetchCurrentMonthSavings(): Promise<{
   return {
     total_savings_usd: rows.reduce((s, r: any) => s + Number(r.savings_usd || 0), 0),
     total_spent_usd: rows.reduce((s, r: any) => s + Number(r.routed_cost_usd || 0), 0),
+    hosted_cost_usd: rows.reduce(
+      (s, r: any) =>
+        (r.key_mode ?? "").toLowerCase() === "hosted"
+          ? s + Number(r.routed_cost_usd || 0)
+          : s,
+      0
+    ),
     requests_routed: rows.length,
   };
 }
@@ -352,10 +388,12 @@ const Billing = () => {
   const invoices = invoicesData ?? [];
   const currentSavings = savingsSummary?.total_savings_usd ?? 0;
   const currentSpent = savingsSummary?.total_spent_usd ?? 0;
+  const currentHostedCost = savingsSummary?.hosted_cost_usd ?? 0;
   const isActive = subscription?.status === "active";
-  const fee = calculateFee(currentSavings, isActive);
-  // Net savings excludes the flat base fee (billed separately as a subscription).
-  const netSavings = currentSavings - fee.variable;
+  const fee = calculateFee(currentSavings, isActive, currentHostedCost);
+  // Net savings excludes the flat base fee AND the Hosted pass-through line
+  // (both billed separately on the Stripe subscription invoice).
+  const netSavings = currentSavings - fee.variable - fee.hostedTotal;
   const isCanceling = subscription?.cancel_at_period_end === true;
 
   const handleSubscribe = async (overridePromo?: string) => {
@@ -541,7 +579,7 @@ const Billing = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid sm:grid-cols-4 gap-4 text-center mb-6">
+          <div className="grid sm:grid-cols-5 gap-4 text-center mb-6">
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">Base fee</div>
               <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.base)}</div>
@@ -555,6 +593,13 @@ const Billing = () => {
               <div className="text-xs text-muted-foreground">10% above $2K saved</div>
               <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.above2k)}</div>
             </div>
+            <div className="p-3 bg-muted rounded-lg" title="AWS Bedrock cost on Hosted-mode requests + 20% markup. Zero if you use your own provider keys (BYOK).">
+              <div className="text-xs text-muted-foreground">Hosted Bedrock usage</div>
+              <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.hostedTotal)}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                ${formatUSD(fee.hostedRawCost)} cost + ${formatUSD(fee.hostedMarkup)} markup
+              </div>
+            </div>
             <div
               className="p-3 rounded-lg border"
               style={{
@@ -564,7 +609,7 @@ const Billing = () => {
             >
               <div className="text-xs text-[hsl(var(--brand-blue-strong))]">Total due</div>
               <div className="mono text-lg font-bold text-[hsl(var(--brand-blue-strong))]">${formatUSD(fee.total)}</div>
-              <div className="text-[10px] text-[hsl(var(--brand-blue-strong))]/80 mt-0.5">base + variable</div>
+              <div className="text-[10px] text-[hsl(var(--brand-blue-strong))]/80 mt-0.5">base + variable + Hosted</div>
             </div>
           </div>
 
@@ -577,11 +622,16 @@ const Billing = () => {
           >
             <div>
               <p className="text-sm font-medium text-[hsl(var(--ok-strong))]">
-                You saved <span className="mono">${formatUSD(currentSavings)}</span> vs always-complex, spent <span className="mono">${formatUSD(currentSpent)}</span>
+                You saved <span className="mono">${formatUSD(currentSavings)}</span> vs always-complex on <span className="mono">${formatUSD(currentSpent)}</span> of routed spend
+                {isActive && fee.hostedRawCost > 0 && (
+                  <>
+                    {" "}(incl. <span className="mono">${formatUSD(fee.hostedRawCost)}</span> on our Hosted Bedrock key, billed back to you + 20% markup)
+                  </>
+                )}
               </p>
               <p className="text-xs text-[hsl(var(--ok))]">
-                Net after <span className="mono">${formatUSD(fee.variable)}</span> variable fee: <b className="mono">${formatUSD(netSavings)}</b>
-                {isActive && <span className="opacity-75"> (the $9 base is billed separately)</span>}
+                Net after <span className="mono">${formatUSD(fee.variable + fee.hostedTotal)}</span> in fees: <b className="mono">${formatUSD(netSavings)}</b>
+                {isActive && <span className="opacity-75"> (the $9 base is billed separately on your subscription)</span>}
                 {!isActive && <span className="opacity-75"> (Free plan, no fees)</span>}
               </p>
             </div>
