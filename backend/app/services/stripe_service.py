@@ -320,11 +320,18 @@ class StripeService:
             )
             return None
 
+        # discountable=False so any subscription-level coupon (e.g. our
+        # `free-first-month` 100% off) can NEVER discount Hosted Bedrock
+        # pass-through or savings-fee usage items. The coupon must only ever
+        # apply to the $9 base subscription line. Safe default; coupons that
+        # legitimately should cover usage can be reverted on a case-by-case
+        # basis.
         item = stripe.InvoiceItem.create(
             customer=customer_id,
             amount=amount_cents,
             currency="usd",
             description=description,
+            discountable=False,
         )
 
         logger.info(

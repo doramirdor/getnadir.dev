@@ -225,7 +225,7 @@ from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
 from app.processors.request_processor import get_processed_request
 from app.middleware.rate_limiter import check_rate_limit
 from app.middleware.subscription_guard import require_active_subscription
-from app.middleware.hosted_budget import check_hosted_budget, record_hosted_spend
+from app.middleware.hosted_budget import enforce_hosted_budget_or_402, record_hosted_spend
 from app.services.preset_router_service import PresetRouterService
 
 from app.complexity.model_registry import extract_provider as _provider_of
@@ -762,24 +762,12 @@ async def create_completion(
         layer_fallback = layers.get("fallback", True)
         layer_optimize = layers.get("optimize", "off")
 
-        # HOSTED MODE: Check per-user spend budget before making LLM call
-        if current_user.key_mode == "hosted":
-            custom_budget = (current_user.raw_data.get("hosted_budget_usd") or
-                             (current_user.api_key_config or {}).get("hosted_budget_usd"))
-            allowed, spent, budget = await check_hosted_budget(
-                current_user.id, current_user.subscription_plan, custom_budget
-            )
-            if not allowed:
-                raise HTTPException(
-                    status_code=402,
-                    detail={
-                        "error": "hosted_budget_exceeded",
-                        "message": f"Daily hosted budget of ${budget:.0f} exceeded (spent today: ${spent:.2f}). Add your own provider keys (BYOK) for unlimited usage, or contact support to increase your limit.",
-                        "spent": spent,
-                        "budget": budget,
-                        "upgrade_url": "https://getnadir.com/pricing",
-                    },
-                )
+        # HOSTED MODE: Check per-user spend budget before making LLM call.
+        # Use the shared wrapper so trial users (<30d since signup) get the
+        # tightened $5/day cap instead of the $50/day default — matches the
+        # legacy /v1/chat/completions path. The wrapper raises HTTP 402 with
+        # a structured body, identical to what this block used to do.
+        await enforce_hosted_budget_or_402(current_user)
 
         # P0 #4: Read sticky provider for cache-hit affinity. Fetched unconditionally
         # when a preset slug exists so auto-injection can decide to mark repeat prompts
@@ -853,6 +841,41 @@ async def create_completion(
                 complexity_analysis_result["tier_mapped_from"] = tier_name
 
             complexity_analysis_result["tier"] = tier_name
+
+            # LAYER: Verifier-gated cascade (IP-1).
+            # Zero-overhead noop when cascade.enabled is False (the default)
+            # or when the verifier has no weights loaded. See
+            # competitor-profiles/blueprints/ip-1-verifier-gated-cascade.md
+            # Section 3 for the orchestration contract.
+            cascade_cfg = user_config.get("model_parameters", {}).get("cascade", {})
+            if cascade_cfg.get("enabled", False):
+                try:
+                    from app.services.cascade_router import CascadeRouter
+                    from app.services.verifier_model import _shared_verifier
+                    cascade_messages = [
+                        {"role": m.role, "content": m.content}
+                        for m in request.messages
+                    ]
+                    cascade_router = CascadeRouter(
+                        cascade_cfg, verifier=_shared_verifier
+                    )
+                    cascade_result = await cascade_router.dispatch_with_verifier(
+                        messages=cascade_messages,
+                        cheap_model=recommended_model,
+                        tier_name=tier_name,
+                        user_session=current_user,
+                        request_id=request_id,
+                    )
+                    if cascade_result.escalated:
+                        recommended_model = cascade_result.final_model
+                    complexity_analysis_result["cascade"] = cascade_result.meta
+                except Exception as cascade_err:  # noqa: BLE001
+                    # Cascade must never break the request path; log and continue.
+                    logger.warning("Cascade dispatch failed: %s", cascade_err)
+                    complexity_analysis_result["cascade"] = {
+                        "cascade_skipped": "error",
+                        "error": str(cascade_err),
+                    }
         else:
             # Routing disabled — use first selected model or request model directly
             selected = user_config.get("selected_models", [])
