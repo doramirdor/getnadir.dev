@@ -1,3 +1,5 @@
+import { SignupDialog } from "@/components/marketing/SignupDialog";
+
 type Bucket = "speed" | "reliability" | "visibility";
 
 const BUCKET_LABEL: Record<Bucket, string> = {
@@ -74,13 +76,13 @@ export const FeaturesGrid = () => {
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
           <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
-            What's actually in the box
+            Why teams switch
           </p>
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
-            Six things the other gateways don't ship.
+            Six features that show up on your bill.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            Routing, caching, failover, observability. One binary. One base URL.
+            Smart routing, semantic cache, automatic failover, full observability. Two-line install. First month is on us.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-5 md:gap-6">
@@ -135,6 +137,20 @@ export const FeaturesGrid = () => {
               </div>
             );
           })}
+        </div>
+
+        <div className="mt-14 md:mt-16 flex flex-col items-center text-center">
+          <SignupDialog ctaLabel="start_free" ctaLocation="features_grid">
+            <button
+              type="button"
+              className="inline-flex items-center px-7 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
+            >
+              Start free, bring your own keys
+            </button>
+          </SignupDialog>
+          <p className="mt-3 text-[13px] text-[#6e6e73] tracking-[-0.005em]">
+            No card to start. Cancel anytime. $9/mo flat after the free first month.
+          </p>
         </div>
       </div>
     </section>
