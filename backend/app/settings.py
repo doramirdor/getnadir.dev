@@ -143,6 +143,11 @@ class Settings:
         self.STRIPE_WEBHOOK_SECRET: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")
         self.STRIPE_PRICE_ID_BASE: Optional[str] = os.getenv("STRIPE_PRICE_ID_BASE")  # $9/mo base plan
 
+    # Resend transactional email (getnadir.com sender domain only — never reuse
+    # API keys or from-addresses from other projects like commareports.com).
+        self.RESEND_API_KEY: Optional[str] = os.getenv("RESEND_API_KEY")
+        self.RESEND_FROM_EMAIL: str = os.getenv("RESEND_FROM_EMAIL", "Nadir <noreply@getnadir.com>")
+
     # PostHog (server-side capture for events the client can't see, e.g.
     # Stripe Checkout abandonment — Stripe's hosted page is off-domain so
     # the PostHog snippet never fires there).

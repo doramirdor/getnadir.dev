@@ -29,10 +29,11 @@ const Layout = () => {
     return () => clearTimeout(timer);
   }, [loading]);
 
-  // Redirect new users (no API keys) to onboarding
+  // Redirect new users (no API keys) to onboarding, unless they've chosen to skip.
   useEffect(() => {
     if (!user) return;
     if (location.pathname === "/dashboard/onboarding") return;
+    if (localStorage.getItem(`nadir_onboarding_skipped:${user.id}`) === "1") return;
 
     const checkOnboarding = async () => {
       const { count } = await supabase

@@ -15,12 +15,15 @@ import {
   CircleCheck,
   Sparkles,
   Gift,
+  Mail,
+  Monitor,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useApiKey } from "@/hooks/useApiKey";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { trackOnboardingStep, trackOnboardingComplete, trackApiKeyCreated } from "@/utils/analytics";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 
@@ -60,6 +63,7 @@ const Onboarding = () => {
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
@@ -205,6 +209,63 @@ const Onboarding = () => {
   const handleFinish = () => {
     trackOnboardingComplete(mode);
     setShowCelebration(true);
+  };
+
+  const handleSkip = () => {
+    if (user) {
+      localStorage.setItem(`nadir_onboarding_skipped:${user.id}`, "1");
+    }
+    navigate("/dashboard");
+    toast({
+      title: "Onboarding skipped",
+      description: "You can configure your API key anytime from the API Keys page.",
+    });
+  };
+
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const handleEmailContinueLink = async () => {
+    if (!user?.email) {
+      toast({
+        variant: "destructive",
+        title: "No email on file",
+        description: "We couldn't find an email on your account.",
+      });
+      return;
+    }
+    setEmailSending(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const continueUrl = `${window.location.origin}/dashboard/onboarding?step=${currentStep}`;
+      const res = await fetch(`${API_BASE}/v1/email/onboarding-continue-link`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ continue_url: continueUrl }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to send email");
+      }
+      setEmailSent(true);
+      toast({
+        title: "Email sent",
+        description: `We sent a continue link to ${user.email}. Open it on your computer.`,
+      });
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "Couldn't send email",
+        description: e.message || "Please try again later.",
+      });
+    } finally {
+      setEmailSending(false);
+    }
   };
 
   useEffect(() => {
@@ -504,6 +565,46 @@ console.log(response.choices[0].message.content);`;
             Continue <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         )}
+      </div>
+
+      {isMobile && (
+        <div className="p-4 bg-muted/40 border border-border rounded-xl space-y-2">
+          <div className="flex items-center gap-2">
+            <Monitor className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">
+              Finish on your computer?
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Setting up routing and API keys is easier on a larger screen. We'll
+            email a link to {user?.email ?? "your account"} so you can pick up
+            right where you left off.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleEmailContinueLink}
+            disabled={emailSending || emailSent}
+          >
+            {emailSending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+            ) : emailSent ? (
+              <><CircleCheck className="w-4 h-4 mr-2 text-primary" /> Sent — check your inbox</>
+            ) : (
+              <><Mail className="w-4 h-4 mr-2" /> Email me a link to continue on desktop</>
+            )}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex justify-center">
+        <button
+          onClick={handleSkip}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+        >
+          Skip onboarding for now
+        </button>
       </div>
     </div>
   );

@@ -40,6 +40,7 @@ from app.api.support_api import router as support_router
 from app.api.provider_keys import router as provider_keys_router
 from app.api.account_api import router as account_router
 from app.api.referrals_api import router as referrals_router
+from app.api.email_api import router as email_router
 
 
 # Create FastAPI application
@@ -315,6 +316,7 @@ app.include_router(support_router)                        # Support tickets API
 app.include_router(provider_keys_router)                    # Provider key management (encrypted)
 app.include_router(account_router)                           # Account management (GDPR/CCPA deletion)
 app.include_router(referrals_router)                          # Referral program
+app.include_router(email_router)                               # Transactional email (Resend)
 
 
 # Root endpoint
