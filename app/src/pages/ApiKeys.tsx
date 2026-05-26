@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Copy, Trash2, Key, Settings2 } from "lucide-react";
+import { Plus, Copy, Trash2, Key, Settings2, Eye, EyeOff } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -43,8 +49,19 @@ const ApiKeys = () => {
   const [showOnceKey, setShowOnceKey] = useState<string | null>(null);
   const [configKeyId, setConfigKeyId] = useState<string | null>(null);
   const [configEditData, setConfigEditData] = useState<any>(null);
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({});
+  const [sessionKeys, setSessionKeys] = useState<Record<string, string>>({});
   const { toast } = useToast();
-  const { setApiKey: setSessionApiKey } = useApiKey();
+  const { apiKey: sessionApiKey, setApiKey: setSessionApiKey } = useApiKey();
+
+  useEffect(() => {
+    if (sessionApiKey && sessionApiKey.length >= 8) {
+      const prefix = sessionApiKey.substring(0, 8);
+      setSessionKeys((prev) =>
+        prev[prefix] === sessionApiKey ? prev : { ...prev, [prefix]: sessionApiKey },
+      );
+    }
+  }, [sessionApiKey]);
 
   useEffect(() => {
     trackPageView("api_keys");
@@ -215,6 +232,13 @@ const ApiKeys = () => {
     });
   };
 
+  const getFullKey = (prefix: string): string | null => sessionKeys[prefix] ?? null;
+
+  const toggleReveal = (keyId: string) => {
+    setRevealedKeys((prev) => ({ ...prev, [keyId]: !prev[keyId] }));
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -314,18 +338,81 @@ const ApiKeys = () => {
                       </div>
 
                       <div className="flex items-center gap-2 mb-3">
-                        <code className="mono bg-muted px-3 py-1.5 rounded-lg text-[12px] text-muted-foreground flex-1 min-w-0 truncate">
-                          {apiKey.prefix}…••••••••
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(apiKey.prefix)}
-                          className="hover:bg-muted"
-                          aria-label="Copy key prefix"
-                        >
-                          <Copy className="w-4 h-4" strokeWidth={1.5} />
-                        </Button>
+                        {(() => {
+                          const fullKey = getFullKey(apiKey.prefix);
+                          const isRevealed = !!revealedKeys[apiKey.id];
+                          const canReveal = !!fullKey;
+                          const displayValue =
+                            isRevealed && fullKey
+                              ? fullKey
+                              : `${apiKey.prefix}…••••••••`;
+                          return (
+                            <>
+                              <code className="mono bg-muted px-3 py-1.5 rounded-lg text-[12px] text-muted-foreground flex-1 min-w-0 truncate">
+                                {displayValue}
+                              </code>
+                              {canReveal && (
+                                <>
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => toggleReveal(apiKey.id)}
+                                          className="hover:bg-muted"
+                                          aria-label={
+                                            isRevealed ? "Hide key" : "Show key"
+                                          }
+                                        >
+                                          {isRevealed ? (
+                                            <EyeOff
+                                              className="w-4 h-4"
+                                              strokeWidth={1.5}
+                                            />
+                                          ) : (
+                                            <Eye
+                                              className="w-4 h-4"
+                                              strokeWidth={1.5}
+                                            />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">
+                                        {isRevealed
+                                          ? "Hide full key"
+                                          : "Reveal full key"}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            copyToClipboard(fullKey)
+                                          }
+                                          className="hover:bg-muted"
+                                          aria-label="Copy full key"
+                                        >
+                                          <Copy
+                                            className="w-4 h-4"
+                                            strokeWidth={1.5}
+                                          />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top">
+                                        Copy full key
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
 
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
@@ -335,14 +422,14 @@ const ApiKeys = () => {
                             {new Date(apiKey.created_at).toLocaleDateString()}
                           </span>
                         </span>
-                        {apiKey.last_used_at && (
-                          <span>
-                            Last used{" "}
-                            <span className="mono">
-                              {new Date(apiKey.last_used_at).toLocaleDateString()}
-                            </span>
+                        <span>
+                          Last used{" "}
+                          <span className="mono">
+                            {apiKey.last_used_at
+                              ? new Date(apiKey.last_used_at).toLocaleDateString()
+                              : "Never"}
                           </span>
-                        )}
+                        </span>
                         {apiKey.selected_models && apiKey.selected_models.length > 0 && (
                           <span>
                             <span className="mono">{apiKey.selected_models.length}</span>{" "}
