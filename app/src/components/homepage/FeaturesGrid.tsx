@@ -17,44 +17,54 @@ type Item = {
   title: string;
   desc: string;
   icon: React.ReactNode;
+  span: 2 | 4;
 };
 
+// Bento order: row 1 = wide+narrow, row 2 = three narrow, row 3 = narrow+wide.
+// Two hero cells (span 4) anchor the top-left and bottom-right; the four narrow
+// cells (span 2) sit between them. 6 items, 6 cells, no empty slots.
 const ITEMS: Item[] = [
   {
     bucket: "speed",
     title: "Routing in under 10 ms.",
     desc: "A trained classifier scores each prompt and picks the cheapest model that can answer it. Faster than your DNS lookup.",
     icon: <BoltIcon />,
+    span: 4,
   },
   {
     bucket: "speed",
     title: "Semantic cache, on by default.",
-    desc: "Identical and near-identical prompts return from cache. The cheapest token is the one you never send.",
+    desc: "Identical prompts return from cache. The cheapest token is the one you never send.",
     icon: <CacheIcon />,
+    span: 2,
   },
   {
     bucket: "reliability",
     title: "Failover without paging.",
-    desc: "A provider goes down. Nadir retries against your chain. Your app stays up. Your on-call sleeps.",
+    desc: "A provider goes down. Nadir retries against your chain. Your app stays up.",
     icon: <ShieldIcon />,
+    span: 2,
   },
   {
     bucket: "reliability",
     title: "Your keys stay yours.",
-    desc: "Bring your own provider keys. We proxy in memory and never log prompts unless you turn logging on.",
+    desc: "Bring your own provider keys. We proxy in memory and never log prompts unless you opt in.",
     icon: <LockIcon />,
-  },
-  {
-    bucket: "visibility",
-    title: "Every request, visible.",
-    desc: "Per-request cost, latency percentiles, token counts, routing decisions. Out of the box. No instrumentation.",
-    icon: <EyeIcon />,
+    span: 2,
   },
   {
     bucket: "visibility",
     title: "A/B test in production.",
-    desc: "Route a slice of traffic to a new model. Compare cost, latency, quality side by side. Roll out when you're convinced.",
+    desc: "Route a slice of traffic to a new model. Compare cost, latency, quality side by side.",
     icon: <BeakerIcon />,
+    span: 2,
+  },
+  {
+    bucket: "visibility",
+    title: "Every request, visible.",
+    desc: "Per-request cost, latency percentiles, token counts, routing decisions. Out of the box, no instrumentation.",
+    icon: <EyeIcon />,
+    span: 4,
   },
 ];
 
@@ -73,39 +83,58 @@ export const FeaturesGrid = () => {
             Routing, caching, failover, observability. One binary. One base URL.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
-          {ITEMS.map((it) => (
-            <div
-              key={it.title}
-              className="bg-white border border-black/[0.06] rounded-[16px] p-7 md:p-8 hover:border-black/[0.14] hover:-translate-y-px transition-all duration-200"
-            >
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-5 md:gap-6">
+          {ITEMS.map((it) => {
+            const isHero = it.span === 4;
+            return (
               <div
-                className="inline-flex items-center justify-center w-10 h-10 rounded-[10px] mb-5"
-                style={{
-                  background: it.bucket === "speed"
-                    ? "rgba(48,209,88,0.10)"
-                    : it.bucket === "reliability"
-                    ? "rgba(0,113,227,0.08)"
-                    : "rgba(29,29,31,0.06)",
-                  color: BUCKET_COLOR[it.bucket],
-                }}
+                key={it.title}
+                className={`bg-white border border-black/[0.06] rounded-[16px] p-7 md:p-8 [@media(hover:hover)_and_(pointer:fine)]:hover:border-black/[0.14] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-px transition-[transform,border-color] duration-200 ease-emil-out ${
+                  isHero ? "md:col-span-4 md:p-10" : "md:col-span-2"
+                }`}
               >
-                {it.icon}
+                <div
+                  className={`inline-flex items-center justify-center rounded-[10px] mb-5 ${
+                    isHero ? "w-11 h-11" : "w-10 h-10"
+                  }`}
+                  style={{
+                    background: it.bucket === "speed"
+                      ? "rgba(48,209,88,0.10)"
+                      : it.bucket === "reliability"
+                      ? "rgba(0,113,227,0.08)"
+                      : "rgba(29,29,31,0.06)",
+                    color: BUCKET_COLOR[it.bucket],
+                  }}
+                >
+                  {it.icon}
+                </div>
+                <p
+                  className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2"
+                  style={{ color: BUCKET_COLOR[it.bucket] }}
+                >
+                  {BUCKET_LABEL[it.bucket]}
+                </p>
+                <h3
+                  className={`font-semibold tracking-[-0.018em] m-0 mb-2.5 text-[#1d1d1f] leading-[1.2] ${
+                    isHero
+                      ? "text-[22px] md:text-[26px]"
+                      : "text-[18px] md:text-[20px]"
+                  }`}
+                >
+                  {it.title}
+                </h3>
+                <p
+                  className={`text-[#424245] leading-[1.55] m-0 tracking-[-0.005em] ${
+                    isHero
+                      ? "text-[15px] md:text-[17px] max-w-[52ch]"
+                      : "text-[14px] md:text-[15px]"
+                  }`}
+                >
+                  {it.desc}
+                </p>
               </div>
-              <p
-                className="text-[11px] font-semibold uppercase tracking-[0.1em] mb-2"
-                style={{ color: BUCKET_COLOR[it.bucket] }}
-              >
-                {BUCKET_LABEL[it.bucket]}
-              </p>
-              <h3 className="text-[18px] md:text-[20px] font-semibold tracking-[-0.016em] m-0 mb-2.5 text-[#1d1d1f] leading-[1.25]">
-                {it.title}
-              </h3>
-              <p className="text-[14px] md:text-[15px] text-[#424245] leading-[1.55] m-0 tracking-[-0.005em]">
-                {it.desc}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

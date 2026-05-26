@@ -26,7 +26,7 @@ export const CalculatorTeaser = () => {
       <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
         <div className="text-center mb-10 md:mb-14">
           <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
-            Estimate your savings · No signup
+            Estimate your savings. No signup
           </p>
           <h2 className="text-[36px] sm:text-[48px] md:text-[60px] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f] mb-5">
             See what Nadir would save you,
@@ -64,7 +64,7 @@ export const CalculatorTeaser = () => {
             <SignupDialog ctaLabel="claim_savings" ctaLocation="homepage_calculator">
               <button
                 type="button"
-                className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#333] transition-colors tracking-[-0.01em]"
+                className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#333] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em]"
               >
                 Claim these savings
               </button>
@@ -72,7 +72,7 @@ export const CalculatorTeaser = () => {
             <Link
               to={`/calculator?spend=${spend}`}
               onClick={() => trackCtaClick("see_full_math", "homepage_calculator")}
-              className="inline-flex items-center px-6 py-[14px] bg-white border border-black/[0.12] text-[#1d1d1f] rounded-full text-[15px] font-medium hover:bg-black/[0.03] transition-colors no-underline tracking-[-0.01em]"
+              className="inline-flex items-center px-6 py-[14px] bg-white border border-black/[0.12] text-[#1d1d1f] rounded-full text-[15px] font-medium hover:bg-black/[0.03] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out no-underline tracking-[-0.01em]"
             >
               See full math <span className="ml-1 text-[14px]">›</span>
             </Link>

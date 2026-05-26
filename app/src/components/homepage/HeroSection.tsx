@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
+import { IntegrationLogos } from "@/components/homepage/IntegrationLogos";
 import { trackCtaClick } from "@/utils/analytics";
 
 // Real Anthropic published rates (per million tokens, April 2026).
@@ -60,9 +61,9 @@ export const HeroSection = () => {
       ([e]) => {
         if (e.isIntersecting) {
           REQUESTS.forEach((_, i) => {
-            timers.push(setTimeout(() => setVisibleRows(i + 1), 400 + i * 420));
+            timers.push(setTimeout(() => setVisibleRows(i + 1), 200 + i * 60));
           });
-          timers.push(setTimeout(() => setShowStats(true), 400 + REQUESTS.length * 420 + 240));
+          timers.push(setTimeout(() => setShowStats(true), 200 + REQUESTS.length * 60 + 180));
           obs.disconnect();
         }
       },
@@ -85,12 +86,8 @@ export const HeroSection = () => {
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-10 lg:gap-14 items-center">
           {/* Copy column */}
           <div className="text-left max-w-[600px] lg:max-w-none">
-            <div className="inline-flex items-center gap-2 mb-6 text-[12px] font-semibold tracking-[0.06em] uppercase text-[#028a3e]">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-60 animate-ping" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#028a3e]" />
-              </span>
-              Live router · {savingsPct}% saved on this page
+            <div className="mb-6 text-[12px] font-semibold tracking-[0.06em] uppercase text-[#028a3e]">
+              Live router. {savingsPct}% saved on this page
             </div>
 
             <h1 className="text-[40px] sm:text-[56px] lg:text-[64px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f] [text-wrap:balance]">
@@ -109,19 +106,16 @@ export const HeroSection = () => {
               .
             </h1>
 
-            <p className="text-[17px] md:text-[19px] text-[#424245] mb-4 leading-[1.5] tracking-[-0.01em]">
+            <p className="text-[17px] md:text-[19px] text-[#424245] mb-9 leading-[1.5] tracking-[-0.01em]">
               Nadir reads every prompt and picks the cheapest Anthropic model that can answer it well.
               <span className="text-[#1d1d1f] font-medium"> Haiku for classifications. Sonnet for refactors. Opus only when it has to think.</span>
-            </p>
-            <p className="text-[15px] md:text-[16px] text-[#6e6e73] mb-9 leading-[1.55] tracking-[-0.005em]">
-              Classifier overhead under 10 ms per request. Zero quality drop on prompts that actually need Opus. See the savings stat below.
             </p>
 
             <div className="flex gap-4 items-center flex-wrap mb-5">
               <SignupDialog ctaLabel="start_saving" ctaLocation="hero">
                 <button
                   type="button"
-                  className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] transition-colors tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
+                  className="inline-flex items-center px-6 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
                 >
                   Start free, bring your own keys
                 </button>
@@ -157,16 +151,11 @@ export const HeroSection = () => {
             className="bg-white border border-black/[0.08] rounded-[18px] overflow-hidden text-left lg:mt-0"
             style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.04)" }}
           >
-            <div className="relative flex items-center px-5 py-3 border-b border-black/[0.06] bg-[#fbfbfd]">
-              <div className="flex gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-              </div>
-              <span className="absolute left-1/2 -translate-x-1/2 text-[12px] text-[#86868b] font-medium">
-                api.getnadir.com
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-black/[0.06] bg-white">
+              <span className="text-[12px] text-[#1d1d1f] font-semibold tracking-[-0.005em]">
+                Live routing decisions
               </span>
-              <span className="ml-auto inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#028a3e]">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#028a3e]">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-60 animate-ping" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#028a3e]" />
@@ -189,7 +178,7 @@ export const HeroSection = () => {
                 return (
                   <div
                     key={i}
-                    className="grid gap-2.5 items-center px-2 py-2.5 rounded-lg mb-0.5 text-[13px] transition-all duration-500"
+                    className="grid gap-2.5 items-center px-2 py-2.5 rounded-lg mb-0.5 text-[13px] transition-[opacity,transform,background-color] duration-300 ease-emil-out"
                     style={{
                       gridTemplateColumns: "70px 1fr auto auto",
                       background: visible && saved ? "rgba(48,209,88,0.06)" : "transparent",
@@ -230,7 +219,7 @@ export const HeroSection = () => {
               })}
 
               <div
-                className="mt-4 pt-4 border-t border-black/[0.06] flex items-center justify-between gap-3 flex-wrap transition-all duration-500"
+                className="mt-4 pt-4 border-t border-black/[0.06] flex items-center justify-between gap-3 flex-wrap transition-[opacity,transform] duration-300 ease-emil-out"
                 style={{
                   opacity: showStats ? 1 : 0,
                   transform: showStats ? "none" : "translateY(6px)",
@@ -259,13 +248,7 @@ export const HeroSection = () => {
           <p className="text-[12px] text-[#6e6e73] uppercase tracking-[0.12em] font-semibold mb-6 text-center">
             Drop-in replacement for the SDKs you already use
           </p>
-          <div className="flex justify-center items-center gap-x-10 gap-y-4 flex-wrap">
-            {["Claude Code", "Cursor", "Codex", "Aider", "Windsurf", "Continue", "LangChain", "OpenAI SDK"].map((item) => (
-              <span key={item} className="text-[15px] md:text-[16px] text-[#424245] font-medium tracking-[-0.012em]">
-                {item}
-              </span>
-            ))}
-          </div>
+          <IntegrationLogos />
         </div>
       </div>
     </section>
