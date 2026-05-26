@@ -3,6 +3,7 @@ import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/homepage/HeroSection";
 import { StatBand } from "@/components/homepage/StatBand";
+import { BenchmarkSection } from "@/components/homepage/BenchmarkSection";
 import { CalculatorTeaser } from "@/components/homepage/CalculatorTeaser";
 import { HowItWorks } from "@/components/homepage/HowItWorks";
 import { FeaturesGrid } from "@/components/homepage/FeaturesGrid";
@@ -25,9 +26,12 @@ const Homepage = () => {
       />
       <HeroSection />
       <StatBand />
+      {/* Benchmark evidence lands right after the headline numbers, before
+          any product narrative. The verifier-gated cascade thesis needs the
+          eval table to back it up while it is still in the visitor's head. */}
+      <BenchmarkSection />
       {/* Calculator teaser lives high in the scroll so the dollar-amount aha
-          moment happens before we ask the visitor to do anything. Replaces
-          the previous "you have to navigate to /calculator to see it" gap. */}
+          moment happens before we ask the visitor to do anything. */}
       <CalculatorTeaser />
       <HowItWorks />
       <FeaturesGrid />

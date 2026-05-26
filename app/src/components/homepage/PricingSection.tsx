@@ -114,7 +114,7 @@ export const PricingSection = () => {
           {TIERS.map((tier) => {
             const highlighted = tier.highlighted;
             const ctaClass =
-              "flex items-center justify-center px-4 py-[13px] rounded-full text-[15px] font-medium no-underline tracking-[-0.01em] transition-colors";
+              "flex items-center justify-center px-4 py-[13px] rounded-full text-[15px] font-medium no-underline tracking-[-0.01em] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out";
             const ctaColors = highlighted
               ? "bg-white text-[#1d1d1f] hover:bg-white/90"
               : "bg-[#1d1d1f] text-white hover:bg-[#333]";

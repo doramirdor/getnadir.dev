@@ -7,9 +7,9 @@ type Stat = {
 };
 
 const STATS: Stat[] = [
-  { value: "47%", label: "Lower Anthropic bill on our 50-prompt eval set, with no quality drop on Opus prompts.", accent: true },
-  { value: "< 10 ms", label: "Classifier overhead per request. Faster than a DNS lookup." },
-  { value: "96%", label: "Routing accuracy on our 50-prompt benchmark. We retrain it weekly." },
+  { value: "47%", label: "Lower bill versus always-Opus, at a 2.5% catastrophic-route rate.", accent: true },
+  { value: "96%", label: "Accuracy on RouterBench held-out. Prompt-only routers top out at 62%." },
+  { value: "180 ms", label: "Verifier latency on CPU. INT8 quantized, ships today." },
   { value: "2 lines", label: "Code change to start routing. Same SDK, new base URL." },
 ];
 
@@ -18,7 +18,7 @@ export const StatBand = () => {
     <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         <p className="text-[12px] text-[#6e6e73] uppercase tracking-[0.12em] font-semibold text-center mb-10 md:mb-12">
-          Numbers from our 50-prompt eval, with the math shown
+          Numbers from RouterBench held-out, n=11,420
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
           {STATS.map((s, i) => (

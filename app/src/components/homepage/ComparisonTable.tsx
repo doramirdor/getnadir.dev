@@ -106,7 +106,7 @@ export const ComparisonTable = () => {
             </div>
             <Link
               to="/compare"
-              className="inline-flex items-center justify-center whitespace-nowrap h-11 px-6 rounded-full bg-[#0a0a0a] hover:bg-[#333] text-white text-[14px] font-medium tracking-[-0.005em] transition-all hover:-translate-y-px hover:shadow-lg"
+              className="inline-flex items-center justify-center whitespace-nowrap h-11 px-6 rounded-full bg-[#0a0a0a] hover:bg-[#333] text-white text-[14px] font-medium tracking-[-0.005em] active:scale-[0.97] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-px [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg transition-[background-color,transform,box-shadow] duration-200 ease-emil-out"
             >
               Read the deep dives &rarr;
             </Link>
