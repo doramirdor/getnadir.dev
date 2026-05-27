@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-05-27T12:55:20.662519+00:00",
+  "n_triples_input": 3313,
+  "n_triples_common": 3313,
+  "model_pair": {
+    "cheap": "gpt-3.5-turbo-1106",
+    "expensive": "gpt-4-1106-preview"
+  },
+  "pricing_usd_per_request": {
+    "gpt-3.5-turbo-1106": 1.5,
+    "gpt-4-1106-preview": 20.0
+  },
+  "cost_ratio_expensive_over_cheap": 13.333333333333334,
+  "nadir_threshold": 0.8,
+  "verifier_report": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/verifier/reports/eval_20260526T184516.json",
+  "verifier_decisions_csv": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/verifier/reports/head_to_head/nadir_decisions_20260527T124812.csv",
+  "notdiamond_decisions_csv": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/verifier/reports/head_to_head/notdiamond_decisions_20260527T124812.csv",
+  "routers": {
+    "nadir_verifier_cascade": {
+      "n": 3313,
+      "routing_accuracy": 0.920615756112285,
+      "catastrophic_rate": 0.01509206157561123,
+      "wasted_escalation_rate": 0.06429218231210383,
+      "quality_preservation": 0.9849079384243887,
+      "cheap_route_rate": 0.7044974343495322,
+      "avg_cost_per_request_usd": 6.966797464533656,
+      "cost_reduction_vs_always_expensive": 0.6516601267733172,
+      "threshold": 0.8,
+      "verifier_auroc_on_full_set": 0.9606620904655935,
+      "verifier_ece_on_full_set": 0.015549267354382968,
+      "note": "Verifier scores come from the existing held-out eval (eval_20260526T184516.json). Verifier is pair-agnostic by design (it scores cheap_answer correctness against the prompt). Decision rule: cheap if verifier_score >= tau, else expensive."
+    },
+    "notdiamond_0001": {
+      "n": 3313,
+      "routing_accuracy": 0.2704497434349532,
+      "catastrophic_rate": 0.011168125565952309,
+      "wasted_escalation_rate": 0.7183821309990944,
+      "quality_preservation": 0.9888318744340477,
+      "cheap_route_rate": 0.04648354965288258,
+      "avg_cost_per_request_usd": 19.140054331421673,
+      "cost_reduction_vs_always_expensive": 0.04299728342891629,
+      "model": "notdiamond/notdiamond-0001",
+      "model_card": "https://huggingface.co/notdiamond/notdiamond-0001",
+      "decision_rule": "logits.argmax() per ND README; label 0 -> gpt-3.5 (cheap), label 1 -> gpt-4 (expensive)",
+      "note": "BERT-based binary classifier. Apache 2.0. Loaded directly from HuggingFace. Quantization: float32, CPU. Prompt formatted exactly per ND model card."
+    },
+    "martian_paper_baseline": {
+      "n": null,
+      "routing_accuracy": null,
+      "catastrophic_rate": null,
+      "wasted_escalation_rate": null,
+      "quality_preservation": 0.95,
+      "cheap_route_rate": null,
+      "avg_cost_per_request_usd": null,
+      "cost_reduction_vs_always_expensive": 0.5,
+      "source": "Hu, Bornstein, Vora, Rajagopal, et al. 2024. 'RouterBench: A Benchmark for Multi-LLM Routing System.' arXiv:2403.12031. KNN router at 95% performance recovery on the GPT-3.5-turbo / GPT-4 pair (Table 3 / Fig 4). Note: paper uses model_performance recovery vs cost on a Pareto curve, not a binary cost-optimal-routing accuracy. Numbers are *the closest comparable point* on Martian's published curve, not a directly-run comparison.",
+      "methodology_notes": "Cited, not re-run. The paper's RouterBench evaluation differs from this comparison's filtering: Hu et al. evaluate across the full 11-model RouterBench surface, not the binary GPT-3.5 / GPT-4 pair we use here. The 50% / 95% point we cite is the closest pair-restricted Pareto point reported."
+    },
+    "always_cheap": {
+      "n": 3313,
+      "routing_accuracy": 0.7536975550860248,
+      "catastrophic_rate": 0.24630244491397524,
+      "wasted_escalation_rate": 0.0,
+      "quality_preservation": 0.7536975550860248,
+      "cheap_route_rate": 1.0,
+      "avg_cost_per_request_usd": 1.5,
+      "cost_reduction_vs_always_expensive": 0.925
+    },
+    "always_expensive": {
+      "n": 3313,
+      "routing_accuracy": 0.24630244491397524,
+      "catastrophic_rate": 0.0,
+      "wasted_escalation_rate": 0.7536975550860248,
+      "quality_preservation": 1.0,
+      "cheap_route_rate": 0.0,
+      "avg_cost_per_request_usd": 20.0,
+      "cost_reduction_vs_always_expensive": 0.0
+    }
+  },
+  "methodology_notes": [
+    "Same RouterBench held-out test split as eval_20260526T184516.json (sha256(sample_id) mod 10 == 9), filtered to the gpt-3.5-turbo-1106 / gpt-4-1106-preview pair so we can compare against notdiamond-0001's exact binary label space.",
+    "Per-triple labels come from RouterBench's published model_responses scores via the same derive_label rule used in routerbench_loader.py (label=1 if cheap_score >= 0.5; label=0 if cheap_score < 0.5 AND expensive_score > cheap_score; otherwise dropped at ingest).",
+    "Notdiamond-0001 is run on CPU float32 with the prompt template verbatim from its HuggingFace README. Decision = logits.argmax().",
+    "Nadir's verifier scores are re-used from the existing held-out eval (verifier/reports/eval_20260526T184516.json). The verifier is pair-agnostic: it scores a cheap_answer's correctness against the prompt, not which model produced it. No re-scoring needed.",
+    "Cost model: RouterBench / OpenAI public pricing for these models ($1/$2 per 1M tokens for gpt-3.5-turbo-1106; $10/$30 per 1M for gpt-4-1106-preview). Cost ratio = 13.33x.",
+    "Martian row is cited from Hu et al. 2024 (arXiv:2403.12031). The paper reports a Pareto curve, not a single binary accuracy. We cite the ~95% performance recovery / ~50% cost-saved point on the GPT-3.5/GPT-4 pair (Table 3, Figure 4). This is the closest comparable point, not a directly-run head-to-head.",
+    "Determinism: torch.manual_seed(0); model.eval(); no random sampling anywhere. Re-running this script on the same data and weights produces identical decisions.",
+    "Subset note: the comparison is restricted to the 3,313 RouterBench held-out triples that use the GPT-3.5/GPT-4 pair (out of 11,420 total). Nadir's headline 60%/98% numbers in the marketing copy are computed over the full 11,420 set across all 4 model pairs. The subset is the only fair comparison surface because notdiamond-0001 is a GPT-3.5-vs-GPT-4 binary classifier by training."
+  ]
+}
