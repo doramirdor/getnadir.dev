@@ -30,6 +30,8 @@ from app.api.health import router as health_router
 from app.api.user_profile import router as user_profile_router
 from app.api.playground import router as playground_router
 from app.api.production_completion import router as production_completion_router
+from app.api.anthropic_messages import router as anthropic_messages_router
+from app.api.route_only import router as route_only_router
 from app.api.organizations import router as organizations_router
 from app.api.metrics_endpoint import router as metrics_router
 from app.api.savings_api import router as savings_router
@@ -301,6 +303,8 @@ async def shutdown_event():
 
 # Include API routers
 app.include_router(production_completion_router)  # Production API endpoints
+app.include_router(anthropic_messages_router)     # Anthropic Messages-compatible /v1/messages
+app.include_router(route_only_router)             # /v1/route_only (RouterArena evaluation only)
 app.include_router(models_router)
 app.include_router(logs_router)
 app.include_router(health_router)
