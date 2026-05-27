@@ -1,0 +1,111 @@
+# RouterArena v4 cascade rule profile — v3 downgrades + R2-Router length budgets.
+#
+# Successor to `routerarena_v3.yaml`. v3 stays unchanged on the
+# routing axis (the two confidence-downgrade rules below are an exact
+# copy of v3). v4 layers a NEW action type — `set_max_tokens` — that
+# emits a per-prompt output budget keyed off prompt length, matching
+# the R2-Router playbook:
+#
+#   prompt len  <  500 chars  -> 256 output tokens
+#   prompt len  <  2000 chars -> 512 output tokens
+#   prompt len  >= 2000 chars -> 1024 output tokens
+#
+# The 500/2000-char thresholds are taken straight from
+# `cheapest_strategies.length_budget()` so v4 cascade is measured on
+# the same axis as nadir-cheapest-E.
+#
+# # Why max-of-budgets on conflict
+#
+# The engine merges multiple matching `set_max_tokens` rules by taking
+# the MAX. This is deliberate. A routing-side cap that silently picks
+# the tightest matching budget would compound truncation risk: any
+# rule writer who adds a 64-token "yes/no" rule would unintentionally
+# truncate every prompt the rule slightly mis-fires on. Less
+# restrictive wins is the safer default; if an operator wants strict
+# nesting they can use `applies_when` to gate.
+#
+# # Honest measurement note
+#
+# Length-budget routing creates an "optimistic upper bound" problem
+# in the RouterArena scoring: the scorer rewards a low-cost
+# submission as long as the accuracy field is filled in, but the
+# cached accuracy was measured on the FULL (un-truncated) cached
+# response. If our budget is shorter than the cached response, real
+# customers would see a truncated answer that may not pass the same
+# verifier. We report two numbers in V4_RESULTS.md:
+#
+#   - optimistic: scorer-as-is, comparable to nadir-cheapest-E.
+#   - conservative: rows where cached_out > budget are penalized
+#                   (accuracy=0) on the assumption the answer would
+#                   not have fit.
+#
+# Submit recommendation lives in V4_RESULTS.md.
+
+rules:
+  # ----- v3 downgrade rules (verbatim copies from routerarena_v3.yaml) -----
+
+  - name: medium_low_confidence_to_simple
+    priority: 100
+    match:
+      any_of:
+        - classifier_confidence_max: 0.77
+    applies_when:
+      tier_predicted_in: [medium]
+    action:
+      type: force_cheap
+      to_tier: simple
+    meta:
+      rationale: "Classifier confidence is uncalibrated below ~0.77 on RouterArena distribution; Haiku 4.5 matches Sonnet 4.6 accuracy in this band at 1/4 the cost. Tighter threshold than v2 (was 0.78) — keeps a few more medium routes whose Sonnet edge does pay off."
+      source: "decisions.csv confidence-band sweep; RESULTS.md"
+
+  - name: complex_downgrade_to_simple
+    priority: 80
+    match:
+      any_of:
+        - classifier_confidence_max: 1.01
+    applies_when:
+      tier_predicted_in: [complex]
+    action:
+      type: force_cheap
+      to_tier: simple
+    meta:
+      rationale: "Opus 4.6 vs Haiku 4.5 quality delta does not justify 12.5x cost under β=0.1 arena weighting."
+      source: "always-Haiku ceiling analysis; RESULTS.md"
+
+  # ----- v4 NEW: R2-Router-style length budgets -----
+
+  - name: short_prompt_short_output
+    priority: 50
+    match:
+      any_of:
+        - prompt_length_max: 500
+    action:
+      type: set_max_tokens
+      value: 256
+    meta:
+      rationale: "Short prompts (< 500 chars) rarely need long outputs. 256-token cap matches nadir-cheapest-E."
+      source: "R2-Router playbook; cheapest_strategies.length_budget"
+
+  - name: medium_prompt_medium_output
+    priority: 50
+    match:
+      any_of:
+        - prompt_length_min: 500
+    action:
+      type: set_max_tokens
+      value: 512
+    meta:
+      rationale: "Medium prompts (500-2000 chars) get a 512-token budget. The min/max overlap with the long rule below is intentional — the engine takes MAX of matching budgets, so prompts >=2000 chars end up at 1024."
+      source: "R2-Router playbook"
+
+  - name: long_prompt_full_output
+    priority: 50
+    match:
+      any_of:
+        - prompt_length_min: 2000
+    action:
+      type: set_max_tokens
+      value: 1024
+    meta:
+      rationale: "Long prompts (>= 2000 chars) keep a 1024-token budget to leave room for stepwise reasoning. Higher budget than the medium rule wins on overlap."
+      source: "R2-Router playbook"

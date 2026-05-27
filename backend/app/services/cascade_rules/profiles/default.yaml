@@ -1,0 +1,143 @@
+# Default cascade rule profile.
+#
+# This profile re-encodes the legacy DEFAULT_FORCE_ESCALATE_PATTERNS and
+# DEFAULT_DOMAIN_THRESHOLDS from `cascade_router.py` as data-driven rules.
+# It is the production profile loaded when no per-tenant override is set
+# and the `cascade_router.py` constants remain the source-of-truth fallback
+# for backward compatibility with existing tests.
+#
+# Patterns here target domains where the held-out RouterBench eval showed
+# the verifier's AUROC was too low to trust (code, summarization, math).
+# Source: verifier/reports/eval_20260526T184516.json
+#
+# To inspect or modify the active rules in production, edit this file and
+# wait up to 30s for the TTL-cached engine to pick up the change. Changes
+# are audit-logged via `cascade_meta.matched_rules` on every request.
+
+rules:
+  # ---------- force_escalate: untrusted verifier domains (code) ----------
+  - name: code_python_triple_backtick
+    priority: 100
+    match:
+      any_of:
+        - substring: "```python"
+    action:
+      type: force_escalate
+    meta:
+      rationale: "Verifier AUROC 0.65 on mbpp; force escalation rather than risk a bad cheap answer"
+      source: "verifier/reports/eval_20260526T184516.json"
+
+  - name: code_javascript_triple_backtick
+    priority: 100
+    match:
+      any_of:
+        - substring: "```javascript"
+    action:
+      type: force_escalate
+    meta:
+      rationale: "Code domain — verifier untrusted"
+
+  - name: code_typescript_triple_backtick
+    priority: 100
+    match:
+      any_of:
+        - substring: "```typescript"
+    action:
+      type: force_escalate
+    meta:
+      rationale: "Code domain — verifier untrusted"
+
+  - name: code_def_keyword
+    priority: 90
+    match:
+      any_of:
+        - substring: "def "
+    action:
+      type: force_escalate
+    meta:
+      rationale: "Python `def ` is a strong code signal; verifier unreliable on code"
+
+  - name: code_function_keyword
+    priority: 90
+    match:
+      any_of:
+        - substring: "function "
+    action:
+      type: force_escalate
+    meta:
+      rationale: "JS `function ` keyword; verifier unreliable on code"
+
+  # ---------- force_escalate: untrusted verifier domains (summarization) ----------
+  - name: summarize_the_following
+    priority: 80
+    match:
+      any_of:
+        - substring: "summarize the following"
+    action:
+      type: force_escalate
+    meta:
+      rationale: "consensus_summary AUROC 0.77; force escalation"
+
+  - name: summarize_this
+    priority: 80
+    match:
+      any_of:
+        - substring: "summarize this"
+    action:
+      type: force_escalate
+    meta:
+      rationale: "Summarization domain — verifier untrusted"
+
+  # ---------- set_threshold: raise the bar on borderline domains ----------
+  # These mirror DEFAULT_DOMAIN_THRESHOLDS so domain-specific verifier
+  # calibration carries over to the rule-driven path.
+  - name: threshold_code_python
+    priority: 50
+    match:
+      any_of:
+        - substring: "```python"
+    action:
+      type: set_threshold
+      threshold: 0.85
+    meta:
+      rationale: "Code AUROC 0.66 — stricter verifier bar"
+
+  - name: threshold_code_javascript
+    priority: 50
+    match:
+      any_of:
+        - substring: "```javascript"
+    action:
+      type: set_threshold
+      threshold: 0.85
+
+  - name: threshold_code_def
+    priority: 50
+    match:
+      any_of:
+        - substring: "def "
+    action:
+      type: set_threshold
+      threshold: 0.85
+
+  - name: threshold_summarize
+    priority: 40
+    match:
+      any_of:
+        - substring: "summarize"
+    action:
+      type: set_threshold
+      threshold: 0.80
+    meta:
+      rationale: "Summarization AUROC 0.78"
+
+  - name: threshold_math_solve_for
+    priority: 40
+    match:
+      any_of:
+        - substring: "solve for"
+    action:
+      type: set_threshold
+      threshold: 0.80
+    meta:
+      rationale: "Math AUROC 0.79"
