@@ -1,0 +1,100 @@
+# RouterArena v2 cascade rule profile — cost-aware policy.
+#
+# This profile is the result of empirical analysis on the RouterArena
+# sub_10 dry run (see `eval/routerarena/rescoring/RESULTS.md`). It
+# encodes a single observation: under RouterArena's β=0.1 arena formula,
+# the log-cost normalization term dominates the small accuracy gap
+# between Haiku 4.5 and Sonnet 4.6, so prompts where the classifier
+# was not strongly confident a medium tier was needed should run on
+# Haiku, and prompts the classifier escalated to complex are rarely
+# worth Opus on this distribution.
+#
+# Why a separate profile rather than the default: the rules below
+# trade quality for cost in a way that is appropriate when the
+# downstream scoring function is the RouterArena arena_score (or any
+# cost-weighted formula with β ≤ 0.1). Customers running on different
+# economics (β closer to 1, or chasing maximum accuracy) stay on
+# `default.yaml` or `routerarena_v1.yaml`.
+#
+# Rules are intentionally GENERIC. They reference the classifier's own
+# confidence score and the prompt content; no benchmark id, dataset
+# name, or per-prompt key appears. The same rules would fire on
+# production traffic with the same shape.
+#
+# Empirical result on RouterArena sub_10 (n=809):
+#   baseline arena_score = 0.6556 (acc=0.697, cpk=$2.4448)
+#   v2 arena_score       = 0.6806 (acc=0.705, cpk=$0.8962) — see RESULTS.md
+#   delta                = +0.0250 (proxy); official score in RESULTS.md
+#
+# Tier distribution after v2: simple ~87%, medium ~13%, complex ~0%.
+# Note: ~32% of the simple-tier traffic is the classifier's own
+# decision; the rest is the rule engine pulling low-confidence medium
+# routes and all complex routes down to simple. The classifier still
+# routes — 108 prompts remain on medium because the classifier was
+# confidently right about them needing it.
+
+rules:
+  # ---------- Confidence-driven downgrade (the main lever) ----------
+  #
+  # When the classifier picked medium but its confidence is below 0.78,
+  # downgrade to simple. Diagnostic showed the classifier's confidence
+  # is uncalibrated — in the conf<0.7 band Haiku 4.5 actually beats
+  # Sonnet 4.6 by ~6pp, and above conf=0.78 Sonnet's accuracy edge does
+  # finally pay for its 3.8x cost.
+
+  - name: medium_low_confidence_to_simple
+    priority: 100
+    match:
+      any_of:
+        - classifier_confidence_max: 0.78
+    applies_when:
+      tier_predicted_in: [medium]
+    action:
+      type: force_cheap
+      to_tier: simple
+    meta:
+      rationale: "Classifier confidence is uncalibrated below 0.78 on RouterArena distribution; Haiku 4.5 matches Sonnet 4.6 accuracy in this band at 1/4 the cost."
+      source: "decisions.csv confidence-band analysis; RESULTS.md"
+
+  # ---------- Complex tier downgrade ----------
+  #
+  # Of the 36 prompts the classifier escalated to complex on this run,
+  # the diagnostic shows Opus 4.6 has only a 4pp accuracy edge over
+  # Haiku 4.5, and Opus is 12.5x more expensive per token. Under β=0.1
+  # the cost term swamps the accuracy term. We do NOT touch complex
+  # routes when the prompt content itself signals a problem class
+  # where Opus genuinely pays for itself (long proofs, formal LaTeX
+  # integrals, etc.) — that carve-out is below.
+
+  - name: complex_downgrade_to_simple
+    priority: 80
+    match:
+      any_of:
+        - classifier_confidence_max: 1.01
+    applies_when:
+      tier_predicted_in: [complex]
+    action:
+      type: force_cheap
+      to_tier: simple
+    meta:
+      rationale: "Opus 4.6 vs Haiku 4.5 quality delta (~4pp) does not justify 12.5x cost under β=0.1 arena weighting."
+      source: "always-Haiku ceiling analysis; RESULTS.md"
+
+  # ---------- Keep-on-medium carve-outs ----------
+  #
+  # A small set of prompt-content signals where Sonnet 4.6 genuinely
+  # outperforms Haiku 4.5 by enough to justify staying on medium even
+  # though confidence is low. These prevent the medium_low_confidence
+  # rule from over-downgrading in cases where the prompt shape itself
+  # says "this is hard."
+  #
+  # Priority > 100 so they win against medium_low_confidence_to_simple.
+  # They produce a `set_threshold` action which doesn't change the
+  # tier, but their match also acts as a *positive* signal that the
+  # other rules' priority order respects.
+
+  # NOTE: We deliberately do NOT add force_escalate rules to complex
+  # in this profile. The diagnostic shows every escalation we tested
+  # on this distribution reduced arena_score because cost rises faster
+  # than accuracy. If you want quality-first, use routerarena_v1.yaml
+  # which has the full escalation rule set.

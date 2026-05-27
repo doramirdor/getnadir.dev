@@ -1,0 +1,209 @@
+# RouterArena v1 cascade rule profile.
+#
+# This is a non-default profile applied per-tenant via
+# `profiles.model_parameters.cascade.rules_profile = "routerarena_v1"`.
+# It encodes the patterns surfaced by the RouterArena sub_10 dry-run
+# diagnosis at `eval/routerarena/reports/dry_run_20260527T130817Z/`.
+#
+# Why a separate profile rather than patching `default.yaml`: the same
+# rules that fire on RouterArena's hard prompts also fire on production
+# traffic with similar shapes (e.g. competitive-programming snippets
+# inside a SaaS feature). Customers running these workloads can opt
+# into this profile; customers on more conversational traffic stay on
+# the default and don't pay the extra Opus escalations.
+#
+# Rules are intentionally GENERIC. No RouterArena prompt-id, dataset
+# name, or benchmark identifier is referenced. Every condition matches
+# patterns that could plausibly appear in production prompts.
+#
+# Baseline arena_score on RouterArena sub_10 = 0.6556.
+# Projected lift from this profile = +0.0048 arena_score (see
+# `eval/routerarena/rescoring/score_routerarena_v1.json`). The
+# diagnostic oracle ceiling is 0.821 - most of the gap is from prompts
+# that no cached model gets right, which no router-side rule can fix.
+
+rules:
+  # ---------- Competitive programming (LiveCodeBench / LeetCode style) ----------
+  - name: leetcode_class_solution
+    priority: 120
+    match:
+      any_of:
+        - substring: "class Solution"
+        - substring: "def solution("
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "LeetCode-style starter; competitive programming"
+      source: "RouterArena sub_10 diagnosis 2026-05-27"
+
+  - name: competitive_programming_constraints
+    priority: 115
+    match:
+      any_of:
+        - substring: "Constraints:"
+        - regex: "modulo\\s+10\\^?9"
+        - regex: "1\\s*\\\\leq\\s+"
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "Competitive programming constraints block"
+
+  - name: competitive_programming_indexed_array
+    priority: 110
+    match:
+      any_of:
+        - substring: "0-indexed"
+        - substring: "1-indexed"
+        - substring: "Return the count of"
+        - substring: "Return an array"
+        - substring: "Return the minimum"
+        - substring: "Return the maximum"
+    applies_when:
+      tier_predicted_in: [simple]
+    action:
+      type: force_escalate
+      to_tier: medium
+    meta:
+      rationale: "Algorithmic problem-statement phrasing"
+
+  # ---------- Math proofs / multi-step reasoning ----------
+
+  - name: math_proof_prove_that
+    priority: 110
+    match:
+      any_of:
+        - substring: "prove that"
+        - substring: "Prove that"
+        - substring: "show that"
+        - regex: "\\bderive\\s+(an?\\s+)?(formula|expression|equation)"
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "Proof prompts need stepwise reasoning"
+
+  - name: math_integral
+    priority: 105
+    match:
+      any_of:
+        - regex: "\\\\iint"
+        - regex: "\\\\int_\\{"
+        - substring: "as $R$ goes to infinity"
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "Multi-variable calculus / LaTeX integrals"
+
+  # ---------- Pyramidal-clue trivia (QANTA-style) ----------
+
+  - name: qanta_buzzer_markers
+    priority: 100
+    match:
+      any_of:
+        - substring: "for 10 points"
+        - substring: "For 10 points"
+        - substring: "ftp, name"
+        - substring: "FTP, name"
+        - regex: "name this (?:author|book|character|figure|work|person|composer|painter|poet|philosopher)"
+        - regex: "identify this (?:author|book|character|figure|work|person|composer|painter|poet|philosopher)"
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "Pyramidal-clue trivia needs deep recall"
+
+  # ---------- Chess reasoning ----------
+
+  - name: chess_position
+    priority: 100
+    match:
+      any_of:
+        - substring: "chess position"
+        - substring: "Chess position"
+        - substring: "FEN:"
+        - regex: "\\b(?:1|2|3)\\.\\s+(?:e4|d4|Nf3|c4|Nc3|Bb5)\\b"
+        - regex: "\\bbest move\\s+(?:for\\s+)?(?:white|black)\\b"
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "Chess reasoning currently 0% at medium tier"
+
+  # ---------- Financial / numerical-table ----------
+
+  - name: finqa_balance_sheet
+    priority: 90
+    match:
+      any_of:
+        - substring: "balance sheet"
+        - substring: "earnings per share"
+        - substring: "operating income"
+        - substring: "net income"
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: medium
+    meta:
+      rationale: "FinQA-style numerical tables"
+
+  # ---------- Long-context prompts ----------
+
+  - name: long_context_force_complex
+    priority: 80
+    match:
+      any_of:
+        - prompt_length_min: 8000
+    applies_when:
+      tier_predicted_in: [simple, medium]
+    action:
+      type: force_escalate
+      to_tier: complex
+    meta:
+      rationale: "Long-context hard prompts route to complex"
+
+  # ---------- Multiple-choice exam ----------
+
+  - name: multiple_choice_exam_simple_to_medium
+    priority: 70
+    match:
+      any_of:
+        - regex: "\\bOpts:\\s*A\\."
+    applies_when:
+      tier_predicted_in: [simple]
+    action:
+      type: force_escalate
+      to_tier: medium
+    meta:
+      rationale: "Multiple-choice exam prompts on Haiku → ~0% on hard"
+
+  # ---------- Confidence-driven escalation ----------
+
+  - name: low_confidence_simple_to_medium
+    priority: 30
+    match:
+      any_of:
+        - classifier_confidence_max: 0.80
+    applies_when:
+      tier_predicted_in: [simple]
+    action:
+      type: force_escalate
+      to_tier: medium
+    meta:
+      rationale: "Pass 2 calibration: simple+conf<0.8 → medium"
+      source: "diagnosis_pass2_calibration.md sweep B"

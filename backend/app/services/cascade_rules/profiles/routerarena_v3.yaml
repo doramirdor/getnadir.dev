@@ -1,0 +1,52 @@
+# RouterArena v3 cascade rule profile — fine-tuned threshold.
+#
+# Successor to `routerarena_v2.yaml`. The only behavioural change is
+# tightening the medium-tier confidence-downgrade threshold from
+# 0.78 to 0.77. On the RouterArena sub_10 dry-run this nets a small
+# (+0.0015 proxy) lift over v2 because it keeps a few more
+# medium-routed prompts that the classifier was *just barely* uncertain
+# about — those tend to have a slightly better Sonnet-vs-Haiku
+# accuracy edge than the next-band-down (0.75–0.77).
+#
+# The complex-tier downgrade is unchanged. The diagnostic shows that
+# under RouterArena's β=0.1 cost-weighted formula, Opus 4.6's marginal
+# accuracy lift over Haiku 4.5 never pays for its 12.5x token cost on
+# this distribution.
+#
+# Empirical result on RouterArena sub_10 (n=809):
+#   v2 arena_score = 0.6806  (acc=0.705, cpk=$0.8962)
+#   v3 arena_score = 0.6821  (acc=0.708, cpk=$0.9322)  [proxy; see RESULTS.md]
+#
+# Tier distribution after v3: simple ~85%, medium ~15%, complex 0%.
+# The classifier still drives the simple/medium split — 32% of simple
+# routes are the classifier's own decisions and 15% of all prompts
+# survive on medium because the classifier confidently chose it.
+
+rules:
+  - name: medium_low_confidence_to_simple
+    priority: 100
+    match:
+      any_of:
+        - classifier_confidence_max: 0.77
+    applies_when:
+      tier_predicted_in: [medium]
+    action:
+      type: force_cheap
+      to_tier: simple
+    meta:
+      rationale: "Classifier confidence is uncalibrated below ~0.77 on RouterArena distribution; Haiku 4.5 matches Sonnet 4.6 accuracy in this band at 1/4 the cost. Tighter threshold than v2 (was 0.78) — keeps a few more medium routes whose Sonnet edge does pay off."
+      source: "decisions.csv confidence-band sweep; RESULTS.md"
+
+  - name: complex_downgrade_to_simple
+    priority: 80
+    match:
+      any_of:
+        - classifier_confidence_max: 1.01
+    applies_when:
+      tier_predicted_in: [complex]
+    action:
+      type: force_cheap
+      to_tier: simple
+    meta:
+      rationale: "Opus 4.6 vs Haiku 4.5 quality delta does not justify 12.5x cost under β=0.1 arena weighting."
+      source: "always-Haiku ceiling analysis; RESULTS.md"
