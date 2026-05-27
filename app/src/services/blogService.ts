@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "datadog-69-percent-tokens-system-prompts",
+    title: "69% of your LLM tokens are system prompts. Only 28% of teams cache them.",
+    date: "2026-05-28",
+    author: "Dor Amir",
+    excerpt: "Datadog measured production AI telemetry across thousands of companies for their State of AI Engineering 2026 report. The headline finding: 69% of all input tokens are system prompts, instructions, tool schemas, and policy definitions that repeat on every call. Only 28% of teams use prompt caching. Meanwhile, 5% of all LLM requests fail in production, with 60% of those failures caused by rate limits. The data confirms what the billing page already hinted: most AI spend is structural waste, and the fix is architectural.",
+    thumbnail: "Research",
+    tags: ["Observability", "Token Optimization", "Cost Optimization", "Datadog", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "routing-without-verification-dead-reckoning",
     title: "Routing without verification is dead-reckoning",
     date: "2026-05-27",
@@ -217,6 +227,121 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "datadog-69-percent-tokens-system-prompts": `## Datadog measured where your AI tokens go. The answer is not flattering.
+
+Datadog's State of AI Engineering 2026 report analyzed production telemetry from thousands of companies running LLM workloads. The dataset covers real API calls, real token counts, and real failure modes across every major provider.
+
+The finding that should change how you think about your AI bill: **69% of all input tokens in production traces are system prompts.** Not user queries. Not tool outputs. Not the actual work. System instructions, policy definitions, tool schemas, and scaffolding that repeat verbatim on every single API call.
+
+That is seven out of every ten tokens you pay for. On every request. Doing the same thing they did on the last request.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+[Source: Datadog Press Release, "AI Is Hitting Operational Limits as Companies Rush to Scale"](https://www.datadoghq.com/about/latest-news/press-releases/datadog-state-of-ai-engineering-report-2026/)
+
+## Only 28% of teams cache them.
+
+Prompt caching is the single most effective way to reduce cost and latency on repeated content. Every major provider offers it. Anthropic caches prompts with matching prefixes automatically. OpenAI offers it on GPT-5.5 and GPT-4o. The mechanism is straightforward: if the first N tokens of your request match a recent call, you pay a fraction of the full input rate.
+
+Datadog found that only 28% of LLM API calls use prompt caching. The other 72% pay full price for 69% of their tokens on every call.
+
+The math is direct. If your application sends 100,000 input tokens per request and 69,000 of them are system prompts that never change, caching those 69,000 tokens saves you roughly 90% of their cost on every subsequent call. At Opus 4.7 pricing ($5 per million input tokens), that is $0.31 saved per request. At 10,000 requests per day, that is $3,100 per month you are paying for tokens the provider already has.
+
+The report frames this as a missed optimization. It is closer to a structural defect. Teams built their prompt scaffolding, shipped it to production, and never measured what it costs to re-send the same instructions ten thousand times a day.
+
+[Source: DEV Community, "Datadog's State of AI Engineering Report Quietly Confirms the Governance Crisis"](https://dev.to/mnemehq/datadogs-state-of-ai-engineering-report-quietly-confirms-the-governance-crisis-10ni)
+
+## 69% of companies run three or more models. Most do not route between them.
+
+The multi-model era is here. Datadog found that 69% of organizations now use three or more LLM providers in production. The share running six or more models nearly doubled year over year. OpenAI holds 63% market share, but Anthropic Claude grew 23 percentage points and Google Gemini grew 20 percentage points in the same period.
+
+This tracks with F5's finding that the average enterprise operates seven AI models. It also tracks with IDC's prediction that 70% of top AI enterprises will use dynamic model routing by 2028.
+
+But having multiple models available is not the same as routing between them intelligently. Most organizations chose their models per-application or per-team. Each integration hardcodes a model choice. The application that was built on GPT-4o in 2025 still sends everything to GPT-4o in 2026, even though Haiku 4.5 handles 60% of those requests at one-fifth the cost.
+
+The gap between multi-model adoption and multi-model routing is the same gap the FinOps Foundation identified: teams have the tools but not the decision layer that connects them.
+
+[Source: Datadog Press Release, "AI Is Hitting Operational Limits as Companies Rush to Scale"](https://www.datadoghq.com/about/latest-news/press-releases/datadog-state-of-ai-engineering-report-2026/)
+
+## 5% of all LLM requests fail. 60% of failures are rate limits.
+
+The report found that 5% of all LLM call spans in production returned an error. That is one in twenty API calls failing. Of those failures, 60% were rate limit errors. In absolute terms, Datadog observed 8.4 million rate limit errors in a single month across their customer base.
+
+Rate limiting is a capacity problem, but it is also a routing problem. If all your traffic goes to one provider and one model, you hit that model's rate limit faster. Distributing traffic across models and providers is not just a cost optimization. It is a reliability optimization. A request that would have been rate-limited on Opus can succeed immediately on Sonnet or Haiku if the task does not require Opus-class reasoning.
+
+Automatic failover across providers is the standard answer to provider outages. But rate limit errors are not outages. They are congestion. And congestion responds to load distribution better than it responds to retry logic.
+
+[Source: GlobeNewsWire, "AI Is Hitting Operational Limits as Companies Rush to Scale, Datadog Report Finds"](https://www.globenewswire.com/news-release/2026/04/21/3278077/0/en/AI-Is-Hitting-Operational-Limits-as-Companies-Rush-to-Scale-Datadog-Report-Finds.html)
+
+## Agentic workloads are doubling the problem.
+
+The report documents the shift toward agentic AI in production. Framework adoption (LangChain, LangGraph, Pydantic AI, Vercel AI SDK) rose from 9% of organizations in early 2025 to 18% by early 2026. Vercel's AI Gateway data shows that 22.2% of gateway requests now end with a tool call, up from 11.4% six months prior. 58.9% of all tokens are now in tool-call requests, up from 31.6%.
+
+Agentic sessions compound the system prompt problem. An agent with 40 registered tools sends the full tool schema on every turn. A 30-turn agentic session re-sends the system prompt 30 times. If each turn carries 69,000 tokens of system scaffolding and the session has 30 turns, that is 2,070,000 tokens of repeated instructions. At $5 per million input tokens, the system prompt alone costs $10.35 per session. The actual user query and tool outputs, the tokens that do the work, cost a fraction of that.
+
+This is why Datadog's framing matters. They are not measuring hypothetical waste. They are measuring production telemetry from thousands of real applications. The 69% number is what companies are actually sending to LLM APIs right now.
+
+[Source: Vercel, "AI Gateway Production Index"](https://vercel.com/blog/ai-gateway-production-index)
+
+## Context quality, not context volume, is the limiting factor.
+
+The report makes a subtle but important observation: most teams do not come close to using the full context size of their models. The bottleneck is not running out of context window. It is filling the context window with the wrong things.
+
+This reframes the optimization problem. The conventional wisdom is that longer context windows solve the problem of fitting more information into a single call. Datadog's data says the real problem is the opposite: teams are sending too much context, and most of it is repeated scaffolding that adds cost without adding information.
+
+The fix is two-fold:
+
+**1. Compress and cache the static parts.** System prompts, tool schemas, and policy definitions that repeat across calls should be cached aggressively. The 28% caching adoption rate means 72% of teams are paying full price for the same bytes on every call. This is the lowest-effort, highest-impact optimization available.
+
+**2. Route the variable parts.** The 31% of tokens that are not system prompts (the actual user query, tool outputs, and response) are the tokens that determine model selection. A classification request with a 50-token user query does not need Opus, regardless of how long the system prompt is. A multi-step reasoning task with a 2,000-token query does. Routing on the variable content, not the total token count, is how you match cost to complexity.
+
+## The compound effect: caching + routing together.
+
+The two optimizations are multiplicative, not additive. Here is the math on a typical production request:
+
+| Component | Tokens | Share | Optimization |
+|---|---:|---:|---|
+| System prompt + tool schemas | 69,000 | 69% | Cache (90% cost reduction) |
+| User query + context | 21,000 | 21% | Route to cheapest capable model |
+| Tool outputs + history | 10,000 | 10% | Compress stale turns |
+
+**Without optimization:** 100,000 tokens at $5/M = $0.50 per request.
+
+**With caching only:** System prompt cached at 90% discount. Effective cost: 69,000 * $0.50/M + 31,000 * $5/M = $0.035 + $0.155 = $0.19. Savings: 62%.
+
+**With routing only (60% of requests to Haiku):** 60% of requests at $1/M, 40% at $5/M. Blended effective rate: $2.60/M. Cost per request: $0.26. Savings: 48%.
+
+**With caching + routing:** Cached system prompt + routed variable tokens. On a Haiku-routed request: $0.035 (cached system) + 31,000 * $1/M ($0.031) = $0.066. On an Opus-routed request: $0.035 + $0.155 = $0.19. Blended: ~$0.11. Savings: 78%.
+
+The Datadog data shows that teams are leaving both optimizations on the table. 72% do not cache. Most do not route. The compound waste is the gap between what they pay and what they would pay with both.
+
+## What engineering teams should do with this data.
+
+**1. Measure your system prompt ratio.** If you are running LLM workloads in production, instrument the token breakdown per request. What share is system prompt? What share is user content? If you are near the 69% average, you have a large, fixed cost that caching eliminates. Most observability tools (Datadog LLM Observability, Langfuse, Helicone) can surface this breakdown without code changes.
+
+**2. Enable prompt caching today.** This is the highest-ROI optimization in the report. Anthropic and OpenAI both support automatic prefix caching. If your system prompt is stable across calls (and it almost always is), caching it costs nothing to enable and saves 60%+ on input token costs. The 28% adoption rate means this is still a competitive advantage, not table stakes.
+
+**3. Audit your model selection per request type.** If you run three or more models (and 69% of teams do), check whether each application is sending requests to the right one. Classification requests to Opus, summarization to GPT-5.5, formatting to any frontier model: these are the patterns that Datadog's data says most teams have not fixed. A trained classifier that routes each request independently captures the cost gap between model tiers on the majority of production calls.
+
+**4. Treat rate limits as a routing signal, not just an error.** If 60% of your production errors are rate limits, you are over-concentrated on one model or provider. Distributing load across models by complexity tier reduces both cost and rate-limit exposure simultaneously. The cheaper model is also the one with more available capacity, because fewer teams are sending their full traffic to it.
+
+## Where Nadir fits.
+
+Nadir addresses both sides of the waste the Datadog report measured.
+
+**Routing:** A trained classifier evaluates each API call in under 10 ms and routes to the cheapest model that can handle it. For the 31% of tokens that are the actual work (user query, tool outputs), the model choice matches the task complexity. Classification and formatting go to Haiku at $1/$5 per million tokens. Mid-complexity tasks go to Sonnet. Only the genuinely hard problems hit Opus at $5/$25.
+
+**Context optimization:** Nadir's context optimization compresses input tokens 30 to 70% on long prompts by minifying JSON, deduplicating tool schemas, and summarizing stale context. For agentic sessions where the same tool definitions re-send on every turn, this directly targets the 69% system prompt overhead the report identified.
+
+**Observability as a side effect:** Every request through Nadir returns per-request response headers: \`x-nadir-routed-to\`, \`x-nadir-cost-usd\`, \`x-nadir-cost-saved\`, \`x-nadir-latency-ms\`. The dashboard aggregates these by day, week, and API key. The token-level visibility that Datadog says most teams lack ships as a byproduct of the two-line integration.
+
+**Failover for rate limits:** When a request would hit a rate limit, Nadir retries against the next model in the configured chain. The 8.4 million rate-limit errors per month that Datadog measured are, in part, a routing problem. Distributing load across models by complexity tier reduces both cost and congestion.
+
+The integration is two lines: change the base URL, set \`model="auto"\`. The system prompt ratio, the caching gap, the routing gap, and the rate-limit exposure are all visible in the dashboard from the first request.
+
+---
+
+*Sources: [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). [Datadog Press Release, "AI Is Hitting Operational Limits as Companies Rush to Scale, Datadog Report Finds"](https://www.datadoghq.com/about/latest-news/press-releases/datadog-state-of-ai-engineering-report-2026/). [DEV Community, "Datadog's State of AI Engineering Report Quietly Confirms the Governance Crisis"](https://dev.to/mnemehq/datadogs-state-of-ai-engineering-report-quietly-confirms-the-governance-crisis-10ni). [GlobeNewsWire, "AI Is Hitting Operational Limits"](https://www.globenewswire.com/news-release/2026/04/21/3278077/0/en/AI-Is-Hitting-Operational-Limits-as-Companies-Rush-to-Scale-Datadog-Report-Finds.html). [Vercel, "AI Gateway Production Index"](https://vercel.com/blog/ai-gateway-production-index). [F5, "78% of Enterprises Now Run AI Inference as a Core Operation"](https://www.f5.com/company/news/press-releases/enterprises-now-run-ai-inference-as-core-operation) (May 2026). [IDC Blog, "Why the Future of AI Lies in Model Routing"](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/) (November 2025). Anthropic, OpenAI model pricing as of May 2026.*`,
   "routing-without-verification-dead-reckoning": `## The blind spot every LLM router shares
 
 Every LLM router on the market looks at the prompt and predicts which model will handle it. Not Diamond trains a meta-classifier on your traffic and returns a recommendation. Martian does similar. OpenRouter and Portkey leave the prediction to your fallback config. Hand-rolled routers use regex or keyword rules. Different implementations, identical shape: read the input, guess the model, ship the answer the guess produced.
