@@ -1,0 +1,18 @@
+Loading predictions from /Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/reports/dry_run_20260527T130817Z/upstream/RouterArena/router_evaluation/../router_inference/predictions/nadir-cheapest-Aprime-20260527T153854Z.json...
+Loaded 8400 predictions
+
+================================================================================
+Router: nadir-cheapest-Aprime-20260527T153854Z
+================================================================================
+Total Queries: 8400
+Queries with Accuracy: 8400
+Queries with Valid Cost: 8400
+Average Accuracy: 0.6951
+Total Cost: $0.581298
+Average Cost per Query: $0.000069
+Average Cost per 1K Queries: $0.0692
+Arena Score: 0.6992
+PLEASE NOTE: The sub_10 dataset is a subset of the full dataset and is used for testing purposes. It is generally easier than the full dataset.
+================================================================================
+
+--- stderr ---
