@@ -223,6 +223,20 @@ class StripeService:
             # 100%-off-first-invoice subscription, leaving us unable to bill
             # subsequent usage. Always force the card.
             "payment_method_collection": "always",
+            # Stripe Tax: calculate and collect sales tax / VAT / GST on the
+            # subscription invoice and all future recurring + usage invoices.
+            "automatic_tax": {"enabled": True},
+            # automatic_tax requires a tax-eligible customer address. We're
+            # reusing an existing Customer here, so let Checkout write the
+            # billing address the user enters back onto the Customer record;
+            # subsequent off-session invoices (usage, renewals) then have a
+            # location to tax against.
+            "customer_update": {"address": "auto", "name": "auto"},
+            "billing_address_collection": "required",
+            # B2B: collect VAT / GST / ABN so reverse-charge applies in EU/UK
+            # and we stay compliant in jurisdictions that require the buyer's
+            # tax ID on the invoice.
+            "tax_id_collection": {"enabled": True},
         }
 
         # Apply promo code if provided
@@ -332,6 +346,10 @@ class StripeService:
             currency="usd",
             description=description,
             discountable=False,
+            # Required for Stripe Tax to compute tax on this line. "exclusive"
+            # = the $ amount above is pre-tax and tax is added on top, which
+            # matches how the subscription is priced.
+            tax_behavior="exclusive",
         )
 
         logger.info(
