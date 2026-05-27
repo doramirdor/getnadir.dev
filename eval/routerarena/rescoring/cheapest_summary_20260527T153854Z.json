@@ -1,0 +1,123 @@
+{
+  "ts": "20260527T153854Z",
+  "strategies": [
+    {
+      "strategy": "A",
+      "router_name": "nadir-cheapest-A-20260527T153854Z",
+      "n_prompts": 8400,
+      "local_arena": 0.6992173159045453,
+      "local_acc": 0.6951149684411742,
+      "local_cpk_usd": 0.06920211130952382,
+      "official_arena": 0.6992,
+      "official_acc": 0.6951,
+      "official_cpk_usd": 0.0692,
+      "predictions": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_predictions_A_20260527T153854Z.json",
+      "decisions_csv": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_decisions_A_20260527T153854Z.csv",
+      "scorer_log": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_official_score_A_20260527T153854Z.txt",
+      "top_picks": [
+        [
+          "qwen/qwen3-235b-a22b-2507",
+          7191
+        ],
+        [
+          "Qwen/Qwen3-Coder-Next",
+          682
+        ],
+        [
+          "deepseek/deepseek-v3.2",
+          355
+        ],
+        [
+          "qwen/qwen3.5-9b",
+          161
+        ],
+        [
+          "qwen/qwen3-30b-a3b-instruct-2507",
+          9
+        ]
+      ]
+    },
+    {
+      "strategy": "Aprime",
+      "router_name": "nadir-cheapest-Aprime-20260527T153854Z",
+      "n_prompts": 8400,
+      "local_arena": 0.6992173159045453,
+      "local_acc": 0.6951149684411742,
+      "local_cpk_usd": 0.06920211130952382,
+      "official_arena": 0.6992,
+      "official_acc": 0.6951,
+      "official_cpk_usd": 0.0692,
+      "predictions": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_predictions_Aprime_20260527T153854Z.json",
+      "decisions_csv": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_decisions_Aprime_20260527T153854Z.csv",
+      "scorer_log": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_official_score_Aprime_20260527T153854Z.txt",
+      "top_picks": [
+        [
+          "qwen/qwen3-235b-a22b-2507",
+          7191
+        ],
+        [
+          "Qwen/Qwen3-Coder-Next",
+          682
+        ],
+        [
+          "deepseek/deepseek-v3.2",
+          355
+        ],
+        [
+          "qwen/qwen3.5-9b",
+          161
+        ],
+        [
+          "qwen/qwen3-30b-a3b-instruct-2507",
+          9
+        ]
+      ]
+    },
+    {
+      "strategy": "E",
+      "router_name": "nadir-cheapest-E-20260527T153854Z",
+      "n_prompts": 8400,
+      "local_arena": 0.7042600891225272,
+      "local_acc": 0.6951149684411742,
+      "local_cpk_usd": 0.03341665869047619,
+      "official_arena": 0.7043,
+      "official_acc": 0.6951,
+      "official_cpk_usd": 0.0334,
+      "predictions": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_predictions_E_20260527T153854Z.json",
+      "decisions_csv": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_decisions_E_20260527T153854Z.csv",
+      "scorer_log": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/cheapest_official_score_E_20260527T153854Z.txt",
+      "top_picks": [
+        [
+          "qwen/qwen3-235b-a22b-2507",
+          7191
+        ],
+        [
+          "Qwen/Qwen3-Coder-Next",
+          682
+        ],
+        [
+          "deepseek/deepseek-v3.2",
+          355
+        ],
+        [
+          "qwen/qwen3.5-9b",
+          161
+        ],
+        [
+          "qwen/qwen3-30b-a3b-instruct-2507",
+          9
+        ]
+      ]
+    }
+  ],
+  "cascade_comparison": {
+    "FIXED_cascade_acc": 0.7065,
+    "FIXED_cascade_cpk": 0.1813,
+    "FIXED_cascade_arena": 0.7013,
+    "FIXED_cascade_log": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/official_score_full_routerarena_v3_FIXED_20260527T152326Z.txt",
+    "preFix_cascade_acc": 0.3703,
+    "preFix_cascade_cpk": 1.8148,
+    "preFix_cascade_arena": 0.3756,
+    "preFix_cascade_log": "/Users/ellabaror/Documents/code/Nadir/getnadir.dev/eval/routerarena/rescoring/official_score_full_routerarena_v3_20260527T145711Z.txt"
+  }
+}
