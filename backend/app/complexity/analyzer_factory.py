@@ -329,6 +329,15 @@ class ComplexityAnalyzerFactory:
         Env overrides (also settable via kwargs):
           WIDE_DEEP_ASYM_DECISION_RULE = "argmax" | "cost_sensitive"   (default: argmax)
           WIDE_DEEP_ASYM_COST_LAMBDA   = float                         (default: 3.0)
+          WIDE_DEEP_VARIANT            = "asym" | "symmetric"          (default: asym)
+
+        The shipped `asym` checkpoint has a documented training pathology
+        that suppresses the simple-class logit; the `symmetric` companion
+        checkpoint trained on the same data with plain CE loss does not.
+        Operators canary-rolling the fix should set
+        ``WIDE_DEEP_VARIANT=symmetric`` for a single customer before
+        flipping the global default. See
+        ``app/complexity/wide_deep_asym_analyzer.py`` module docstring.
         """
         import os as _os
         from app.complexity.wide_deep_asym_analyzer import get_wide_deep_asym_analyzer
@@ -343,11 +352,20 @@ class ComplexityAnalyzerFactory:
                 _os.getenv("WIDE_DEEP_ASYM_COST_LAMBDA", "3.0"),
             )
         )
+        # Production default flipped to the working symmetric checkpoint
+        # after confirming the shipped asym variant has per_class_f1.simple
+        # = 0.0. Operators rolling back must set WIDE_DEEP_VARIANT=asym
+        # explicitly. See app/complexity/wide_deep_asym_analyzer.py docstring.
+        checkpoint_variant = kwargs.get(
+            "checkpoint_variant",
+            _os.getenv("WIDE_DEEP_VARIANT", "symmetric"),
+        )
         return get_wide_deep_asym_analyzer(
             allowed_providers=allowed_providers,
             allowed_models=allowed_models,
             decision_rule=decision_rule,
             cost_lambda=cost_lambda,
+            checkpoint_variant=checkpoint_variant,
         )
 
     @staticmethod

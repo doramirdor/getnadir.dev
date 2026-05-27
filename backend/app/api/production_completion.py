@@ -923,6 +923,18 @@ async def create_completion(
                         effective_cfg["force_escalate_patterns"] = user_cascade_cfg[
                             "force_escalate_patterns"
                         ]
+                    # Cascade Rule Engine (Pro feature): per-tenant
+                    # routing policy. `rules_inline` carries the rule
+                    # list directly on the user row (jsonb), `rules_profile`
+                    # selects a named YAML profile shipped with the
+                    # backend (e.g. "routerarena_v1"). Inline takes
+                    # precedence. Falls back to "default" when neither
+                    # is set, which mirrors the legacy DEFAULT_*
+                    # patterns from cascade_router.py.
+                    if "rules_inline" in user_cascade_cfg:
+                        effective_cfg["rules_inline"] = user_cascade_cfg["rules_inline"]
+                    if "rules_profile" in user_cascade_cfg:
+                        effective_cfg["rules_profile"] = user_cascade_cfg["rules_profile"]
 
                     # Lazy-load the pre-classifier the first time we hit
                     # this branch. Singleton across requests. The wrapper

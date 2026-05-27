@@ -160,22 +160,29 @@ async def test_cost_sensitive_prefers_safer_tier_on_ambiguous_prompt():
     """On a borderline prompt, cost-sens λ=20 should never rank below argmax."""
     import app.complexity.wide_deep_asym_analyzer as wda
 
-    wda._analyzer_instance = None
-    argmax = get_wide_deep_asym_analyzer(decision_rule="argmax")
-    prompt = (
-        "Given a 3-layer transformer decoder with causal self-attention, derive "
-        "the gradient of the loss w.r.t. the Q projection weights at layer 2."
-    )
-    r_argmax = await argmax.analyze(prompt)
+    # Snapshot the cache so we can restore for downstream tests (module-scoped
+    # `argmax_analyzer` fixture aliases the cached asym instance; mutating
+    # decision_rule mid-suite would otherwise leak into later tests).
+    snap = _snapshot_singleton_state()
+    try:
+        wda._analyzer_instances.clear()
+        argmax = get_wide_deep_asym_analyzer(decision_rule="argmax")
+        prompt = (
+            "Given a 3-layer transformer decoder with causal self-attention, derive "
+            "the gradient of the loss w.r.t. the Q projection weights at layer 2."
+        )
+        r_argmax = await argmax.analyze(prompt)
 
-    wda._analyzer_instance = None
-    safe = get_wide_deep_asym_analyzer(decision_rule="cost_sensitive", cost_lambda=20.0)
-    r_safe = await safe.analyze(prompt)
+        wda._analyzer_instances.clear()
+        safe = get_wide_deep_asym_analyzer(decision_rule="cost_sensitive", cost_lambda=20.0)
+        r_safe = await safe.analyze(prompt)
 
-    tier_rank = {"simple": 0, "medium": 1, "complex": 2}
-    assert tier_rank[r_safe["tier_name"]] >= tier_rank[r_argmax["tier_name"]], (
-        f"cost-sens λ=20 picked {r_safe['tier_name']} vs argmax {r_argmax['tier_name']}"
-    )
+        tier_rank = {"simple": 0, "medium": 1, "complex": 2}
+        assert tier_rank[r_safe["tier_name"]] >= tier_rank[r_argmax["tier_name"]], (
+            f"cost-sens λ=20 picked {r_safe['tier_name']} vs argmax {r_argmax['tier_name']}"
+        )
+    finally:
+        _restore_singleton_state(snap)
 
 
 # ---------------------------------------------------------------------------
@@ -311,3 +318,180 @@ def test_classifier_analytics_filter_accepts_wide_deep_asym():
     assert _is_classifier_event(
         {"metadata": {"analyzer_type": "future_model_v7", "classifier_version": "v7"}}
     ) is True
+
+
+# ---------------------------------------------------------------------------
+# Symmetric-checkpoint variant
+#
+# The shipped asym-loss checkpoint (wide_deep_asym_v3.pt) has a documented
+# training pathology: the simple logit was globally suppressed by ~7-17
+# points during training because asym loss with λ=3 penalises downgrades
+# 3x as much as upgrades, so the model learned to never predict simple.
+# Training metrics (labeled_data/v2/results/07_wide_deep_asym.json) record
+# per_class_f1.simple = 0.0. The symmetric-loss companion checkpoint
+# (wide_deep_sym_v3.pt) was trained on the same data with plain CE loss
+# and reaches simple-class F1 = 0.78 in its training report.
+# ---------------------------------------------------------------------------
+
+
+def test_constructor_rejects_unknown_checkpoint_variant():
+    with pytest.raises(ValueError, match="checkpoint_variant"):
+        WideDeepAsymAnalyzer(checkpoint_variant="banana")
+
+
+def test_default_checkpoint_variant_is_asym_unchanged():
+    """Production behaviour is unchanged: the default variant is the asym
+    checkpoint. Operators who never pass `checkpoint_variant` see the same
+    model the production service has been serving since April 2026.
+    """
+    a = WideDeepAsymAnalyzer(decision_rule="argmax")
+    assert a.checkpoint_variant == "asym"
+    assert _MODEL_PATH_REL.endswith("wide_deep_asym_v3.pt")
+
+
+_MODEL_PATH_REL = "wide_deep_asym_v3.pt"  # used by the test above
+
+
+@pytest.fixture(scope="module")
+def symmetric_analyzer() -> WideDeepAsymAnalyzer:
+    """Module-scoped analyzer using the working symmetric checkpoint."""
+    if not os.path.exists(
+        os.path.join(
+            os.path.dirname(__file__), "..", "app", "complexity", "models",
+            "wide_deep_sym_v3.pt",
+        )
+    ):
+        pytest.skip("symmetric checkpoint not present")
+    return WideDeepAsymAnalyzer(
+        decision_rule="argmax", checkpoint_variant="symmetric"
+    )
+
+
+def test_symmetric_variant_predicts_simple_on_trivial_prompt(symmetric_analyzer):
+    """The asym checkpoint never predicts simple — see training F1 = 0.0
+    in 07_wide_deep_asym.json. The symmetric checkpoint must recover this:
+    a 2-word greeting should classify as simple, not medium or complex.
+    """
+    tier, _conf, info = symmetric_analyzer.classify("hi")
+    probs = info["tier_probabilities"]
+    assert tier == "simple", (
+        f"symmetric checkpoint failed to predict simple on a trivial prompt: "
+        f"tier={tier}, probs={probs}"
+    )
+    assert probs["simple"] > probs["medium"]
+    assert probs["simple"] > probs["complex"]
+
+
+def test_symmetric_variant_distinguishes_simple_from_complex(symmetric_analyzer):
+    """A trivial prompt and a domain-expert prompt must produce DIFFERENT
+    argmax tiers. The asym checkpoint produces ~identical argmax behaviour
+    for both ('medium' in both cases), which is the bug we are fixing.
+    """
+    trivial = symmetric_analyzer.classify("hello")
+    complex_prompt = symmetric_analyzer.classify(
+        "Derive the renormalisation group equations for QCD at two-loop order "
+        "and explain the physical meaning of asymptotic freedom in this context."
+    )
+    assert trivial[0] != complex_prompt[0], (
+        f"symmetric checkpoint failed to distinguish trivial from complex: "
+        f"both → {trivial[0]!r}"
+    )
+
+
+def _snapshot_singleton_state():
+    """Capture-restore helper so factory tests don't pollute later tests."""
+    from app.complexity import wide_deep_asym_analyzer as wd
+    return dict(wd._analyzer_instances), {
+        v: (inst.decision_rule, inst.cost_lambda) for v, inst in wd._analyzer_instances.items()
+    }
+
+
+def _restore_singleton_state(snap):
+    from app.complexity import wide_deep_asym_analyzer as wd
+    instances, rules = snap
+    wd._analyzer_instances.clear()
+    wd._analyzer_instances.update(instances)
+    for v, (rule, lam) in rules.items():
+        inst = wd._analyzer_instances.get(v)
+        if inst is not None:
+            inst.decision_rule = rule
+            inst.cost_lambda = lam
+            inst._cost = wd._cost_matrix(lam) if rule == "cost_sensitive" else None
+
+
+def test_factory_honors_wide_deep_variant_env(monkeypatch):
+    """Setting WIDE_DEEP_VARIANT=symmetric in the environment must produce
+    an analyzer with the symmetric checkpoint loaded. This is the canary
+    rollout switch operators use to ship the fix without code changes.
+    """
+    snap = _snapshot_singleton_state()
+    try:
+        monkeypatch.setenv("WIDE_DEEP_VARIANT", "symmetric")
+        monkeypatch.setenv("WIDE_DEEP_ASYM_DECISION_RULE", "argmax")
+        a = ComplexityAnalyzerFactory.create_analyzer(AnalyzerType.WIDE_DEEP_ASYM)
+        assert a.checkpoint_variant == "symmetric"
+    finally:
+        _restore_singleton_state(snap)
+
+
+def test_factory_defaults_to_symmetric_variant(monkeypatch):
+    """Production default flipped to the symmetric (working) checkpoint
+    after we confirmed the shipped asym checkpoint has F1(simple)=0.0.
+    Operators rolling back must set WIDE_DEEP_VARIANT=asym explicitly.
+    """
+    snap = _snapshot_singleton_state()
+    try:
+        monkeypatch.delenv("WIDE_DEEP_VARIANT", raising=False)
+        a = ComplexityAnalyzerFactory.create_analyzer(AnalyzerType.WIDE_DEEP_ASYM)
+        assert a.checkpoint_variant == "symmetric"
+    finally:
+        _restore_singleton_state(snap)
+
+
+def test_factory_rollback_to_asym_via_env(monkeypatch):
+    """Setting WIDE_DEEP_VARIANT=asym restores the legacy (bugged)
+    behaviour for emergency rollback. We test it explicitly so the
+    rollback path stays exercised."""
+    snap = _snapshot_singleton_state()
+    try:
+        monkeypatch.setenv("WIDE_DEEP_VARIANT", "asym")
+        a = ComplexityAnalyzerFactory.create_analyzer(AnalyzerType.WIDE_DEEP_ASYM)
+        assert a.checkpoint_variant == "asym"
+    finally:
+        _restore_singleton_state(snap)
+
+
+def test_singleton_keeps_separate_instances_per_variant():
+    """The singleton cache is keyed on checkpoint_variant; switching
+    variants must NOT reuse the previously-cached instance (because the
+    loaded state dict differs).
+    """
+    from app.complexity.wide_deep_asym_analyzer import (
+        get_wide_deep_asym_analyzer,
+    )
+    asym = get_wide_deep_asym_analyzer(checkpoint_variant="asym")
+    sym = get_wide_deep_asym_analyzer(checkpoint_variant="symmetric")
+    assert asym is not sym
+    assert asym.checkpoint_variant == "asym"
+    assert sym.checkpoint_variant == "symmetric"
+    # Asking for asym again returns the cached asym instance.
+    asym2 = get_wide_deep_asym_analyzer(checkpoint_variant="asym")
+    assert asym2 is asym
+
+
+def test_symmetric_variant_simple_logit_is_competitive(symmetric_analyzer):
+    """The symmetric variant must produce non-degenerate P(simple) on at
+    least one of a handful of trivial prompts. We assert max(P(simple))
+    over a small probe set exceeds 0.5, which is impossible with the asym
+    checkpoint (it caps at ~0.001 on any prompt).
+    """
+    trivial_probes = ["hi", "thanks", "ok", "what is 2+2", "yes"]
+    p_simple_max = 0.0
+    for prompt in trivial_probes:
+        _tier, _conf, info = symmetric_analyzer.classify(prompt)
+        p_simple_max = max(p_simple_max, info["tier_probabilities"]["simple"])
+    assert p_simple_max > 0.5, (
+        f"symmetric checkpoint failed to produce P(simple) > 0.5 on any of "
+        f"{trivial_probes!r}; max was {p_simple_max:.3f}. This is the bug "
+        f"the symmetric checkpoint was supposed to fix."
+    )

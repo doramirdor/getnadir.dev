@@ -11,3 +11,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.abspath(os.path.join(HERE, ".."))
 if BACKEND not in sys.path:
     sys.path.insert(0, BACKEND)
+
+# Make `verifier/` importable for OAuth-judge harness tests.
+REPO_ROOT = os.path.abspath(os.path.join(BACKEND, ".."))
+VERIFIER = os.path.join(REPO_ROOT, "verifier")
+if VERIFIER not in sys.path:
+    sys.path.insert(0, VERIFIER)

@@ -20,6 +20,16 @@ RUN adduser --disabled-password --gecos '' appuser
 # Backend code
 COPY backend/ ./
 
+# Verifier checkpoints (IP-1 verifier-gated cascade).
+# - verifier/weights/best/      DeBERTa-v3-small cross-encoder (safetensors,
+#                               INT8 quantized at runtime). 541MB.
+# - verifier/weights/router_v2.pkl  LR pre-classifier (BGE+struct → cheap/exp).
+# Per .dockerignore, verifier_int8.pt is excluded (we quantize at load time).
+# Settings resolve these via CASCADE_VERIFIER_WEIGHTS_PATH=verifier/weights/best
+# and CASCADE_PRE_CLASSIFIER_PATH=verifier/weights/router_v2.pkl relative to
+# /app (the WORKDIR), so the layout under /app/verifier/weights/ matches.
+COPY verifier/weights/ /app/verifier/weights/
+
 # Own app directory by appuser
 RUN chown -R appuser:appuser /app
 
