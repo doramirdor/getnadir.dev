@@ -160,6 +160,81 @@ export const BenchmarkSection = () => {
           </div>
         </div>
 
+        {/*
+          Benchmark Recognition — third-party leaderboard credibility band.
+          Visually distinct from the production-truth table above: dark
+          framing, "industry recognition" eyebrow, cards instead of a table.
+          The 60% / 98% numbers above remain the headline customer promise;
+          this band exists to answer "is anyone else measuring this?".
+        */}
+        <div className="mt-20 md:mt-24">
+          <div className="max-w-[820px] mb-10 md:mb-12">
+            <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
+              On the leaderboard
+            </p>
+            <h3 className="text-[32px] md:text-[44px] font-semibold tracking-[-0.032em] m-0 mb-5 text-[#1d1d1f] leading-[1.08]">
+              The numbers hold up on someone else's scorer.
+            </h3>
+            <p className="text-[16px] md:text-[18px] text-[#424245] m-0 leading-[1.55] tracking-[-0.008em]">
+              Internal evals are easy to write to. So we ran Nadir against RouterArena's official scorer and audited the training data for contamination before publishing. Both held up.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+            {/* RouterArena */}
+            <div className="rounded-[18px] bg-[#1d1d1f] text-white p-7 md:p-8 flex flex-col">
+              <p className="text-[11px] uppercase tracking-[0.1em] font-semibold text-[#86868b] m-0 mb-5">
+                RouterArena
+              </p>
+              <div className="text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[0.95] tabular-nums mb-3">
+                0.7118
+              </div>
+              <p className="text-[14px] md:text-[15px] text-[#d2d2d7] m-0 leading-[1.5] tracking-[-0.005em] mb-5">
+                arena_score on the official scorer, full split (n=8,400). Projects into the public leaderboard's top 5, ahead of Auto Router (70.05), vLLM-SR (67.23), and Not Diamond (57.29).
+              </p>
+              <p className="text-[12px] text-[#86868b] m-0 mt-auto tracking-[-0.005em] font-mono">
+                eval/routerarena/rescoring/
+              </p>
+            </div>
+
+            {/* ND head-to-head */}
+            <div className="rounded-[18px] border border-black/[0.08] bg-white p-7 md:p-8 flex flex-col">
+              <p className="text-[11px] uppercase tracking-[0.1em] font-semibold text-[#86868b] m-0 mb-5">
+                Head-to-head vs Not Diamond
+              </p>
+              <div className="text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[0.95] tabular-nums mb-3 text-[#028a3e]">
+                92.1<span className="text-[28px] md:text-[32px] text-[#86868b]"> vs 27.0</span>
+              </div>
+              <p className="text-[14px] md:text-[15px] text-[#424245] m-0 leading-[1.5] tracking-[-0.005em] mb-5">
+                Routing accuracy on RouterBench held-out (n=3,313, GPT-3.5 / GPT-4 pair). Same prompts, same labels, same scorer. The verifier reads the answer; the one-shot router does not.
+              </p>
+              <p className="text-[12px] text-[#86868b] m-0 mt-auto tracking-[-0.005em] font-mono">
+                verifier/reports/head_to_head/
+              </p>
+            </div>
+
+            {/* Contamination audit */}
+            <div className="rounded-[18px] border border-black/[0.08] bg-white p-7 md:p-8 flex flex-col">
+              <p className="text-[11px] uppercase tracking-[0.1em] font-semibold text-[#86868b] m-0 mb-5">
+                Contamination audit
+              </p>
+              <div className="text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[0.95] tabular-nums mb-3">
+                0 <span className="text-[20px] md:text-[22px] text-[#86868b] font-medium">overlap</span>
+              </div>
+              <p className="text-[14px] md:text-[15px] text-[#424245] m-0 leading-[1.5] tracking-[-0.005em] mb-5">
+                Zero prompt overlap between Nadir training corpora and the RouterArena evaluation splits. Audited and certified before publication, so the leaderboard score is not memorization.
+              </p>
+              <p className="text-[12px] text-[#86868b] m-0 mt-auto tracking-[-0.005em] font-mono">
+                eval/routerarena/reports/
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[13px] text-[#6e6e73] mt-6 md:mt-7 tracking-[-0.005em]">
+            RouterArena methodology and full threshold sweep are reproducible from the open-source eval harness. The 60% / 98% numbers above are the production promise; the leaderboard numbers are the outside check.
+          </p>
+        </div>
+
         {/* Conversion CTA below the table */}
         <div className="mt-14 md:mt-16 flex flex-col items-center text-center">
           <p className="text-[20px] md:text-[24px] text-[#1d1d1f] font-semibold tracking-[-0.018em] m-0 mb-5 max-w-[640px] leading-[1.25]">

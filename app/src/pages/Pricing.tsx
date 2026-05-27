@@ -352,6 +352,9 @@ export default function Pricing() {
         <p className="text-center text-[13px] text-[#86868b] mt-8 tracking-[-0.005em]">
           Numbers from RouterBench held-out, n=11,420. Verifier AUROC 0.961, ECE 0.016. Your savings vary with your workload.
         </p>
+        <p className="text-center text-[13px] text-[#86868b] mt-2 tracking-[-0.005em]">
+          Independently verified on RouterArena's public scorer: arena_score 0.7118 on the full evaluation set, n=8,400.
+        </p>
       </section>
 
       {/* How savings pricing works */}

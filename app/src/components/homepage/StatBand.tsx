@@ -9,6 +9,7 @@ type Stat = {
 const STATS: Stat[] = [
   { value: "98%", label: "Quality preserved versus always-Opus. Verifier in the loop, not a one-shot router.", accent: true },
   { value: "60%", label: "Lower bill versus always-Opus on the same 11,420 triples." },
+  { value: "0.7118", label: "RouterArena arena_score on the official scorer, full evaluation set, n=8,400. Projected top 5, ahead of Auto Router, vLLM-SR, and Not Diamond." },
   { value: "180 ms", label: "Verifier latency on CPU. INT8 quantized, ships today." },
   { value: "2 lines", label: "Code change to start routing. Same SDK, new base URL." },
 ];
@@ -20,7 +21,7 @@ export const StatBand = () => {
         <p className="text-[12px] text-[#6e6e73] uppercase tracking-[0.12em] font-semibold text-center mb-10 md:mb-12 stat-reveal" style={{ ['--stat-delay' as never]: '0ms' }}>
           Numbers from RouterBench held-out, n=11,420
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-6">
           {STATS.map((s, i) => (
             <div
               key={s.label}
