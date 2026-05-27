@@ -45,7 +45,7 @@ export default function SolutionRouting() {
     <MarketingLayout>
       <SEO
         title="LLM Routing - Nadir"
-        description="Route every prompt to the cheapest model that can still handle it. Nadir's trained router saves up to 47% vs always-Opus with 0% catastrophic routes."
+        description="Verifier-gated cascade: the cheap model answers first, the verifier scores it, escalate only when quality fails the bar. 60% cost reduction with 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples."
         path="/solutions/routing"
       />
 
@@ -75,9 +75,9 @@ export default function SolutionRouting() {
       <section className="max-w-4xl mx-auto px-6 pb-16">
         <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { k: "47%", v: "cheaper than always-Opus on our 50-prompt eval", accent: true },
-            { k: "< 10ms", v: "added latency for the routing decision" },
-            { k: "0%", v: "catastrophic routes in our internal eval" },
+            { k: "60%", v: "cheaper than always-Opus on 11,420 RouterBench held-out triples", accent: true },
+            { k: "98%", v: "of always-Opus quality preserved on the same eval" },
+            { k: "< 10ms", v: "pre-classifier overhead; verifier skipped on confident routes" },
           ].map((s) => (
             <div key={s.k} className="p-5 bg-white border border-black/[0.06] rounded-xl">
               <div className="text-[28px] font-semibold tracking-[-0.025em]" style={{ color: s.accent ? "#028a3e" : "#1d1d1f" }}>{s.k}</div>

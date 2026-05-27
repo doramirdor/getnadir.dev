@@ -88,7 +88,8 @@ curl http://localhost:4000/v1/chat/completions \\
             </div>
             <p className="text-sm text-[#666]">
               A binary classifier routes each prompt to the right tier (simple, mid, complex,
-              reasoning) in under 10ms. 96% accuracy on real-world benchmarks.
+              reasoning) in under 10ms. The Pro tier adds verifier-gated cascade: 98% of
+              always-Opus quality preserved at 40% of the cost on RouterBench held-out.
             </p>
           </div>
           <div className="p-5 rounded-xl border border-[#e5e5e5] bg-white">

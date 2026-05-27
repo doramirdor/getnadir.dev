@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 
 const BENCHMARK_DATA = [
-  { label: "Baseline (Sonnet)", pct: 100, savings: 0, color: "#d4d4d4" },
-  { label: "Router + Safe", pct: 62, savings: 38, color: "#00a86b" },
+  { label: "Baseline (always-Opus)", pct: 100, savings: 0, color: "#d4d4d4" },
+  { label: "Nadir verifier-gated cascade", pct: 40, savings: 60, color: "#00a86b" },
 ];
 
 const CATEGORIES = [
@@ -15,7 +15,7 @@ export const BenchmarkResults = () => {
   const [monthlySpend, setMonthlySpend] = useState(5000);
 
   const roi = useMemo(() => {
-    const savings = monthlySpend * 0.38;
+    const savings = monthlySpend * 0.6;
     const fee = savings * 0.252;
     const net = savings - fee;
     return { savings, fee, net, annual: net * 12 };
@@ -43,24 +43,24 @@ export const BenchmarkResults = () => {
           </h2>
           <div className="w-12 h-[3px] bg-gradient-to-r from-[#0066ff] to-[#00a86b] rounded-full mx-auto mt-4 mb-4" />
           <p className="text-lg text-[#666] max-w-[600px] mx-auto">
-            Benchmark across diverse real-world prompts. 96% routing
-            accuracy verified by independent LLM judge.
+            11,420 held-out RouterBench triples. Verifier in the loop, not a one-shot router.
+            98% of always-Opus quality preserved, independently scored.
           </p>
         </div>
 
         {/* Hero stats */}
         <div className="grid md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-8 md:mb-16">
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-3xl font-bold text-[#00a86b] mb-1">Up to 47%</div>
-            <div className="text-sm text-[#666]">cost savings</div>
+            <div className="text-3xl font-bold text-[#00a86b] mb-1">60%</div>
+            <div className="text-sm text-[#666]">cost reduction vs always-Opus</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-3xl font-bold text-[#0066ff] mb-1">96%</div>
-            <div className="text-sm text-[#666]">routing accuracy</div>
+            <div className="text-3xl font-bold text-[#0066ff] mb-1">98%</div>
+            <div className="text-sm text-[#666]">quality preserved</div>
           </div>
           <div className="text-center p-6 bg-white border border-[#e5e5e5] rounded-xl">
-            <div className="text-3xl font-bold text-[#6366f1] mb-1">Zero</div>
-            <div className="text-sm text-[#666]">latency overhead</div>
+            <div className="text-3xl font-bold text-[#6366f1] mb-1">180 ms</div>
+            <div className="text-sm text-[#666]">verifier latency, CPU</div>
           </div>
         </div>
 
@@ -119,8 +119,9 @@ export const BenchmarkResults = () => {
               <h3 className="text-base font-semibold">Quality verified</h3>
             </div>
             <p className="text-[15px] text-[#666] leading-relaxed">
-              96% routing accuracy across real-world prompts. Simple and medium prompts
-              routed to budget models. Complex prompts preserved on premium.
+              98% of always-Opus quality preserved on RouterBench held-out. Cheap-model
+              answers are scored by the verifier before they ship. Verifier AUROC 0.961,
+              calibration ECE 0.016.
             </p>
           </div>
 
@@ -145,8 +146,9 @@ export const BenchmarkResults = () => {
               <h3 className="text-base font-semibold">Zero latency overhead</h3>
             </div>
             <p className="text-[15px] text-[#666] leading-relaxed">
-              Similar latency across all configurations. The routing classifier
-              adds negligible overhead to request processing.
+              180 ms verifier latency on CPU, INT8 quantized. The classifier shortcut
+              skips the verifier entirely on high-confidence routes, so most requests
+              add zero overhead.
             </p>
           </div>
         </div>

@@ -196,7 +196,7 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
       className="min-h-screen bg-white text-[#1d1d1f] antialiased"
-      style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
+      style={{ fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
     >
       <header
         className="sticky top-0 z-50 border-b border-black/[0.06]"

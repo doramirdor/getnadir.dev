@@ -9,9 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { trackCtaClick, trackPageView } from "@/utils/analytics";
 
 const FACTS: [string, string][] = [
-  ["47%", "Verified savings on our benchmark vs always-Opus, 0% catastrophic routes."],
-  ["96%", "Routing accuracy on our 50-prompt benchmark."],
-  ["< 10 ms", "Classifier overhead. Faster than a DNS lookup."],
+  ["60%", "Cost reduction vs always-Opus on 11,420 RouterBench held-out triples."],
+  ["98%", "Quality preserved vs always-Opus on the same eval. Verifier scores cheap answers before they ship."],
+  ["180 ms", "Verifier latency on CPU. INT8 quantized. Skipped entirely on high-confidence routes."],
 ];
 
 const FAQS: [string, string][] = [
@@ -24,8 +24,8 @@ const FAQS: [string, string][] = [
     "A flat $9 per month for hosting, plus 25 percent of the first $2,000 of monthly savings and 10 percent above that. No savings, no variable fee.",
   ],
   [
-    "Where does 38 percent come from?",
-    "It is the average savings we see on a realistic mix of simple, medium, and complex prompts routed with our Wide and Deep classifier at λ=20. Your mix will vary.",
+    "Where does 60 percent come from?",
+    "It is the cost reduction we measure on 11,420 RouterBench held-out triples versus always-Opus, using the verifier-gated cascade at the default operating point. The cheap model answers first; a calibrated verifier (AUROC 0.961) scores the answer before we ship; on rejection, we escalate. Your mix will vary; the eval JSON is in the public repo.",
   ],
   [
     "Do you count failed requests?",

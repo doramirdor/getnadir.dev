@@ -141,7 +141,7 @@ export default function Pricing() {
     "@type": "Product",
     name: "Nadir",
     description:
-      "Intelligent LLM router that cuts Claude, GPT, and Gemini API costs up to 47 percent with automatic prompt-level model selection.",
+      "Verifier-gated cascade router that cuts Claude, GPT, and Gemini API costs 60 percent versus always-Opus on 11,420 RouterBench held-out triples, with 98 percent of always-Opus quality preserved.",
     image: "https://getnadir.com/og-image.png",
     brand: { "@type": "Brand", name: "Nadir" },
     offers: [
@@ -328,9 +328,9 @@ export default function Pricing() {
       <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
         <div className="max-w-[1160px] mx-auto px-6 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
           {[
-            { value: "47%", label: "Lower bill on our 50-prompt eval, no Opus-prompt quality drop.", accent: true },
-            { value: "96%", label: "Routing accuracy on our 50-prompt benchmark." },
-            { value: "< 10 ms", label: "Classifier overhead. Faster than a DNS lookup." },
+            { value: "60%", label: "Lower bill vs always-Opus on 11,420 RouterBench held-out triples.", accent: true },
+            { value: "98%", label: "Quality preserved vs always-Opus on the same eval." },
+            { value: "180 ms", label: "Verifier latency on CPU. INT8 quantized." },
           ].map((s, i) => (
             <div
               key={s.label}
@@ -350,7 +350,7 @@ export default function Pricing() {
           ))}
         </div>
         <p className="text-center text-[13px] text-[#86868b] mt-8 tracking-[-0.005em]">
-          Numbers from our 50-prompt eval. Quality verified by LLM judge. Your savings vary with your workload.
+          Numbers from RouterBench held-out, n=11,420. Verifier AUROC 0.961, ECE 0.016. Your savings vary with your workload.
         </p>
       </section>
 

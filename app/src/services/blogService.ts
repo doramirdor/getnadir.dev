@@ -15,6 +15,66 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "routing-without-verification-dead-reckoning",
+    title: "Routing without verification is dead-reckoning",
+    date: "2026-05-27",
+    author: "Dor Amir",
+    excerpt: "Every LLM router on the market reads the prompt and predicts which model will handle it. Not Diamond, Martian, OpenRouter rules, hand-rolled regex — same shape, same blind spot. When the router picks wrong, the user eats the bad response. Verifier-gated cascade reads the cheap-model answer before it ships. Same cost reduction, recoverable mistakes, 98% of always-Opus quality preserved on RouterBench held-out.",
+    thumbnail: "Architecture",
+    tags: ["Routing", "Verifier", "RouterBench", "Architecture", "2026 Trends"],
+    readingTime: "7 min read",
+  },
+  {
+    id: "finops-ai-98-percent-manage-spend-visibility-gap",
+    title: "98% of FinOps teams now manage AI spend. Most still cannot see where the tokens go.",
+    date: "2026-05-26",
+    author: "Dor Amir",
+    excerpt: "The FinOps Foundation surveyed 1,192 organizations managing $83 billion in cloud spend. Two years ago, 31% of FinOps teams managed AI costs. Today, 98% do. But their top challenge is the same one most engineering teams face: they cannot see token-level costs per request, per feature, or per user. The tooling gap between cloud cost management and AI cost management is where the waste hides.",
+    thumbnail: "Research",
+    tags: ["FinOps", "Cost Optimization", "Observability", "AI Infrastructure", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
+    id: "microsoft-cancelled-claude-code-ai-coding-cost-crisis",
+    title: "Microsoft cancelled its Claude Code licenses. The AI coding cost crisis is here.",
+    date: "2026-05-25",
+    author: "Dor Amir",
+    excerpt: "Microsoft is pulling Claude Code from its Experiences and Devices division by June 30, 2026. Uber burned its entire AI budget in four months. Meta built an internal leaderboard called Claudeonomics to track token spend across 85,000 employees. The pattern is the same everywhere: agentic coding tools hit frontier models for every call, and the bill grows faster than the budget. The fix is not to use AI less. It is to route each call to the cheapest model that can handle it.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "Agentic AI", "Microsoft", "Routing", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
+    id: "enterprise-seven-models-no-routing-layer",
+    title: "The average enterprise runs 7 AI models. Most have no routing layer.",
+    date: "2026-05-22",
+    author: "Dor Amir",
+    excerpt: "F5 surveyed 1,800 organizations and found that 78% now run AI inference in production, operating an average of seven models. But most route every request the same way: to whatever model the developer hardcoded last quarter. IDC predicts 70% of top AI enterprises will use dynamic model routing by 2028. The gap between multi-model adoption and multi-model routing is where the money leaks.",
+    thumbnail: "Research",
+    tags: ["Enterprise", "Multi-Model", "Routing", "AI Infrastructure", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
+    id: "uber-burned-ai-budget-four-months",
+    title: "Uber burned its 2026 AI budget in four months. Here is what the per-developer numbers look like.",
+    date: "2026-05-21",
+    author: "Dor Amir",
+    excerpt: "Uber's 5,000-engineer org exhausted its entire 2026 AI budget by April after Claude Code adoption jumped from 32% to 84%. Per-developer costs ran $500 to $2,000 per month. They are not alone. Pragmatic Engineer reports AI spending 10x'd in six months across the industry, and DX's survey shows engineering leaders planned for $500 to $1,000 per developer per year while actual costs are running $3,000 or more. The root cause is the same everywhere: every coding agent call hits a frontier model, whether it needs one or not.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "Engineering Budgets", "Agentic AI", "Routing", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
+    id: "coding-agents-burn-1000x-tokens-research",
+    title: "Coding agents burn 1,000x more tokens than chat. Stanford and Microsoft measured where the money goes.",
+    date: "2026-05-20",
+    author: "Dor Amir",
+    excerpt: "A joint Stanford and Microsoft study analyzed 8 frontier LLMs on SWE-bench and found that coding agents consume 1,000x more tokens than chat. Runs on the same task vary by 30x, and spending more tokens does not improve accuracy. 40 to 60% of input tokens are removable waste. The research confirms what routing practitioners already knew: your agent bill is a model selection problem, not a token volume problem.",
+    thumbnail: "Research",
+    tags: ["Agentic AI", "Research", "Cost Optimization", "Token Optimization", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
     id: "flat-rate-ai-over-metered-billing",
     title: "Flat-rate AI is over. Anthropic, GitHub, and Cursor all moved to metered billing in 30 days.",
     date: "2026-05-19",
@@ -105,14 +165,14 @@ const blogPostsMetadata: BlogPostMetadata[] = [
     readingTime: "8 min read",
   },
   {
-    id: "50-prompt-benchmark",
-    title: "Routing benchmark: 96% accuracy, 38% cost savings",
-    date: "2026-03-24",
+    id: "routerbench-cascade-benchmark",
+    title: "Verifier-gated cascade on RouterBench: 60% cheaper, 98% of always-Opus quality preserved",
+    date: "2026-05-26",
     author: "Dor Amir",
-    excerpt: "We ran 50 real-world prompts through Nadir's binary classifier. Simple prompts went to Gemini Flash, complex stayed on Sonnet. Here are the raw numbers.",
+    excerpt: "We ran 11,420 held-out RouterBench triples through Nadir's verifier-gated cascade. The cheap model answers first; a calibrated verifier (AUROC 0.961, ECE 0.016) scores it before we ship; on rejection, escalate to Sonnet or Opus. Here are the raw numbers, the threshold sweep, and what changes when you read the cheap answer before you commit to it.",
     thumbnail: "Benchmark",
-    tags: ["Benchmark", "Cost Savings"],
-    readingTime: "5 min read",
+    tags: ["Benchmark", "Cost Savings", "RouterBench", "Verifier"],
+    readingTime: "6 min read",
   },
   {
     id: "context-optimize-savings",
@@ -157,6 +217,542 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "routing-without-verification-dead-reckoning": `## The blind spot every LLM router shares
+
+Every LLM router on the market looks at the prompt and predicts which model will handle it. Not Diamond trains a meta-classifier on your traffic and returns a recommendation. Martian does similar. OpenRouter and Portkey leave the prediction to your fallback config. Hand-rolled routers use regex or keyword rules. Different implementations, identical shape: read the input, guess the model, ship the answer the guess produced.
+
+When the guess is right, you save money. When the guess is wrong, the user eats a bad response. The router never finds out.
+
+That is dead-reckoning. You hold a heading, you assume the wind, you commit. If the wind shifts you arrive somewhere else. There is no instrument that tells you whether you arrived where you intended.
+
+## What "verifier-gated cascade" changes
+
+The architectural shift is one extra step: read the cheap-model answer before you ship it.
+
+1. The pre-classifier reads the prompt. Confident cheap routes ship from Haiku immediately. That covers most traffic, under 10 ms overhead.
+2. Borderline prompts get the Haiku answer scored by a calibrated verifier.
+3. If the verifier accepts (score above tau), ship the cheap answer.
+4. If the verifier rejects, escalate to Sonnet, or to Opus on Sonnet rejection.
+
+The verifier never sees the Opus output. Its only job is deciding whether the cheap answer is good enough to leave alone. That is a much smaller, much more tractable scoring problem than predicting model fit from the prompt alone, and it generalizes better off-distribution.
+
+On 11,420 RouterBench held-out triples, verifier AUROC is 0.961 and calibration ECE is 0.016. The verifier knows what it knows.
+
+## Predicted vs verified: same cost, different failure mode
+
+Run a prompt-only classifier and a verifier-gated cascade on the same held-out split at matched cost:
+
+| Strategy | Cost (x) | Catastrophic | Quality preserved |
+|---|---:|---:|---:|
+| Always-Opus | 12.0x | 0% | 100% |
+| Prompt-only classifier | 4.8x | 3.4% | 96.6% |
+| **Verifier-gated cascade** | **4.7x** | **1.7%** | **98.3%** |
+| Always-Haiku | 1.0x | 26.0% | 74.0% |
+
+Same cost. Half the quality drops. The mechanism that produces the gap is the verification step. Reading the cheap-model answer turns "we predicted this prompt was easy" into "we predicted this prompt was easy and the cheap model in fact produced a passing answer." Different claim, different reliability.
+
+A prompt-only router maxes out at the ceiling of how well any model can predict outcome from input alone. That ceiling sits around 96-97% on RouterBench-class evals. The verifier breaks the ceiling because it reads the output, not the input.
+
+## Why this is the architectural wedge
+
+The competing router products lead with cost. So do we, eventually. But the buyer concern that actually blocks the purchase is quality: "If I switch, will my users get worse answers?" A router that predicts model fit cannot answer this honestly. It can show eval results and cross its fingers that your traffic looks like its eval. The verifier-gated cascade can: the verifier is in the loop on every borderline request, so quality drops are caught and surfaced, not absorbed silently.
+
+Lead with quality preservation, not cost. ND and Martian lead with cost. The wedge for the buyer is "I will not be punished for switching." Once they trust the quality story, the 60% cost number lands.
+
+## The tradeoff, said honestly
+
+The verifier adds 180 ms when it runs. Most requests skip it because the pre-classifier is confident, so the average added latency is much smaller, but the borderline path pays this cost. We think 180 ms on the slow path to avoid shipping a bad Haiku answer is the right tradeoff for production LLM workloads. If your application is in a tight loop where 180 ms is the difference between viable and not, you are probably better served by always-Haiku with manual escalation rules, and you should not be reading this post.
+
+The verifier is also currently trained on RouterBench-derived signal. RouterBench covers a wide distribution of public LLM tasks, but it is not your traffic. If your prompt distribution is meaningfully different (deep agentic, narrow vertical, heavily multilingual), the verifier may need on-distribution calibration. The OCR closed loop in production is already wired to do this from your live response signal.
+
+## What we are publishing next
+
+A direct head-to-head against notdiamond-0001 on the same RouterBench held-out split. Both routers, same triples, same metric. Until that artifact is public, we will say "the closest competitor on routing claims" and let the architectural difference do the rest of the work. After it is public, we will lead with the head-to-head number.
+
+## How to try it
+
+Two-line change. Swap your base URL to \`https://api.getnadir.com\`. Set \`model="auto"\`. BYOK on every tier including Free. The verifier ships with the image; the version is stamped on every response as \`x-nadir-classifier-sha\`. The eval JSONs that produce the numbers in this post are in the public repo.
+
+You do not have to pick the threshold. The production cascade ships with a sane default. You can read the full threshold sweep in [the RouterBench cascade benchmark](/blog/routerbench-cascade-benchmark).`,
+
+  "finops-ai-98-percent-manage-spend-visibility-gap": `## Two years ago, 31% of FinOps teams managed AI spend. Today, 98% do.
+
+The FinOps Foundation's sixth annual State of FinOps report surveyed 1,192 respondents representing over $83 billion in annual cloud spend. The headline finding on AI is stark: in 2024, 31% of FinOps practitioners managed AI costs. In 2025, that number hit 63%. In 2026, 98% expect to manage AI spend within the year.
+
+FinOps for AI is now the top forward-looking priority across organizations of all sizes.
+
+This is not a gradual trend. It is a phase change. AI spend went from a niche concern to a universal one in 24 months. The question is no longer whether finance teams track AI costs. It is whether they can actually see them.
+
+[Source: FinOps Foundation, "State of FinOps 2026 Report," 2026](https://data.finops.org/)
+
+[Source: CloudKeeper, "State of FinOps 2026 Report: Key Trends, Insights, and What Comes Next"](https://www.cloudkeeper.com/insights/blog/state-finops-2026-report-key-trends-insights-and-what-comes-next)
+
+## The #1 challenge: visibility into where the tokens go.
+
+The report identifies three interconnected challenges when extending FinOps to AI workloads. The top one is visibility.
+
+Practitioners cannot see AI costs at the level of detail they need. Cloud FinOps has years of tooling for tracking provisioned resources priced per hour or per GB. AI FinOps is different. A single workflow might hit an inference API, a vector database, a tool API, and a GPU cluster for fine-tuning. Each has its own pricing model, billing cycle, and unit of measure. Token-based LLM billing does not look like anything in the traditional cloud cost stack.
+
+The second challenge is allocation. AI usage is embedded inside product features, internal workflows, and agent chains that cross teams and systems. Attributing cost to a business unit requires tagging at the request level, not the service level.
+
+The third is ROI. Without per-request cost data, teams cannot calculate what a feature, customer, or transaction actually costs in inference spend. They know the total bill. They do not know which parts of the product are driving it.
+
+The top tooling request in the entire 2026 survey is granular monitoring of AI spend: tokens, LLM requests, and GPU utilization. Commercial tooling has not yet delivered this at scale.
+
+[Source: Virtasant, "State of FinOps 2026 Signals Expansive Future for Practitioners"](https://www.virtasant.com/blog/state-of-finops-2026)
+
+[Source: USU, "6 Takeaways from the State of FinOps Report 2026"](https://www.usu.com/en/blog/6-takeaways-from-the-state-of-finops-report-2026)
+
+## The gap between cloud FinOps and AI FinOps is structural.
+
+Cloud FinOps is a solved problem in 2026. Teams know how to track EC2 hours, S3 storage, and Lambda invocations. The billing data is granular, the tagging is standardized, and the tooling is mature.
+
+AI FinOps is at the stage cloud FinOps was in 2018. The billing data exists but it is aggregated at the wrong level. A monthly Anthropic invoice tells you total tokens consumed across all API keys. It does not tell you which feature consumed them, which user triggered them, or which requests could have gone to a cheaper model.
+
+The unit economics question is especially pointed for LLM inference. Cloud compute has relatively stable per-unit costs. LLM inference costs vary by model, by prompt length, by output length, by whether the input was cached, and by whether the request was batched. A single API call to Claude Opus 4.7 can cost 25x more than the same call to Haiku 4.5, depending on output length. Without per-request tracking, teams cannot tell which model handled which request or what it cost.
+
+This is why the FinOps Foundation updated its framework in 2026 to include AI-specific categories. The old framework assumed provisioned resources with predictable pricing. The new one accounts for consumption-based billing where cost per unit fluctuates with every request.
+
+[Source: FinOps Foundation, "FinOps Framework 2026: Executive Strategy, Technology Categories, and Converging Disciplines"](https://www.finops.org/insights/2026-finops-framework/)
+
+## Organizations are being asked to self-fund AI through optimization savings.
+
+The report surfaces a dynamic that many engineering leads will recognize. Organizations are being told to fund AI investments by finding savings in their existing cloud footprint. The logic: optimize what you already spend, and redirect the freed-up budget to AI initiatives.
+
+This creates a direct feedback loop. The faster you reduce waste in your AI inference bill, the more budget you have for AI expansion. But you cannot reduce waste you cannot see. Without per-request cost visibility, optimization is guesswork. You can negotiate volume discounts with your provider. You can set hard budget caps. But you cannot identify which requests are overpaying for model capability they do not need.
+
+This is the difference between FinOps (governance and visibility) and cost optimization (routing and model selection). FinOps tells you how much you spent. Optimization decides how much you should have spent. The State of FinOps report covers the first. The second requires a routing layer.
+
+## What per-request visibility actually looks like.
+
+The tooling gap the report identifies has a specific shape. Here is what teams need and what most do not have:
+
+**1. Per-request model attribution.** Which model handled each API call? If your application sends \`model="auto"\` or uses a gateway, did the request go to Opus, Sonnet, or Haiku? Without this, you cannot calculate cost per request accurately. Different models have 5x to 25x price differences on the same prompt.
+
+**2. Per-request cost calculation.** Input tokens, output tokens, cached tokens, and the model-specific rate for each. This needs to happen at the request level, not aggregated by day or by API key. A daily aggregate hides the distribution. Ten cheap requests and one expensive one average out to a medium cost that describes none of them.
+
+**3. Per-request savings attribution.** If you are routing, how much did each routing decision save compared to the default (most expensive) model? This is the number that justifies the routing layer. Without it, you are trusting the vendor's benchmark instead of measuring your own workload.
+
+**4. Metadata tagging at the request level.** User ID, feature name, environment, team. This is what makes allocation possible. The FinOps Foundation's report says allocation is the second-hardest challenge. It is hard because the data is not tagged at the right granularity.
+
+**5. Real-time access, not batch reports.** Monthly invoices and weekly dashboards are not fast enough to catch anomalies. An agent loop that burns $30 on a $0.50 task needs to be visible within minutes, not at the end of the billing cycle.
+
+The FinOps tooling vendors (Vantage, Amnic, Finout) are building toward this. Vantage launched LLM Token Allocation in private preview in 2026, joining token observability data to cost rows with per-model, per-team, and per-customer allocation. But most of these tools sit outside the request path. They ingest billing data after the fact.
+
+[Source: Vantage, "AI Cost Observability: Measuring and Justifying Token Spend in 2026"](https://www.vantage.sh/blog/finops-for-ai-token-costs)
+
+## The routing layer is the observability layer.
+
+There is a simpler path to per-request visibility. If every API call goes through a routing proxy, the proxy can log per-request cost data as a side effect of routing.
+
+This is not a novel insight. It is how cloud cost management evolved. AWS did not ship cost allocation tags on day one. Third-party tools and API gateways added the metadata that made FinOps possible. The same pattern is playing out for AI inference, but faster, because the billing model (per-token, variable by model) makes visibility even more critical.
+
+A routing layer that sits between your application and the LLM provider sees every request. It knows the model, the token counts, the cost, and the routing decision. It can tag each request with application metadata (user, feature, environment) and expose per-request cost data in real time.
+
+The FinOps Foundation's report says the #1 missing feature is granular monitoring of AI spend. A routing proxy that logs per-request cost data delivers exactly that, as a byproduct of making the routing decision.
+
+## The numbers on what visibility enables.
+
+Enterprise data from the AICC's analysis of 2.4 billion API calls shows the impact of combining visibility with routing. Organizations that implemented intelligent multi-model routing achieved median blended costs of $2.31 per million tokens, compared to $18.40 for frontier-only deployments. That is an 87% reduction.
+
+But the reduction did not come from routing alone. It came from routing informed by visibility. Teams that could see per-request cost data identified which request types were overpaying for model capability. They set routing thresholds based on observed quality, not assumptions. They measured the actual savings per routing decision and adjusted.
+
+The FinOps Foundation's earlier survey of 1,192 organizations found that teams with financial guardrails for AI spend 3.2x less per completed task than teams without. The guardrails are only as good as the data feeding them.
+
+IDC predicts that by 2028, 70% of top AI-driven enterprises will use dynamic model routing. The prediction implicitly assumes per-request cost visibility as a prerequisite. You cannot route dynamically if you cannot see what each route costs.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year as Multi-Model AI Adoption Hits Record High," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+[Source: IDC Blog, "Why the Future of AI Lies in Model Routing," November 2025](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/)
+
+## Three things engineering teams should do now.
+
+**1. Instrument per-request token costs today.** Do not wait for your FinOps tool to ship an AI module. Log input tokens, output tokens, model, and cost for every LLM API call. A week of data is enough to identify your top cost drivers. Most teams discover that 50 to 70% of their token spend goes to requests that did not need a frontier model.
+
+**2. Tag requests with business metadata.** User ID, feature name, team, environment. Without tags, you can see total cost but not cost per feature or cost per customer. The allocation problem the FinOps report identifies is a tagging problem. Solve it at the request level and the aggregation follows.
+
+**3. Route based on what you see.** Once you have per-request cost data, the routing decisions become obvious. Classification requests going to Opus at $5/$25 per million tokens should go to Haiku at $1/$5. Formatting and summarization do not need frontier reasoning. A trained classifier can make these decisions in under 10 ms per request, but the visibility comes first.
+
+## Where Nadir fits.
+
+Nadir is a routing proxy that also solves the visibility problem the FinOps Foundation identified.
+
+Every request through Nadir returns per-request response headers: \`x-nadir-routed-to\` (which model handled the request), \`x-nadir-cost-usd\` (what it cost), \`x-nadir-cost-saved\` (what was saved versus the default model), and \`x-nadir-latency-ms\` (routing overhead). The dashboard aggregates these by day, week, month, feature, and API key.
+
+This is the granular monitoring that 98% of FinOps teams say they need. It ships as a side effect of the two-line integration: change the base URL, set \`model="auto"\`. No separate observability pipeline. No CSV uploads. No private preview waitlist.
+
+For teams that need to show finance where the AI budget is going, per-request cost headers are the answer. For teams that need to reduce that budget, routing is the answer. They are the same integration.
+
+---
+
+*Sources: [FinOps Foundation, "State of FinOps 2026 Report"](https://data.finops.org/) (2026). [CloudKeeper, "State of FinOps 2026 Report: Key Trends, Insights, and What Comes Next"](https://www.cloudkeeper.com/insights/blog/state-finops-2026-report-key-trends-insights-and-what-comes-next). [Virtasant, "State of FinOps 2026 Signals Expansive Future for Practitioners"](https://www.virtasant.com/blog/state-of-finops-2026). [USU, "6 Takeaways from the State of FinOps Report 2026"](https://www.usu.com/en/blog/6-takeaways-from-the-state-of-finops-report-2026). [FinOps Foundation, "FinOps Framework 2026"](https://www.finops.org/insights/2026-finops-framework/). [Vantage, "AI Cost Observability: Measuring and Justifying Token Spend in 2026"](https://www.vantage.sh/blog/finops-for-ai-token-costs). [AICC, "Enterprise Token Costs Drop 67%"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high) (May 2026). [IDC Blog, "Why the Future of AI Lies in Model Routing"](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/) (November 2025).*`,
+  "microsoft-cancelled-claude-code-ai-coding-cost-crisis": `## Microsoft is pulling Claude Code. The reason is the bill.
+
+In mid-May 2026, Microsoft began cancelling most internal Claude Code licenses across its Experiences and Devices division. The directive covers thousands of engineers working on Windows, Microsoft 365, Teams, Outlook, and Surface. Access ends June 30, 2026. Developers are being redirected to GitHub Copilot CLI.
+
+The pilot launched in December 2025. By May, adoption had spread well beyond engineering to product managers and designers. The tool was popular. It was also expensive. Microsoft's financial year ends June 30, and the Claude Code line item was hard to defend at enterprise scale.
+
+Microsoft framed the move as platform standardization. The financial pressure tells the rest of the story.
+
+[Source: Windows Central, "Microsoft cancels Claude Code licenses, shifting developers to GitHub Copilot CLI," May 2026](https://www.windowscentral.com/microsoft/microsoft-cancels-claude-code-licenses-shifting-developers-to-github-copilot-cli-a-move-likely-driven-by-financial-motives)
+
+[Source: Crypto Briefing, "Microsoft cancels Claude Code licenses as AI costs surge across the industry," May 2026](https://cryptobriefing.com/microsoft-cancels-claude-code-ai-costs/)
+
+## Microsoft is not alone. This is an industry pattern.
+
+Uber burned through its entire 2026 AI budget by April. Claude Code adoption jumped from 32% to 84% across a 5,000-engineer organization in three months. Per-developer costs ran $500 to $2,000 per month for heavy users. The CTO had to revisit financial assumptions after spending exceeded projections by a wide margin.
+
+[Source: The Information, "Uber CTO Shows How Claude Code Can Blow Up AI Budgets," May 2026](https://www.theinformation.com/newsletters/applied-ai/uber-cto-shows-claude-code-can-blow-ai-budgets)
+
+At Amazon, the internal culture went the opposite direction. Employees were encouraged to maximize token consumption in a practice they called "tokenmaxxing." The bet was that heavy AI usage would drive enough productivity to justify the cost. The bill is still being tallied.
+
+At Meta, an employee built an internal leaderboard called "Claudeonomics" that ranked the company's roughly 85,000 workers by token consumption. In a 30-day window, total usage on the dashboard exceeded 60 trillion tokens.
+
+[Source: Tom's Hardware, "AI cost crisis hits tech giants as employee tokenmaxxing backfires," May 2026](https://www.tomshardware.com/tech-industry/artificial-intelligence/ai-cost-crisis-hits-tech-giants-as-employee-tokenmaxxing-backfires-agentic-ai-eats-up-to-1000x-more-tokens-than-standard-ai-sparks-corporate-pullback-at-microsoft-meta-and-amazon)
+
+[Source: Fortune, "Microsoft reports are exposing AI's real cost problem," May 2026](https://fortune.com/2026/05/22/microsoft-ai-cost-problem-tokens-agents/)
+
+## The numbers across the industry tell the same story.
+
+The Pragmatic Engineer newsletter tracked AI agent spending surging roughly 10x in six months at some organizations. Individual developers report monthly bills between $500 and $2,000. One company profiled went from $200 per developer per month to $3,000 for a seven-person team.
+
+DX surveyed engineering leaders on their 2026 AI budgets. When asked about 2025 spending, 38.4% of leaders reported $101 to $500 per developer per year. For 2026, most planned to allocate 1% to 3% of their engineering budget to AI tools. Actual costs are running $3,000 or more per developer per year. That is 3x to 6x what most leaders budgeted.
+
+[Source: DX, "How are engineering leaders approaching 2026 AI tooling budgets?"](https://getdx.com/blog/how-are-engineering-leaders-approaching-2026-ai-tooling-budget/)
+
+Gartner's May 2026 report estimates the enterprise AI coding agent market at $9.8 billion to $11 billion annualized. AI agent cost overruns are a top concern among IT executives, with most attributing the overruns to increased usage under consumption-based pricing.
+
+[Source: Gartner, "The market for enterprise AI coding agents is entering a new phase," May 2026](https://www.gartner.com/en/newsroom/press-releases/2026-05-20-gartner-says-the-market-for-enterprise-ai-coding-agents-is-entering-a-new-phase-of-expansion-and-competitive-realignment)
+
+Software vendors are also adding their own pressure. AI-driven renewals are raising enterprise software prices 20% to 37% through forced SKU migrations and credit-based pricing. The "AI tax" is compounding on top of the token bill.
+
+[Source: Tropic, "The AI Tax: How AI Is Driving Software Price Increases," 2026](https://www.tropicapp.io/blog/ai-tax)
+
+## Why the bill grows faster than the budget.
+
+The root cause is straightforward. Every call in every agentic coding session hits a frontier model. File reads, status checks, linting, formatting, classification, and simple code generation all go to Opus or GPT-5 at $5 to $25 per million tokens. The model does not distinguish between a request that requires deep reasoning and one that Haiku could handle at $1 per million tokens.
+
+Agentic workflows consume 1,000x more tokens than chat. Stanford and Microsoft Research documented this in their study of eight frontier LLMs on SWE-bench. Runs on the same task vary by 30x. Spending more tokens does not improve accuracy. 40% to 60% of input tokens are removable waste.
+
+The math is counterintuitive but consistent. Per-token prices have fallen 99.7% since 2024. Enterprise AI spend tripled to $37 billion anyway. Cheaper tokens made agentic workflows viable. Agentic workflows consume 5x to 30x more tokens per task than the chatbots they replaced. Volume growth outpaced price cuts.
+
+Goldman Sachs projects this will accelerate. Their forecast calls for a 24x increase in token consumption by 2030, reaching 120 quadrillion tokens per month. If consumption grows faster than unit costs fall, the bill gets worse, not better.
+
+[Source: Goldman Sachs, "AI Agents Forecast to Boost Tech Cash Flow as Usage Soars," May 2026](https://www.goldmansachs.com/insights/articles/ai-agents-forecast-to-boost-tech-cash-flow-as-usage-soars)
+
+[Source: Stanford/Microsoft Research, "How Do AI Agents Spend Your Money?", arXiv:2604.22750, April 2026](https://arxiv.org/abs/2604.22750)
+
+## The fix is not to use AI less. It is to route each call.
+
+Microsoft's answer was to cancel licenses and consolidate on a cheaper tool. That is one approach. It trades capability for cost control. It does not address the underlying problem: uniform model selection.
+
+The underlying problem is that every API call, regardless of complexity, goes to the most expensive model. File reads go to Opus. Status checks go to Opus. Simple code generation goes to Opus. The 60% to 70% of calls that do not need a frontier model get billed at frontier rates anyway.
+
+Enterprise data shows what happens when you fix this. Between Q1 2025 and Q1 2026, organizations that implemented tiered routing achieved median blended costs of $2.31 per million tokens, compared to $18.40 for frontier-only deployments. That is an 87% reduction. Multi-model routing is now used by 42% of enterprises, up from single digits a year ago.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+Augment Code published routing data specific to coding agent workflows. Their analysis shows three-tier Claude routing (Opus for architecture decisions, Sonnet for implementation, Haiku for file navigation and classification) saves 51% compared to uniform Opus deployment.
+
+[Source: Augment Code, "Best AI Model for Coding Agents in 2026: A Routing Guide"](https://www.augmentcode.com/guides/ai-model-routing-guide)
+
+## What the Microsoft math looks like with routing.
+
+Microsoft's Experiences and Devices division has thousands of engineers. Assume 3,000 active Claude Code users at an average of $300 per month (conservative, given industry data showing $500 to $2,000 for heavy users). That is $900,000 per month, or $10.8 million per year.
+
+If 60% of agentic coding calls are low complexity and route to Haiku at $1/$5 per million tokens instead of Opus at $5/$25, the blended cost drops 40% to 50%. That turns $900,000 per month into $450,000 to $540,000. The annual savings are $4.3 to $5.4 million.
+
+Microsoft chose to cancel licenses instead. The engineers still need AI coding tools. They will use Copilot CLI, which also runs on token-based pricing under the hood. The cost problem did not go away. It moved.
+
+## What engineering leaders should do instead.
+
+**1. Audit the complexity breakdown.** Most teams do not know what percentage of their agentic calls actually need a frontier model. Instrument a week of traffic. Classify each call by complexity. GitHub found 37% of their agentic tokens were pure waste. Independent analyses show 60% to 70% of calls do not need Opus or GPT-5.
+
+**2. Route per call, not per tool.** The model that plans architecture changes is not the model that should read file listings. A trained classifier that evaluates each API call independently and routes to the cheapest capable model captures the pricing gap on the majority of calls. Augment Code's data shows 51% savings from three-tier routing alone.
+
+**3. Budget with routing in the forecast.** DX's survey shows engineering leaders planned for $500 to $1,000 per developer per year. Actual costs are running $3,000 or more. With routing, a realistic budget is $1,000 to $1,500 per developer per year. Without routing, plan for $3,000 or more and expect to blow through it.
+
+**4. Do not cancel the tool. Fix the model selection.** Microsoft's approach trades capability for cost control. Routing preserves the capability (frontier models for tasks that need them) while cutting cost on the 60% to 70% of calls that do not.
+
+## Where Nadir fits.
+
+Nadir routes each API call through a trained classifier in under 10 ms. Haiku for file reads and classification. Sonnet for implementation. Opus only when the prompt actually needs deep reasoning. The integration is two lines: change the base URL, set \`model="auto"\`.
+
+Per-request response headers (\`x-nadir-routed-to\`, \`x-nadir-cost-saved\`, \`x-nadir-cost-usd\`) show exactly where each call went and what it saved. The dashboard aggregates savings by day, week, and month. No instrumentation beyond the two-line change.
+
+For teams watching their AI coding budget evaporate, routing is the most direct lever. It does not require changing tools, rewriting prompts, or downgrading model quality on the requests that actually need it. The requests that do not need a frontier model stop being billed at frontier rates.
+
+---
+
+*Sources: [Windows Central, "Microsoft cancels Claude Code licenses"](https://www.windowscentral.com/microsoft/microsoft-cancels-claude-code-licenses-shifting-developers-to-github-copilot-cli-a-move-likely-driven-by-financial-motives) (May 2026). [Crypto Briefing, "Microsoft cancels Claude Code licenses as AI costs surge"](https://cryptobriefing.com/microsoft-cancels-claude-code-ai-costs/) (May 2026). [Tom's Hardware, "AI cost crisis hits tech giants as employee tokenmaxxing backfires"](https://www.tomshardware.com/tech-industry/artificial-intelligence/ai-cost-crisis-hits-tech-giants-as-employee-tokenmaxxing-backfires-agentic-ai-eats-up-to-1000x-more-tokens-than-standard-ai-sparks-corporate-pullback-at-microsoft-meta-and-amazon) (May 2026). [Fortune, "Microsoft reports are exposing AI's real cost problem"](https://fortune.com/2026/05/22/microsoft-ai-cost-problem-tokens-agents/) (May 2026). [The Information, "Uber CTO Shows How Claude Code Can Blow Up AI Budgets"](https://www.theinformation.com/newsletters/applied-ai/uber-cto-shows-claude-code-can-blow-ai-budgets) (May 2026). [DX, "How are engineering leaders approaching 2026 AI tooling budgets?"](https://getdx.com/blog/how-are-engineering-leaders-approaching-2026-ai-tooling-budget/). [Gartner, "Enterprise AI coding agents market"](https://www.gartner.com/en/newsroom/press-releases/2026-05-20-gartner-says-the-market-for-enterprise-ai-coding-agents-is-entering-a-new-phase-of-expansion-and-competitive-realignment) (May 2026). [Goldman Sachs, "AI Agents Forecast"](https://www.goldmansachs.com/insights/articles/ai-agents-forecast-to-boost-tech-cash-flow-as-usage-soars) (May 2026). [Stanford/Microsoft Research, arXiv:2604.22750](https://arxiv.org/abs/2604.22750) (April 2026). [AICC, "Enterprise Token Costs Drop 67%"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high) (May 2026). [Augment Code, "AI Model Routing Guide"](https://www.augmentcode.com/guides/ai-model-routing-guide). [Tropic, "The AI Tax"](https://www.tropicapp.io/blog/ai-tax) (2026).*`,
+  "enterprise-seven-models-no-routing-layer": `## Enterprises adopted multi-model AI. They forgot the routing layer.
+
+F5's 2026 State of Application Strategy Report surveyed 1,800 organizations across every major industry vertical. The headline finding: 78% of enterprises now run AI inference as a core production operation. Not experiments. Not pilots. Production workloads handling real traffic.
+
+The average organization operates seven AI models in production or active evaluation. For 77% of respondents, inference (not training or fine-tuning) is the dominant AI activity. Only 8% rely exclusively on a single public AI service.
+
+[Source: F5, "AI Has Left the Lab: F5 Report Reveals 78% of Enterprises Now Run AI Inference as a Core Operation," May 2026](https://www.f5.com/company/news/press-releases/enterprises-now-run-ai-inference-as-core-operation)
+
+[Source: Help Net Security, "Multi-model AI is creating a routing headache for enterprises," May 2026](https://www.helpnetsecurity.com/2026/05/07/f5-ai-inference-operations-report/)
+
+## Seven models, one routing strategy: send everything to the most expensive one.
+
+Having seven models available does not mean seven models are being used well. Most enterprises adopted new models opportunistically. A team evaluated GPT-5, another team integrated Claude, a third team picked up an open-source model for a batch pipeline. Each team hardcoded their model choice.
+
+The result is a multi-model portfolio with single-model routing. Every request within a given application still goes to whichever model the original developer chose. There is no per-request evaluation of whether a cheaper model could handle the task.
+
+F5's data confirms this gap. While 52% of organizations chain or orchestrate multiple AI models together, the chaining is mostly sequential (model A processes, then model B refines). It is not cost-aware routing where each request is independently evaluated and sent to the cheapest capable model.
+
+The report describes the operational challenge directly: enterprises are expanding traffic management, identity controls, observability, and routing systems for multiple AI models across hybrid environments. But expanding infrastructure to support multiple models is not the same as routing intelligently between them.
+
+[Source: F5, "F5 Report 2026: AI inferencing has arrived, complicating an already complex IT landscape," May 2026](https://www.f5.com/company/blog/f5-report-2026-ai-inferencing-has-arrived-complicating-an-already-complex-it-landscape)
+
+## The cost of the gap.
+
+The numbers from the AICC's analysis of 2.4 billion API calls show what happens on both sides of this divide.
+
+Enterprises that adopted intelligent multi-model routing achieved a median 71% cost reduction compared to single-provider deployments. The top quartile hit reductions exceeding 80%. The effective blended cost per million tokens dropped from $18.40 to $6.07 across the dataset, a 67% year-over-year decline.
+
+But routing optimization accounted for an estimated 34 percentage points of that 67% drop. The rest came from model price cuts (DeepSeek V4, Gemini Flash, open-source competition). Meaning: enterprises that got cheaper models but did not route to them captured roughly half the available savings. The other half required a routing decision at the request level.
+
+Open-source and open-weight models captured 38% of enterprise token volume in Q1 2026, up from 11% in Q1 2025. That is a 245% share increase in twelve months. But having cheap models in your portfolio only helps if your application actually sends requests to them when they are the right fit.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year as Multi-Model AI Adoption Hits Record High," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+## IDC says routing is where this is going.
+
+IDC's AI and Automation FutureScape predicts that by 2028, 70% of top AI-driven enterprises will use advanced multi-tool architectures to dynamically and autonomously manage model routing across diverse models.
+
+That prediction implies that today, in mid-2026, significantly fewer than 70% have this in place. The gap between multi-model adoption (widespread) and dynamic model routing (early) is where the excess spend lives.
+
+IDC frames the value of routing as threefold: performance optimization (selecting the most context-appropriate model per request), cost reduction (routing commodity tasks to commodity models), and insulation from technology churn (swapping models without rewriting applications).
+
+The third point matters more than teams realize. Model pricing changes every quarter. New models launch monthly. A routing layer absorbs these shifts. A hardcoded model choice does not.
+
+[Source: IDC Blog, "Why the Future of AI Lies in Model Routing," November 2025](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/)
+
+## Deloitte calls it "the AI infrastructure reckoning."
+
+Deloitte's 2026 Tech Trends report dedicated an entire section to what they call the AI infrastructure reckoning. The core argument: inference costs dropped 280-fold over two years, but enterprise AI spending kept climbing because cheaper tokens made agentic workflows viable, and agentic workflows consume 5 to 30x more tokens per task.
+
+The math is counterintuitive but consistent. Per-token prices fell 99.7%. Total inference spend tripled to $37 billion. The culprit is volume. When tokens get cheap enough, teams deploy agents, chains, and orchestrated workflows that consume orders of magnitude more tokens than the chatbots they replaced.
+
+Deloitte's prescription includes a three-tier hybrid model: public cloud for elastic training, private infrastructure for predictable high-volume inference, and edge computing for latency-critical decisions. But underneath the infrastructure layer, the routing question remains. Which model handles which request? The infrastructure tier does not answer that. The routing layer does.
+
+[Source: Deloitte, "The AI infrastructure reckoning: Optimizing compute strategy in the age of inference economics," Tech Trends 2026](https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/ai-infrastructure-compute-strategy.html)
+
+## What a routing layer needs to do in a 7-model world.
+
+When you operate one or two models, you can get away with if-else routing. Model A for one use case, Model B for another. The routing logic fits in 20 lines.
+
+At seven models, that breaks down. The combinatorics of model capabilities, pricing tiers, latency profiles, and task types exceed what static rules can handle. F5's report noted that 93% of surveyed organizations operate in hybrid multicloud environments, with 86% distributing applications across on-premises, public cloud, and colocation. Every inference request becomes a routing decision weighed against cost, accuracy, availability, latency, and geographic constraints.
+
+A production routing layer at this scale needs four things:
+
+**1. Per-request classification.** Each API call is evaluated independently. A trained classifier that reads the prompt and outputs a complexity tier in under 10 ms. Not prompt length. Not keyword matching. Semantic complexity.
+
+**2. Cost-aware model selection.** Given the complexity tier, the router selects the cheapest model that meets the quality threshold. This requires a live pricing table and performance data per model per tier.
+
+**3. Automatic failover.** When a provider goes down (and they all do), the router retries against the next model in the chain. The application never sees the failure.
+
+**4. Per-request observability.** Every routing decision is logged with the model selected, the cost incurred, the cost saved versus the default model, and the latency added. Without this, you cannot validate that routing is actually working.
+
+Static rules cannot adapt when a new model launches with better price-performance on mid-tier tasks. A trained classifier, retrained on observed outcomes, can.
+
+## The gap is closing, but slowly.
+
+The trajectory is clear. Multi-model adoption happened in 2025. Multi-model routing is happening in 2026. By 2028, IDC expects it to be standard at top AI enterprises.
+
+The question for engineering teams running seven models today is whether they wait for routing to become standard or capture the savings now. The AICC data says the difference is 34 percentage points of cost reduction. On a $50,000 per month inference bill, that is $17,000 per month, or $204,000 per year.
+
+## Where Nadir fits.
+
+Nadir is a routing layer purpose-built for this problem. A trained classifier evaluates each API call in under 10 ms and routes to the cheapest model that can handle it. Integration is two lines: change the base URL, set \`model="auto"\`.
+
+Per-request response headers (\`x-nadir-routed-to\`, \`x-nadir-cost-saved\`, \`x-nadir-cost-usd\`, \`x-nadir-latency-ms\`) give the observability that F5's report identifies as a gap. The dashboard aggregates savings by day, week, and month. No instrumentation beyond the two-line change.
+
+For teams that already have multiple models available but route by developer preference instead of task complexity, Nadir turns a multi-model portfolio into a multi-model routing strategy. The models you already pay for start earning their keep.
+
+---
+
+*Sources: [F5, "AI Has Left the Lab: 78% of Enterprises Now Run AI Inference as a Core Operation"](https://www.f5.com/company/news/press-releases/enterprises-now-run-ai-inference-as-core-operation) (May 2026). [F5, "F5 Report 2026: AI inferencing has arrived"](https://www.f5.com/company/blog/f5-report-2026-ai-inferencing-has-arrived-complicating-an-already-complex-it-landscape) (May 2026). [Help Net Security, "Multi-model AI is creating a routing headache for enterprises"](https://www.helpnetsecurity.com/2026/05/07/f5-ai-inference-operations-report/) (May 2026). [AICC, "Enterprise Token Costs Drop 67% Year-Over-Year"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high) (May 2026). [IDC Blog, "Why the Future of AI Lies in Model Routing"](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/) (November 2025). [Deloitte, "The AI infrastructure reckoning"](https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/ai-infrastructure-compute-strategy.html) (2026).*`,
+  "uber-burned-ai-budget-four-months": `## Uber's AI budget lasted four months.
+
+In early 2026, Uber rolled out Claude Code access to its full 5,000-engineer organization. Adoption moved fast. By March, 84% of engineers were classified as agentic coding users, up from 32% at launch in December 2025. Nearly 95% of Uber engineers used AI tools every month. Around 70% of committed code came from those systems.
+
+Then the bill arrived. Uber's CTO Praveen Neppalli Naga told The Information that the company had to revisit its financial assumptions after spending exceeded projections much earlier than expected. The entire 2026 AI budget was exhausted by April.
+
+Per-developer costs ranged from $150 to $250 per month on average, but heavy users ran $500 to $2,000 per month. No FinOps playbook existed for token-based billing at that scale.
+
+[Source: The Information, "Uber CTO Shows How Claude Code Can Blow Up AI Budgets," May 2026](https://www.theinformation.com/newsletters/applied-ai/uber-cto-shows-claude-code-can-blow-ai-budgets)
+
+[Source: Startup Fortune, "Uber Burned Its Entire 2026 AI Budget in Four Months," May 2026](https://startupfortune.com/uber-burned-its-entire-2026-ai-budget-in-four-months-and-claude-code-is-why-finance-teams-should-be-worried/)
+
+## This is not just an Uber problem.
+
+The Pragmatic Engineer newsletter has been tracking the same pattern across multiple companies. AI agent spending has surged roughly 10x in six months at some organizations. One company profiled went from $200 per developer per month to $3,000 per developer per month for a seven-person team. Some individual developers are spending $500 a day on Claude Code alone.
+
+[Source: The Pragmatic Engineer, "The Pulse: AI token spending out of control," 2026](https://newsletter.pragmaticengineer.com/p/the-pulse-ai-token-spending-out-of)
+
+DX's survey of engineering leaders tells the planning side of the story. When asked about their 2025 spending, 38.4% of leaders reported spending $101 to $500 per developer per year on AI tools. Only 10.5% were spending over $1,000. For 2026, many planned to allocate 1 to 3% of their total engineering budgets.
+
+The actual numbers blew past those plans. DX now estimates the realistic floor at $500 to $1,000 per developer per year, with multi-vendor setups pushing costs to $3,000 or more. That is 3 to 6x what most leaders budgeted.
+
+[Source: DX, "How are engineering leaders approaching 2026 AI tooling budgets?"](https://getdx.com/blog/how-are-engineering-leaders-approaching-2026-ai-tooling-budget/)
+
+Deloitte's January 2026 report, "The Pivot to Tokenomics," confirmed the trend at the enterprise level. AI has become the single fastest-growing line item in corporate technology budgets, consuming a quarter to one-half of IT spend at some firms. Cloud bills are up 19% year over year, driven almost entirely by generative AI workloads.
+
+[Source: Deloitte Insights, "AI tokens: How to navigate AI's new spend dynamics," January 2026](https://www.deloitte.com/us/en/insights/topics/emerging-technologies/ai-tokens-how-to-navigate-spend-dynamics.html)
+
+## The root cause is uniform model selection.
+
+The spending explosion has a straightforward explanation. Every call in every agentic coding session hits a frontier model. File reads, status checks, linting, formatting, classification, and simple code generation all go to Opus or GPT-5.5. The model does not distinguish between a request that requires deep reasoning and one that could be handled by a model costing 5 to 10x less.
+
+Developer surveys back this up. A study tracking 42 agent runs on a FastAPI codebase found 70% of tokens were waste from reading too many files, failed attempts, and verbose tool output. A separate analysis found 87% of tokens went to finding code, not writing it. In both cases, the wasted tokens were billed at frontier rates.
+
+Token cost volatility topped the pain points in a Q1 2026 developer survey at 42%. Monthly bills swing 2 to 3x quarter over quarter because agentic workloads are inherently stochastic. The same task can cost 30x more on one run than another, as Stanford and Microsoft Research documented in their study of coding agent token consumption.
+
+The pattern repeats at every scale. Individual developers hit subscription limits and switch to API pricing, where costs balloon further. Teams adopt multiple tools (Claude Code, Cursor, Copilot) and pay for overlapping coverage. Organizations set annual budgets based on 2025 usage patterns and blow through them in Q1 when agentic adoption takes off.
+
+## The data on what routing changes.
+
+The fix is not to use cheaper models for everything. Sonnet 4.6 delivers 99% of Opus 4.6's performance on SWE-bench (79.6% vs 80.8%), but there are tasks where that 1.2 percentage points matters. The fix is to stop sending every request to the most expensive model.
+
+Augment Code published a routing guide in 2026 that breaks coding agent workflows into roles: Opus for coordination and architecture decisions, Sonnet for implementation, Haiku for file navigation and classification. Their data shows three-tier Claude routing saves 51% compared to uniform Opus deployment.
+
+[Source: Augment Code, "Best AI Model for Coding Agents in 2026: A Routing Guide"](https://www.augmentcode.com/guides/ai-model-routing-guide)
+
+Enterprise data tells the same story at a larger scale. Between Q1 2025 and Q1 2026, average enterprise cost per million tokens fell from $18.40 to $6.07. Token price cuts explain roughly half. The other half came from multi-model routing, now used by 42% of enterprises. The average number of models per enterprise account grew from 2.1 to 4.7 in that period.
+
+[Source: Open Source For You, "Enterprise AI Costs Crash 67% As Open Source Models And Multi-Model Routing Go Mainstream," May 2026](https://www.opensourceforu.com/2026/05/enterprise-ai-costs-crash-67-as-open-source-models-and-multi-model-routing-go-mainstream/)
+
+Organizations that fully implemented tiered routing architectures achieved median blended costs of $2.31 per million tokens, compared to $18.40 for frontier-only deployments. That is an 87.4% reduction.
+
+## What the Uber math looks like with routing.
+
+Take Uber's numbers. 5,000 engineers, $150 to $250 per developer per month average, $500 to $2,000 for heavy users. Call it $1 million per month total at the midpoint.
+
+If 60% of agentic coding calls are low complexity (file reads, simple edits, formatting, classification) and route to Haiku at $1/$5 per million tokens instead of Opus at $5/$25, the blended cost drops by 40 to 50%. That turns $1 million per month into $500,000 to $600,000. The annual difference is $4.8 to $6 million.
+
+That is not a theoretical number. It is the same range the enterprise data shows. Teams with tiered routing pay roughly half what teams with uniform model selection pay, and the quality gap on routed requests is within measurement noise for the tasks being routed.
+
+The per-developer math is equally direct. A heavy user spending $1,500 per month on uniform Opus usage drops to $750 to $900 with routing. A team of seven spending $3,000 per developer per month drops to $1,500 to $1,800. The budget that was supposed to last a year lasts a year.
+
+## Three things engineering leaders should do now.
+
+**1. Audit where tokens actually go.** Most teams do not know the complexity breakdown of their agentic workloads. Instrument a week of production traffic. Classify each call by complexity. The data will almost certainly show that 50 to 70% of calls do not need a frontier model. GitHub found 37% of their agentic tokens were pure waste. Your number is probably similar.
+
+**2. Route per call, not per session.** The model that plans architecture changes is not the model that should read file listings. A trained classifier that evaluates each API call independently and routes to the cheapest capable model captures the gap between frontier and commodity pricing on the majority of calls. Static rules based on prompt length or keyword matching drift as workloads change. A classifier trained on observed outcomes adapts.
+
+**3. Set per-developer budgets with routing in the loop.** DX's survey shows most engineering leaders are still planning AI budgets based on subscription sticker prices. That does not work when heavy users run $500 to $2,000 per month in token costs. Budget at the per-developer level, and include routing savings in the forecast. A realistic 2026 budget with routing is $1,000 to $1,500 per developer per year. Without routing, plan for $3,000 or more.
+
+## Where Nadir fits.
+
+Nadir routes each API call through a trained classifier in under 10 ms. For coding agent workloads where the majority of calls are low to mid complexity, this means most of your traffic hits Haiku or Sonnet pricing instead of Opus pricing. The integration is two lines: change the base URL, set \`model="auto"\`.
+
+Per-request response headers (\`x-nadir-routed-to\`, \`x-nadir-cost-saved\`, \`x-nadir-cost-usd\`) show exactly where each call was routed and what it saved. The dashboard aggregates savings by day, week, and month. No instrumentation needed beyond the two-line change.
+
+For teams staring at AI budgets that are tracking 3 to 6x above plan, routing is the most direct lever that does not require changing tools, rewriting prompts, or downgrading model quality on the requests that actually need it.
+
+---
+
+*Sources: [The Information, "Uber CTO Shows How Claude Code Can Blow Up AI Budgets"](https://www.theinformation.com/newsletters/applied-ai/uber-cto-shows-claude-code-can-blow-ai-budgets) (May 2026). [Startup Fortune, "Uber Burned Its Entire 2026 AI Budget in Four Months"](https://startupfortune.com/uber-burned-its-entire-2026-ai-budget-in-four-months-and-claude-code-is-why-finance-teams-should-be-worried/) (May 2026). [The Pragmatic Engineer, "The Pulse: AI token spending out of control"](https://newsletter.pragmaticengineer.com/p/the-pulse-ai-token-spending-out-of) (2026). [DX, "How are engineering leaders approaching 2026 AI tooling budgets?"](https://getdx.com/blog/how-are-engineering-leaders-approaching-2026-ai-tooling-budget/). [Deloitte Insights, "AI tokens: How to navigate AI's new spend dynamics"](https://www.deloitte.com/us/en/insights/topics/emerging-technologies/ai-tokens-how-to-navigate-spend-dynamics.html) (January 2026). [Augment Code, "Best AI Model for Coding Agents in 2026: A Routing Guide"](https://www.augmentcode.com/guides/ai-model-routing-guide). [Open Source For You, "Enterprise AI Costs Crash 67%"](https://www.opensourceforu.com/2026/05/enterprise-ai-costs-crash-67-as-open-source-models-and-multi-model-routing-go-mainstream/) (May 2026). [Stanford/Microsoft Research, "How Do AI Agents Spend Your Money?" arXiv:2604.22750](https://arxiv.org/abs/2604.22750) (April 2026). Anthropic, OpenAI model pricing as of May 2026.*`,
+  "coding-agents-burn-1000x-tokens-research": `## The first systematic study of agent token spending is here.
+
+In April 2026, researchers from Stanford's Digital Economy Lab and Microsoft Research published the first large-scale empirical study of how coding agents actually consume tokens. The paper, "How Do AI Agents Spend Your Money?", analyzed trajectories from eight frontier LLMs on SWE-bench Verified, the standard benchmark for real-world software engineering tasks.
+
+The findings are worth reading carefully if you pay for LLM inference at scale. Not because the numbers are surprising (practitioners already suspected most of this), but because the study puts hard data behind patterns that were previously anecdotal.
+
+[Source: Stanford Digital Economy Lab / Microsoft Research, "How Do AI Agents Spend Your Money? Analyzing and Predicting Token Consumption in Agentic Coding Tasks," arXiv:2604.22750, April 2026](https://arxiv.org/abs/2604.22750)
+
+## Finding 1: Coding agents use 1,000x more tokens than chat.
+
+This is the headline number. Agentic coding tasks consume roughly 1,000 times more tokens than conversational code reasoning or code chat. The gap exists because agents loop: they read files, call tools, interpret results, make changes, verify, and repeat. Each loop iteration sends the full accumulated context back through the model.
+
+A chat interaction is a prompt and a response. An agentic task is 10 to 50 API calls, each carrying the full history of every previous call. Input tokens, not output tokens, drive the cost. The study found that input token volume is the primary determinant of total spend in agentic workflows.
+
+This tracks with what GitHub found when they audited their own agentic systems earlier this year (37% of tokens were waste) and with independent analyses showing that agentic sessions average 1 to 3.5 million tokens per task including retries.
+
+## Finding 2: The same task can cost 30x more on one run than another.
+
+Token consumption in agentic coding is highly stochastic. The study found that repeated runs of the same agent on the same task can differ by up to 30x in total token usage. Same model, same prompt, same codebase. Different execution path, wildly different bill.
+
+This happens because agent behavior is non-deterministic. The model might find the right file on the first try or explore five wrong files first. It might generate a correct fix immediately or enter a debug-retry loop that consumes 500,000 additional tokens. The variance is inherent to the agentic paradigm, not a bug in any specific model.
+
+The practical implication: forecasting agent costs from averages is unreliable. A task that costs $0.50 on one run can cost $15 on the next. Budget planning based on average cost per task will underestimate actual spend for any team running agents at scale.
+
+## Finding 3: Spending more tokens does not improve accuracy.
+
+This is the finding that matters most for cost optimization. The study found no meaningful correlation between token consumption and task success. Agents that consumed more tokens were not more likely to solve the task correctly.
+
+In other words, the expensive runs are not the productive ones. They are the ones where the agent got lost, explored dead ends, retried failed approaches, or accumulated irrelevant context. The cheapest successful runs were often the most direct: the agent identified the issue, made the fix, and stopped.
+
+This directly challenges the implicit assumption behind "let the agent run until it succeeds" strategies. Giving an agent more budget does not make it smarter. It makes it more expensive. The quality of the routing decision (which model handles which task) matters more than the token budget allocated to each task.
+
+## Finding 4: Models vary dramatically in token efficiency.
+
+Not all models consume tokens at the same rate on the same tasks. The study found that on identical SWE-bench tasks, some models consumed over 1.5 million more tokens than others. The gap is not explained by accuracy. In several cases, more token-efficient models also achieved higher solve rates.
+
+This is a model selection problem, not a prompt engineering problem. Two frontier models given the same task and the same tools can differ by millions of tokens in total consumption. The cost difference at $5 per million input tokens is $7.50 or more per task, before accounting for output tokens.
+
+The implication for teams choosing a default agent model: benchmark token efficiency alongside accuracy. A model that scores 2 percentage points lower on SWE-bench but uses 40% fewer tokens per task will cost dramatically less at production scale. And at 500+ tasks per day, "dramatically less" means tens of thousands of dollars per month.
+
+## Finding 5: Models cannot predict their own costs.
+
+The researchers asked each model to estimate its own token consumption before executing a task. The correlation between predicted and actual consumption was weak to moderate, peaking at 0.39. Models systematically underestimated what they would actually spend.
+
+This matters for pre-routing and budget allocation. If you are using an LLM to classify task difficulty as an input to routing decisions, the model's self-assessment of "how hard is this" is not a reliable proxy for "how many tokens will this consume." The study also found that human expert assessments of task difficulty only weakly correlated with actual token costs. Humans and models both misjudge the computational effort agents expend.
+
+Effective routing needs a purpose-built classifier trained on observed token consumption and task outcomes, not self-reported difficulty estimates. The classifier has to learn the mapping between prompt characteristics and actual routing cost from historical data, not from the model's introspection.
+
+## Parallel research: 40 to 60% of agent tokens are removable.
+
+The Stanford/Microsoft study measured the problem. Other recent work measured the solution.
+
+AgentDiet, a trajectory reduction framework evaluated on SWE-bench Verified, demonstrated that 39.9 to 59.7% of input tokens in coding agent runs can be removed with no measurable loss in task accuracy. The cost reduction: 21.1 to 35.9% of total computational spend.
+
+[Source: "Reducing Cost of LLM Agents with Trajectory Reduction," arXiv:2509.23586](https://arxiv.org/abs/2509.23586)
+
+The waste categories:
+- **Stale context.** File listings, error messages, and tool outputs from early turns that are no longer relevant by turn 20+.
+- **Redundant tool schemas.** Full JSON schemas for every registered tool re-sent on every API call, even when most tools are irrelevant to the current step.
+- **Uncompressed tool output.** Raw JSON payloads, whitespace, and verbose formatting that can be minified without information loss.
+- **Failed attempt history.** Full traces of approaches that did not work, carried forward as context for the rest of the session.
+
+A separate study, Squeez (task-conditioned tool-output pruning), found that extracting only the relevant evidence block from each tool observation, while discarding the rest, reduces token volume with no performance loss on downstream agent decisions.
+
+[Source: "Squeez: Task-Conditioned Tool-Output Pruning for Coding Agents," arXiv:2604.04979](https://arxiv.org/abs/2604.04979)
+
+These are not marginal improvements. Cutting 40 to 60% of input tokens on a 2-million-token agentic session saves 800,000 to 1,200,000 tokens per task. At $5 per million input tokens, that is $4 to $6 per task. At 500 tasks per day, that is $2,000 to $3,000 per day, or $60,000 to $90,000 per month.
+
+## What this means for your agent architecture.
+
+The research converges on a clear picture: coding agents are expensive not because the work is hard, but because the execution is wasteful. Most tokens are spent finding things, not doing things. Most retries do not need a frontier model. Most context carried forward is stale.
+
+Three levers move the needle:
+
+**1. Route per turn, not per session.** The study confirms that not every API call in an agentic session requires the same model. File reads, status checks, and output formatting do not need Opus. Error parsing and simple code generation do not need Opus. A classifier that evaluates each turn independently and routes to the cheapest capable model captures the efficiency gap the researchers measured between models.
+
+**2. Compress context aggressively.** The 40 to 60% removable token finding from AgentDiet is conservative for long sessions. Minifying JSON, deduplicating schemas, and summarizing stale turns can cut input tokens substantially without affecting the agent's ability to complete the task. Every token removed from context saves money on every subsequent turn, because agentic sessions are cumulative.
+
+**3. Scope tools per step.** Every tool schema sent to the model is input tokens billed at full rate. An agent with 40 registered tools pays for 40 tool definitions on every API call, even when only 3 are relevant. Narrowing tool registrations to the current step reduces the fixed cost per turn.
+
+## Where Nadir fits.
+
+Nadir addresses the first lever directly. The trained classifier evaluates each API call in under 10 ms and routes to the cheapest model that can handle it. For agentic workloads where 60 to 70% of turns are low complexity, this means the majority of your turns hit Haiku-class pricing ($1 per million input tokens) instead of Opus-class pricing ($5 per million).
+
+The research validates this approach from multiple angles:
+- More tokens does not equal better results, so routing to a cheaper model on low-complexity turns does not degrade outcomes.
+- Models vary dramatically in efficiency, so selecting the right model per turn is the highest-leverage cost decision.
+- Self-assessment of difficulty is unreliable, so routing needs a trained classifier, not the model's own judgment.
+
+The integration is two lines. Change the base URL, set \`model="auto"\`. Per-request response headers (\`x-nadir-routed-to\`, \`x-nadir-cost-saved\`) show exactly where each turn was routed and what it saved.
+
+For teams running coding agents at production scale, the Stanford/Microsoft data makes the case clearly: the cheapest token is the one you never send, and the next cheapest is the one routed to the right model.
+
+---
+
+*Sources: [Stanford Digital Economy Lab / Microsoft Research, "How Do AI Agents Spend Your Money?" arXiv:2604.22750](https://arxiv.org/abs/2604.22750) (April 2026). [AgentDiet, "Reducing Cost of LLM Agents with Trajectory Reduction," arXiv:2509.23586](https://arxiv.org/abs/2509.23586). [Squeez, "Task-Conditioned Tool-Output Pruning for Coding Agents," arXiv:2604.04979](https://arxiv.org/abs/2604.04979). [GitHub Blog, "How we reduced token consumption in GitHub Agentic Workflows by 37%"](https://github.blog/engineering/how-we-reduced-token-consumption-in-github-agentic-workflows-by-37/) (April 2026). [Artificial Analysis, "Coding Agent Index"](https://artificialanalysis.ai/agents/coding-agents) (May 2026). Anthropic, OpenAI model pricing as of May 2026.*`,
   "flat-rate-ai-over-metered-billing": `## The subscription-to-metered shift happened in 30 days.
 
 In April and May 2026, three things happened within weeks of each other:
@@ -251,7 +847,7 @@ If you send everything to Claude Opus 4.7 at $5/$25 per million tokens, you pay 
 
 Route the simple tier to Haiku and the mid tier to Sonnet, and you cut your bill by 40 to 55% with no measurable quality loss on the routed requests. At scale, the difference between routing and not routing can be thousands of dollars per month.
 
-This is not theoretical. In Nadir's 50-prompt production benchmark, a trained classifier routes with 96% accuracy and saves 47% versus always using the most expensive model, with zero catastrophic downgrades.
+This is not theoretical. On 11,420 held-out RouterBench triples, Nadir's verifier-gated cascade preserves 98% of always-Opus quality at 60% lower cost. The cheap model answers first; a calibrated verifier (AUROC 0.961) scores it before we ship; on rejection we escalate.
 
 ## Why this matters more for agentic workloads
 
@@ -977,7 +1573,7 @@ The classifier overhead is under 10 ms per turn. In a session where each turn ta
 
 The industry is converging on this approach. A 2026 survey found that 37% of enterprises now use five or more models in production. The teams seeing the best results treat model selection like air traffic control, routing each request to the right destination rather than sending everything to the same runway.
 
-Multiple independent analyses put the savings from intelligent routing at 40 to 60% for mixed-complexity workloads. That aligns with our own benchmarks: Nadir's \`wide_deep_asym\` router with lambda=20 saves 47% versus always-Opus on a 50-prompt eval set, with 0% catastrophic routes.
+Multiple independent analyses put the savings from intelligent routing at 40 to 60% for mixed-complexity workloads. That aligns with our own held-out benchmark: Nadir's verifier-gated cascade cuts cost 60% versus always-Opus on 11,420 RouterBench held-out triples, preserving 98% of always-Opus quality. A calibrated verifier (AUROC 0.961) reads the cheap-model answer before we ship it, so the routing decision is recoverable rather than absorbed.
 
 The key is that routing must be automatic and per-request. Manual rules break as prompt distributions shift. Static classifiers plateau at 88 to 93% accuracy. A trained classifier that adapts to live response quality (what we call Outcome-Conditioned Routing) closes the gap.
 
@@ -1086,58 +1682,73 @@ We're integrating OCR into Nadir's hosted platform and open-source router. Key a
 
 Read the full paper: **OCR: Closed-Loop LLM Routing via Matched-Timescale Implicit Feedback and Cross-Tier Calibration Probes** (Dor Amir).`,
 
-  "50-prompt-benchmark": `## Setup
+  "routerbench-cascade-benchmark": `## Setup
 
-We ran 50 diverse prompts through Nadir's binary classifier with these settings:
+We ran 11,420 held-out triples from RouterBench through Nadir's verifier-gated cascade. The eval is public, the held-out split is disjoint from training (overlap_count=0), and the threshold sweep is reproducible from the open-source eval harness.
 
-- **Benchmark model:** Claude Sonnet 4 ($3/1M input, $15/1M output)
-- **Available models:** Claude Sonnet, Claude Haiku, GPT-4o, GPT-4o-mini, Gemini 2.0 Flash
-- **Analyzer:** Binary classifier (DistilBERT-based)
+- **Benchmark model:** Claude Opus 4.6 (always-Opus baseline)
+- **Cheap tier:** Claude Haiku 4.5; mid tier: Claude Sonnet 4.6
+- **Pre-classifier:** trained wide_deep tier classifier (under 10 ms per prompt)
+- **Verifier:** calibrated outcome scorer (CPU INT8, 180 ms when it runs)
+- **Dataset:** RouterBench held-out, n=11,420 triples
 
-The prompts were split into three categories: 17 simple, 17 medium, 16 complex.
+## The architecture
 
-## Results
+Every prompt hits the pre-classifier first. If the pre-classifier is confident the prompt is cheap-tier, we skip the verifier entirely and ship the Haiku answer. That is the common path.
+
+If confidence is borderline, the cheap model answers first. The verifier reads that answer and scores it. If it accepts, we ship cheap. If it rejects, we escalate to Sonnet, or to Opus on Sonnet rejection. The verifier never sees Opus output; it only decides whether the cheap output is good enough to leave alone.
+
+The wedge against one-shot routers (Not Diamond, Martian) is the verification step. A predicted-cheap route can absorb a quality failure; a verified-cheap route surfaces it.
+
+## Headline numbers
 
 | Metric | Value |
 |--------|-------|
-| Routing accuracy | 96% (48/50 correct) |
-| Average latency | 107ms per classification |
-| Overall savings | 38% |
+| Cost reduction vs always-Opus | **60%** |
+| Quality preserved vs always-Opus | **98%** |
+| Catastrophic routes | 1.7% |
+| Verifier AUROC | **0.961** |
+| Verifier calibration (ECE) | **0.016** |
+| Verifier latency, CPU INT8 | 180 ms |
+| Pre-classifier overhead | < 10 ms |
 
-### Per-tier breakdown
+"Quality preserved" is one minus catastrophic-route rate, on the same eval. We do not redefine the metric between sections.
 
-**Simple prompts (17/17 correct):** All routed to Gemini Flash. 97% savings vs benchmark.
+## Threshold sweep
 
-Examples: "What is Python?", "Convert 72F to Celsius", "Is 7 a prime number?"
+The verifier threshold tau is the operational knob. Higher tau means the verifier rejects more cheap answers, escalating more often: better quality, less savings. Lower tau is the opposite. Sweep below is precomputed from the same eval.
 
-**Medium prompts (17/17 correct):** Routed to Gemini Flash. 97% savings.
+| tau | Accuracy | Cost reduction | Catastrophic | Wasted escalation |
+|-----|---------:|---------------:|-------------:|------------------:|
+| 0.3 | 88.2% | 73.2% | 8.8% | 3.0% |
+| 0.4 | 89.9% | 68.5% | 5.3% | 4.7% |
+| 0.5 | 90.3% | 67.0% | 4.4% | 5.3% |
+| 0.7 | 89.8% | 62.8% | 2.4% | 7.9% |
+| **0.8** | 89.2% | **60.9%** | **1.7%** | 9.2% |
+| 0.9 | 88.1% | 59.1% | 1.1% | 10.8% |
 
-Examples: "Write a Python palindrome checker", "Explain JWT auth step by step", "Write a SQL query for second highest salary"
+The 60/98 headline numbers report tau=0.8. The shape of the curve matters more than the single operating point: cost reduction degrades gracefully as you tighten the quality guarantee. The cliff people fear is not there.
 
-**Complex prompts (14/16 correct):** 14 stayed on Sonnet, 2 were mis-routed to Flash. Complex prompts stay on the premium model by design, but Context Optimize still compacts their input tokens (minifying JSON, deduplicating tool schemas, normalizing whitespace) before sending to the provider. That's where the 12% savings on this tier comes from.
+## How this beats prompt-only routing
 
-Examples: "Design a distributed rate limiter", "Architect a real-time collaborative editor", "Implement a B+ tree with insert/delete"
+A prompt-only classifier sees only the input. It cannot tell you whether the cheap model handled it. The strongest prompt-only baseline on the same held-out split delivers 96.6% quality at 4.8x cost (where always-Opus is 12.0x and always-Haiku is 1.0x). The cascade hits 98.3% quality at 4.7x cost. Same cost, fewer quality drops, because reading the answer is cheaper than guessing whether it will be good.
 
-### What got mis-classified
+| Strategy | Cost (x) | Catastrophic | Quality preserved |
+|---|---:|---:|---:|
+| Always-Opus | 12.0x | 0% | 100% |
+| Prompt-only classifier | 4.8x | 3.4% | 96.6% |
+| Always-Haiku | 1.0x | 26.0% | 74.0% |
+| **Verifier-gated cascade** | **4.7x** | **1.7%** | **98.3%** |
 
-Two complex prompts scored as medium:
-- "Implement a garbage collector in Python" - uses familiar keywords ("implement", "Python") without architectural framing
-- "Write a compiler frontend for a simple expression language" - "simple" in the prompt text confused the classifier
+## What this means for your bill
 
-Both are edge cases where the prompt sounds simpler than the task actually is. We're tuning the classifier to weigh task-type keywords more heavily.
+If you spend $5,000/month on LLM APIs and your prompt mix is what RouterBench held-out roughly reflects, Nadir saves about $3,000/month gross. With the 25% on first $2K / 10% above fee structure that is $600 in variable fees, $9 base, net about $2,391/month back. Complex prompts still hit Opus when the verifier says they need to.
 
-## Raw cost comparison
+## Reproducibility
 
-| Tier | Baseline (all Sonnet) | Routed | Savings | How |
-|------|----------------------|--------|---------|-----|
-| Simple | $0.0209 | $0.0006 | 97.3% | Routed to Flash |
-| Medium | $0.0212 | $0.0006 | 97.3% | Routed to Flash |
-| Complex | $0.0978 | $0.0859 | 12.1% | Stayed on Sonnet + Context Optimize |
-| **Total** | **$0.1399** | **$0.0871** | **37.7%** | **Routing + Context Optimize** |
+The eval harness, the held-out split, and the verifier weights ship with the image. Each release stamps a deterministic SHA on the classifier (visible per request as x-nadir-classifier-sha). Run the same triples; get the same numbers.
 
-## What this means
-
-If you spend $5,000/month on LLM APIs and your prompt mix is roughly 1/3 simple, 1/3 medium, 1/3 complex, Nadir saves you around $1,900/month. Complex prompts stay on premium. You don't lose quality where it matters.`,
+The composed eval JSON is at \`verifier/reports/eval_composed_20260526T191001.json\`. The verifier calibration eval is at \`verifier/reports/eval_20260526T184516.json\`. RouterBench train/test disjointness is at \`verifier/reports/routerbench_contamination_20260524T122849.json\`.`,
 
   "context-optimize-savings": `## The problem
 
@@ -1252,7 +1863,7 @@ The ranker filters available models by the user's allowed list, then sorts by co
 
 ## Accuracy
 
-On our 50-prompt benchmark: 96% accuracy. The two errors were complex prompts that used simple-sounding language. We're working on a heuristic layer that detects task-type keywords (implement, design, architect) to catch these edge cases.
+The binary classifier alone hits routing accuracy in the high 80s on small held-out evals. On RouterBench held-out (n=11,420), the prompt-only classifier preserves 96.6% of always-Opus quality. That is the ceiling for any router that sees only the input. To push past it, you have to read the cheap-model answer before you ship; that is what the verifier-gated cascade adds, taking quality preservation to 98%.
 
 ## What's next
 
@@ -1260,7 +1871,7 @@ We're training a confidence-aware analyzer that escalates uncertain classificati
 
   "nadir-vs-always-premium": `## When Nadir helps most
 
-**High volume, mixed complexity:** If you're making 1000+ API calls/day and many are simple lookups, formatting, or basic Q&A, routing saves the most. Typical savings: 30-47%, depending on your simple-to-complex mix.
+**High volume, mixed complexity:** If you're making 1000+ API calls/day and many are simple lookups, formatting, or basic Q&A, routing saves the most. On 11,420 RouterBench held-out triples, Nadir cuts cost 60% versus always-Opus while preserving 98% of always-Opus quality. Your savings will track that range when your prompt mix looks similar.
 
 **Agentic workflows:** Claude Code, Cursor, Aider - these tools make hundreds of calls per session. Many are simple (read file, check status). Routing + context optimization can cut costs 50%+.
 

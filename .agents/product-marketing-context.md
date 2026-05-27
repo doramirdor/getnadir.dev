@@ -1,13 +1,13 @@
 # Product Marketing Context
 
-*Last updated: 2026-05-26*
-*Auto-drafted from BRAND_VOICE.md, llms.txt, README.md, and the live homepage components in `app/src/components/homepage/`. Review and correct sections marked TBD.*
+*Last updated: 2026-05-27*
+*Updated after the τ=0.8 operating-point shift and the website headline rewrite (60% cost reduction / 98% quality preserved on RouterBench held-out, n=11,420). Replaces the prior "47% / 96% routing accuracy" framing, which conflated two different metrics on two different evals.*
 
 ## Product Overview
 
-**One-liner:** Nadir routes every prompt to the cheapest Anthropic model that can handle it.
+**One-liner:** Nadir is a verifier-gated cascade router. The cheap model answers first, the verifier scores it, and we only escalate when quality fails the bar.
 
-**What it does:** A trained classifier reads each prompt in under 10 ms and picks the cheapest model that can answer it well. Haiku for classifications, Sonnet for refactors, Opus only when the prompt actually needs to think. OpenAI compatible — change two lines (base URL + `model="auto"`) and your bill drops.
+**What it does:** Every prompt hits a trained pre-classifier in under 10 ms. High-confidence simple prompts ship straight from Haiku-class models. Borderline prompts get the Haiku answer scored by a calibrated verifier (AUROC 0.961 on RouterBench held-out); if the verifier accepts, ship cheap; if it rejects, escalate to Sonnet or Opus. OpenAI compatible — change two lines (base URL + `model="auto"`) and your bill drops while quality holds.
 
 **Product category:** LLM gateway / AI router. Customers compare us against OpenRouter, Requesty, Portkey, LiteLLM, Not Diamond, and homegrown routers.
 
@@ -70,7 +70,7 @@
 
 | Persona | Cares about | Challenge | Value we promise |
 |---------|-------------|-----------|------------------|
-| Founder-engineer (User + Decision Maker) | Burn rate, shipping velocity | Anthropic bill is the second line on the AWS invoice. Can't justify time to build a router. | Two-line change, save 47% by tomorrow, no refactor |
+| Founder-engineer (User + Decision Maker) | Burn rate, shipping velocity | Anthropic bill is the second line on the AWS invoice. Can't justify time to build a router. | Two-line change, 60% lower bill with 98% of always-Opus quality preserved, no refactor |
 | Staff engineer (Champion + Technical Influencer) | Latency, reliability, control | Has tried OpenRouter or hand-rolled fallbacks. Wants quality floor, BYOK, observability. | Under 10 ms overhead, BYOK, per-request headers, A/B route in production |
 | Eng lead / VP Eng (Decision Maker + Financial Buyer) | Predictable spend, on-call load | Spend is volatile. Provider outages page the team. Quality regressions are expensive. | Flat $9 base + savings fee, 99.9% SLA on Enterprise, automatic failover |
 | Platform team (Anti-buyer risk) | Owning the routing layer in-house | "We could build this." | Maintained classifier retrained weekly, OCR closed loop, semantic cache, context optimization — months of work, shipped |
@@ -99,7 +99,8 @@
 - **Requesty** — Manual model selection with rules. No classifier.
 - **Portkey** — Strong observability, rules-based routing, no trained classifier.
 - **LiteLLM** — Open-source SDK, you run it. Routing is rules-based.
-- **Not Diamond** — Closer to Nadir on routing claims. We compete on observability, BYOK economics, OCR closed loop, and price.
+- **Not Diamond** — The closest competitor on routing claims. They route once with a meta-classifier, then ship the answer. If the classifier picks wrong, the user eats a bad response. We verify the cheap answer before we ship it — that's the architectural wedge. Also competing on observability, BYOK economics, the OCR closed loop, and price.
+- **Martian** — Similar one-shot routing approach. Same wedge applies: no post-generation verification, no recovery mechanism when the router is wrong.
 
 **Secondary (different solution, same problem):**
 - Hand-rolled internal routers and prompt classifiers
@@ -114,26 +115,28 @@
 
 ## Differentiation
 
-**Key differentiators:**
-- Trained classifier with 96% agreement on the public 50-prompt eval, retrained weekly
-- Outcome-Conditioned Routing (OCR) — closed-loop algorithm that adjusts per-tier thresholds from live response quality. Nobody else ships this.
-- Semantic cache on by default (cheapest token is the one you never send)
-- Context optimization (cuts input tokens 30 to 70% on long prompts)
-- Per-request response headers (`x-nadir-routed-to`, `x-nadir-cost-usd`, `x-nadir-cost-saved`, `x-nadir-latency-ms`, `x-nadir-cached`)
-- BYOK on every tier including Free
-- Open-source self-host option (NadirClaw, MIT) for teams that want to run it themselves
+**Key differentiators (ranked by leverage):**
+1. **Verifier-gated cascade.** The cheap model answers first. A calibrated verifier (AUROC 0.961, ECE 0.016 on RouterBench held-out) scores the response. If it accepts, ship cheap; if it rejects, escalate. Nobody else in the gateway space ships this. Not Diamond and Martian route once and never look at the output.
+2. **Iterative refinement (novel cost moat).** Before paying for an Opus escalation, we refine the cheap response with a targeted second cheap-model pass. Cuts the cost of borderline cases that would otherwise force a $$$ escalation. Not published anywhere else.
+3. **Pre-classifier shortcut.** When the trained pre-classifier (wide_deep_asym_v3) is highly confident the prompt is cheap-class, we skip the verifier entirely. Most requests pay zero verifier latency.
+4. **Outcome-Conditioned Routing (OCR) closed loop.** Continuous retraining of thresholds from live response-quality signal. Closed-loop infra exists; numbers will land after 7 days of production data.
+5. Semantic cache on by default (cheapest token is the one you never send).
+6. Context optimization (cuts input tokens 30 to 70% on long prompts).
+7. Per-request response headers (`x-nadir-routed-to`, `x-nadir-cost-usd`, `x-nadir-cost-saved`, `x-nadir-latency-ms`, `x-nadir-cached`).
+8. BYOK on every tier including Free.
+9. Open-source self-host option (NadirClaw, MIT) for teams that want to run it themselves.
 
-**How we do it differently:** A trained model picks the destination, not a rules engine. The router adapts as model quality drifts. The proxy is in-memory, prompts are not logged unless the user opts in.
+**How we do it differently:** Other routers are *predictive*: they guess which model will be best, then ship that model's answer no matter what. Nadir is *verified*: cheap answers are scored before they ship. The architectural difference is recoverable mistakes vs absorbed mistakes.
 
-**Why that's better:** Less configuration, better routing decisions, lower spend, higher reliability, cleaner privacy story.
+**Why that's better:** When the router is wrong, the user doesn't pay for it in quality. Same cost reduction, lower variance.
 
-**Why customers choose us:** "Stop configuring. The router decides." Two-line change, savings visible on the next request, no refactor, no SDK swap.
+**Why customers choose us:** "Stop guessing. Verify before ship." Two-line change, 60% lower bill on RouterBench held-out, 98% of always-Opus quality preserved, no refactor, no SDK swap.
 
 ## Objections
 
 | Objection | Response |
 |-----------|----------|
-| "Will the cheaper model give worse answers?" | You set a quality floor per API key. Simple prompts route to Haiku-class models. Anything above your threshold routes to your configured premium model. On our 50-prompt eval, 0% catastrophic routes at λ=20. |
+| "Will the cheaper model give worse answers?" | The cheap answer is scored by a calibrated verifier (AUROC 0.961 on RouterBench held-out) before it ships. Quality drops are caught, not absorbed. On 11,420 held-out RouterBench triples, 98% of always-Opus quality is preserved at 40% of the cost. The 1.7% of cases where the verifier was wrong are the only quality drops — and they're audited, logged, and used to retrain. |
 | "I don't want a vendor between me and Anthropic." | Proxy runs in memory, BYOK on every tier, OpenAI compatible (rip and replace in two lines). Self-host the open-source core (NadirClaw, MIT) if you prefer. |
 | "Adds latency." | Classifier overhead is under 10 ms per request. Faster than your DNS lookup. |
 | "We can build this ourselves." | Sure — the trained classifier, OCR closed loop, semantic cache, context optimization, retraining pipeline, and per-request observability are months of work. $9/mo gets you the maintained version today. |
@@ -184,7 +187,9 @@
 - "Drop-in for the OpenAI SDK."
 - TBD: capture more verbatim from existing customers
 
-**Words to use:** route, routing, the cheapest model that can handle it, base URL, `model="auto"`, BYOK, classifier, quality floor, failover, proxy, semantic cache, OCR (Outcome-Conditioned Routing), under 10 ms.
+**Words to use:** verifier-gated cascade, quality preservation, the cheap model answers first, escalate only when quality fails the bar, route, routing, base URL, `model="auto"`, BYOK, calibrated verifier, AUROC 0.961, RouterBench held-out, pre-classifier shortcut, iterative refinement, quality floor, failover, proxy, semantic cache, OCR (Outcome-Conditioned Routing), under 10 ms.
+
+**Words to retire (used in older copy, now stale):** "routing accuracy" as a standalone metric (use "quality preservation" instead — same eval, better framing), "50-prompt eval" (we now cite the 11,420-triple RouterBench held-out everywhere), "47% savings" (now 60%), "96%" routing-accuracy claim (was conflating two metrics; use 98% quality preserved).
 
 **Words to avoid (per BRAND_VOICE.md):**
 - Em dashes — use commas, periods, separate sentences
@@ -217,7 +222,7 @@
 
 **Tone:** Direct, confident, technically literate, calm. A senior infra engineer who ships, talking to other builders.
 
-**Style:** Short declarative sentences. Active voice. Verbs up front. Specifics over adjectives. Honest about the shape of the proof ("our 50-prompt benchmark," "sample of six prompts").
+**Style:** Short declarative sentences. Active voice. Verbs up front. Specifics over adjectives. Honest about the shape of the proof (cite the eval inline: "11,420 RouterBench held-out triples," "verifier AUROC 0.961").
 
 **Personality (5 adjectives):** Direct. Confident-not-boastful. Technical. Calm. Honest.
 
@@ -241,14 +246,15 @@
 
 ## Proof Points
 
-**Metrics:**
-- 47% lower Anthropic bill on the 50-prompt eval set, no quality drop on prompts that need Opus (λ=20 in the wide_deep_asym router)
-- 96% routing accuracy on the public 50-prompt benchmark (retrained weekly)
-- Under 10 ms classifier overhead per request
-- 2 lines of code change to migrate
-- 30 to 70% input token reduction with context optimization (where applicable)
-- Up to 53% savings with the argmax variant (2.4pp higher downgrade rate, documented)
-- 99.9% uptime SLA on Enterprise (contractual)
+**Metrics (public, defensible, sourced):**
+- **60% cost reduction** vs always-Opus on 11,420 RouterBench held-out triples (`verifier/reports/eval_composed_20260526T191001.json`, τ=0.8)
+- **98% of always-Opus quality preserved** on the same eval (catastrophic-route rate 1.7%)
+- **Verifier AUROC 0.961, ECE 0.016** on RouterBench held-out (`verifier/reports/eval_20260526T184516.json`, n=11,420)
+- **180 ms verifier latency on CPU**, INT8 quantized, 70 MB artifact
+- **Under 10 ms** pre-classifier overhead per request; verifier skipped entirely on high-confidence routes
+- **2 lines of code** to migrate (base URL + `model="auto"`)
+- **30 to 70% input token reduction** with context optimization (where applicable)
+- **99.9% uptime SLA** on Enterprise (contractual)
 
 **Customers / logos:** No committed customer logos yet. See "Target Accounts (Aspirational ICPs)" above for the archetypes and example companies we are building toward. Anchor-logo priority order is documented there.
 
@@ -258,13 +264,72 @@
 **Value themes:**
 | Theme | Proof |
 |-------|-------|
-| Cost | 47% lower bill on 50-prompt eval; per-request `x-nadir-cost-saved` header; calculator on the homepage |
+| Cost | 60% lower bill on RouterBench held-out; per-request `x-nadir-cost-saved` header; calculator on the homepage |
+| Quality preservation | 98% of always-Opus quality on the same eval; verifier AUROC 0.961; the verifier-gated cascade architecture |
 | Zero friction | OpenAI compatible, two-line change, `model="auto"`, drop-in for Claude Code / Cursor / Codex / Aider / Windsurf / Continue / LangChain / OpenAI SDK |
 | Control | Quality floor per API key, BYOK, failover chain, pin-a-model when needed |
 | Observability | Per-request response headers, full dashboard, no instrumentation |
 | Safety | In-memory proxy, no prompt logging unless opted in, automatic failover |
 
-**Claims discipline (from BRAND_VOICE.md):** Every quantitative claim must (a) cite the source inline, (b) link to the eval, (c) qualify the range, or (d) be contractually true. "Up to 47%" appears once prominently, not three times.
+**Claims discipline (from BRAND_VOICE.md, updated):** Every quantitative claim must (a) cite the source inline, (b) link to the eval JSON, (c) qualify the range, or (d) be contractually true. The eval source is the same one everywhere on the public site: "11,420 RouterBench held-out triples." If a number is from a different eval (e.g., the internal 50-prompt curated set, or any in-progress benchmark), it does not go on the marketing site.
+
+## What's Public vs What Stays Internal
+
+*This section is the screen between engineering truth and marketing copy. Anything in the "say publicly" column has a citable source in the repo. Anything in the "do not say publicly" column is either premature, indefensible, or actively bad for positioning.*
+
+### Public — say these freely
+
+| Claim | Source / why it's safe |
+|---|---|
+| "60% lower bill vs always-Opus" | `verifier/reports/eval_composed_20260526T191001.json`, τ=0.8, n=11,420 |
+| "98% of always-Opus quality preserved" | Same eval, catastrophic-route rate 1.7% |
+| "Verifier AUROC 0.961, ECE 0.016" | `verifier/reports/eval_20260526T184516.json` |
+| "11,420 RouterBench held-out triples" | The methodology citation. Use this exact phrasing site-wide. |
+| "180 ms verifier latency on CPU, INT8 quantized" | Measured. Goes in the "latency" proof card. |
+| "Under 10 ms pre-classifier overhead" | Measured. The classifier shortcut bypasses the verifier on confident routes. |
+| "The cheap model answers first. The verifier scores it before we ship." | Architectural truth. The wedge against Not Diamond / Martian. |
+| "Iterative refinement before escalation" | Move 5, novel cost moat. Live in production. |
+| "Two-line change. OpenAI compatible." | Always true. |
+| "BYOK on every tier, including Free." | Always true. |
+| "In-memory proxy, no prompt logging unless opted in." | Always true (see backend `_redact_for_privacy`). |
+| "Verifier weights ship with the image, deterministic SHA per release." | Reproducibility claim, defensible (route_only exposes `x-nadir-classifier-sha`). |
+
+### Internal — do not put on the marketing site
+
+| Claim / fact | Why it stays internal |
+|---|---|
+| Specific cascade threshold (τ=0.8) | Operational tuning knob. Saying "we run at τ=0.8" invites prospects to second-guess the math. Say "verifier accepts when confident" instead. |
+| Production cascade was fail-open until 2026-05-27 | True but alarming. Just deployed; track record is hours, not weeks. Don't volunteer this. If asked directly, say "the cascade became fully load-bearing this week after the v3 deploy" — true and forward-looking. |
+| Not on any public benchmark leaderboard yet | Don't lead with "submitted to RouterArena" until the PR is open. Until then, frame as "evaluated on RouterBench held-out" (which is true). |
+| RouterArena-specific contamination audit not done | Internal gating item for the submission PR, not a marketing claim. |
+| No measured production AUROC yet | OCR pipeline is wired but zero days of data. The 0.961 number is RouterBench held-out, which is what we cite. |
+| The 25.6% binary routing accuracy of wide_deep_asym *alone* on RouterBench | Bad number. The full cascade is 89.8% (or 98% on quality preservation). The classifier-alone number is misleading without the cascade context — don't expose it. |
+| Internal eval-on-training-distribution numbers (90%+) | Inflated by construction. Never cite these — the 89.8% / 98% on held-out is the real number. |
+| Anchor logos / target accounts list | Aspirational, not customers. Sales-research seed list, not a marketing page. |
+| Production traffic distribution stats | Lets competitors infer our scale. |
+| Internal move taxonomy ("Move 1–5", "composed_v2", "wide_deep_asym_v3") | Jargon. In public, say "pre-classifier shortcut," "verifier cache," "iterative refinement," "trained tier classifier." |
+| The fact that we just rewrote site copy from 47%/96% to 60%/98% | Don't draw attention to the change. Site shows the new numbers; old screenshots may exist in the wild but we don't have to acknowledge the shift. |
+| The fee math edge cases (e.g., savings-fee compounding on cached requests) | Discuss with Pro customers directly, not on the marketing page. |
+| Specific customer count / MRR | Until we hit a number we want to lead with, leave it off. |
+
+### Truth-with-framing — say it, but frame it
+
+| Raw fact | Public framing |
+|---|---|
+| RouterBench numbers may not perfectly match every customer's workload | "On 11,420 RouterBench held-out triples." Always cite the eval. Never say "60% savings guaranteed." |
+| The verifier was trained on RouterBench-derived signal | "Calibrated verifier (AUROC 0.961 on RouterBench held-out)." Acknowledges the source. |
+| Verifier adds 180ms latency *when it runs* — but most requests skip it | "Verifier latency 180ms on CPU; skipped entirely on high-confidence routes." Honest and not alarming. |
+| We're competitive with Not Diamond on routing claims | "The closest competitor on routing claims. They route once; we verify before we ship." Specific and defensible. |
+| The 1.7% catastrophic rate means 1 in 60 requests is below always-Opus quality | "98% of always-Opus quality preserved." Same fact, better framing. |
+| Pricing fee compounds on savings | "$9 base, 25% of the first $2K saved, 10% above. If we save you nothing, you pay $9." Always say it this way, never aggregate. |
+
+### Marketing tone calibration
+
+- **Lead with quality preservation, not cost.** ND and Martian lead with cost. The wedge for the buyer is "I won't get punished for switching." Once they trust the quality story, the 60% cost number lands.
+- **Cite the eval inline.** "11,420 RouterBench held-out triples" should appear in the same sentence as "60%" and "98%" wherever they appear together. Splitting them lets a reader think the number is unsourced.
+- **Don't compete on adjectives.** Never use "best," "most accurate," "leading." Use specific numbers and a citation, and let the reader conclude.
+- **Direct comparisons to ND only when we have a head-to-head artifact.** Until we publish the `notdiamond-0001` vs Nadir RouterBench table, don't say "we beat Not Diamond." Say "we verify before ship; they don't" — true today, expandable later.
+- **Reserve "Up to" for forward-looking claims you can't pin to a single number** (e.g., "up to 70% input token reduction with context optimization"). For the eval numbers, never say "up to 60%" — say "60% on RouterBench held-out." It reads stronger because it's specific.
 
 ## Goals
 

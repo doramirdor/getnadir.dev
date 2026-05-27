@@ -29,13 +29,13 @@ const SOLUTIONS: Solution[] = [
   {
     title: "LLM Routing",
     description:
-      "Every prompt goes to the cheapest model that can still handle it. Opus only when Opus is actually needed.",
+      "Verifier-gated cascade: the cheap model answers first, the verifier scores it, and we only escalate when quality fails the bar. Opus is the safety net, not the default.",
     to: "/solutions/routing",
     icon: "route",
     bullets: [
-      "Up to 47% savings vs always-Opus",
-      "Haiku 4.5, Sonnet 4.6, Opus 4.7",
-      "Tuned per workload",
+      "60% cost reduction vs always-Opus",
+      "98% of always-Opus quality preserved",
+      "Haiku 4.5, Sonnet 4.6, Opus 4.6",
     ],
   },
   {

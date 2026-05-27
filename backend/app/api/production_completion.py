@@ -842,40 +842,143 @@ async def create_completion(
 
             complexity_analysis_result["tier"] = tier_name
 
-            # LAYER: Verifier-gated cascade (IP-1).
-            # Zero-overhead noop when cascade.enabled is False (the default)
-            # or when the verifier has no weights loaded. See
-            # competitor-profiles/blueprints/ip-1-verifier-gated-cascade.md
-            # Section 3 for the orchestration contract.
-            cascade_cfg = user_config.get("model_parameters", {}).get("cascade", {})
-            if cascade_cfg.get("enabled", False):
+            # LAYER: Verifier-gated cascade (IP-1, composed_v2).
+            #
+            # The cascade fires when EITHER the per-user profile
+            # `model_parameters.cascade.enabled` is True OR the global
+            # `settings.CASCADE_ENABLED` env flag is True (production
+            # default). Per-user config overrides env on every field, so
+            # a customer can opt out by setting `enabled: false` on
+            # their profile without restarting the backend.
+            #
+            # `pre_classifier` is the wide_deep_asym 3-tier softmax adapter
+            # (BGE+struct → simple/medium/complex). It runs first; when
+            # high-confidence (P(simple) >= 0.9 or P(complex) >= 0.9 with
+            # P(medium) < 0.5) it short-circuits the verifier path. When
+            # below threshold (or not present) the cascade falls back to
+            # the standard cheap-then-verify flow.
+            #
+            # NOTE: previously this branch loaded `router_v2.pkl` via
+            # `get_routerbench_classifier`. That LR head was trained on a
+            # 5k RouterBench slice (AUROC 0.62) and fired its shortcut on
+            # only 0.9% of held-out prompts — effectively a no-op while
+            # adding an extra encode per request. The wide_deep_asym
+            # analyzer already runs once per request via the analyzer
+            # factory and produces a calibrated 3-tier softmax, so we
+            # reuse it here. The `CASCADE_PRE_CLASSIFIER_PATH` env var
+            # is kept for backward compat but is now inert.
+            user_cascade_cfg = user_config.get("model_parameters", {}).get("cascade", {})
+            from app.settings import settings as _app_settings
+            cascade_enabled = user_cascade_cfg.get(
+                "enabled", _app_settings.CASCADE_ENABLED
+            )
+            nadir_cascade_state = None  # populated below iff cascade dispatch is set up
+            if cascade_enabled:
                 try:
                     from app.services.cascade_router import CascadeRouter
                     from app.services.verifier_model import _shared_verifier
+
+                    # Merge env defaults with per-user overrides. Per-user
+                    # wins on every key it sets; missing keys fall through
+                    # to the env-driven settings.
+                    #
+                    # Production model ladder per CLAUDE.md ("Routing
+                    # model" section):
+                    #   simple  → Haiku-4-5  (the cheap_model arg)
+                    #   medium  → Sonnet-4-6
+                    #   complex → Opus-4-6   (top of ladder, no further escalation)
+                    # The keys here are STARTING tiers; the value is the
+                    # tier we escalate INTO on verifier reject. We omit
+                    # "complex" on purpose since there is nowhere to
+                    # escalate above Opus-4-6.
+                    default_escalations = {
+                        "simple": "claude-sonnet-4-6",
+                        "medium": "claude-opus-4-6",
+                    }
+                    effective_cfg = {
+                        "enabled": True,
+                        "mode": user_cascade_cfg.get("mode", _app_settings.CASCADE_DEFAULT_MODE),
+                        "acceptance_threshold": user_cascade_cfg.get(
+                            "acceptance_threshold",
+                            _app_settings.CASCADE_DEFAULT_THRESHOLD,
+                        ),
+                        "pre_classifier_enabled": user_cascade_cfg.get(
+                            "pre_classifier_enabled",
+                            _app_settings.CASCADE_PRE_CLASSIFIER_ENABLED,
+                        ),
+                        "escalation_models": user_cascade_cfg.get(
+                            "escalation_models", default_escalations
+                        ),
+                        # Move 5: iterative refinement attempts before escalation.
+                        "max_refinement_attempts": user_cascade_cfg.get(
+                            "max_refinement_attempts",
+                            _app_settings.CASCADE_REFINEMENT_ATTEMPTS,
+                        ),
+                        # Move 3: verifier-score cache (LRU+TTL singleton).
+                        "verifier_cache_enabled": user_cascade_cfg.get(
+                            "verifier_cache_enabled", True
+                        ),
+                    }
+                    if "force_escalate_patterns" in user_cascade_cfg:
+                        effective_cfg["force_escalate_patterns"] = user_cascade_cfg[
+                            "force_escalate_patterns"
+                        ]
+
+                    # Lazy-load the pre-classifier the first time we hit
+                    # this branch. Singleton across requests. The wrapper
+                    # is fail-open: if the underlying wide_deep analyzer
+                    # cannot load, predict_binary returns high_confidence
+                    # False and the cascade falls through to the verifier.
+                    pre_classifier = None
+                    if effective_cfg["pre_classifier_enabled"]:
+                        try:
+                            from app.services.wide_deep_pre_classifier import (
+                                get_wide_deep_pre_classifier,
+                            )
+                            pre_classifier = get_wide_deep_pre_classifier()
+                        except Exception as _pc_err:  # noqa: BLE001
+                            logger.warning(
+                                "Pre-classifier load failed; cascade falls through to verifier: %s",
+                                _pc_err,
+                            )
+                            pre_classifier = None
+
                     cascade_messages = [
                         {"role": m.role, "content": m.content}
                         for m in request.messages
                     ]
-                    cascade_router = CascadeRouter(
-                        cascade_cfg, verifier=_shared_verifier
-                    )
-                    cascade_result = await cascade_router.dispatch_with_verifier(
-                        messages=cascade_messages,
-                        cheap_model=recommended_model,
-                        tier_name=tier_name,
-                        user_session=current_user,
-                        request_id=request_id,
-                    )
-                    if cascade_result.escalated:
-                        recommended_model = cascade_result.final_model
-                    complexity_analysis_result["cascade"] = cascade_result.meta
+                    # Stash everything the post-call cascade dispatch needs.
+                    # The actual verifier-gated dispatch runs AFTER the
+                    # cheap LLM call so the verifier can score the real
+                    # response text rather than an empty string. The
+                    # previous pre-call dispatch was structurally unable
+                    # to do this (no llm_service was wired in) and
+                    # systematically over-escalated. See post-LLM block
+                    # near the response handling further down this file.
+                    nadir_cascade_state = {
+                        "router": CascadeRouter(
+                            effective_cfg,
+                            verifier=_shared_verifier,
+                            pre_classifier=pre_classifier,
+                        ),
+                        "messages": cascade_messages,
+                        "tier_name": tier_name,
+                        "request_id": request_id,
+                        "escalation_models": effective_cfg.get("escalation_models", {}),
+                    }
+                    complexity_analysis_result["cascade"] = {
+                        "cascade_pending": "post_call_verify",
+                    }
                 except Exception as cascade_err:  # noqa: BLE001
                     # Cascade must never break the request path; log and continue.
-                    logger.warning("Cascade dispatch failed: %s", cascade_err)
+                    logger.warning("Cascade dispatch setup failed: %s", cascade_err)
+                    nadir_cascade_state = None
                     complexity_analysis_result["cascade"] = {
                         "cascade_skipped": "error",
                         "error": str(cascade_err),
                     }
+            else:
+                nadir_cascade_state = None
         else:
             # Routing disabled — use first selected model or request model directly
             selected = user_config.get("selected_models", [])
@@ -1125,6 +1228,86 @@ async def create_completion(
                 fallback_models=resolved_fallback_models if layer_fallback else None,
                 **extra_kwargs
             )
+
+            # ── Verifier-gated cascade (post-LLM dispatch) ─────────────
+            # Now that we have the actual cheap response, hand it to the
+            # cascade for verification. If the verifier rejects, we make
+            # a second LLM call with the configured escalation model and
+            # use that response instead. This is the IP-1 path made
+            # load-bearing: the verifier scores the REAL response, not
+            # an empty string as in the previous wiring.
+            if nadir_cascade_state is not None and response is not None:
+                try:
+                    # `llm_service.process_prompt()` returns its own shape
+                    # (see `SupabaseUnifiedLLMService.process_prompt`): the
+                    # text is at response["response"], NOT in an OpenAI-
+                    # shape choices array. The OpenAI shape is built later
+                    # in this function when assembling the API response.
+                    cheap_text = response.get("response", "") if isinstance(response, dict) else ""
+                    if not isinstance(cheap_text, str):
+                        cheap_text = ""
+
+                    cascade_router = nadir_cascade_state["router"]
+                    cascade_result = await cascade_router.dispatch_with_verifier(
+                        messages=nadir_cascade_state["messages"],
+                        cheap_model=recommended_model,
+                        tier_name=nadir_cascade_state["tier_name"],
+                        user_session=current_user,
+                        request_id=nadir_cascade_state["request_id"],
+                        cheap_response_text=cheap_text,
+                    )
+                    complexity_analysis_result["cascade"] = cascade_result.meta
+
+                    # If cascade decided to escalate (verifier rejected the
+                    # cheap response and refinement either did not run or
+                    # also failed), call the escalation model and swap the
+                    # response. The cascade's own internal escalation call
+                    # is skipped because we did NOT pass it an llm_service
+                    # — we re-issue via the production unified service so
+                    # billing, analytics, and fallbacks behave correctly.
+                    if cascade_result.escalated and cascade_result.final_model:
+                        escalation_target = cascade_result.final_model
+                        logger.info(
+                            "Cascade escalation: %s → %s (verifier_score=%s)",
+                            recommended_model,
+                            escalation_target,
+                            cascade_result.verifier_score,
+                        )
+                        try:
+                            escalated_response = await llm_service.process_prompt(
+                                prompt=prompt,
+                                system_message=system_message,
+                                model=escalation_target,
+                                temperature=request.temperature or 0.7,
+                                max_tokens=request.max_tokens,
+                                messages=messages_dicts,
+                                fallback_models=(
+                                    resolved_fallback_models if layer_fallback else None
+                                ),
+                                **extra_kwargs,
+                            )
+                            response = escalated_response
+                            recommended_model = escalation_target
+                        except Exception as esc_err:  # noqa: BLE001
+                            # Escalation failed: stick with the cheap
+                            # response we already have. Log so we can see
+                            # how often this happens.
+                            logger.warning(
+                                "Cascade escalation call failed; keeping cheap response: %s",
+                                esc_err,
+                            )
+                            complexity_analysis_result["cascade"][
+                                "escalation_call_error"
+                            ] = str(esc_err)
+                except Exception as cascade_err:  # noqa: BLE001
+                    logger.warning(
+                        "Post-LLM cascade dispatch failed (non-fatal): %s",
+                        cascade_err,
+                    )
+                    complexity_analysis_result["cascade"] = {
+                        "cascade_skipped": "post_call_error",
+                        "error": str(cascade_err),
+                    }
 
         # P0 #4: Store sticky provider after any successful standard-routing call so
         # the next request can use it for cache-aware routing and auto-injection.

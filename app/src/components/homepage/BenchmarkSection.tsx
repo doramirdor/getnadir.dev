@@ -10,9 +10,9 @@ type Row = {
 
 const ROWS: Row[] = [
   { strategy: "Always-Opus (no router)", cost: "12.0x", catastrophic: "0%", quality: "100%" },
-  { strategy: "RouteLLM-style classifier", cost: "11.6x", catastrophic: "7.8%", quality: "92.2%" },
+  { strategy: "Prompt-only classifier (wide_deep_asym alone)", cost: "4.8x", catastrophic: "3.4%", quality: "96.6%" },
   { strategy: "Always-Haiku (cheapest)", cost: "1.0x", catastrophic: "26.0%", quality: "74.0%" },
-  { strategy: "Nadir verifier-gated cascade", cost: "4.5x", catastrophic: "2.5%", quality: "97.5%", highlighted: true },
+  { strategy: "Nadir verifier-gated cascade", cost: "4.7x", catastrophic: "1.7%", quality: "98.3%", highlighted: true },
 ];
 
 type Proof = {
@@ -23,12 +23,12 @@ type Proof = {
 
 const PROOF: Proof[] = [
   {
-    value: "96%",
-    label: "Routing accuracy on RouterBench held-out. Prompt-only routers top out at 62%. 34-point gap.",
+    value: "98%",
+    label: "Quality preserved versus always-Opus on RouterBench held-out. We verify the cheap answer before shipping it, so quality drops are caught, not absorbed.",
   },
   {
-    value: "47%",
-    label: "Cost reduction versus always-Opus, at a 2.5% catastrophic-route rate.",
+    value: "60%",
+    label: "Cost reduction versus always-Opus on the same 11,420 triples. Same eval, no cherry-picking.",
   },
   {
     value: "180 ms",
@@ -52,26 +52,26 @@ export const BenchmarkSection = () => {
             Every other router picks a model from the prompt alone. We measured how well that works.
           </p>
           <p className="text-[17px] md:text-[19px] text-[#424245] m-0 leading-[1.55] tracking-[-0.008em]">
-            On 11,420 held-out RouterBench triples, prompt-only routers top out at 62% accuracy.
-            <span className="text-[#1d1d1f] font-medium"> Nadir reaches 96%</span>
-            {" "}by reading the cheap model's answer first and escalating only when quality fails the bar.
+            On 11,420 held-out RouterBench triples,
+            <span className="text-[#1d1d1f] font-medium"> Nadir preserves 98% of always-Opus quality at 40% of the cost</span>
+            {" "}by reading the cheap model's answer first and escalating only when quality fails the bar. Verifier AUROC 0.961, calibration ECE 0.016.
           </p>
         </div>
 
-        {/* Three proof cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mb-14 md:mb-16">
+        {/* Three proof points — divider-grouped, not boxed. The numbers carry
+            the weight; framing them in cards adds containers without adding
+            information. */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 md:gap-y-0 mb-14 md:mb-16 border-y border-black/[0.08]">
           {PROOF.map((p, i) => (
             <div
               key={p.label}
-              className="bg-white border border-black/[0.08] rounded-[16px] p-7 md:p-8"
-              style={{
-                background: i === 0 ? "rgba(48,209,88,0.04)" : "#fff",
-                borderColor: i === 0 ? "rgba(48,209,88,0.22)" : "rgba(0,0,0,0.08)",
-              }}
+              className={`py-10 md:py-12 px-1 md:px-8 ${
+                i > 0 ? "md:border-l md:border-black/[0.08]" : ""
+              }`}
             >
               <div className="flex items-baseline gap-2 mb-3">
                 <span
-                  className="text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[1] tabular-nums"
+                  className="text-[48px] md:text-[60px] font-semibold tracking-[-0.04em] leading-[0.95] tabular-nums"
                   style={{ color: i === 0 ? "#028a3e" : "#1d1d1f" }}
                 >
                   {p.value}
@@ -82,7 +82,7 @@ export const BenchmarkSection = () => {
                   </span>
                 )}
               </div>
-              <p className="text-[14px] md:text-[15px] text-[#424245] m-0 leading-[1.55] tracking-[-0.005em]">
+              <p className="text-[14px] md:text-[15px] text-[#424245] m-0 leading-[1.55] tracking-[-0.005em] max-w-[260px]">
                 {p.label}
               </p>
             </div>
@@ -154,7 +154,7 @@ export const BenchmarkSection = () => {
 
           <div className="px-5 md:px-7 py-4 md:py-5 border-t border-black/[0.06] bg-[#fbfbfd]">
             <p className="text-[13px] text-[#424245] m-0 tracking-[-0.005em]">
-              <span className="text-[#1d1d1f] font-semibold">62% cost reduction. 97.5% quality preserved.</span>
+              <span className="text-[#1d1d1f] font-semibold">60% cost reduction. 98% quality preserved.</span>
               {" "}11,420 triples, no prompt seen in both train and test. Reproducible from the open-source eval.
             </p>
           </div>
@@ -163,7 +163,7 @@ export const BenchmarkSection = () => {
         {/* Conversion CTA below the table */}
         <div className="mt-14 md:mt-16 flex flex-col items-center text-center">
           <p className="text-[20px] md:text-[24px] text-[#1d1d1f] font-semibold tracking-[-0.018em] m-0 mb-5 max-w-[640px] leading-[1.25]">
-            Save 47%. Don't break 2.5%. Read the eval, not the marketing.
+            Cut your bill by 60%. Keep 98% of always-Opus quality. Read the eval, not the marketing.
           </p>
           <SignupDialog ctaLabel="start_free" ctaLocation="benchmark">
             <button

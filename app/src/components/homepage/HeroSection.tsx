@@ -46,6 +46,7 @@ const fmtCost = (n: number) =>
 export const HeroSection = () => {
   const [visibleRows, setVisibleRows] = useState(0);
   const [showStats, setShowStats] = useState(false);
+  const [pulseRow, setPulseRow] = useState<number | null>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,13 +58,28 @@ export const HeroSection = () => {
     const el = terminalRef.current;
     if (!el) return;
     let timers: ReturnType<typeof setTimeout>[] = [];
+    let pulseInterval: ReturnType<typeof setInterval> | null = null;
     const obs = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
           REQUESTS.forEach((_, i) => {
             timers.push(setTimeout(() => setVisibleRows(i + 1), 200 + i * 60));
           });
-          timers.push(setTimeout(() => setShowStats(true), 200 + REQUESTS.length * 60 + 180));
+          const settleAt = 200 + REQUESTS.length * 60 + 180;
+          timers.push(setTimeout(() => setShowStats(true), settleAt));
+          // Perpetual rolling highlight after initial reveal. Cycles through
+          // routed rows to suggest a continuous live feed without changing
+          // data or shifting layout. CSS does the visual lift.
+          timers.push(
+            setTimeout(() => {
+              let idx = 0;
+              setPulseRow(idx);
+              pulseInterval = setInterval(() => {
+                idx = (idx + 1) % REQUESTS.length;
+                setPulseRow(idx);
+              }, 1800);
+            }, settleAt + 400),
+          );
           obs.disconnect();
         }
       },
@@ -73,6 +89,7 @@ export const HeroSection = () => {
     return () => {
       obs.disconnect();
       timers.forEach(clearTimeout);
+      if (pulseInterval) clearInterval(pulseInterval);
     };
   }, []);
 
@@ -86,7 +103,11 @@ export const HeroSection = () => {
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-10 lg:gap-14 items-center">
           {/* Copy column */}
           <div className="text-left max-w-[600px] lg:max-w-none">
-            <div className="mb-6 text-[12px] font-semibold tracking-[0.06em] uppercase text-[#028a3e]">
+            <div className="mb-6 inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.06em] uppercase text-[#028a3e]">
+              <span className="relative inline-flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-70 animate-ping" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#028a3e]" />
+              </span>
               Live router. {savingsPct}% saved on this page
             </div>
 
@@ -175,13 +196,23 @@ export const HeroSection = () => {
               {REQUESTS.map((req, i) => {
                 const visible = i < visibleRows;
                 const saved = req.premiumCost > req.cost;
+                const pulsing = pulseRow === i;
+                // Highlight intensifies when the rolling pulse lands on this
+                // row. Saved rows pulse green; non-saved (Opus) rows pulse
+                // neutral so we don't fake a savings event we didn't earn.
+                const baseBg = visible && saved ? "rgba(48,209,88,0.06)" : "transparent";
+                const pulseBg = pulsing
+                  ? saved
+                    ? "rgba(48,209,88,0.16)"
+                    : "rgba(0,0,0,0.04)"
+                  : baseBg;
                 return (
                   <div
                     key={i}
-                    className="grid gap-2.5 items-center px-2 py-2.5 rounded-lg mb-0.5 text-[13px] transition-[opacity,transform,background-color] duration-300 ease-emil-out"
+                    className="grid gap-2.5 items-center px-2 py-2.5 rounded-lg mb-0.5 text-[13px] transition-[opacity,transform,background-color] duration-500 ease-emil-out"
                     style={{
                       gridTemplateColumns: "70px 1fr auto auto",
-                      background: visible && saved ? "rgba(48,209,88,0.06)" : "transparent",
+                      background: pulseBg,
                       opacity: visible ? 1 : 0,
                       transform: visible ? "none" : "translateY(8px)",
                     }}

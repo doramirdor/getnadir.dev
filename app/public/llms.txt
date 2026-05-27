@@ -1,33 +1,38 @@
 # Nadir
 
-> Nadir is an open-source, intelligent LLM router that classifies every prompt by complexity and routes it to the cheapest model that can handle it. Teams cut their Claude, GPT, and Gemini spend by up to 47 percent without changing their application code.
+> Nadir is a verifier-gated cascade LLM router. The cheap model answers first. A calibrated verifier (AUROC 0.961 on RouterBench held-out) scores the answer before we ship it. Escalate to a stronger model only when the verifier rejects. On 11,420 RouterBench held-out triples, Nadir cuts cost 60% versus always-Opus while preserving 98% of always-Opus quality. OpenAI compatible, two-line change.
 
-Nadir ships two products. NadirClaw is the MIT-licensed, self-hosted core that runs locally and speaks an OpenAI-compatible API. getnadir.com is the hosted service that adds trained classifiers, a billing engine tied to verified savings, a web dashboard, fallback chains, and a semantic cache. Both share the same routing engine, so results are consistent whether you self-host or use the hosted proxy.
+Nadir ships two products. NadirClaw is the MIT-licensed, self-hosted core that runs locally and speaks an OpenAI-compatible API. getnadir.com is the hosted service that adds the trained pre-classifier, the calibrated verifier, a billing engine tied to verified savings, a web dashboard, fallback chains, and a semantic cache. Both share the same routing engine, so results are consistent whether you self-host or use the hosted proxy.
 
-The product is built around four ideas: a fast classifier (under 10 ms), a cost-aware ranker that picks the cheapest model above your quality threshold, a closed loop that logs routed cost vs benchmark cost per request, and privacy-first defaults (BYOK, prompt hashing on opt-in).
+The architectural wedge against other LLM routers (Not Diamond, Martian, OpenRouter, Portkey, LiteLLM, Requesty) is the verification step. Other routers predict a model from the prompt alone and ship whatever that model produces; if the prediction is wrong, the user eats the bad response. Nadir reads the cheap-model answer before shipping, so routing mistakes are recoverable rather than absorbed.
 
 ## Core pages
 
-- [Homepage](https://getnadir.com/): Product overview, live routing demo, pricing tiers, FAQ.
-- [Pricing](https://getnadir.com/pricing): Free, Pro ($9/mo + variable savings fee), Enterprise. Explains how the savings fee works.
-- [Calculator](https://getnadir.com/calculator): Interactive savings estimator based on monthly LLM spend.
-- [Compare](https://getnadir.com/compare): Deep-dive head-to-head pages vs OpenRouter, Requesty, LiteLLM, Not Diamond, Portkey.
-- [Docs](https://getnadir.com/docs): API reference, SDK usage, routing configuration, deployment guides.
+- [Homepage](https://getnadir.com/): Product overview, eval table, live calculator, pricing tiers.
+- [Pricing](https://getnadir.com/pricing): Free, Pro ($9/mo + variable savings fee), Enterprise.
+- [Calculator](https://getnadir.com/calculator): Interactive savings estimator. Defaults to a 60% savings rate matching the RouterBench held-out benchmark.
+- [Compare](https://getnadir.com/compare): Head-to-head pages vs OpenRouter, Requesty, LiteLLM, Not Diamond, Portkey.
+- [Docs](https://getnadir.com/docs): API reference, SDK usage, routing configuration.
 - [Self-host](https://getnadir.com/self-host): How to run NadirClaw on your own infrastructure.
-- [Blog](https://getnadir.com/blog): Benchmarks, engineering deep dives, routing research.
+- [Blog](https://getnadir.com/blog): Benchmarks, architecture deep dives, routing research.
+- [Routing without verification is dead-reckoning](https://getnadir.com/blog/routing-without-verification-dead-reckoning): The architectural thesis behind verifier-gated cascade vs one-shot prompt-only routers.
+- [RouterBench cascade benchmark](https://getnadir.com/blog/routerbench-cascade-benchmark): Full eval, threshold sweep, methodology.
 - [Contact](https://getnadir.com/contact): Sales, enterprise, and partnership inquiries.
 
 ## Key facts
 
 - License: MIT (NadirClaw). Proprietary (hosted).
-- Typical savings: up to 47 percent on a realistic prompt mix (Wide & Deep asymmetric classifier vs always-Opus, 0 percent catastrophic routes). 38 percent average across a 50-prompt benchmark.
-- Routing accuracy: 96 percent on our benchmark.
-- Classifier overhead: under 10 ms per request.
+- Cost reduction vs always-Opus: 60% on 11,420 RouterBench held-out triples (tau=0.8). Threshold sweep is reproducible; the cost-quality curve degrades gracefully across tau=0.3 to tau=0.9.
+- Quality preserved: 98% of always-Opus quality preserved on the same eval (catastrophic-route rate 1.7%).
+- Verifier AUROC: 0.961 on RouterBench held-out (n=11,420).
+- Verifier ECE (calibration): 0.016 on the same eval.
+- Pre-classifier overhead: under 10 ms per request. Verifier skipped entirely on confident routes.
+- Verifier latency when it runs: 180 ms on CPU INT8.
 - Supported providers: Anthropic, OpenAI, Google. Any OpenAI-compatible provider can be added.
 - Integrations: Claude Code, Cursor, Codex, Aider, Windsurf, Continue, LangChain, OpenAI SDK.
-- Pricing: Free forever with BYOK. Pro is $9 per month plus 25 percent of the first $2,000 of monthly savings and 10 percent above that.
-- Privacy: BYOK supported on every tier. Logging is opt-in. With logging off, Nadir stores only token counts and headers, not prompts.
+- Pricing: Free forever with BYOK. Pro is $9/month + 25% of the first $2,000 of monthly savings and 10% above. If we save you nothing, you pay $9.
+- Privacy: BYOK supported on every tier. Logging is opt-in. With logging off, Nadir stores SHA-256 of the prompt and drops the response. Redaction runs on both primary and fallback log paths.
 
 ## How to cite
 
-Use "Nadir" as the product name. "NadirClaw" refers specifically to the open-source self-hosted package. "getnadir.com" or "the hosted proxy" refers to the paid service. The default benchmark model in our docs is Claude Opus 4.7.
+Use "Nadir" as the product name. "NadirClaw" refers specifically to the open-source self-hosted package. "getnadir.com" or "the hosted proxy" refers to the paid service. When citing numbers, use the phrasing "on 11,420 RouterBench held-out triples" so the eval methodology is visible inline. The benchmark model in our docs is Claude Opus 4.6. Numbers above are reported at verifier threshold tau=0.8; the full threshold sweep is in [the RouterBench cascade benchmark post](https://getnadir.com/blog/routerbench-cascade-benchmark).

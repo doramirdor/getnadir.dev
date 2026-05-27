@@ -47,8 +47,8 @@ export interface NadirPillar {
 export const NADIR_PILLARS: NadirPillar[] = [
   {
     title: "Decide, don't configure",
-    body: "A DistilBERT classifier reads every prompt in under 10 ms and picks Haiku, Sonnet, or Opus automatically. You do not pick the tier per call. You do not write routing rules.",
-    proof: "96% agreement with human labels on our public 50-prompt eval. Zero catastrophic routes.",
+    body: "A trained pre-classifier reads every prompt in under 10 ms. Borderline routes go through a calibrated verifier that scores the cheap-model answer before it ships. You do not pick the tier per call. You do not write routing rules.",
+    proof: "98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Verifier AUROC 0.961, ECE 0.016.",
   },
   {
     title: "A router that adapts",
@@ -99,8 +99,8 @@ const pages: ComparePage[] = [
     keyAdvantages: [
       {
         title: "Routing, not a model list",
-        body: "A classifier picks Haiku, Sonnet, or Opus per request. You do not pick the tier in your code. You do not maintain routing rules.",
-        proof: "96% oracle agreement on our 50-prompt public eval. Zero catastrophic routes.",
+        body: "A trained classifier plus a calibrated verifier picks Haiku, Sonnet, or Opus per request. You do not pick the tier in your code. You do not maintain routing rules.",
+        proof: "98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Verifier AUROC 0.961.",
       },
       {
         title: "OCR closed-loop adaptation",
@@ -172,7 +172,7 @@ const pages: ComparePage[] = [
       },
       {
         heading: "The numbers to weigh",
-        body: "On a $5,000/month mixed workload, the shape usually lands near $1,900 saved, $475 variable fee, $9 base. Net about $1,415/month back with Claude still handling the hard prompts. Agreement with human labels on our 50-prompt public eval is 96%, with zero catastrophic routes.\n\nIf you already use OpenRouter, run Nadir in front of it. Nadir picks the tier, OpenRouter executes. Your credit balance drops by less each day.",
+        body: "On a $5,000/month mixed workload, the shape usually lands near $3,000 saved, $600 variable fee, $9 base. Net about $2,391/month back with Opus still handling the hard prompts. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961).\n\nIf you already use OpenRouter, run Nadir in front of it. Nadir picks the tier, OpenRouter executes. Your credit balance drops by less each day.",
       },
     ],
 
@@ -212,8 +212,8 @@ const pages: ComparePage[] = [
     keyAdvantages: [
       {
         title: "Decision engine, not a gateway with rules",
-        body: "A classifier picks the tier in under 10 ms. Requesty routes through fallback and load balance rules you write. Different job entirely.",
-        proof: "96% oracle agreement on our public eval, zero catastrophic routes.",
+        body: "A trained pre-classifier picks the tier in under 10 ms. A calibrated verifier scores the cheap-model answer before it ships; escalate only when the verifier rejects. Requesty routes through fallback and load balance rules you write. Different job entirely.",
+        proof: "98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Verifier AUROC 0.961.",
       },
       {
         title: "OCR closed-loop adaptation",
@@ -277,7 +277,7 @@ const pages: ComparePage[] = [
     sections: [
       {
         heading: "Where your money goes",
-        body: "Nadir moves traffic off the premium tier when the prompt does not need it. That is the savings lever on a mixed workload. A semantic cache helps on repeated prompts. A markup on inference does not help at all.\n\nOn a $5,000/month workload, the typical shape with Nadir is about $1,900 saved, $475 variable fee, $9 base. Net near $1,415/month back. A 5% discount-via-markup math on the same $5,000 is $250 in a different direction.",
+        body: "Nadir moves traffic off the premium tier when the prompt does not need it. The verifier scores the cheap-model answer before it ships, so the move is recoverable rather than absorbed. That is the savings lever on a mixed workload. A semantic cache helps on repeated prompts. A markup on inference does not help at all.\n\nOn a $5,000/month workload, the typical shape with Nadir is about $3,000 saved, $600 variable fee, $9 base. Net near $2,391/month back. A 5% discount-via-markup math on the same $5,000 is $250 in a different direction.",
       },
       {
         heading: "What Nadir ships",
@@ -325,8 +325,8 @@ const pages: ComparePage[] = [
     keyAdvantages: [
       {
         title: "Ships the routing decision",
-        body: "Classifier, ranker, OCR, Context Optimize, semantic cache, quality floors, failover, and the savings dashboard as one product. On LiteLLM you assemble the same stack yourself and maintain it forever.",
-        proof: "Classifier overhead under 10 ms. 96% oracle agreement on our public eval.",
+        body: "Pre-classifier, calibrated verifier, ranker, OCR, Context Optimize, semantic cache, quality floors, failover, and the savings dashboard as one product. On LiteLLM you assemble the same stack yourself and maintain it forever.",
+        proof: "Pre-classifier overhead under 10 ms. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples.",
       },
       {
         title: "OCR closed-loop adaptation",
@@ -398,7 +398,7 @@ const pages: ComparePage[] = [
       },
       {
         heading: "The numbers that matter to you",
-        body: "Classifier overhead is under 10 ms. Agreement with human labels on our 50-prompt public eval is 96%, with zero catastrophic routes. On a $5,000/month mixed workload, the shape usually lands near $1,900 saved, $475 variable fee, $9 base.",
+        body: "Pre-classifier overhead is under 10 ms. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961). On a $5,000/month mixed workload, the shape usually lands near $3,000 saved, $600 variable fee, $9 base.",
       },
     ],
 
@@ -446,9 +446,9 @@ const pages: ComparePage[] = [
         proof: "Calibration closes the gap inside a few thousand requests at 2.16% overhead.",
       },
       {
-        title: "No labeling project to start",
-        body: "The classifier ships trained with 96% oracle agreement on our public eval. You plug in and route immediately. No sample collection, no human labels, no model training runway.",
-        proof: "Classifier overhead under 10 ms. Zero catastrophic routes on the eval.",
+        title: "Verify before ship, don't predict and pray",
+        body: "Not Diamond routes once with a meta-classifier and ships the answer. If the classifier picks wrong, the user eats the bad response. Nadir reads the cheap-model answer with a calibrated verifier before it ships; on rejection, escalate to Sonnet or Opus. Recoverable mistakes, not absorbed ones.",
+        proof: "98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Verifier AUROC 0.961, ECE 0.016.",
       },
       {
         title: "Bundled, not a la carte",
@@ -546,7 +546,7 @@ const pages: ComparePage[] = [
 
     tldr: [
       "Nadir is a router. Portkey is a governance platform. One decides which model to call, one logs and audits what was called. Different jobs.",
-      "A DistilBERT classifier picks the tier in under 10 ms with 96% oracle agreement. Portkey leaves the tier to your fallback config.",
+      "A trained pre-classifier picks the tier in under 10 ms; a verifier scores the cheap answer before it ships. Portkey leaves the tier to your fallback config.",
       "OCR closed-loop routing adapts when providers change. A gateway cannot do this, because it does not own the decision.",
       "Hash-only prompt storage, circuit breakers, provider health scoring, and zero-completion insurance ship in-box. The reliability layer is not an add-on.",
     ],
@@ -554,8 +554,8 @@ const pages: ComparePage[] = [
     keyAdvantages: [
       {
         title: "A router, not a logger",
-        body: "The classifier decides Haiku, Sonnet, or Opus per prompt. Portkey does fallbacks, load balancing, and retries. Those are execution policies, not routing decisions. The cost lever is the decision, not the retry.",
-        proof: "96% oracle agreement on our 50-prompt public eval, zero catastrophic routes, classifier overhead under 10 ms.",
+        body: "A trained classifier plus a calibrated verifier decides Haiku, Sonnet, or Opus per prompt. Portkey does fallbacks, load balancing, and retries. Those are execution policies, not routing decisions. The cost lever is the decision, not the retry.",
+        proof: "98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Verifier AUROC 0.961.",
       },
       {
         title: "OCR closed-loop adaptation",
@@ -623,7 +623,7 @@ const pages: ComparePage[] = [
       },
       {
         heading: "What Nadir ships",
-        body: "OpenAI compatible endpoint. Swap your base URL, set model to auto. BYOK. Failover chain. Quality floor per API key. Semantic cache at 85 to 90% similarity. PII redaction with opt-in hash-only prompt storage. Context Optimize for token reduction on the input. A dashboard that compares routed cost against always-Opus.\n\nClassifier overhead is under 10 ms. Agreement with human labels on our 50-prompt public eval is 96%, with zero catastrophic routes.",
+        body: "OpenAI compatible endpoint. Swap your base URL, set model to auto. BYOK. Failover chain. Quality floor per API key. Semantic cache at 85 to 90% similarity. PII redaction with opt-in hash-only prompt storage. Context Optimize for token reduction on the input. A dashboard that compares routed cost against always-Opus.\n\nPre-classifier overhead is under 10 ms. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961, ECE 0.016).",
       },
       {
         heading: "If you need a full governance platform",
