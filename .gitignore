@@ -17,3 +17,14 @@ app/test-results/
 supabase/.temp/
 model.safetensors
 *.npy
+
+# Verifier trained checkpoints — large, regenerable, never commit
+verifier/weights/
+verifier/weights_smoke/
+verifier/verifier_checkpoint.zip
+verifier/data/routerbench_triples.jsonl
+verifier/data/routerbench_triples.jsonl.gz
+verifier/reports/
+*.safetensors
+verifier_int8.pt
+pitch-site/

@@ -29,11 +29,27 @@ logger = logging.getLogger(__name__)
 
 _PKG_DIR = os.path.dirname(os.path.abspath(__file__))
 _MODEL_PATH = os.path.join(_PKG_DIR, "models", "wide_deep_asym_v3.pt")
+# Symmetric-loss companion checkpoint trained on the same data with the
+# same architecture (BGE-base + 33-dim struct, hidden=256, dropout=0.3).
+# The asym-loss head shipped as wide_deep_asym_v3.pt has a known bug:
+# the simple logit was globally suppressed (gap of 7-17 points below max)
+# during training because the asym loss with λ=3 penalises downgrades
+# 3x; the model rationally learned to never predict simple, collapsing
+# its F1 on the simple class to 0.0 in the training report
+# (labeled_data/v2/results/07_wide_deep_asym.json). This symmetric
+# checkpoint was trained on the same day with plain CE loss and reports
+# per-class F1 = {simple: 0.78, medium: 0.64, complex: 0.57}. Use it via
+# `WideDeepAsymAnalyzer(checkpoint_variant="symmetric")` to recover
+# correct simple-class behaviour at the cost of losing the asym safety
+# bias. The shipped default remains the asym checkpoint so production
+# behaviour is unchanged until the operator opts in.
+_MODEL_PATH_SYM = os.path.join(_PKG_DIR, "models", "wide_deep_sym_v3.pt")
 _TIER_MAP = {0: "simple", 1: "medium", 2: "complex"}
 _TIER_NUM = {"simple": 1, "medium": 2, "complex": 3}
 
 # Shared singletons
-_analyzer_instance: Optional["WideDeepAsymAnalyzer"] = None
+_analyzer_instance: Optional["WideDeepAsymAnalyzer"] = None  # legacy; superseded by _analyzer_instances
+_analyzer_instances: Dict[str, "WideDeepAsymAnalyzer"] = {}
 _encoder = None
 _extractor: Optional[StructuralFeatureExtractor] = None
 
@@ -124,6 +140,7 @@ class WideDeepAsymAnalyzer:
         model_path: Optional[str] = None,
         decision_rule: str = "argmax",
         cost_lambda: float = 3.0,
+        checkpoint_variant: str = "asym",
     ):
         import torch
 
@@ -133,14 +150,25 @@ class WideDeepAsymAnalyzer:
             raise ValueError(
                 f"decision_rule must be 'argmax' or 'cost_sensitive', got {decision_rule!r}"
             )
+        if checkpoint_variant not in ("asym", "symmetric"):
+            raise ValueError(
+                f"checkpoint_variant must be 'asym' or 'symmetric', got {checkpoint_variant!r}"
+            )
         self.decision_rule = decision_rule
         self.cost_lambda = float(cost_lambda)
+        self.checkpoint_variant = checkpoint_variant
         self._cost = _cost_matrix(self.cost_lambda) if decision_rule == "cost_sensitive" else None
 
-        path = model_path or _MODEL_PATH
+        if model_path is not None:
+            path = model_path
+        elif checkpoint_variant == "symmetric":
+            path = _MODEL_PATH_SYM
+        else:
+            path = _MODEL_PATH
         if not os.path.exists(path):
             raise FileNotFoundError(
-                f"Wide&Deep asym checkpoint not found at {path}."
+                f"Wide&Deep checkpoint not found at {path} "
+                f"(variant={checkpoint_variant!r})."
             )
 
         ckpt = torch.load(path, map_location="cpu", weights_only=False)
@@ -157,7 +185,9 @@ class WideDeepAsymAnalyzer:
         self._encoder_name = ckpt.get("encoder", "BAAI/bge-base-en-v1.5")
 
         logger.info(
-            "WideDeepAsymAnalyzer loaded (encoder=%s, struct_dim=%d, trained λ=%.1f, rule=%s, λ=%.1f)",
+            "WideDeepAsymAnalyzer loaded (variant=%s, encoder=%s, struct_dim=%d, "
+            "trained λ=%.1f, rule=%s, λ=%.1f)",
+            self.checkpoint_variant,
             self._encoder_name,
             cfg["struct_dim"],
             self._trained_lambda,
@@ -303,26 +333,36 @@ def get_wide_deep_asym_analyzer(
     allowed_models: Optional[List[str]] = None,
     decision_rule: str = "argmax",
     cost_lambda: float = 3.0,
+    checkpoint_variant: str = "asym",
 ) -> WideDeepAsymAnalyzer:
-    """Singleton accessor."""
-    global _analyzer_instance
-    if _analyzer_instance is None:
-        _analyzer_instance = WideDeepAsymAnalyzer(
+    """Singleton accessor keyed on `checkpoint_variant`.
+
+    The variant determines which trained weights live in the cached
+    analyzer (asym = shipped but bugged; symmetric = working). We
+    therefore keep a separate cached instance per variant; switching
+    variants does NOT reload the previously-cached one because the
+    underlying state dict differs. `decision_rule` and `cost_lambda`
+    can be hot-swapped on the cached instance because they only affect
+    the decoding step, not the loaded weights.
+    """
+    global _analyzer_instances
+    inst = _analyzer_instances.get(checkpoint_variant)
+    if inst is None:
+        inst = WideDeepAsymAnalyzer(
             allowed_providers=allowed_providers,
             allowed_models=allowed_models,
             decision_rule=decision_rule,
             cost_lambda=cost_lambda,
+            checkpoint_variant=checkpoint_variant,
         )
+        _analyzer_instances[checkpoint_variant] = inst
     else:
-        _analyzer_instance.allowed_providers = allowed_providers
-        _analyzer_instance.allowed_models = allowed_models
-        if (
-            _analyzer_instance.decision_rule != decision_rule
-            or _analyzer_instance.cost_lambda != cost_lambda
-        ):
-            _analyzer_instance.decision_rule = decision_rule
-            _analyzer_instance.cost_lambda = float(cost_lambda)
-            _analyzer_instance._cost = (
+        inst.allowed_providers = allowed_providers
+        inst.allowed_models = allowed_models
+        if inst.decision_rule != decision_rule or inst.cost_lambda != cost_lambda:
+            inst.decision_rule = decision_rule
+            inst.cost_lambda = float(cost_lambda)
+            inst._cost = (
                 _cost_matrix(cost_lambda) if decision_rule == "cost_sensitive" else None
             )
-    return _analyzer_instance
+    return inst

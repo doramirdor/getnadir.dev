@@ -40,6 +40,13 @@ RUN adduser --disabled-password --gecos '' appuser
 # Backend code
 COPY backend/ ./
 
+# Verifier checkpoints (IP-1 verifier-gated cascade).
+# DeBERTa-v3-small safetensors + LR pre-classifier. verifier_int8.pt is
+# excluded by .dockerignore — we quantize the safetensors at load time
+# via torch.quantization.quantize_dynamic. Paths resolve relative to
+# /app (WORKDIR) per the CASCADE_*_PATH defaults in settings.py.
+COPY verifier/weights/ /app/verifier/weights/
+
 # Frontend static files (served by FastAPI)
 COPY --from=frontend-build /app/frontend/dist /app/static
 

@@ -132,7 +132,8 @@ class Settings:
         self.TOGETHERAI_API_KEY: Optional[str] = os.getenv("TOGETHERAI_API_KEY")
         self.COHERE_API_KEY: Optional[str] = os.getenv("COHERE_API_KEY")
         self.MISTRAL_API_KEY: Optional[str] = os.getenv("MISTRAL_API_KEY")
-        self.OPENROUTER_API_KEY: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+        self.OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
+        self.OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
         self.GROQ_API_KEY: Optional[str] = os.getenv("GROQ_API_KEY")
     
     # Encryption
@@ -154,6 +155,81 @@ class Settings:
         self.POSTHOG_API_KEY: Optional[str] = os.getenv("POSTHOG_API_KEY")
         self.POSTHOG_HOST: str = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
         self.ADMIN_API_KEY: Optional[str] = os.getenv("ADMIN_API_KEY")  # Admin key for internal endpoints
+
+    # Verifier-gated cascade routing (IP-1). Composed_v2 is the production
+    # default as of this commit: pre-classifier (RouterBench-trained) acts as
+    # latency/cost shortcut on high-confidence cases, verifier-gated cascade
+    # handles the rest. Rollback to legacy routing: CASCADE_ENABLED=false.
+        self.CASCADE_ENABLED: bool = os.getenv("CASCADE_ENABLED", "True").lower() in ("true", "1", "t")
+        self.CASCADE_VERIFIER_WEIGHTS_PATH: str = os.getenv(
+            "CASCADE_VERIFIER_WEIGHTS_PATH",
+            "verifier/weights/best",
+        )
+        # Operating point τ=0.80 matches the public marketing claim of
+        # "98% of always-Opus quality preserved" on RouterBench held-out
+        # (catastrophic ≤ 1.7%, see verifier/reports/eval_20260526T184516.json
+        # thresholds[]). Earlier default was 0.70 (97.6% quality preserved).
+        # Per-customer overrides via profiles.model_parameters.cascade.acceptance_threshold.
+        self.CASCADE_DEFAULT_THRESHOLD: float = float(os.getenv("CASCADE_DEFAULT_THRESHOLD", "0.80"))
+        self.CASCADE_TIMEOUT_MS: int = int(os.getenv("CASCADE_TIMEOUT_MS", "80"))
+        # Mode applied when a profile does not explicitly set
+        # `model_parameters.cascade.mode`. "active" routes traffic through
+        # the cascade and serves escalated responses when the verifier
+        # rejects; "shadow" only logs decisions. We default to active now
+        # that the verifier is calibrated (AUROC 0.961 on RouterBench
+        # held-out, ECE 0.016, kill switch + fail-open both wired).
+        self.CASCADE_DEFAULT_MODE: str = os.getenv("CASCADE_DEFAULT_MODE", "active")
+        # Iterative refinement (IP-1 Move 5): when the verifier rejects
+        # the cheap response, instead of immediately escalating to the
+        # expensive tier, give the cheap model up to N additional
+        # attempts with the verifier-score diagnostic embedded in the
+        # prompt. If any retry passes, ship the refined cheap answer
+        # (cost: N+1 cheap calls vs 1 expensive call — net win whenever
+        # expensive is ≥ ~12x cheap, which holds for Haiku→Sonnet/Opus).
+        # Default 1 (one retry) — empirical sweet spot in tests; raise
+        # to 2 for more aggressive cost optimization at slight latency
+        # cost. Set 0 to disable the refinement loop entirely.
+        self.CASCADE_REFINEMENT_ATTEMPTS: int = int(
+            os.getenv("CASCADE_REFINEMENT_ATTEMPTS", "1")
+        )
+        # Verifier score cache. Caches (prompt, cheap_response) → score
+        # so near-duplicate production traffic doesn't repeatedly pay
+        # the 180ms verifier cost. LRU + TTL. Disable per profile via
+        # `model_parameters.cascade.verifier_cache_enabled = false`.
+        self.VERIFIER_CACHE_MAX_SIZE: int = int(
+            os.getenv("VERIFIER_CACHE_MAX_SIZE", "4096")
+        )
+        self.VERIFIER_CACHE_TTL_SECONDS: int = int(
+            os.getenv("VERIFIER_CACHE_TTL_SECONDS", "300")
+        )
+        # Pre-generation classifier (router_v2.pkl) short-circuit. When True
+        # and the classifier reports confidence >= the threshold below, the
+        # cascade skips the verifier path entirely on that request.
+        self.CASCADE_PRE_CLASSIFIER_ENABLED: bool = os.getenv(
+            "CASCADE_PRE_CLASSIFIER_ENABLED", "True"
+        ).lower() in ("true", "1", "t")
+        self.CASCADE_PRE_CLASSIFIER_PATH: str = os.getenv(
+            "CASCADE_PRE_CLASSIFIER_PATH",
+            "verifier/weights/router_v2.pkl",
+        )
+        # wide_deep_asym variant. The shipped asym checkpoint had a
+        # documented per_class_f1.simple = 0.0 collapse from asymmetric
+        # loss with λ=3 during training; the symmetric companion
+        # checkpoint trained on the same data reaches simple F1 = 0.78.
+        # Default flipped to the working checkpoint with cost_lambda=3
+        # (the prior λ=20 over-suppressed the simple class even on the
+        # symmetric head).
+        # NOTE: read by app.complexity.analyzer_factory; here only for
+        # documentation of the production default.
+
+    # Online contextual bandit router (WS-3 foundation; integration pending)
+        self.BANDIT_ENABLED_DEFAULT: bool = os.getenv("BANDIT_ENABLED_DEFAULT", "False").lower() in ("true", "1", "t")
+        self.BANDIT_COLD_START_N: int = int(os.getenv("BANDIT_COLD_START_N", "20"))
+        # TODO: recalibrate to 20th-percentile of production classifier_confidence
+        self.BANDIT_OCR_CONFIDENCE_FLOOR: float = float(os.getenv("BANDIT_OCR_CONFIDENCE_FLOOR", "0.7"))
+        self.BANDIT_DECAY_GAMMA: float = float(os.getenv("BANDIT_DECAY_GAMMA", "0.99"))
+        self.BANDIT_HIGH_SPEND_THRESHOLD_USD: int = int(os.getenv("BANDIT_HIGH_SPEND_THRESHOLD_USD", "1000"))
+        self.BANDIT_LRU_TTL_SECONDS: int = int(os.getenv("BANDIT_LRU_TTL_SECONDS", "60"))
 
     # API keys for authentication
         self.API_KEYS: Dict[str, str] = self._parse_api_keys()
