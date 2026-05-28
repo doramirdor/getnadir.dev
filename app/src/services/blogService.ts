@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "gartner-inference-costs-drop-90-percent-routing-stronger",
+    title: "Gartner predicts inference costs drop 90% by 2030. The case for routing gets stronger, not weaker.",
+    date: "2026-05-29",
+    author: "Dor Amir",
+    excerpt: "Gartner forecasts that inference on a trillion-parameter model will cost providers 90% less by 2030 than it did in 2025. The intuitive conclusion is that routing becomes less valuable as tokens get cheaper. The data says the opposite. Goldman Sachs projects 24x growth in token consumption by 2030. Epoch AI shows prices halving every two months at fixed performance, but usage growth outpaces the decline. The tier spread between cheap and frontier models persists. Routing savings are structural, not temporary, and they compound as agentic workloads scale.",
+    thumbnail: "Research",
+    tags: ["Cost Optimization", "Routing", "Gartner", "Inference Economics", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "datadog-69-percent-tokens-system-prompts",
     title: "69% of your LLM tokens are system prompts. Only 28% of teams cache them.",
     date: "2026-05-28",
@@ -227,6 +237,125 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "gartner-inference-costs-drop-90-percent-routing-stronger": `## Gartner says inference gets 90% cheaper. That does not mean your bill shrinks.
+
+In March 2026, Gartner published a prediction that by 2030, performing inference on a trillion-parameter LLM will cost providers over 90% less than it did in 2025. Their May 2026 forecast put total worldwide AI spending at $2.59 trillion for the year, a 47% increase. Inference spending on AI-optimized IaaS alone doubled from $9.2 billion to $20.6 billion. For the first time, inference accounts for 55% of enterprise AI compute spending, and Gartner expects that share to reach 65% by 2029.
+
+[Source: Gartner, "Predicts That by 2030, Performing Inference on an LLM With 1 Trillion Parameters Will Cost GenAI Providers Over 90% Less Than in 2025," March 2026](https://www.gartner.com/en/newsroom/press-releases/2026-03-25-gartner-predicts-that-by-2030-performing-inference-on-an-llm-with-1-trillion-parameters-will-cost-genai-providers-over-90-percent-less-than-in-2025)
+
+[Source: Gartner, "Forecasts Worldwide AI Spending to Grow 47% in 2026," May 2026](https://www.gartner.com/en/newsroom/press-releases/2026-05-19-gartner-forecasts-worldwide-ai-spending-to-grow-47-percent-in-2026)
+
+A 90% cost drop sounds like it solves the AI cost problem. It does not. The reason is structural, and it is the reason routing becomes more valuable over time, not less.
+
+## Prices are falling faster than ever. Bills are rising faster than the prices fall.
+
+Epoch AI measured inference price trends across six benchmarks and found that the cost to reach a fixed level of performance has been halving every two months. The median decline is 50x per year. Post-January 2024, the median accelerated to 200x per year.
+
+[Source: Epoch AI, "LLM inference prices have fallen rapidly but unequally across tasks"](https://epoch.ai/data-insights/llm-inference-price-trends)
+
+At the same time, Goldman Sachs projects a 24x increase in token consumption by 2030, reaching 120 quadrillion tokens per month. Enterprise AI spending tripled to $37 billion between 2024 and 2026 despite a 99.7% drop in per-token prices over the same period.
+
+[Source: Goldman Sachs, "AI Agents Forecast to Boost Tech Cash Flow as Usage Soars," May 2026](https://www.goldmansachs.com/insights/articles/ai-agents-forecast-to-boost-tech-cash-flow-as-usage-soars)
+
+The math is counterintuitive but consistent. If prices fall 10x and usage grows 24x, your total bill grows 2.4x. That is the trajectory Gartner, Goldman Sachs, and Epoch AI's data all point toward. Cheaper tokens do not produce cheaper bills. They produce more usage, which produces larger bills at lower per-unit rates.
+
+This is the same dynamic that played out in cloud computing. AWS prices fell every year for a decade. Enterprise cloud spending grew from $6 billion in 2011 to over $500 billion in 2024. The FinOps industry, built entirely around optimizing cloud spend, grew to $5 billion in annual revenue. Cheaper did not mean less spending. It meant more usage, more waste, and a larger optimization opportunity.
+
+## The tier spread is structural. It does not close as prices fall.
+
+The second reason routing stays valuable is that the price gap between model tiers persists across price generations.
+
+Here is the current spread as of May 2026:
+
+| Model | Input ($/M tokens) | Output ($/M tokens) |
+|---|---:|---:|
+| Claude Opus 4.7 | $5.00 | $25.00 |
+| GPT-5.5 | $5.00 | $30.00 |
+| Claude Sonnet 4.6 | $3.00 | $15.00 |
+| DeepSeek V4 | $1.74 | $3.48 |
+| Claude Haiku 4.5 | $1.00 | $5.00 |
+| Gemini 2.5 Flash | $0.30 | $2.50 |
+
+The output price spread between the cheapest production model (Gemini 2.5 Flash at $2.50/M) and the most expensive (GPT-5.5 at $30/M) is 12x. Between Haiku and Opus, it is 5x.
+
+Compare this to two years ago. In early 2024, GPT-4 cost roughly $30/M input. GPT-3.5 Turbo cost $0.50/M. The spread was 60x.
+
+The absolute prices fell dramatically. Frontier models went from $30 to $5 per million input tokens. Commodity models went from $0.50 to $0.30. But the spread between tiers, the ratio between cheap and expensive, stayed in the 5x to 12x range. It shifted from 60x down to 5-12x as the market matured, but it has not converged to 1x, and it will not.
+
+The reason is economic. Frontier models cost more to train and run. They represent the latest research, the largest parameter counts, and the most expensive infrastructure. Commodity models use older architectures, smaller parameters, and cheaper hardware. As long as there is a quality gap between model sizes, there will be a price gap. And as long as there is a price gap, routing captures the spread on every request.
+
+Epoch AI's data confirms this from the supply side. The rate of price decline varies by 100x depending on the performance milestone. Reaching GPT-4-level performance on PhD-level science questions got 40x cheaper per year. But reaching frontier performance on the hardest benchmarks declined much more slowly. The cheap end of the spectrum gets cheaper faster than the expensive end.
+
+This means the spread is not shrinking. It is potentially widening on certain tasks. The cheapest way to handle a classification task is falling faster than the cheapest way to handle a multi-step reasoning task. Routing captures this divergence.
+
+## Agentic workloads make the case even stronger over time.
+
+Gartner's inference spending data shows the shift toward production inference. The $20.6 billion figure is not research labs training models. It is companies running models on live traffic, including agentic workflows that consume 5x to 30x more tokens per task than chatbots.
+
+Stanford and Microsoft Research documented this in April 2026. Coding agents consume roughly 1,000x more tokens than chat interactions. Runs on the same task vary by 30x. 40% to 60% of input tokens are removable waste.
+
+[Source: Stanford/Microsoft Research, "How Do AI Agents Spend Your Money?", arXiv:2604.22750, April 2026](https://arxiv.org/abs/2604.22750)
+
+As agentic workloads grow (Vercel reports 22.2% of gateway requests now end with a tool call, up from 11.4% six months ago), the total token volume subject to routing grows with them. Each agentic session has dozens of turns, each of which is independently routable. A 30-turn session where 20 turns are low complexity and route to Haiku instead of Opus saves 60% on those 20 turns. The savings multiply across hundreds of sessions per day.
+
+IDC predicts that by 2028, 70% of top AI-driven enterprises will use dynamic model routing. That prediction is not about cost cutting alone. It is about managing the combinatorial complexity of multi-model portfolios (F5 reports the average enterprise now operates seven AI models) and the volume explosion from agentic adoption.
+
+[Source: IDC Blog, "Why the Future of AI Lies in Model Routing," November 2025](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/)
+
+## The 2030 math: cheaper tokens, more tokens, same spread.
+
+Here is the projection using Gartner's own numbers plus Goldman Sachs' consumption forecast.
+
+**2026 baseline** (current):
+- Enterprise blended cost: $6.07/M tokens (AICC data, with routing; $18.40 without)
+- Monthly token consumption: ~5 quadrillion tokens (Goldman Sachs estimate)
+- Tier spread: 5x to 12x
+
+**2030 projection** (using Gartner's 90% cost reduction + Goldman's 24x consumption growth):
+- Frontier model cost: ~$0.50/M input, ~$2.50/M output (90% cheaper than today's $5/$25)
+- Commodity model cost: ~$0.03/M input, ~$0.25/M output (proportional decline)
+- Monthly token consumption: ~120 quadrillion tokens (24x growth)
+- Tier spread: still 8x to 10x (frontier vs commodity)
+
+**Without routing in 2030:** 120Q tokens/month at frontier rates ($0.50/$2.50). Monthly inference bill: roughly $180B industry-wide.
+
+**With routing in 2030:** 60% of tokens go to commodity models at 1/10th frontier price. Monthly inference bill: roughly $90B. The absolute savings from routing in 2030 exceed the total inference market in 2025.
+
+The per-request savings in 2030 will be smaller in absolute dollars (cents instead of dollars). But the volume will be 24x larger. The total addressable savings, the number of dollars that routing can redirect, grows every year.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year as Multi-Model AI Adoption Hits Record High," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+## Cloud cost optimization is the precedent.
+
+This pattern has played out before. AWS launched in 2006 with a handful of instance types and simple pricing. By 2016, there were hundreds of instance types, spot pricing, reserved instances, savings plans, and a cottage industry of cloud cost optimization vendors. By 2026, Gartner estimates worldwide IT spending at $6.31 trillion, with cloud computing as the largest segment.
+
+The FinOps Foundation grew from a niche practice to an industry standard serving organizations managing $83 billion in cloud spend. Gartner includes FinOps as a mandatory discipline in its 2026 IT spending framework. None of this happened because cloud got expensive. It happened because cloud got cheap enough that everyone used it, and the aggregate spend became large enough that optimization mattered.
+
+AI inference is on the same curve, compressed into a shorter timeline. The FinOps Foundation's 2026 report already shows 98% of FinOps teams managing AI spend, up from 31% two years ago. The tools, practices, and market for AI cost optimization are forming right now. Routing is the foundational layer.
+
+[Source: FinOps Foundation, "State of FinOps 2026 Report"](https://data.finops.org/)
+
+## Three things to do before prices drop further.
+
+**1. Start routing now, not later.** Every month you wait is a month of overspending at current prices. The AICC data shows enterprises with tiered routing pay $2.31/M tokens versus $18.40 without. On a $10,000/month inference bill, that is $8,700/month in savings starting from the first routed request.
+
+**2. Build the routing muscle before 2028.** IDC says 70% of top enterprises will use dynamic routing by 2028. That gives you two years to instrument your traffic, understand your complexity distribution, and tune routing thresholds on your workload. Teams that start now will have years of calibration data. Teams that wait will start cold.
+
+**3. Treat inference cost optimization as a permanent discipline, not a one-time project.** Just as cloud cost optimization became a permanent function, AI inference optimization is here to stay. The tools will evolve. The models will change. The principle, route each request to the cheapest model that can handle it, will not.
+
+## Where Nadir fits.
+
+Nadir is built for this trajectory. The trained classifier evaluates each API call in under 10 ms and routes to the cheapest model that can handle it. On 11,420 RouterBench held-out triples, the verifier-gated cascade preserves 98% of always-Opus quality at 60% lower cost.
+
+As new models launch and pricing shifts, the classifier retrains. As your workload evolves, the OCR closed loop adjusts thresholds from live response quality. The routing layer adapts to the market. Your application code does not change.
+
+The integration is two lines: change the base URL, set \`model="auto"\`. Per-request response headers (\`x-nadir-routed-to\`, \`x-nadir-cost-saved\`, \`x-nadir-cost-usd\`) show the savings on every request.
+
+Inference costs will keep falling. Usage will keep growing. The spread between model tiers will persist. Routing captures that spread on every request, today and in 2030.
+
+---
+
+*Sources: [Gartner, "Predicts That by 2030, Performing Inference on an LLM With 1 Trillion Parameters Will Cost GenAI Providers Over 90% Less Than in 2025"](https://www.gartner.com/en/newsroom/press-releases/2026-03-25-gartner-predicts-that-by-2030-performing-inference-on-an-llm-with-1-trillion-parameters-will-cost-genai-providers-over-90-percent-less-than-in-2025) (March 2026). [Gartner, "Forecasts Worldwide AI Spending to Grow 47% in 2026"](https://www.gartner.com/en/newsroom/press-releases/2026-05-19-gartner-forecasts-worldwide-ai-spending-to-grow-47-percent-in-2026) (May 2026). [Epoch AI, "LLM inference prices have fallen rapidly but unequally across tasks"](https://epoch.ai/data-insights/llm-inference-price-trends). [Goldman Sachs, "AI Agents Forecast to Boost Tech Cash Flow as Usage Soars"](https://www.goldmansachs.com/insights/articles/ai-agents-forecast-to-boost-tech-cash-flow-as-usage-soars) (May 2026). [AICC, "Enterprise Token Costs Drop 67% Year-Over-Year"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high) (May 2026). [Stanford/Microsoft Research, arXiv:2604.22750](https://arxiv.org/abs/2604.22750) (April 2026). [IDC Blog, "Why the Future of AI Lies in Model Routing"](https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/) (November 2025). [FinOps Foundation, "State of FinOps 2026 Report"](https://data.finops.org/) (2026). [F5, "78% of Enterprises Now Run AI Inference as a Core Operation"](https://www.f5.com/company/news/press-releases/enterprises-now-run-ai-inference-as-core-operation) (May 2026). Anthropic, OpenAI, Google, DeepSeek model pricing as of May 2026.*`,
   "datadog-69-percent-tokens-system-prompts": `## Datadog measured where your AI tokens go. The answer is not flattering.
 
 Datadog's State of AI Engineering 2026 report analyzed production telemetry from thousands of companies running LLM workloads. The dataset covers real API calls, real token counts, and real failure modes across every major provider.
