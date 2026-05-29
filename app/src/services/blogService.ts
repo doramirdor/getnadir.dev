@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "500m-claude-bill-spending-caps-wrong-fix",
+    title: "A company burned $500M on Claude in 30 days. Spending caps are not the fix.",
+    date: "2026-05-29",
+    author: "Dor Amir",
+    excerpt: "An enterprise client ran up a $500 million Anthropic bill in a single month after deploying Claude without usage limits. The industry response has been predictable: spending caps, dashboards, governance committees. These controls limit usage, not waste. The real problem is that every API call hit a frontier model regardless of complexity. Routing fixes the unit economics. Caps just cut the volume.",
+    thumbnail: "Deep Dive",
+    tags: ["Cost Optimization", "Enterprise", "AI Governance", "Routing", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
     id: "gartner-inference-costs-drop-90-percent-routing-stronger",
     title: "Gartner predicts inference costs drop 90% by 2030. The case for routing gets stronger, not weaker.",
     date: "2026-05-29",
@@ -237,6 +247,134 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "500m-claude-bill-spending-caps-wrong-fix": `## $500 million in 30 days. One company. No usage limits.
+
+On May 28, 2026, multiple outlets reported that an enterprise client ran up a $500 million bill on Anthropic's Claude in a single month. The cause was not a billing error or a rogue process. It was uncapped access. Thousands of employees had unrestricted Claude API access. No per-user limits. No spending thresholds. No hard stops. Agentic workflows, extended thinking, and parallel coding sessions compounded token consumption across the organization until the invoice arrived.
+
+[Source: Yahoo Finance, "Client Accidentally Burns $500 Million on Claude AI in One Month," May 2026](https://finance.yahoo.com/sectors/technology/articles/client-accidentally-burns-500-million-105400717.html)
+
+[Source: Business Today, "AI spending nightmare: Companies spend over $500 million in 30 days on Anthropic's Claude," May 2026](https://www.businesstoday.in/technology/artificial-intelligence/story/ai-spending-nightmare-companies-spend-over-a-500-million-in-30-days-on-anthropics-claude-533824-2026-05-29)
+
+This is the most extreme data point yet in a pattern that now includes Microsoft (cancelling Claude Code licenses after per-engineer costs hit $500 to $2,000 per month), Uber (exhausting its entire 2026 AI budget by April), and Meta (building an internal leaderboard called Claudeonomics to track token spend across 85,000 employees).
+
+The industry response has been immediate and predictable: implement spending caps, deploy dashboards, form governance committees. These are reasonable first steps. They are also the wrong long-term fix.
+
+## Spending caps limit usage, not waste.
+
+A spending cap tells you how much you are willing to spend. It does not tell you how much you should be spending. When you cap at $50,000 per month, you stop at $50,000 regardless of whether $30,000 of that went to frontier-model calls that Haiku could have handled.
+
+The $500M bill happened because there were no caps at all. That is a governance failure. But the underlying economics that produced the bill, every API call hitting Claude at $5 to $25 per million tokens regardless of task complexity, would still be wasteful at $5 million per month with proper caps in place.
+
+Caps are a circuit breaker. They prevent catastrophic outcomes. They do not fix the unit economics.
+
+The same logic applies to dashboards and usage alerts. Knowing that you spent $200,000 last week is useful. Knowing that 60% of those calls were classification, formatting, and simple Q&A that did not need a frontier model is actionable. Most governance tooling delivers the first insight but not the second.
+
+## The real problem: uniform model selection at scale.
+
+The $500M bill was not caused by too many API calls. It was caused by every API call going to the most expensive model available.
+
+Anthropic's Claude pricing as of May 2026:
+
+| Model | Input ($/M tokens) | Output ($/M tokens) |
+|---|---:|---:|
+| Claude Opus 4.7 | $5.00 | $25.00 |
+| Claude Sonnet 4.6 | $3.00 | $15.00 |
+| Claude Haiku 4.5 | $1.00 | $5.00 |
+
+The output price spread between Haiku and Opus is 5x. For the majority of production API calls, classification, formatting, summarization, simple Q&A, file reads, status checks, Haiku produces equivalent output at one-fifth the cost.
+
+Datadog's State of AI Engineering 2026 report measured production telemetry across thousands of companies and found that 69% of all input tokens are system prompts, tool schemas, and policy definitions that repeat on every call. The actual user query, the part that determines complexity, is 31% of the token volume. Most of those queries do not require frontier reasoning.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+When every call goes to Opus, you pay the Opus rate on all of it. That is the structural waste. Caps do not touch it.
+
+## The governance playbook everyone is recommending.
+
+CIO magazine reported in May 2026 that 85% of organizations misestimate AI costs by more than 10%, and nearly a quarter are off by more than 50%. Governance spending is the fastest-growing line item in enterprise AI budgets, rising from 3 to 5% of AI budget in 2024 to 8 to 12% in 2026.
+
+[Source: CIO, "AI cost overruns are adding up, with major implications for CIOs," May 2026](https://www.cio.com/article/4064319/ai-cost-overruns-are-adding-up-with-major-implications-for-cios.html)
+
+The standard recommendations after a budget blowout are:
+
+- **Per-user spending caps.** Set a maximum monthly spend per employee or team.
+- **Real-time dashboards.** Surface token consumption and cost by department, project, and user.
+- **Budget alerts.** Notify finance when spending approaches thresholds.
+- **Role-based access.** Restrict which teams can use which models.
+- **Chargeback to business units.** Make each team accountable for its own AI spend.
+
+These are all sound governance practices. Every enterprise should have them. But notice what they all have in common: they control how much AI you use. None of them control how efficiently you use it.
+
+A team that hits its $10,000 monthly cap sending everything to Opus used $10,000. A team that routes 60% of those calls to Haiku and 30% to Sonnet, reserving Opus for the 10% that actually need it, uses $3,500 for the same work. Same output. Same quality on the tasks that matter. Different bill.
+
+## Deloitte calls it a new spend dynamic. The fix is architectural.
+
+Deloitte's 2026 analysis of AI token economics frames the problem clearly: while per-token prices are falling, overall enterprise AI spending is rising because cheaper tokens enable more usage. AI is now the fastest-growing expense in corporate technology budgets, with some firms reporting it consumes up to half of their IT spend.
+
+[Source: Deloitte, "AI tokens: How to navigate AI's new spend dynamics," 2026](https://www.deloitte.com/us/en/insights/topics/emerging-technologies/ai-tokens-how-to-navigate-spend-dynamics.html)
+
+Deloitte recommends managing AI as an economic system driven by token-based costs, with real-time monitoring, forecasting, and FinOps practices. Their CTO guide specifically calls out model routing as a cost control lever, matching each request to the cheapest capable model instead of defaulting to the most expensive one.
+
+[Source: Deloitte, "Follow the AI tokens: How CTOs can manage tokenomics," 2026](https://www.deloitte.com/us/en/services/consulting/articles/future-of-enterprise-it-tokenomics-insights-for-cto.html)
+
+The enterprise data supports this. The AICC's analysis of 2.4 billion API calls found that organizations with intelligent multi-model routing achieved median blended costs of $2.31 per million tokens, compared to $18.40 for frontier-only deployments. That is an 87% reduction. The gap is not from spending less on AI. It is from spending the same amount more efficiently.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+## What $500M looks like with routing.
+
+Let us run the numbers on the $500M bill. The exact breakdown is not public, but we can model it using industry benchmarks.
+
+Assume 60% of API calls were low complexity (classification, formatting, simple Q&A, file reads), 30% were medium complexity (implementation, summarization, multi-step but not frontier-hard), and 10% were high complexity (deep reasoning, architecture, novel problem-solving).
+
+**Without routing (what happened):**
+All calls go to Opus at blended $15/M tokens (weighted input/output). Total: $500M.
+
+**With three-tier routing:**
+- 60% of calls to Haiku at $3/M blended: $90M
+- 30% of calls to Sonnet at $9/M blended: $67.5M
+- 10% of calls to Opus at $15/M blended: $75M
+- **Total: $232.5M. Savings: $267.5M.**
+
+That is a 53% reduction. Not from using less AI. Not from capping access. From routing each call to the cheapest model that can handle it.
+
+Add prompt caching on the 69% of tokens that are repeated system prompts (per Datadog's findings), and the number drops further. Caching at 90% discount on the static prefix, combined with routing on the variable content, produces compound savings of 70% or more.
+
+The $500M bill could have been $150M with routing and caching. Same usage. Same access. Same output quality on the tasks that actually needed frontier reasoning.
+
+## Caps and routing are not mutually exclusive.
+
+The correct architecture is both. Caps prevent the catastrophic scenario (the $500M bill with no controls). Routing fixes the steady-state economics (every dollar spent goes further).
+
+Think of it like cloud cost management. AWS budget alerts prevent surprise bills. Reserved instances and spot pricing optimize the unit economics. You need both, but the one that saves 50% to 80% on an ongoing basis is the unit economics layer, not the alert.
+
+The FinOps Foundation's 2026 report found that teams with financial guardrails for AI spend 3.2x less per completed task than teams without. Guardrails include both governance (caps, alerts, chargebacks) and optimization (routing, caching, context compression). The teams saving the most use both.
+
+[Source: FinOps Foundation, "State of FinOps 2026 Report"](https://data.finops.org/)
+
+## Four things to do after a budget blowout.
+
+**1. Set caps immediately.** This is table stakes. Per-user, per-team, and per-organization spending limits. Hard stops, not just alerts. Anthropic, OpenAI, and every major provider offer admin controls for this. If you deployed without them, deploy them now. This prevents the next $500M bill.
+
+**2. Instrument per-request cost data.** You cannot optimize what you cannot see. Log the model, token count, and cost for every API call. Most teams discover that 50% to 70% of their calls do not need a frontier model. Until you have this data, every optimization decision is a guess.
+
+**3. Route per request, not per application.** Stop hardcoding model selection. A trained classifier that evaluates each API call independently and routes to the cheapest capable model captures the 5x pricing gap between Haiku and Opus on the majority of production calls. Augment Code published routing data showing three-tier Claude routing saves 51% compared to uniform Opus deployment.
+
+[Source: Augment Code, "Best AI Model for Coding Agents in 2026: A Routing Guide"](https://www.augmentcode.com/guides/ai-model-routing-guide)
+
+**4. Cache repeated context.** Datadog found only 28% of teams use prompt caching, despite 69% of input tokens being static system prompts. Enabling prefix caching on Anthropic or OpenAI costs nothing and saves 60% or more on input token costs for repeated scaffolding.
+
+## Where Nadir fits.
+
+Nadir is the routing layer. A trained classifier evaluates each API call in under 10 ms and routes to the cheapest model that can handle it. On 11,420 RouterBench held-out triples, the verifier-gated cascade preserves 98% of always-Opus quality at 60% lower cost.
+
+The integration is two lines: change the base URL, set \`model="auto"\`. Per-request response headers (\`x-nadir-routed-to\`, \`x-nadir-cost-usd\`, \`x-nadir-cost-saved\`) show exactly where each call went and what it saved. The dashboard aggregates savings by day, week, and month.
+
+For the enterprise that spent $500M in 30 days, the governance failure was deploying without caps. The economic failure was deploying without routing. Caps would have stopped the bill at a budget threshold. Routing would have cut the bill in half at the same usage level. The right answer is both.
+
+---
+
+*Sources: [Yahoo Finance, "Client Accidentally Burns $500 Million on Claude AI in One Month"](https://finance.yahoo.com/sectors/technology/articles/client-accidentally-burns-500-million-105400717.html) (May 2026). [Business Today, "AI spending nightmare: Companies spend over $500 million in 30 days on Anthropic's Claude"](https://www.businesstoday.in/technology/artificial-intelligence/story/ai-spending-nightmare-companies-spend-over-a-500-million-in-30-days-on-anthropics-claude-533824-2026-05-29) (May 2026). [CIO, "AI cost overruns are adding up, with major implications for CIOs"](https://www.cio.com/article/4064319/ai-cost-overruns-are-adding-up-with-major-implications-for-cios.html) (May 2026). [Deloitte, "AI tokens: How to navigate AI's new spend dynamics"](https://www.deloitte.com/us/en/insights/topics/emerging-technologies/ai-tokens-how-to-navigate-spend-dynamics.html) (2026). [Deloitte, "Follow the AI tokens: How CTOs can manage tokenomics"](https://www.deloitte.com/us/en/services/consulting/articles/future-of-enterprise-it-tokenomics-insights-for-cto.html) (2026). [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). [AICC, "Enterprise Token Costs Drop 67% Year-Over-Year"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high) (May 2026). [FinOps Foundation, "State of FinOps 2026 Report"](https://data.finops.org/) (2026). [Augment Code, "Best AI Model for Coding Agents in 2026: A Routing Guide"](https://www.augmentcode.com/guides/ai-model-routing-guide). Anthropic model pricing as of May 2026.*`,
   "gartner-inference-costs-drop-90-percent-routing-stronger": `## Gartner says inference gets 90% cheaper. That does not mean your bill shrinks.
 
 In March 2026, Gartner published a prediction that by 2030, performing inference on a trillion-parameter LLM will cost providers over 90% less than it did in 2025. Their May 2026 forecast put total worldwide AI spending at $2.59 trillion for the year, a 47% increase. Inference spending on AI-optimized IaaS alone doubled from $9.2 billion to $20.6 billion. For the first time, inference accounts for 55% of enterprise AI compute spending, and Gartner expects that share to reach 65% by 2029.
