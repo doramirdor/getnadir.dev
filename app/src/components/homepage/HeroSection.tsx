@@ -115,9 +115,9 @@ export const HeroSection = () => {
   const savingsPct = Math.round(((totalWithout - totalWith) / totalWithout) * 100);
 
   return (
-    <section className="pt-8 md:pt-12 pb-16 md:pb-20">
+    <section className="pt-10 md:pt-14 pb-16 md:pb-20">
       <div className="max-w-[1240px] mx-auto px-6 sm:px-8">
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-10 lg:gap-14 items-center">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-10 lg:gap-14 items-start">
           {/* Copy column */}
           <div className="text-left max-w-[600px] lg:max-w-none">
             <h1 className="text-[40px] sm:text-[56px] lg:text-[64px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f] [text-wrap:balance]">
