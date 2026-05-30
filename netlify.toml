@@ -1,6 +1,10 @@
 [build]
   base = "app"
-  command = "npm ci && npm run build"
+  # Build the SPA, generate the sitemap, then prerender each public route to
+  # static HTML so crawlers and AI bots get real content (the app is otherwise
+  # client-rendered). Chromium install and the prerender step are both
+  # non-fatal: if either fails, the deploy still ships the working CSR build.
+  command = "npm ci && npm run build && npm run sitemap && (npx playwright install --with-deps chromium && npm run prerender || echo 'Prerender skipped; shipping CSR build')"
   publish = "dist"
 
 # Security headers
