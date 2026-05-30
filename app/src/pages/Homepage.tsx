@@ -20,6 +20,11 @@ const Homepage = () => {
   }, []);
   return (
     <MarketingLayout>
+      {/*
+        Homepage structured data (SoftwareApplication, Organization, FAQPage,
+        WebSite) already ships in the static index.html @graph, which every
+        prerendered page inherits, so we deliberately do not re-emit it here.
+      */}
       <SEO
         title="Nadir: Stop paying Opus prices for Haiku problems"
         description="Nadir routes every prompt to the cheapest model that can handle it. OpenAI compatible. Open source. Cut your Claude, GPT, and Gemini spend with a two-line change."

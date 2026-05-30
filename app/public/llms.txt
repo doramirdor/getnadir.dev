@@ -15,9 +15,30 @@ The architectural wedge against other LLM routers (Not Diamond, Martian, OpenRou
 - [Docs](https://getnadir.com/docs): API reference, SDK usage, routing configuration.
 - [Self-host](https://getnadir.com/self-host): How to run NadirClaw on your own infrastructure.
 - [Blog](https://getnadir.com/blog): Benchmarks, architecture deep dives, routing research.
+- [Contact](https://getnadir.com/contact): Sales, enterprise, and partnership inquiries.
+
+## Comparisons
+
+- [Nadir vs OpenRouter](https://getnadir.com/compare/openrouter): Verifier-gated routing vs a marketplace gateway with manual model selection.
+- [Nadir vs Requesty](https://getnadir.com/compare/requesty): Cascade routing with quality verification vs prompt-only routing.
+- [Nadir vs LiteLLM](https://getnadir.com/compare/litellm): A routing engine with a quality floor vs a proxy library you configure yourself.
+- [Nadir vs Not Diamond](https://getnadir.com/compare/notdiamond): Answer-level verification vs one-shot prompt classification.
+- [Nadir vs Portkey](https://getnadir.com/compare/portkey): Savings tied to verified quality vs a gateway with observability add-ons.
+
+## Solutions
+
+- [Routing](https://getnadir.com/solutions/routing): Route each prompt to the cheapest model that can handle it, with a per-key quality floor.
+- [Fallback](https://getnadir.com/solutions/fallback): Automatic failover across Anthropic, OpenAI, and Google when a provider errors.
+- [Analytics](https://getnadir.com/solutions/analytics): Per-request cost, latency, and routing decisions in headers and a dashboard.
+- [Clustering](https://getnadir.com/solutions/clustering): Group similar prompts to tune routing thresholds against real traffic.
+- [Context Optimize](https://getnadir.com/optimize): Cut input tokens 30-70% with lossless context compaction and semantic dedup.
+
+## Key blog posts
+
 - [Routing without verification is dead-reckoning](https://getnadir.com/blog/routing-without-verification-dead-reckoning): The architectural thesis behind verifier-gated cascade vs one-shot prompt-only routers.
 - [RouterBench cascade benchmark](https://getnadir.com/blog/routerbench-cascade-benchmark): Full eval, threshold sweep, methodology.
-- [Contact](https://getnadir.com/contact): Sales, enterprise, and partnership inquiries.
+- [Why we built Nadir: the $0.45 docstring problem](https://getnadir.com/blog/why-we-built-nadir): The founding cost problem that motivated prompt-level routing.
+- [How the binary classifier works](https://getnadir.com/blog/how-binary-classifier-works): The pre-classifier that scores prompt complexity in under 10 ms.
 
 ## Key facts
 

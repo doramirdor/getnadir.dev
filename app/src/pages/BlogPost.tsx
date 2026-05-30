@@ -6,6 +6,7 @@ import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { trackBlogRead } from "@/utils/analytics";
+import { articleJsonLd } from "@/lib/structuredData";
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -268,6 +269,13 @@ export default function BlogPost() {
         title={`${post.title} - Nadir Blog`}
         description={post.excerpt}
         path={`/blog/${post.id}`}
+        jsonLd={articleJsonLd({
+          title: post.title,
+          description: post.excerpt,
+          path: `/blog/${post.id}`,
+          datePublished: post.date,
+          dateModified: post.date,
+        })}
       />
       <div className="container mx-auto px-6 py-8">
         <Button
