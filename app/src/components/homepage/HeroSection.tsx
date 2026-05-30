@@ -43,6 +43,23 @@ const REQUESTS: Req[] = (
 const fmtCost = (n: number) =>
   n < 0.01 ? `$${n.toFixed(4)}` : n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`;
 
+// What you get, stated as outcomes. Kept consistent with the StatBand below
+// the hero (30-60% typical savings) and the observability pillar.
+const BENEFITS: { title: string; detail: string }[] = [
+  {
+    title: "A lower bill",
+    detail: "30-60% on a typical coding workload, with no quality drop on the prompts that matter.",
+  },
+  {
+    title: "Full cost visibility",
+    detail: "Per-request cost, latency, and routing decisions in response headers and the dashboard.",
+  },
+  {
+    title: "No refactor",
+    detail: "OpenAI compatible, two-line install. Keep the SDKs and tools you already use.",
+  },
+];
+
 export const HeroSection = () => {
   const [visibleRows, setVisibleRows] = useState(0);
   const [showStats, setShowStats] = useState(false);
@@ -112,7 +129,7 @@ export const HeroSection = () => {
             </div>
 
             <h1 className="text-[40px] sm:text-[56px] lg:text-[64px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f] [text-wrap:balance]">
-              Stop paying Opus prices for{" "}
+              Route every prompt to the{" "}
               <span
                 className="px-[0.05em]"
                 style={{
@@ -122,14 +139,14 @@ export const HeroSection = () => {
                   boxDecorationBreak: "clone",
                 }}
               >
-                Haiku problems
-              </span>
-              .
+                cheapest model
+              </span>{" "}
+              that can handle it.
             </h1>
 
             <p className="text-[17px] md:text-[19px] text-[#424245] mb-9 leading-[1.5] tracking-[-0.01em]">
-              Nadir reads every prompt and picks the cheapest Anthropic model that can answer it well.
-              <span className="text-[#1d1d1f] font-medium"> Haiku for classifications. Sonnet for refactors. Opus only when it has to think.</span>
+              Nadir is an LLM router. It reads every prompt and sends it to the cheapest model that can answer it well.
+              <span className="text-[#1d1d1f] font-medium"> Haiku for classifications, Sonnet for refactors, Opus only when it has to think.</span>
             </p>
 
             <div className="flex gap-4 items-center flex-wrap mb-5">
@@ -150,19 +167,21 @@ export const HeroSection = () => {
               </a>
             </div>
 
-            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-[#424245] tracking-[-0.005em]">
-              <li className="inline-flex items-center gap-1.5">
-                <CheckGlyph />
-                OpenAI compatible
-              </li>
-              <li className="inline-flex items-center gap-1.5">
-                <CheckGlyph />
-                Two-line install
-              </li>
-              <li className="inline-flex items-center gap-1.5">
-                <CheckGlyph />
-                Cancel anytime
-              </li>
+            <p className="text-[12px] text-[#86868b] font-semibold uppercase tracking-[0.1em] mb-3">
+              What you get
+            </p>
+            <ul className="grid sm:grid-cols-3 gap-x-6 gap-y-4">
+              {BENEFITS.map((b) => (
+                <li key={b.title}>
+                  <div className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#1d1d1f] tracking-[-0.01em]">
+                    <CheckGlyph />
+                    {b.title}
+                  </div>
+                  <p className="mt-1 text-[13px] text-[#424245] leading-[1.45] tracking-[-0.005em]">
+                    {b.detail}
+                  </p>
+                </li>
+              ))}
             </ul>
           </div>
 

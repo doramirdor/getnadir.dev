@@ -32,31 +32,9 @@
       "name": "Nadir",
       "description": "Open-source LLM router that automatically routes simple prompts to cheaper models. Save 30-60% on LLM API costs.",
       "url": "https://getnadir.com",
-      "image": "https://getnadir.com/og-image.png",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "macOS, Linux, Windows",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock",
-        "url": "https://getnadir.com/pricing",
-        "hasMerchantReturnPolicy": {
-          "@type": "MerchantReturnPolicy",
-          "applicableCountry": "US",
-          "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
-        },
-        "shippingDetails": {
-          "@type": "OfferShippingDetails",
-          "shippingRate": { "@type": "MonetaryAmount", "value": "0", "currency": "USD" },
-          "shippingDestination": { "@type": "DefinedRegion", "addressCountry": "US" },
-          "deliveryTime": {
-            "@type": "ShippingDeliveryTime",
-            "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" },
-            "transitTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 0, "unitCode": "DAY" }
-          }
-        }
-      },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "codeRepository": "https://github.com/NadirRouter/NadirClaw",
       "license": "https://github.com/NadirRouter/NadirClaw/blob/main/LICENSE"
     }
@@ -332,19 +310,6 @@
             text-align: center;
         }
         
-        .hero-eyebrow {
-            display: inline-block;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.2px;
-            color: var(--accent);
-            background: rgba(0, 102, 255, 0.07);
-            border: 1px solid rgba(0, 102, 255, 0.18);
-            padding: 6px 14px;
-            border-radius: 999px;
-            margin-bottom: 24px;
-        }
-
         .hero h1 {
             font-size: 64px;
             font-weight: 700;
@@ -455,43 +420,6 @@
 
         .works-with-sep {
             color: var(--border);
-        }
-
-        .what-you-get {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            max-width: 760px;
-            margin: 0 auto 48px;
-            text-align: left;
-        }
-
-        .wyg-item {
-            background: var(--bg-subtle);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 18px 20px;
-        }
-
-        .wyg-item h3 {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .wyg-item h3 svg {
-            color: var(--accent);
-            flex-shrink: 0;
-        }
-
-        .wyg-item p {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin: 0;
         }
 
         /* Sticky bottom CTA */
@@ -1137,12 +1065,7 @@
             .hero .subtitle {
                 font-size: 17px;
             }
-
-            .what-you-get {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
+            
             .section-header h2 {
                 font-size: 28px;
             }
@@ -1848,10 +1771,9 @@
             <div class="parallax-orb hero-orb-1" data-parallax="0.15"></div>
             <div class="parallax-orb hero-orb-2" data-parallax="0.25"></div>
             <div class="container">
-                <span class="hero-eyebrow" data-anim="fade-up">Your simple prompts are burning premium tokens</span>
-                <h1 data-anim="fade-up" style="transition-delay: 60ms;">Route every prompt to the cheapest model that can handle it</h1>
+                <h1 data-anim="fade-up">Your simple prompts are burning premium tokens</h1>
                 <p class="subtitle" data-anim="fade-up" style="transition-delay: 100ms;">
-                    Nadir is an open-source LLM router. It sits between your app and the providers, reads each prompt, and sends the simple ones to cheaper models. Swap your base URL, set <code>model=auto</code>, and watch your bill drop.
+                    Every "write a test" or "fix this typo" burns premium LLM credits. <code>nadirclaw</code> routes simple prompts to cheaper models automatically. Save on every call that doesn't need your most expensive model.
                 </p>
 
                 <div class="cta-group" data-anim="fade-up" style="transition-delay: 200ms;">
@@ -1884,21 +1806,6 @@
                     <span class="works-with-item">Continue</span>
                     <span class="works-with-sep">/</span>
                     <span class="works-with-item">Any OpenAI-compatible client</span>
-                </div>
-
-                <div class="what-you-get" data-anim="fade-up" style="transition-delay: 380ms;">
-                    <div class="wyg-item">
-                        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8 7 12 13 4"/></svg>A lower LLM bill</h3>
-                        <p>30-60% on a typical mix, with no quality drop on the prompts that matter.</p>
-                    </div>
-                    <div class="wyg-item">
-                        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8 7 12 13 4"/></svg>Full cost visibility</h3>
-                        <p>Per-request cost, latency, and routing decisions in response headers and a dashboard.</p>
-                    </div>
-                    <div class="wyg-item">
-                        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8 7 12 13 4"/></svg>No refactor</h3>
-                        <p>A two-line base URL change, <code>model=auto</code>, and you keep the tools you already use.</p>
-                    </div>
                 </div>
 
                 <div class="product-preview" data-anim="scale-in" style="transition-delay: 400ms;">
