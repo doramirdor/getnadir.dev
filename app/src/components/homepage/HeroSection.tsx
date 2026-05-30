@@ -115,19 +115,11 @@ export const HeroSection = () => {
   const savingsPct = Math.round(((totalWithout - totalWith) / totalWithout) * 100);
 
   return (
-    <section className="pt-16 md:pt-24 pb-16 md:pb-20">
+    <section className="pt-8 md:pt-12 pb-16 md:pb-20">
       <div className="max-w-[1240px] mx-auto px-6 sm:px-8">
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-10 lg:gap-14 items-center">
           {/* Copy column */}
           <div className="text-left max-w-[600px] lg:max-w-none">
-            <div className="mb-6 inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.06em] uppercase text-[#028a3e]">
-              <span className="relative inline-flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-70 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#028a3e]" />
-              </span>
-              Live router. {savingsPct}% saved on this page
-            </div>
-
             <h1 className="text-[40px] sm:text-[56px] lg:text-[64px] font-semibold leading-[1.04] tracking-[-0.035em] mb-6 text-[#1d1d1f] [text-wrap:balance]">
               Route every prompt to the{" "}
               <span
