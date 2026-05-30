@@ -15,30 +15,9 @@ const ROWS: Row[] = [
   { strategy: "Nadir verifier-gated cascade", cost: "4.7x", catastrophic: "1.7%", quality: "98.3%", highlighted: true },
 ];
 
-type Proof = {
-  value: string;
-  unit?: string;
-  label: string;
-};
-
-const PROOF: Proof[] = [
-  {
-    value: "98%",
-    label: "Quality preserved versus always-Opus on RouterBench held-out. We verify the cheap answer before shipping it, so quality drops are caught, not absorbed.",
-  },
-  {
-    value: "60%",
-    label: "Cost reduction versus always-Opus on the same 11,420 triples. Same eval, no cherry-picking.",
-  },
-  {
-    value: "180 ms",
-    label: "Verifier latency on CPU. INT8 quantized, 70 MB. Ships today.",
-  },
-];
-
 export const BenchmarkSection = () => {
   return (
-    <section id="benchmark" className="py-24 md:py-32 scroll-mt-16">
+    <section id="benchmark" className="py-20 md:py-24 scroll-mt-16">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         {/* Headline + narrative */}
         <div className="max-w-[820px] mb-14 md:mb-16">
@@ -56,37 +35,6 @@ export const BenchmarkSection = () => {
             <span className="text-[#1d1d1f] font-medium"> Nadir preserves 98% of always-Opus quality at 40% of the cost</span>
             {" "}by reading the cheap model's answer first and escalating only when quality fails the bar. Verifier AUROC 0.961, calibration ECE 0.016.
           </p>
-        </div>
-
-        {/* Three proof points — divider-grouped, not boxed. The numbers carry
-            the weight; framing them in cards adds containers without adding
-            information. */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-10 md:gap-y-0 mb-14 md:mb-16 border-y border-black/[0.08]">
-          {PROOF.map((p, i) => (
-            <div
-              key={p.label}
-              className={`py-10 md:py-12 px-1 md:px-8 ${
-                i > 0 ? "md:border-l md:border-black/[0.08]" : ""
-              }`}
-            >
-              <div className="flex items-baseline gap-2 mb-3">
-                <span
-                  className="text-[48px] md:text-[60px] font-semibold tracking-[-0.04em] leading-[0.95] tabular-nums"
-                  style={{ color: i === 0 ? "#028a3e" : "#1d1d1f" }}
-                >
-                  {p.value}
-                </span>
-                {p.unit && (
-                  <span className="text-[14px] md:text-[15px] font-semibold text-[#6e6e73] uppercase tracking-[0.08em]">
-                    {p.unit}
-                  </span>
-                )}
-              </div>
-              <p className="text-[14px] md:text-[15px] text-[#424245] m-0 leading-[1.55] tracking-[-0.005em] max-w-[260px]">
-                {p.label}
-              </p>
-            </div>
-          ))}
         </div>
 
         {/* Comparison table */}

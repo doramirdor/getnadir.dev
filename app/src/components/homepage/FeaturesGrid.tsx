@@ -1,4 +1,5 @@
 import { SignupDialog } from "@/components/marketing/SignupDialog";
+import { Reveal } from "@/components/marketing/Reveal";
 
 type Bucket = "speed" | "reliability" | "visibility";
 
@@ -72,9 +73,9 @@ const ITEMS: Item[] = [
 
 export const FeaturesGrid = () => {
   return (
-    <section className="py-24 md:py-36 bg-[#fbfbfd] border-y border-black/[0.06]">
+    <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
-        <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
+        <Reveal className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
           <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">
             Why teams switch
           </p>
@@ -84,15 +85,19 @@ export const FeaturesGrid = () => {
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
             Smart routing, semantic cache, automatic failover, full observability. Two-line install. First month is on us.
           </p>
-        </div>
+        </Reveal>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-5 md:gap-6">
-          {ITEMS.map((it) => {
+          {ITEMS.map((it, i) => {
             const isHero = it.span === 4;
             return (
-              <div
+              <Reveal
                 key={it.title}
-                className={`bg-white border border-black/[0.06] rounded-[16px] p-7 md:p-8 [@media(hover:hover)_and_(pointer:fine)]:hover:border-black/[0.14] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-px transition-[transform,border-color] duration-200 ease-emil-out ${
-                  isHero ? "md:col-span-4 md:p-10" : "md:col-span-2"
+                delay={i * 60}
+                className={isHero ? "md:col-span-4" : "md:col-span-2"}
+              >
+              <div
+                className={`h-full bg-white border border-black/[0.06] rounded-[16px] p-7 md:p-8 [@media(hover:hover)_and_(pointer:fine)]:hover:border-black/[0.14] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-px transition-[transform,border-color] duration-200 ease-emil-out ${
+                  isHero ? "md:p-10" : ""
                 }`}
               >
                 <div
@@ -135,11 +140,12 @@ export const FeaturesGrid = () => {
                   {it.desc}
                 </p>
               </div>
+              </Reveal>
             );
           })}
         </div>
 
-        <div className="mt-14 md:mt-16 flex flex-col items-center text-center">
+        <Reveal className="mt-14 md:mt-16 flex flex-col items-center text-center">
           <SignupDialog ctaLabel="start_free" ctaLocation="features_grid">
             <button
               type="button"
@@ -151,7 +157,7 @@ export const FeaturesGrid = () => {
           <p className="mt-3 text-[13px] text-[#6e6e73] tracking-[-0.005em]">
             No card to start. Cancel anytime. $9/mo flat after the free first month.
           </p>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

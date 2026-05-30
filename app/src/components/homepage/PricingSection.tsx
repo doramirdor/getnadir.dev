@@ -96,7 +96,7 @@ const Check = () => (
 
 export const PricingSection = () => {
   return (
-    <section className="py-24 md:py-36">
+    <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
           <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">

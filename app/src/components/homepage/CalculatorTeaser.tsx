@@ -22,7 +22,7 @@ export const CalculatorTeaser = () => {
   const netPerYear = netPerMonth * 12;
 
   return (
-    <section className="py-20 md:py-28">
+    <section className="py-20 md:py-24 bg-[#fbfbfd] border-y border-black/[0.06]">
       <div className="max-w-[1040px] mx-auto px-6 sm:px-8">
         <div className="text-center mb-10 md:mb-14">
           <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-4">

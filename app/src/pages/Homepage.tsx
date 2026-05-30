@@ -11,6 +11,7 @@ import { ComparisonTable } from "@/components/homepage/ComparisonTable";
 import { PricingSection } from "@/components/homepage/PricingSection";
 import { FAQSection } from "@/components/homepage/FAQSection";
 import { BottomCta } from "@/components/homepage/BottomCta";
+import { Reveal } from "@/components/marketing/Reveal";
 import { trackPageView } from "@/utils/analytics";
 
 const Homepage = () => {
@@ -29,16 +30,16 @@ const Homepage = () => {
       {/* Benchmark evidence lands right after the headline numbers, before
           any product narrative. The verifier-gated cascade thesis needs the
           eval table to back it up while it is still in the visitor's head. */}
-      <BenchmarkSection />
+      <Reveal><BenchmarkSection /></Reveal>
       {/* Calculator teaser lives high in the scroll so the dollar-amount aha
           moment happens before we ask the visitor to do anything. */}
-      <CalculatorTeaser />
-      <HowItWorks />
+      <Reveal><CalculatorTeaser /></Reveal>
+      <Reveal><HowItWorks /></Reveal>
       <FeaturesGrid />
-      <ComparisonTable />
-      <PricingSection />
-      <FAQSection />
-      <BottomCta />
+      <Reveal><ComparisonTable /></Reveal>
+      <Reveal><PricingSection /></Reveal>
+      <Reveal><FAQSection /></Reveal>
+      <Reveal><BottomCta /></Reveal>
     </MarketingLayout>
   );
 };

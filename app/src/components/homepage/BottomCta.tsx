@@ -2,7 +2,7 @@ import { SignupDialog } from "@/components/marketing/SignupDialog";
 
 export const BottomCta = () => {
   return (
-    <section className="py-32 md:py-40 px-6 sm:px-8 bg-[#fbfbfd] border-t border-black/[0.06]">
+    <section className="py-24 md:py-28 px-6 sm:px-8 bg-[#fbfbfd] border-t border-black/[0.06]">
       <div className="max-w-[860px] mx-auto text-center">
         <p className="text-[12px] text-[#028a3e] uppercase tracking-[0.12em] font-semibold mb-5">
           One last thing

@@ -63,7 +63,7 @@ const Step = ({
 
 export const HowItWorks = () => {
   return (
-    <section className="py-24 md:py-36">
+    <section className="py-20 md:py-24">
       <div className="max-w-[1160px] mx-auto px-6 sm:px-8">
         <div className="text-center max-w-[760px] mx-auto mb-16 md:mb-20">
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
