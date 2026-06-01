@@ -11,7 +11,7 @@ type Stat = {
 const STATS: Stat[] = [
   { value: "98%", label: "Quality preserved versus always-Opus. Verifier in the loop, not a one-shot router.", accent: true },
   { value: "60%", label: "Lower bill versus always-Opus on the same 11,420 triples." },
-  { value: "0.7118", label: "RouterArena arena_score on the official scorer, full evaluation set, n=8,400. Projected top 5, ahead of Auto Router, vLLM-SR, and Not Diamond." },
+  { value: "0.733", label: "RouterArena arena_score on the official scorer, full evaluation set, n=8,400. #3 on the public leaderboard, behind only Sqwish and AgentForge." },
   { value: "180 ms", label: "Verifier latency on CPU. INT8 quantized, ships today." },
   { value: "2 lines", label: "Code change to start routing. Same SDK, new base URL." },
 ];
