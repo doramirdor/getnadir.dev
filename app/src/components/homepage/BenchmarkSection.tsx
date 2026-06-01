@@ -135,14 +135,19 @@ export const BenchmarkSection = () => {
                 RouterArena
               </p>
               <div className="text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[0.95] tabular-nums mb-3">
-                0.7118
+                0.733
               </div>
               <p className="text-[14px] md:text-[15px] text-[#d2d2d7] m-0 leading-[1.5] tracking-[-0.005em] mb-5">
-                arena_score on the official scorer, full split (n=8,400). Projects into the public leaderboard's top 5, ahead of Auto Router (70.05), vLLM-SR (67.23), and Not Diamond (57.29).
+                arena_score on the official scorer, full split (n=8,400). Top 3 on the public RouterArena leaderboard, behind only Sqwish and AgentForge.
               </p>
-              <p className="text-[12px] text-[#86868b] m-0 mt-auto tracking-[-0.005em] font-mono">
-                eval/routerarena/rescoring/
-              </p>
+              <a
+                href="https://routeworks.github.io/leaderboard"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[12px] text-[#86868b] hover:text-white transition-colors m-0 mt-auto tracking-[-0.005em] font-mono"
+              >
+                routeworks.github.io/leaderboard ↗
+              </a>
             </div>
 
             {/* ND head-to-head */}
