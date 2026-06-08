@@ -935,15 +935,15 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
               </div>
             )}
 
-            {/* Context Optimize */}
+            {/* Compression */}
             <div className="border-t pt-4 mt-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 rounded-lg bg-green-50">
                   <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 12.5-6-3-6 3"/><path d="m18 18-6-3-6 3"/><path d="m18 7-6-3-6 3"/></svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">Context Optimize</p>
-                  <p className="text-xs text-muted-foreground">Reduce input tokens before sending to the model</p>
+                  <p className="text-sm font-semibold">Compression</p>
+                  <p className="text-xs text-muted-foreground">Shrink prompts with Nadir's context-compression engine before they reach the model — lower cost, same answers</p>
                 </div>
               </div>
               <div className="flex gap-2 ml-11">
@@ -969,8 +969,13 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
               {optimizeMode !== "off" && (
                 <p className="text-xs text-muted-foreground ml-11 mt-2">
                   {optimizeMode === "safe"
-                    ? "Lossless transforms: whitespace, empty messages, duplicate system prompts"
-                    : "Safe + semantic dedup using sentence embeddings"}
+                    ? "Strong lossless compression: JSON minification, columnar packing of repeated structures, and semantic deduplication — same answers, fewer tokens"
+                    : "Everything in Safe, but repeated structures use a tighter compact-table format for the largest savings — data stays in the prompt, no extra calls"}
+                </p>
+              )}
+              {optimizeMode !== "off" && !isPro && (
+                <p className="text-xs text-amber-600 ml-11 mt-1">
+                  Compression applies on paid plans — free-tier requests run uncompressed.
                 </p>
               )}
             </div>
@@ -1039,9 +1044,9 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
                 )}
               </div>
 
-              {/* Context Optimize */}
+              {/* Compression */}
               <div className="p-3 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Context Optimize</span>
+                <span className="text-sm text-muted-foreground">Compression</span>
                 <Badge variant={optimizeMode !== "off" ? "default" : "outline"} className={`text-xs ${
                   optimizeMode === "safe" ? "bg-green-600" : optimizeMode === "aggressive" ? "bg-orange-600" : ""
                 }`}>

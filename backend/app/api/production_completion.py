@@ -1072,6 +1072,8 @@ async def create_completion(
             optimize_mode = "safe"  # middle-out = safe mode
         if optimize_mode in ("safe", "aggressive"):
             from app.services.context_optimizer import optimize_messages
+            # Both modes compress IN the prompt (data stays available, no retrieval):
+            # safe = JSON columnar packing; aggressive = tighter CSV columnar packing.
             original_tokens = sum(len(m.get("content", "")) // 4 for m in messages_dicts)
             optimize_result = optimize_messages(messages_dicts, mode=optimize_mode)
             messages_dicts = optimize_result.messages

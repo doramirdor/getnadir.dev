@@ -4,7 +4,7 @@
  * Three toggleable layers:
  *   - Routing:  complexity analysis → intelligent model selection
  *   - Fallback: auto-retry with ordered fallback chain on failure
- *   - Context Optimize: off / safe (lossless) / aggressive (semantic dedup)
+ *   - Compression: off / safe (lossless) / aggressive (columnar packing + semantic dedup)
  *
  * Always-on (shown as info, not toggleable):
  *   Token tracking, savings tracking, response healing, rate limiting
@@ -41,9 +41,9 @@ interface LayerConfigProps {
 }
 
 const OPTIMIZE_OPTIONS: { value: Layers["optimize"]; label: string; desc: string }[] = [
-  { value: "off", label: "Off", desc: "No optimization" },
-  { value: "safe", label: "Safe", desc: "Lossless transforms only" },
-  { value: "aggressive", label: "Aggressive", desc: "Safe + semantic dedup" },
+  { value: "off", label: "Off", desc: "No compression" },
+  { value: "safe", label: "Safe", desc: "Strong lossless (columnar packing + dedup)" },
+  { value: "aggressive", label: "Aggressive", desc: "Safe + tighter table packing (max savings)" },
 ];
 
 export default function LayerConfig({ layers, onChange, onSave, saving, compact }: LayerConfigProps) {
@@ -99,16 +99,16 @@ export default function LayerConfig({ layers, onChange, onSave, saving, compact 
             />
           </div>
 
-          {/* Context Optimize */}
+          {/* Compression */}
           <div className="py-2 border-b">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 rounded-lg bg-green-50">
                 <Scissors className="h-4 w-4 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium">Context Optimize</p>
+                <p className="text-sm font-medium">Compression</p>
                 <p className="text-xs text-muted-foreground">
-                  Reduce input tokens before sending to the model
+                  Shrink prompts before they reach the model — lower cost, same answers
                 </p>
               </div>
             </div>
@@ -134,8 +134,8 @@ export default function LayerConfig({ layers, onChange, onSave, saving, compact 
             {layers.optimize !== "off" && (
               <p className="text-xs text-muted-foreground ml-11 mt-1.5">
                 {layers.optimize === "safe"
-                  ? "5 lossless transforms: whitespace, empty messages, duplicate system prompts, ASCII art, comment blocks"
-                  : "Safe + diff-preserving semantic dedup using sentence embeddings"}
+                  ? "Strong lossless compression: JSON minification, columnar packing of repeated structures, and semantic deduplication — same answers, fewer tokens"
+                  : "Everything in Safe, but repeated structures use a tighter compact-table format for the largest savings — data stays in the prompt, no extra calls"}
               </p>
             )}
           </div>

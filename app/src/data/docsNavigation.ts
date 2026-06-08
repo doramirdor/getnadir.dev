@@ -41,7 +41,7 @@ export const docsNavigation: DocGroup[] = [
     title: "Routing",
     sections: [
       { slug: "smart-routing", label: "Smart Routing", icon: Brain },
-      { slug: "context-optimize", label: "Context Optimize", icon: Sparkles },
+      { slug: "context-optimize", label: "Compression", icon: Sparkles },
       { slug: "fallbacks", label: "Fallbacks & Budget", icon: RotateCcw },
     ],
   },

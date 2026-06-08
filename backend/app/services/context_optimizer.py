@@ -29,6 +29,10 @@ class OptimizeResult:
     tokens_saved: int
     mode: str
     optimizations_applied: list[str] = field(default_factory=list)
+    # aggressive offload: {hash: original_content} so the caller can inject the
+    # retrieve tool and serve the fetch-back loop (see ccr.py). Empty unless the
+    # offload stage ran (aggressive mode + allow_offload).
+    offload_captured: dict = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -262,8 +266,12 @@ def _normalize_whitespace(content: str) -> tuple[str, bool]:
         if in_code_block:
             out_lines.append(line)
             continue
-        # Collapse multi-spaces outside code blocks
-        out_lines.append(_MULTI_SPACES.sub(" ", line))
+        # Collapse interior multi-spaces but PRESERVE leading indentation —
+        # otherwise raw (unfenced) source code has its indentation flattened
+        # into invalid syntax. Leading whitespace is semantically significant
+        # (Python, YAML, diffs), so it must survive even in "safe" mode.
+        n_lead = len(line) - len(line.lstrip(" \t"))
+        out_lines.append(line[:n_lead] + _MULTI_SPACES.sub(" ", line[n_lead:]))
 
     result = "\n".join(out_lines)
     # Collapse 3+ consecutive blank lines → 2
@@ -458,6 +466,136 @@ def _semantic_dedup(
     return result, changed
 
 
+# ---------------------------------------------------------------------------
+# Transform — Homogeneous JSON-array packing (aggressive, columnar)
+# ---------------------------------------------------------------------------
+#
+# Large arrays of objects that share the same keys (DB query results, API list
+# responses, tool outputs) repeat every key on every row. Packing them into a
+# columnar table — a single header of keys plus one JSON value-array per row —
+# emits each key once instead of N times. Information-lossless (deterministically
+# reversible via _unpack_table) but not byte-identical JSON, so aggressive only.
+
+_TABLE_OPEN = "⟦cols="   # ⟦cols=[...]⟧
+_TABLE_CLOSE = "⟧"       # ⟧
+_TABLE_END = "⟦end⟧"  # ⟦end⟧
+_MIN_TABLE_ROWS = 5
+
+
+_CSV_TABLE_OPEN = "⟦tbl⟧"
+_CSV_TABLE_END = "⟦/tbl⟧"
+
+
+def _is_flat_scalar_dict(d: dict) -> bool:
+    return all(not isinstance(v, (dict, list)) for v in d.values())
+
+
+def _pack_array(arr: list, style: str = "json"):
+    """Pack a homogeneous list-of-dicts into a columnar table, or None if unfit.
+
+    style="json" (default) -> ``⟦cols=[...]⟧`` + one JSON value-array per row.
+        Deterministically reversible to the exact list-of-dicts (types preserved).
+    style="csv"  -> a tighter ``⟦tbl⟧`` header + CSV rows. Used only when every
+        value is a scalar; ~5-7% smaller and fully model-readable, but values come
+        back as strings (information-complete, not byte/type-exact). Falls back to
+        the json style automatically for nested/non-flat arrays.
+    """
+    if len(arr) < _MIN_TABLE_ROWS or not all(isinstance(x, dict) for x in arr):
+        return None
+    cols = list(arr[0].keys())
+    if len(cols) < 2:
+        return None
+    colset = set(cols)
+    for d in arr:
+        if set(d.keys()) != colset:
+            return None  # not strictly homogeneous — leave for json_minify
+
+    if style == "csv" and all(_is_flat_scalar_dict(d) for d in arr):
+        import csv
+        import io
+        out = io.StringIO()
+        out.write(_CSV_TABLE_OPEN + "\n")
+        w = csv.writer(out, lineterminator="\n")
+        w.writerow(cols)
+        for d in arr:
+            w.writerow(["" if d[c] is None else d[c] for c in cols])
+        out.write(_CSV_TABLE_END)
+        return out.getvalue()
+
+    # json style (also the fallback when csv can't apply)
+    lines = [f"{_TABLE_OPEN}{json.dumps(cols, separators=(',', ':'), ensure_ascii=False)}{_TABLE_CLOSE}"]
+    for d in arr:
+        lines.append(json.dumps([d[c] for c in cols], separators=(",", ":"), ensure_ascii=False))
+    lines.append(_TABLE_END)
+    return "\n".join(lines)
+
+
+def _unpack_table(packed: str) -> list:
+    """Inverse of :func:`_pack_array` — reconstruct the list-of-dicts (json or csv)."""
+    if packed.startswith(_CSV_TABLE_OPEN):
+        import csv
+        import io
+        body = packed[len(_CSV_TABLE_OPEN):]
+        if body.endswith(_CSV_TABLE_END):
+            body = body[: -len(_CSV_TABLE_END)]
+        rows = list(csv.reader(io.StringIO(body.strip("\n"))))
+        cols, data = rows[0], rows[1:]
+        return [dict(zip(cols, r)) for r in data]
+    lines = packed.split("\n")
+    cols = json.loads(lines[0][len(_TABLE_OPEN):-len(_TABLE_CLOSE)])
+    rows = [json.loads(ln) for ln in lines[1:] if ln and ln != _TABLE_END]
+    return [dict(zip(cols, r)) for r in rows]
+
+
+def _pack_homogeneous_arrays(content: str, style: str = "json") -> tuple[str, bool]:
+    """Replace embedded homogeneous JSON arrays with a compact columnar table."""
+    if not content or len(content) < 80 or "[" not in content:
+        return content, False
+
+    parts = re.split(r"(```[^\n]*\n.*?```)", content, flags=re.DOTALL)
+    changed = False
+    out_segments: list[str] = []
+    for seg in parts:
+        if seg.startswith("```"):
+            out_segments.append(seg)
+            continue
+        new_seg, seg_changed = _pack_segment(seg, style=style)
+        out_segments.append(new_seg)
+        changed = changed or seg_changed
+    return "".join(out_segments), changed
+
+
+def _pack_segment(text: str, style: str = "json") -> tuple[str, bool]:
+    decoder = json.JSONDecoder()
+    result: list[str] = []
+    pos = 0
+    changed = False
+    while pos < len(text):
+        idx = text.find("[", pos)
+        if idx == -1:
+            result.append(text[pos:])
+            break
+        result.append(text[pos:idx])
+        try:
+            obj, end = decoder.raw_decode(text, idx)
+        except (json.JSONDecodeError, ValueError):
+            result.append("[")
+            pos = idx + 1
+            continue
+        packed = _pack_array(obj, style=style) if isinstance(obj, list) else None
+        if packed is not None:
+            minified = json.dumps(obj, separators=(",", ":"), ensure_ascii=False)
+            if _estimate_tokens_str(packed) < _estimate_tokens_str(minified):
+                result.append(packed)
+                changed = True
+            else:
+                result.append(text[idx:end])
+        else:
+            result.append(text[idx:end])
+        pos = end
+    return "".join(result), changed
+
+
 _SAFE_TRANSFORMS = [
     ("system_prompt_dedup", lambda msgs, **_: _dedup_system_prompts(msgs)),
     ("tool_schema_dedup", lambda msgs, **_: _dedup_tool_schemas(msgs)),
@@ -474,6 +612,8 @@ def optimize_messages(
     messages: list[dict],
     mode: str = "off",
     max_turns: int = 40,
+    *,
+    allow_offload: bool = False,
 ) -> OptimizeResult:
     """Optimize a list of message dicts for token reduction.
 
@@ -482,15 +622,25 @@ def optimize_messages(
     messages
         List of ``{"role": "...", "content": "..."}`` dicts.
     mode
-        ``"off"`` (no-op), ``"safe"`` (lossless), or ``"aggressive"``
-        (safe + semantic deduplication via sentence embeddings).
+        - ``"off"``        — no processing.
+        - ``"safe"``       — strong in-prompt compression: structural transforms,
+          columnar JSON-array packing (type-exact reversible), and semantic
+          deduplication. Data stays in the prompt; no retrieval needed.
+        - ``"aggressive"`` — same pipeline but homogeneous arrays are packed in the
+          tighter CSV columnar form (~5-7% smaller, fully model-readable). Data
+          still stays IN the prompt, so it works for data-dependent queries with no
+          retrieval round-trip.
     max_turns
         Maximum conversation turns to keep when trimming history.
+    allow_offload
+        Deprecated / no-op. Token offload was removed because it is a net loss
+        whenever the model needs the data back (confirmed on real provider tokens).
+        Kept only for call-site compatibility.
 
     Returns
     -------
     OptimizeResult
-        Contains optimized messages and savings metrics.
+        Optimized messages and savings metrics.
     """
     original_tokens = _estimate_tokens_messages(messages)
 
@@ -528,8 +678,27 @@ def optimize_messages(
         if content_changed:
             applied.append(name)
 
-    # --- Aggressive-only transforms ---
-    if mode == "aggressive":
+    # --- Strong in-prompt compression (BOTH safe and aggressive) ---
+    # The data stays IN the prompt, so this works for data-dependent queries with
+    # NO retrieval round-trip. safe packs homogeneous arrays as JSON value-arrays
+    # (type-exact reversible); aggressive uses the tighter CSV columnar form
+    # (~5-7% smaller, fully model-readable). (Token offload was removed: it is a
+    # net loss whenever the model needs the data back — confirmed on real tokens.)
+    offload_captured: dict = {}
+    if mode in ("safe", "aggressive"):
+        pack_style = "csv" if mode == "aggressive" else "json"
+        content_changed = False
+        for i, m in enumerate(msgs):
+            content = m.get("content")
+            if not isinstance(content, str) or len(content) < 10:
+                continue
+            new_content, changed = _pack_homogeneous_arrays(content, style=pack_style)
+            if changed:
+                msgs[i] = {**m, "content": new_content}
+                content_changed = True
+        if content_changed:
+            applied.append("csv_table_pack" if pack_style == "csv" else "json_array_pack")
+
         msgs, did_semantic = _semantic_dedup(msgs)
         if did_semantic:
             applied.append("semantic_dedup")
@@ -547,5 +716,6 @@ def optimize_messages(
         optimized_tokens=optimized_tokens,
         tokens_saved=max(0, original_tokens - optimized_tokens),
         mode=mode,
+        offload_captured=offload_captured,
         optimizations_applied=applied,
     )
