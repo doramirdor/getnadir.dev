@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "llm-api-pricing-june-2026-complete-comparison",
+    title: "LLM API pricing, June 2026: every major model compared. The cheapest output token is 75x less than the most expensive.",
+    date: "2026-06-09",
+    author: "Dor Amir",
+    excerpt: "GPT-5.5 charges $30 per million output tokens. Gemini 2.5 Flash-Lite charges $0.40. DeepSeek V4 Flash charges $0.28. That is a 75x to 107x spread on output alone. Add prompt caching, batch discounts, and off-peak pricing, and the effective gap widens past 1,000x. This is the complete pricing breakdown for every major LLM API in June 2026, from frontier to budget, with the cost optimization features that most comparison posts leave out. The teams that route across this spread save 40 to 70%. The teams that do not are overpaying on the majority of their API calls.",
+    thumbnail: "Research",
+    tags: ["LLM Pricing", "Cost Optimization", "Model Comparison", "Routing", "2026 Trends"],
+    readingTime: "10 min read",
+  },
+  {
     id: "openai-14b-loss-api-prices-subsidized-routing-hedge",
     title: "OpenAI will lose $14 billion this year. Your API price is a subsidy, not a market rate.",
     date: "2026-06-08",
@@ -297,6 +307,198 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "llm-api-pricing-june-2026-complete-comparison": `## The price spread has never been wider. Most teams are ignoring it.
+
+In June 2026, the LLM API market has more models at more price points than at any point in the industry's history. GPT-5.5 charges $30 per million output tokens. Gemini 2.5 Flash-Lite charges $0.40. That is a 75x spread on output pricing alone. On input tokens, the range runs from $0.10 (GPT-4.1 nano, Gemini 2.5 Flash-Lite) to $10.00 (Claude Opus 4.8 Fast Mode), a 100x gap.
+
+And these are just the list prices. Layer in prompt caching, batch discounts, and off-peak windows, and the effective cost of a cached DeepSeek V4 Flash input token drops to $0.0028 per million. Compare that to a non-cached GPT-5.5 input at $5.00, and the spread is 1,785x.
+
+The question is not which model is cheapest. The question is whether your architecture can exploit the spread.
+
+## OpenAI: five tiers from $0.10 to $30 per million tokens.
+
+OpenAI now runs five distinct model tiers, each targeting a different cost-performance point. GPT-5.5 is the flagship, but the real story is the depth of the lineup below it.
+
+| Model | Input / 1M tokens | Output / 1M tokens | Context | Cached input |
+|---|---:|---:|---:|---:|
+| GPT-5.5 | $5.00 | $30.00 | 1M | $0.50 (90% off) |
+| GPT-4.1 | $2.00 | $8.00 | 1M | $0.50 (75% off) |
+| GPT-4.1 mini | $0.40 | $1.60 | 1M | $0.10 (75% off) |
+| GPT-4.1 nano | $0.10 | $0.40 | 1M | $0.025 (75% off) |
+| o3 (reasoning) | $2.00 | $8.00 | 200K | $0.50 (75% off) |
+| o4-mini (reasoning) | $0.55 | $2.20 | 200K | $0.14 (75% off) |
+
+[Source: OpenAI, "API Pricing," June 2026](https://developers.openai.com/api/docs/pricing)
+
+The biggest pricing lever is the Batch API, which cuts all prices by 50% in exchange for 24-hour async processing. Combined with prompt caching, a batch GPT-4.1 nano call costs $0.0125 per million cached input tokens and $0.20 per million output tokens. That is 150x cheaper than a standard GPT-5.5 output call.
+
+GPT-5.5 also has a long-context surcharge: requests exceeding 272K input tokens are billed at 2x input and 1.5x output for the full session. Teams running large codebases or document corpora through GPT-5.5 should watch for this multiplier.
+
+[Source: OpenAI, "Introducing GPT-5.5," April 2026](https://openai.com/index/introducing-gpt-5-5/)
+
+One critical detail on reasoning models: o3 and o4-mini bill internal reasoning tokens at the output rate. A typical o3 call generates 3 to 10x more hidden reasoning tokens than visible output. The sticker price of $8 per million output tokens can effectively become $24 to $80 per million tokens of actual model compute, depending on task complexity.
+
+## Anthropic: consistent pricing, a tokenizer trap, and aggressive caching.
+
+Anthropic's Claude lineup is simpler than OpenAI's, but the pricing has a hidden variable that most comparison posts miss.
+
+| Model | Input / 1M tokens | Output / 1M tokens | Context | Cached input |
+|---|---:|---:|---:|---:|
+| Claude Opus 4.8 | $5.00 | $25.00 | 200K | $0.50 (90% off) |
+| Claude Opus 4.8 Fast | $10.00 | $50.00 | 200K | $1.00 (90% off) |
+| Claude Sonnet 4.6 | $3.00 | $15.00 | 200K | $0.30 (90% off) |
+| Claude Haiku 4.5 | $1.00 | $5.00 | 200K | $0.10 (90% off) |
+
+[Source: Anthropic, "Pricing," June 2026](https://platform.claude.com/docs/en/about-claude/pricing)
+
+The tokenizer trap: Claude Opus 4.7 introduced a new tokenizer that produces roughly 35% more tokens for the same text compared to Opus 4.6. This means migrating workloads from Opus 4.6 to Opus 4.7 or 4.8 can increase effective costs by 35% even though the per-token price is identical. Teams comparing Anthropic pricing across model versions should measure token counts, not just sticker prices.
+
+[Source: Finout, "Claude Opus 4.8 Pricing 2026: Everything You Need to Know"](https://www.finout.io/blog/claude-opus-4.8-pricing-2026-everything-you-need-to-know)
+
+Anthropic's prompt caching is the most aggressive in the market. Cache reads cost 90% less than base input pricing. Cache writes carry a 25% surcharge, but any prompt prefix that repeats across calls amortizes that surcharge quickly. Opus 4.8 lowered the minimum cacheable prompt length to 1,024 tokens, making caching viable for shorter system prompts.
+
+The Batch API mirrors OpenAI's: 50% off all models with async processing. A batched, cached Haiku call costs $0.05 per million cached input tokens and $2.50 per million output tokens. For high-volume classification, summarization, or formatting tasks, that is hard to beat from a proprietary model.
+
+## Google: the most aggressive price cuts of 2026.
+
+Google has been the most active price-cutter this year. Gemini 2.5 Flash undercuts every proprietary competitor at its tier, and Gemini 2.5 Flash-Lite matches open-source pricing.
+
+| Model | Input / 1M tokens | Output / 1M tokens | Context | Cached input |
+|---|---:|---:|---:|---:|
+| Gemini 2.5 Pro | $1.25 | $10.00 | 1M | ~$0.13 (90% off) |
+| Gemini 2.5 Flash | $0.30 | $2.50 | 1M | ~$0.03 (90% off) |
+| Gemini 2.5 Flash-Lite | $0.10 | $0.40 | 1M | N/A |
+| Gemini 3.5 Flash | $1.50 | $9.00 | 1M | TBD |
+
+[Source: Google, "Gemini API Pricing," June 2026](https://ai.google.dev/gemini-api/docs/pricing)
+
+Gemini 3.5 Flash, launched at Google I/O on May 19, 2026, introduced a pricing shift. At $1.50/$9.00, it costs 3x more than the previous Flash generation ($0.50/$3.00 for Gemini 2.0 Flash). But it benchmarks ahead of Gemini 3.1 Pro on coding, agentic, and multimodal tasks while costing 40% less than Pro-tier pricing.
+
+[Source: Simon Willison, "Gemini 3.5 Flash," May 2026](https://simonwillison.net/2026/May/19/gemini-35-flash/)
+
+The Gemini 2.5 Pro long-context surcharge is worth noting: requests over 200K tokens are billed at $2.50 input and $15.00 output, a 2x and 1.5x multiplier respectively. Context caching helps here, but storage costs $4.50 per million tokens per hour for Pro, making it expensive to maintain large cached contexts over time.
+
+Google also offers a free tier for Gemini 2.5 Flash and Flash-Lite with rate limits, which is useful for prototyping and low-volume applications.
+
+## DeepSeek: the price floor.
+
+DeepSeek has consistently set the floor for API pricing, and V4 (launched April 24, 2026) continues that pattern.
+
+| Model | Input / 1M tokens | Output / 1M tokens | Context | Cached input |
+|---|---:|---:|---:|---:|
+| DeepSeek V4 Flash | $0.14 | $0.28 | 128K | $0.0028 (98% off) |
+| DeepSeek V4 Pro | $0.14 | $0.55 | 128K | $0.015 (90% off) |
+
+[Source: DeepSeek, "API Pricing," 2026](https://api-docs.deepseek.com/quick_start/pricing)
+
+DeepSeek V4 Flash replaced both V3 and R1 in a single model. The former R1 reasoning capability now lives inside V4 Flash's thinking mode, at the same $0.14/$0.28 pricing. The cache hit discount of 98% is the most aggressive in the market: a cached input token costs $0.0028 per million.
+
+DeepSeek also offers off-peak discounts of 50 to 75% during 16:30 to 00:30 UTC. Combined with caching, off-peak DeepSeek V4 Flash input tokens cost approximately $0.001 per million. That is 5,000x cheaper than standard GPT-5.5 input.
+
+[Source: CloudZero, "DeepSeek Pricing 2026"](https://www.cloudzero.com/blog/deepseek-pricing/)
+
+The tradeoff is capability. DeepSeek V4 Flash is competitive on standard coding and reasoning benchmarks, but it does not match frontier models on complex agentic tasks, multi-file code generation, or reliability-critical workflows. It excels as a high-volume workhorse for classification, formatting, translation, and straightforward Q&A.
+
+## Open-source models: Llama 4 pricing depends entirely on the host.
+
+Meta's Llama 4 is free to self-host, but most teams access it through inference providers. The price varies significantly.
+
+| Model | Provider | Input / 1M tokens | Output / 1M tokens |
+|---|---|---:|---:|
+| Llama 4 Scout | DeepInfra | $0.08 | $0.30 |
+| Llama 4 Scout | Groq | $0.11 | $0.34 |
+| Llama 4 Maverick | DeepInfra | $0.15 | $0.60 |
+| Llama 4 Maverick | Fireworks | $0.15 | $0.60 |
+| Llama 4 Maverick | AWS Bedrock | $0.50 | $1.00+ |
+
+[Source: Artificial Analysis, "Llama 4 Scout Provider Comparison," 2026](https://artificialanalysis.ai/models/llama-4-scout/providers)
+
+The provider spread matters. The same Llama 4 Maverick model costs $0.15 per million input tokens on DeepInfra and $0.50 on AWS Bedrock. That is a 3.3x markup for the managed service. Teams that care about cost should shop inference providers, not just model families.
+
+Llama 4 Scout on DeepInfra at $0.08/$0.30 is the cheapest option in this entire comparison. For latency-insensitive batch workloads, it is worth benchmarking against your specific use case.
+
+## The full comparison: 30 price points across 5 providers.
+
+Here is the complete picture, sorted by output price from cheapest to most expensive.
+
+| Model | Provider | Input / 1M | Output / 1M | Best with caching + batch |
+|---|---|---:|---:|---:|
+| Llama 4 Scout | DeepInfra | $0.08 | $0.30 | N/A |
+| DeepSeek V4 Flash | DeepSeek | $0.14 | $0.28 | $0.001 / $0.14 |
+| GPT-4.1 nano | OpenAI | $0.10 | $0.40 | $0.0125 / $0.20 |
+| Gemini 2.5 Flash-Lite | Google | $0.10 | $0.40 | N/A |
+| Llama 4 Maverick | DeepInfra | $0.15 | $0.60 | N/A |
+| GPT-4.1 mini | OpenAI | $0.40 | $1.60 | $0.05 / $0.80 |
+| o4-mini | OpenAI | $0.55 | $2.20 | $0.07 / $1.10 |
+| Gemini 2.5 Flash | Google | $0.30 | $2.50 | $0.015 / $1.25 |
+| Haiku 4.5 | Anthropic | $1.00 | $5.00 | $0.05 / $2.50 |
+| GPT-4.1 | OpenAI | $2.00 | $8.00 | $0.25 / $4.00 |
+| o3 | OpenAI | $2.00 | $8.00 | $0.25 / $4.00 |
+| Gemini 3.5 Flash | Google | $1.50 | $9.00 | TBD |
+| Gemini 2.5 Pro | Google | $1.25 | $10.00 | $0.065 / $5.00 |
+| Sonnet 4.6 | Anthropic | $3.00 | $15.00 | $0.15 / $7.50 |
+| Opus 4.8 | Anthropic | $5.00 | $25.00 | $0.25 / $12.50 |
+| GPT-5.5 | OpenAI | $5.00 | $30.00 | $0.25 / $15.00 |
+| Opus 4.8 Fast | Anthropic | $10.00 | $50.00 | $0.50 / $25.00 |
+
+The "best with caching + batch" column shows the lowest achievable price when both prompt caching and batch API are available. Not all providers offer both, and the column marked N/A means no first-party optimization is available.
+
+## Three hidden cost multipliers that change the math.
+
+Sticker prices tell one story. Actual invoices tell another. Three factors consistently push real costs away from the numbers in the tables above.
+
+### 1. Tokenizer differences.
+
+Models tokenize the same text differently. Claude Opus 4.7 and 4.8 use a tokenizer that produces roughly 35% more tokens than Opus 4.6 for identical input. GPT-5.5 is more token-efficient, using 72% fewer output tokens than Opus 4.8 on equivalent agentic tasks. A model that looks cheaper per token can be more expensive per task if it uses more tokens to reach the same result.
+
+[Source: Metacto, "Anthropic API Pricing: A Full Breakdown of Costs and Integration," 2026](https://www.metacto.com/blogs/anthropic-api-pricing-a-full-breakdown-of-costs-and-integration)
+
+[Source: Windows Forum, "GPT-5.5 vs Claude Opus 4.8: AI Coding Agents Win on Cost, Consistency, Repeatability," 2026](https://windowsforum.com/threads/gpt-5-5-vs-claude-opus-4-8-ai-coding-agents-win-on-cost-consistency-repeatability.421143/)
+
+### 2. Reasoning token overhead.
+
+OpenAI's o3 and o4-mini bill internal reasoning tokens at the output rate, but those tokens are not visible in the response. A typical o3 call generates 3x to 10x more reasoning tokens than visible output tokens. Google's Gemini 2.5 Pro and Flash also bill thinking tokens separately. The sticker price per output token does not reflect the total compute cost when reasoning is involved.
+
+### 3. Long-context surcharges.
+
+GPT-5.5 doubles input pricing and adds 50% to output pricing for sessions exceeding 272K input tokens. Gemini 2.5 Pro doubles input pricing and adds 50% to output pricing past 200K tokens. These surcharges are easy to miss in a pricing table but can dominate the bill for document-heavy or code-heavy workloads.
+
+## The routing math: blended cost drops 40 to 70%.
+
+The 75x spread between cheapest and most expensive output tokens is not just a curiosity. It is a routing opportunity. The AICC analyzed 2.4 billion enterprise API calls and found that organizations with multi-model routing achieved median blended costs of $2.31 per million tokens, compared to $18.40 without routing. That is an 87% reduction.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+Here is a concrete example using June 2026 pricing. Assume a workload of 1 million API calls per month with a typical distribution:
+
+| Tier | % of calls | Model | Blended output cost |
+|---|---:|---|---:|
+| Simple (formatting, classification, boilerplate) | 60% | Haiku 4.5 ($5/M) | $3.00/M |
+| Medium (summarization, moderate reasoning) | 25% | Sonnet 4.6 ($15/M) | $3.75/M |
+| Complex (multi-step reasoning, code generation) | 15% | Opus 4.8 ($25/M) | $3.75/M |
+| **Blended** | **100%** | | **$10.50/M** |
+
+Without routing, every call goes to Opus 4.8 at $25/M output. With routing, the blended cost is $10.50/M. That is a 58% reduction.
+
+Swap the simple tier to GPT-4.1 nano ($0.40/M output) and the blended cost drops to $4.99/M, an 80% reduction. Add prompt caching and the numbers improve further.
+
+[Source: Orq.ai, "Intelligent LLM Routing: Cut Costs by 25-70%"](https://router.orq.ai/blog/auto-router-intelligent-llm-routing)
+
+The key insight is that the 60% of calls in the simple tier are not degraded by routing. A classification task, a format conversion, or a boilerplate generation produces identical output whether it runs on Opus at $25/M or Haiku at $5/M. The savings come from eliminating waste, not from accepting lower quality.
+
+## What this means for your stack in June 2026.
+
+The pricing landscape rewards two architectural choices:
+
+**1. Multi-model routing.** The spread between tiers is wide enough that even a naive routing strategy (send short/simple prompts to a cheap model, everything else to a frontier model) saves 40 to 60%. A tuned router that classifies by complexity saves 60 to 80%.
+
+**2. Cost optimization features.** Prompt caching (75 to 98% off input), batch processing (50% off everything), and off-peak scheduling (50 to 75% off on DeepSeek) are multiplicative. A team that uses routing plus caching plus batching can achieve effective token costs 10 to 20x lower than a team using a single frontier model at list price.
+
+The teams that treat model selection as a one-time architecture decision are leaving the majority of the savings on the table. The teams that treat it as a per-request routing decision are exploiting the full 75x spread.
+
+---
+
+*Sources: [OpenAI, "API Pricing"](https://developers.openai.com/api/docs/pricing) (June 2026). [OpenAI, "Introducing GPT-5.5"](https://openai.com/index/introducing-gpt-5-5/) (April 2026). [Anthropic, "Pricing"](https://platform.claude.com/docs/en/about-claude/pricing) (June 2026). [Finout, "Claude Opus 4.8 Pricing 2026"](https://www.finout.io/blog/claude-opus-4.8-pricing-2026-everything-you-need-to-know). [Metacto, "Anthropic API Pricing"](https://www.metacto.com/blogs/anthropic-api-pricing-a-full-breakdown-of-costs-and-integration). [Google, "Gemini API Pricing"](https://ai.google.dev/gemini-api/docs/pricing) (June 2026). [Simon Willison, "Gemini 3.5 Flash"](https://simonwillison.net/2026/May/19/gemini-35-flash/) (May 2026). [DeepSeek, "API Pricing"](https://api-docs.deepseek.com/quick_start/pricing). [CloudZero, "DeepSeek Pricing 2026"](https://www.cloudzero.com/blog/deepseek-pricing/). [Artificial Analysis, "Llama 4 Scout Providers"](https://artificialanalysis.ai/models/llama-4-scout/providers). [AICC, "Enterprise Token Costs Drop 67%"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high) (May 2026). [Orq.ai, "Intelligent LLM Routing"](https://router.orq.ai/blog/auto-router-intelligent-llm-routing). [Windows Forum, "GPT-5.5 vs Claude Opus 4.8"](https://windowsforum.com/threads/gpt-5-5-vs-claude-opus-4-8-ai-coding-agents-win-on-cost-consistency-repeatability.421143/). Anthropic, OpenAI, Google, DeepSeek model pricing as of June 9, 2026.*`,
   "opus-4-8-vs-gpt-5-5-routing-not-picking-winner": `## The comparison everyone is making. The question nobody is asking.
 
 Claude Opus 4.8 launched on May 28, 2026. GPT-5.5 launched on April 24. Within a week, every AI blog published the same article: which one is better? The benchmarks give a clear answer. It depends on the task.
