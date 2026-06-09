@@ -395,8 +395,8 @@ export default function ApiKeyConfig({ open, onClose, onSave, initialConfig, key
                 <Scissors className="h-4 w-4 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Context Optimize</p>
-                <p className="text-xs text-muted-foreground">Reduce input tokens before sending to the model</p>
+                <p className="text-sm font-semibold">Compression</p>
+                <p className="text-xs text-muted-foreground">Shrink prompts before they reach the model — lower cost, same answers</p>
               </div>
             </div>
             <div className="flex gap-2">

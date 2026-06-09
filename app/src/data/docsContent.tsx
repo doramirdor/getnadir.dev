@@ -458,7 +458,7 @@ export function ConfigurationContent() {
       </div>
 
       <div className="space-y-4">
-        <H2>Context Optimize</H2>
+        <H2>Compression</H2>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
@@ -470,7 +470,7 @@ export function ConfigurationContent() {
             <tbody className="text-muted-foreground">
               <tr>
                 <td className="px-4 py-3"><InlineCode>NADIRCLAW_OPTIMIZE</InlineCode></td>
-                <td className="px-4 py-3"><InlineCode>off</InlineCode> (default), <InlineCode>safe</InlineCode> (lossless), or <InlineCode>aggressive</InlineCode> (coming soon)</td>
+                <td className="px-4 py-3"><InlineCode>off</InlineCode> (default), <InlineCode>safe</InlineCode> (lossless), or <InlineCode>aggressive</InlineCode></td>
               </tr>
             </tbody>
           </table>
@@ -574,7 +574,7 @@ NADIRCLAW_FREE_MODEL=gemini-2.0-flash
 NADIRCLAW_CLASSIFIER=binary
 NADIRCLAW_CONFIDENCE_THRESHOLD=0.7
 
-# Context Optimize
+# Compression
 NADIRCLAW_OPTIMIZE=safe
 
 # Budget
@@ -773,35 +773,38 @@ export function ContextOptimizeContent() {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold text-foreground">Context Optimize</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Compression</h1>
         <P>
-          Context Optimize reduces token counts before requests hit your LLM
-          provider, cutting costs without changing the meaning of your prompts.
+          Compression is Nadir's own context-compression engine. It shrinks the
+          tokens in every request before they reach your LLM provider, so you pay
+          for fewer input tokens while the model still sees the same information.
+          Choose a level per API key when you create one, or set an account-wide
+          default in Settings.
         </P>
       </div>
 
       <div className="space-y-4">
-        <H2>Modes</H2>
+        <H2>Levels</H2>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-4 py-3 font-semibold text-foreground">Mode</th>
+                <th className="text-left px-4 py-3 font-semibold text-foreground">Level</th>
                 <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
               </tr>
             </thead>
             <tbody className="text-muted-foreground">
               <tr className="border-b border-border">
                 <td className="px-4 py-3"><InlineCode>off</InlineCode></td>
-                <td className="px-4 py-3">Default. No optimization applied.</td>
+                <td className="px-4 py-3">Default. Compression disabled, zero overhead.</td>
               </tr>
               <tr className="border-b border-border">
                 <td className="px-4 py-3"><InlineCode>safe</InlineCode></td>
-                <td className="px-4 py-3">Lossless optimizations only. Zero semantic change to your prompts.</td>
+                <td className="px-4 py-3">Strong lossless compression: minification, columnar packing of repeated structures, and semantic deduplication. Information-preserving and deterministically reversible.</td>
               </tr>
               <tr>
                 <td className="px-4 py-3"><InlineCode>aggressive</InlineCode></td>
-                <td className="px-4 py-3">Coming soon. Lossy optimizations for maximum savings.</td>
+                <td className="px-4 py-3">Everything in safe, but repeated structures use a tighter compact-table format for the largest savings. The data stays in the prompt and remains fully readable -- no extra calls.</td>
               </tr>
             </tbody>
           </table>
@@ -811,17 +814,26 @@ export function ContextOptimizeContent() {
       <div className="space-y-4">
         <H2>What safe mode does</H2>
         <ul className="space-y-2 text-sm text-muted-foreground">
-          <BulletItem><strong className="text-foreground">JSON minification</strong> -- Removes unnecessary whitespace and formatting from JSON payloads in messages.</BulletItem>
-          <BulletItem><strong className="text-foreground">Tool schema deduplication</strong> -- Deduplicates repeated tool/function schemas across messages.</BulletItem>
-          <BulletItem><strong className="text-foreground">Whitespace normalization</strong> -- Collapses redundant whitespace, blank lines, and trailing spaces.</BulletItem>
-          <BulletItem><strong className="text-foreground">Chat history trimming</strong> -- Trims older messages that exceed the context window while preserving the most recent context.</BulletItem>
+          <BulletItem><strong className="text-foreground">JSON minification</strong> -- Strips unnecessary whitespace and formatting from JSON in messages while preserving every value.</BulletItem>
+          <BulletItem><strong className="text-foreground">Schema deduplication</strong> -- Replaces repeated tool/function schemas and duplicated system-prompt text with short references.</BulletItem>
+          <BulletItem><strong className="text-foreground">Columnar array packing</strong> -- Rewrites arrays of same-shaped objects (DB rows, API list responses, large tool outputs) into one header plus one value-row each -- up to ~68% smaller than pretty-printed JSON on large homogeneous arrays, and fully reversible.</BulletItem>
+          <BulletItem><strong className="text-foreground">Semantic deduplication</strong> -- Collapses near-duplicate repeated context, keeping the differences so refinements aren't lost.</BulletItem>
+          <BulletItem><strong className="text-foreground">Whitespace &amp; history</strong> -- Normalizes redundant whitespace (preserving code indentation) and trims older turns that exceed the context window.</BulletItem>
+        </ul>
+      </div>
+
+      <div className="space-y-4">
+        <H2>What aggressive mode adds</H2>
+        <ul className="space-y-2 text-sm text-muted-foreground">
+          <BulletItem><strong className="text-foreground">Compact-table packing</strong> -- Homogeneous arrays are written as a tighter header-plus-rows table (CSV-style) instead of JSON value-arrays, shaving another ~5 percent off on real tokens. The data stays in the prompt and the model reads it directly, so it works for lookups and analysis over the content with no retrieval round-trip.</BulletItem>
         </ul>
       </div>
 
       <div className="space-y-4">
         <H2>Token savings</H2>
         <P>
-          Real-world savings measured across common workloads:
+          Measured by Nadir's own benchmarks on structured, payload-heavy
+          workloads -- the kind agent and API traffic produces:
         </P>
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
@@ -832,56 +844,40 @@ export function ContextOptimizeContent() {
               </tr>
             </thead>
             <tbody className="text-muted-foreground">
-              <tr className="border-b border-border">
-                <td className="px-4 py-3">Agentic assistant</td>
-                <td className="px-4 py-3">57%</td>
-              </tr>
-              <tr className="border-b border-border">
-                <td className="px-4 py-3">RAG pipeline</td>
-                <td className="px-4 py-3">29%</td>
-              </tr>
-              <tr className="border-b border-border">
-                <td className="px-4 py-3">API response processing</td>
-                <td className="px-4 py-3">62%</td>
-              </tr>
-              <tr className="border-b border-border">
-                <td className="px-4 py-3">Debug session</td>
-                <td className="px-4 py-3">63%</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3">OpenAPI spec</td>
-                <td className="px-4 py-3">71%</td>
-              </tr>
+              <tr className="border-b border-border"><td className="px-4 py-3">Agentic assistant (repeated tool schemas)</td><td className="px-4 py-3">57%</td></tr>
+              <tr className="border-b border-border"><td className="px-4 py-3">RAG pipeline (JSON chunks)</td><td className="px-4 py-3">29%</td></tr>
+              <tr className="border-b border-border"><td className="px-4 py-3">API response processing (nested JSON)</td><td className="px-4 py-3">62%</td></tr>
+              <tr className="border-b border-border"><td className="px-4 py-3">Debug session (JSON logs)</td><td className="px-4 py-3">63%</td></tr>
+              <tr><td className="px-4 py-3">OpenAPI spec context</td><td className="px-4 py-3">71%</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
+      <Callout type="warning">
+        Savings depend on payload shape. Compression cannot shrink natural-language
+        prose, so prose-heavy chat sees the low end of the range (typically 1-10%),
+        while JSON-, tool-, and log-heavy agent traffic sees the high end. On a mix
+        of real conversations our engine saves a few percent losslessly; on the
+        structured payloads above it saves far more.
+      </Callout>
+
       <div className="space-y-4">
         <H2>Enable</H2>
-        <CodeBlock label="Via CLI flag">{`nadirclaw serve --optimize safe`}</CodeBlock>
-        <CodeBlock label="Via .env">{`NADIRCLAW_OPTIMIZE=safe`}</CodeBlock>
-      </div>
-
-      <div className="space-y-4">
-        <H2>Test on a file</H2>
         <P>
-          Preview optimization results on a saved payload without starting the
-          server:
+          In the hosted dashboard, pick a Compression level when you create or
+          edit an API key -- it applies to every request made with that key. You
+          can also set an account-wide default in Settings. Self-hosted users set
+          it via flag or environment variable:
         </P>
-        <CodeBlock label="Test optimize">{`nadirclaw optimize payload.json
-
-# Output:
-# Original tokens:  4,218
-# Optimized tokens:  1,803
-# Saved:            2,415 (57.3%)
-# Mode:             safe (lossless)`}</CodeBlock>
+        <CodeBlock label="Via CLI flag">{`nadirclaw serve --optimize safe   # off | safe | aggressive`}</CodeBlock>
+        <CodeBlock label="Via .env">{`NADIRCLAW_OPTIMIZE=safe`}</CodeBlock>
       </div>
 
       <Callout type="tip">
         Safe mode is fully lossless -- zero semantic change to your prompts.
-        Every optimization is reversible and preserves the exact meaning of
-        your messages.
+        Aggressive mode is information-lossless and deterministically reversible:
+        it reorganizes and de-duplicates, but never drops a value.
       </Callout>
     </div>
   );
@@ -1683,7 +1679,7 @@ export function ProFeaturesContent() {
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-semibold text-foreground">Self-Host</td>
                 <td className="px-4 py-3">Free forever</td>
-                <td className="px-4 py-3">Full CLI router, smart routing, context optimize, fallbacks, local dashboard (MIT licensed)</td>
+                <td className="px-4 py-3">Full CLI router, smart routing, compression, fallbacks, local dashboard (MIT licensed)</td>
               </tr>
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-semibold text-foreground">Free (Hosted)</td>
