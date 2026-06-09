@@ -13,4 +13,3 @@ venv/
 *.safetensors
 *.npy
 app/templates/
-app/static/

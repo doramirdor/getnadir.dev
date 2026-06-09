@@ -1,4 +1,4 @@
-# Nadir ranks #2 on RouterArena, ahead of azure-model-router, Not Diamond, and Martian
+# Nadir lands in RouterArena's top 5, ahead of Auto Router, vLLM-SR, and Not Diamond
 
 *Published 2026-05-27 by the Nadir team.*
 
@@ -7,8 +7,8 @@ production-equivalent verifier-gated cascade and one cost-minimization
 baseline, scored on the full n=8,400 split under the official scorer:
 
 - `nadir-cascade-verified` (τ=0.70): arena score **0.7118**, accuracy
-  0.7371, cost $0.68 per 1K queries. Projects to **rank 2** on the
-  public leaderboard.
+  0.7371, cost $0.68 per 1K queries. Projects into the public
+  leaderboard's **top 5**.
 - `nadir-cheapest` (Strategy E): arena score **0.7043**, accuracy
   0.6951, cost $0.03 per 1K queries. Submitted as a transparency
   artifact.
@@ -18,38 +18,54 @@ RouterArena's cached-response distribution
 (`eval/routerarena/rescoring/THRESHOLD_SWEEP.md`); production live
 traffic continues to use τ=0.80.
 
-## The leaderboard, in one table
+## Where we land on the published leaderboard
 
-Top tier of the RouterArena full split under the official scorer
-(`compute_scores.py`), sorted by arena score:
+Top of the live RouterArena leaderboard
+(<https://routeworks.github.io/leaderboard>), with Nadir's projected
+position inserted by arena_score:
 
-| Rank | Router | Arena | Accuracy | Cost / 1K |
-| ---: | --- | ---: | ---: | ---: |
-| 1 | orcarouter-adaptive | 0.7204 | 0.7579 | $1.1413 |
-| 2 | **nadir-cascade-verified (τ=0.70)** | **0.7118** | 0.7371 | $0.6841 |
-| 3 | azure-model-router | 0.7107 | 0.7202 | $0.2399 |
-| 4 | **nadir-cheapest (Strategy E)** | **0.7043** | 0.6951 | $0.0334 |
-| 5 | r2-router | 0.6997 | 0.6977 | $0.0887 |
-| 6 | vLLM-SR | 0.6724 | 0.6724 | reported |
-| 7 | Martian (RouterBench-MLP) | 0.5755 | reported | reported |
-| 8 | Not Diamond | 0.5729 | reported | reported |
+| Rank | Router | Arena |
+| ---: | --- | ---: |
+| 1 | Sqwish Router | 75.27 |
+| 2 | OrcaRouter-Adaptive | 72.08 |
+| 3 | Azure-Model-Router | 71.87 |
+| 4 | R2-Router | 71.60 |
+| **5 (projected)** | **Nadir cascade-verified (τ=0.70)** | **71.18** |
+| 6 | Auto Router | 70.05 |
+| 7 | vLLM-SR | 67.23 |
+| ... | | |
+| 13 | NotDiamond | 57.29 |
 
-Source rows: `eval/routerarena/rescoring/threshold_sweep/scorer_tau_0.70.txt`
-for the primary, `eval/routerarena/rescoring/cheapest_official_score_E_20260527T153854Z.txt`
-for the cheapest baseline.
+Our 0.7118 is what RouterArena's official `compute_scores.py` returns
+on Nadir's stored prediction files (full evaluation set, n=8,400). The
+published leaderboard uses RouterArena's full evaluation pipeline,
+which fills in `generated_result`, `accuracy`, and `cost` via live LLM
+calls; the projected rank above could move by a notch in either
+direction once the maintainers run our submission through the full
+pipeline. We will update this post when the official rank lands.
 
-The deltas vs the closest comparable systems:
+The deltas vs the named competitors we beat in this projection:
 
-- **vs azure-model-router (+1.1pp arena):** 0.7118 vs 0.7107.
-  We ship higher accuracy (0.7371 vs 0.7202) at lower cost.
-- **vs Not Diamond (+13.9pp arena):** 0.7118 vs 0.5729.
-- **vs Martian's RouterBench-MLP (+13.6pp arena):** 0.7118 vs 0.5755.
-- **vs vLLM-SR (+3.9pp arena):** 0.7118 vs 0.6724.
+- **vs Auto Router (+1.13 arena):** 71.18 vs 70.05.
+- **vs vLLM-SR (+3.95 arena):** 71.18 vs 67.23.
+- **vs Not Diamond (+13.89 arena):** 71.18 vs 57.29.
+- **vs Martian variants (+13.6 to +14.0 arena):** 71.18 vs the 57.2-57.6
+  range across Martian RouterBench-MLP and the BERT variants.
 
-We are not #1. orcarouter-adaptive (Alibaba Cloud) sits ahead at 0.7204
-on a different cached pool with different pricing. The honest read of
-this submission is: among independent routing-IP companies, Nadir is
-the highest-scoring entry on the leaderboard.
+The published top entries above us, Sqwish Router (75.27),
+OrcaRouter-Adaptive (72.08), Azure-Model-Router (71.87), and R2-Router
+(71.60), all score above the verifier-gated cascade on the public
+leaderboard. We are not claiming we beat them.
+
+## A note on Weave Router
+
+Weave Router has prediction files in the RouterArena repository
+(`router_inference/config/weave-router.json`) but does not appear on
+the public leaderboard. Their config self-describes as cluster-routing
+"trained on the RouterArena full split with k=160 clusters." We
+mention this because the methodology incentives on a public benchmark
+matter; we have not trained Nadir on any RouterArena split, and the
+contamination audit referenced below documents that.
 
 ## What we actually submitted
 

@@ -30,7 +30,8 @@ export function computeSavings({ spend, savingsRate = 0.6 }: SavingsInputs): Sav
   const feeOnFirst2K = Math.min(grossSavings, 2000) * 0.25;
   const feeAbove2K = Math.max(grossSavings - 2000, 0) * 0.10;
   const variableFee = feeOnFirst2K + feeAbove2K;
-  const baseFee = 9;
+  // No base fee — Nadir only charges a percentage of the savings it delivers.
+  const baseFee = 0;
   const totalFee = baseFee + variableFee;
   const withNadir = spend - grossSavings;
   const netSavings = grossSavings - totalFee;

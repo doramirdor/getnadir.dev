@@ -30,13 +30,13 @@ export const BottomCta = () => {
               type="button"
               className="inline-flex items-center px-7 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
             >
-              Start free, bring your own keys
+              Bring your own keys
             </button>
           </SignupDialog>
           <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[13px] text-[#424245] tracking-[-0.005em] mt-1">
             <li className="inline-flex items-center gap-1.5">
               <CheckGlyph />
-              No card to start
+              Pay only on savings
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckGlyph />
@@ -44,7 +44,7 @@ export const BottomCta = () => {
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckGlyph />
-              First month free with code <span className="font-mono text-[#1d1d1f] bg-black/[0.04] px-1.5 py-0.5 rounded">FIRST1</span>
+              No base fee — pay only on savings
             </li>
           </ul>
         </div>

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   CreditCard,
   TrendingDown,
@@ -13,9 +12,9 @@ import {
   Check,
   Loader2,
   XCircle,
-  Tag,
   Sparkles,
   ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,41 +23,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
 import { trackBillingView, trackCheckoutStart, trackCheckoutCancel } from "@/utils/analytics";
 import { formatUSD } from "@/utils/format";
+import { CreditsPanel } from "@/components/billing/CreditsPanel";
 import { Link, useSearchParams } from "react-router-dom";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
-// Markup applied to raw AWS Bedrock cost for Hosted-mode requests. Must
-// stay in sync with HOSTED_COST_MARKUP in
-// backend/app/services/savings_billing_service.py.
+// Markup applied to raw AWS Bedrock cost for Hosted-mode requests. Hosted
+// usage is prepaid (drawn down in real time via credits), so it is NOT part
+// of the monthly invoice. Kept here only to show the cost-plus rate in copy.
 const HOSTED_COST_MARKUP = 0.20;
 
-function calculateFee(
-  totalSavings: number,
-  isActive: boolean,
-  hostedCost = 0
-) {
-  // Free plan owes nothing. The $9 base only applies once subscribed.
-  const base = isActive ? 9 : 0;
-  const first2k = isActive ? Math.min(totalSavings, 2000) * 0.25 : 0;
-  const above2k = isActive ? Math.max(totalSavings - 2000, 0) * 0.10 : 0;
+// Prepaid credit top-ups must be a positive multiple of this amount.
+const TOPUP_INCREMENT_USD = 5;
+
+function calculateFee(totalSavings: number) {
+  // No base fee. The monthly bill is purely a percentage of the savings we
+  // deliver: 25% on the first $2K, 10% above. Hosted usage is billed
+  // separately via prepaid credits, not here.
+  const first2k = Math.min(totalSavings, 2000) * 0.25;
+  const above2k = Math.max(totalSavings - 2000, 0) * 0.10;
   const variable = first2k + above2k;
-  // Hosted Bedrock pass-through: user pays the raw AWS cost we incurred
-  // PLUS a 20% markup. Both are billed via a separate Stripe InvoiceItem
-  // on their next subscription invoice (handled by invoice_scheduler.py).
-  // Zero for BYOK-only users.
-  const hostedRawCost = isActive ? hostedCost : 0;
-  const hostedMarkup = isActive ? hostedCost * HOSTED_COST_MARKUP : 0;
-  const hostedTotal = hostedRawCost + hostedMarkup;
   return {
-    base,
+    base: 0,
     first2k,
     above2k,
     variable,
-    hostedRawCost,
-    hostedMarkup,
-    hostedTotal,
-    total: base + variable + hostedTotal,
+    total: variable,
   };
 }
 
@@ -160,18 +150,16 @@ interface InvoiceItem {
 
 // ── Projected-savings hero ───────────────────────────────────────────────
 //
-// Shown above the pricing card for unsubscribed users. Leads with their
-// own observed savings (or a cohort projection for zero-usage users) so
-// the $9/mo Pro price is anchored against a personalized benefit number
-// instead of arriving cold.
+// Shown above the pricing card for users who haven't set up billing yet.
+// Leads with their own observed savings (or a cohort projection for
+// zero-usage users) so the value is anchored against a personalized benefit
+// number instead of arriving cold.
 //
 // Three display states:
-//   (1) real savings this month         -> "you'd save ~$X/mo"
-//   (2) has requests but no savings yet -> nudge to playground + Pro
+//   (1) real savings this month         -> "you keep ~$X/mo"
+//   (2) has requests but no savings yet -> nudge to playground
 //   (3) no usage at all                 -> "try the playground" CTA
-// Hidden entirely when the user is already on Pro (handled by the caller).
-
-const PRO_MONTHLY_FEE_USD = 9;
+// Hidden entirely once billing is active (handled by the caller).
 
 // Fallback projection used when the user has no usage yet. Anchored to the
 // rough median of real Nadir users so we're not making up numbers — adjust
@@ -199,11 +187,10 @@ function ProjectedSavingsHero({
 }: ProjectedSavingsHeroProps) {
   const { elapsed, total } = daysElapsedThisMonth();
   const monthlyProjected = elapsed > 0 ? (currentSavings * total) / elapsed : 0;
-  const netProjected = Math.max(monthlyProjected - PRO_MONTHLY_FEE_USD, 0);
-  const paybackDays =
-    monthlyProjected > PRO_MONTHLY_FEE_USD
-      ? Math.max(1, Math.ceil((PRO_MONTHLY_FEE_USD / monthlyProjected) * total))
-      : null;
+  // Projected savings fee: 25% on first $2K, 10% above. No base fee.
+  const projectedFee =
+    Math.min(monthlyProjected, 2000) * 0.25 + Math.max(monthlyProjected - 2000, 0) * 0.1;
+  const netProjected = Math.max(monthlyProjected - projectedFee, 0);
 
   const hasSavings = currentSavings > 0.01;
   const hasUsage = requestsRouted > 0;
@@ -228,11 +215,10 @@ function ProjectedSavingsHero({
               <p className="text-sm text-muted-foreground mt-3 max-w-xl">
                 Based on {requestsRouted} request{requestsRouted === 1 ? "" : "s"} routed this month
                 (${formatUSD(currentSavings)} saved so far, {elapsed}/{total} days elapsed).
-                {paybackDays !== null && (
+                {netProjected > 0 && (
                   <>
                     {" "}
-                    At this pace, <strong className="text-foreground">Pro pays for itself in {paybackDays}
-                    {" "}day{paybackDays === 1 ? "" : "s"}</strong> and nets you roughly ${formatUSD(netProjected)}/mo after the $9 base fee.
+                    At this pace you keep roughly <strong className="text-foreground">${formatUSD(netProjected)}/mo</strong> after our fee.
                   </>
                 )}
               </p>
@@ -240,10 +226,10 @@ function ProjectedSavingsHero({
             <div className="lg:text-right">
               <Button size="lg" onClick={onSubscribe} disabled={subscribing} className="whitespace-nowrap">
                 {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                  <>Upgrade to Pro <ArrowRight className="w-4 h-4 ml-2" /></>
+                  <>Set up billing <ArrowRight className="w-4 h-4 ml-2" /></>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">$9/mo base + 10-25% of net savings</p>
+              <p className="text-xs text-muted-foreground mt-2">No base fee · 25% of savings, 10% above $2K</p>
             </div>
           </div>
         </CardContent>
@@ -266,19 +252,19 @@ function ProjectedSavingsHero({
                 </span>
               </div>
               <p className="text-[22px] font-semibold tracking-tight text-foreground leading-tight">
-                You've routed {requestsRouted} request{requestsRouted === 1 ? "" : "s"}. Pro's Wide&amp;Deep Asym router saves a typical user 45-53%.
+                You've routed {requestsRouted} request{requestsRouted === 1 ? "" : "s"}. The Wide&amp;Deep Asym router saves a typical user 45-53%.
               </p>
               <p className="text-sm text-muted-foreground mt-3 max-w-xl">
-                Upgrade to route simple requests to Haiku and reasoning to Opus automatically. We only bill when we save you money.
+                Set up billing to route simple requests to Haiku and reasoning to Opus automatically. We only bill when we save you money.
               </p>
             </div>
             <div className="lg:text-right">
               <Button size="lg" onClick={onSubscribe} disabled={subscribing} className="whitespace-nowrap">
                 {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-                  <>Upgrade to Pro <ArrowRight className="w-4 h-4 ml-2" /></>
+                  <>Set up billing <ArrowRight className="w-4 h-4 ml-2" /></>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">$9/mo base + 10-25% of net savings</p>
+              <p className="text-xs text-muted-foreground mt-2">No base fee · 25% of savings, 10% above $2K</p>
             </div>
           </div>
         </CardContent>
@@ -318,7 +304,7 @@ function ProjectedSavingsHero({
               disabled={subscribing}
               className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
-              {subscribing ? "Opening checkout…" : "or upgrade to Pro now, $9/mo"}
+              {subscribing ? "Opening checkout…" : "or set up billing now, no base fee"}
             </button>
           </div>
         </div>
@@ -333,7 +319,6 @@ const Billing = () => {
   const [searchParams] = useSearchParams();
   const [subscribing, setSubscribing] = useState(false);
   const [canceling, setCanceling] = useState(false);
-  const [promoCode, setPromoCode] = useState(searchParams.get("promo") || "");
   const { toast } = useToast();
   const { apiKey, requireApiKey } = useApiKey();
   const queryClient = useQueryClient();
@@ -390,13 +375,64 @@ const Billing = () => {
   const currentSpent = savingsSummary?.total_spent_usd ?? 0;
   const currentHostedCost = savingsSummary?.hosted_cost_usd ?? 0;
   const isActive = subscription?.status === "active";
-  const fee = calculateFee(currentSavings, isActive, currentHostedCost);
-  // Net savings excludes the flat base fee AND the Hosted pass-through line
-  // (both billed separately on the Stripe subscription invoice).
-  const netSavings = currentSavings - fee.variable - fee.hostedTotal;
+  const fee = calculateFee(currentSavings);
+  // Net savings = gross savings minus the variable savings fee. There is no
+  // base fee, and Hosted usage is prepaid separately (not netted here).
+  const netSavings = currentSavings - fee.variable;
   const isCanceling = subscription?.cancel_at_period_end === true;
+  const cardFailing = subscription?.payment_method_health === "failing";
+  const cardFailingReason = subscription?.payment_method_health_last_error as
+    | string
+    | null
+    | undefined;
+  const [openingPortal, setOpeningPortal] = useState(false);
 
-  const handleSubscribe = async (overridePromo?: string) => {
+  const handleOpenPortal = async () => {
+    if (!apiKey) {
+      // Portal endpoint authenticates via API key. New signups land here
+      // without one in memory (it's cleared on refresh), so point them at
+      // the API keys page to create / paste one first.
+      toast({
+        title: "Enter your API key first",
+        description:
+          "Open the API Keys page and paste your key, then come back to update your card.",
+      });
+      return;
+    }
+    setOpeningPortal(true);
+    try {
+      const res = await fetch(`${API_BASE}/v1/billing/portal`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey,
+        },
+      });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody.detail) detail = errBody.detail;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(detail);
+      }
+      const data = (await res.json()) as { portal_url: string };
+      window.location.href = data.portal_url;
+    } catch (error: any) {
+      logger.error("Open portal error:", error);
+      toast({
+        title: "Couldn't open billing portal",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setOpeningPortal(false);
+    }
+  };
+
+  const handleSubscribe = async () => {
     setSubscribing(true);
     try {
       // Backend /v1/billing/checkout authenticates with the Supabase JWT, not
@@ -413,13 +449,6 @@ const Billing = () => {
         success_url: `${window.location.origin}/dashboard/billing?status=success`,
         cancel_url: `${window.location.origin}/dashboard/billing?status=cancelled`,
       };
-      const effectivePromo =
-        typeof overridePromo === "string" && overridePromo.trim()
-          ? overridePromo.trim()
-          : promoCode.trim();
-      if (effectivePromo) {
-        checkoutBody.promo_code = effectivePromo;
-      }
       const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
         method: "POST",
         headers: {
@@ -480,16 +509,16 @@ const Billing = () => {
     }
   };
 
-  // Auto-start checkout when arriving from the global FreePlanBanner
-  // (?autostart=1). Checkout is authenticated by the Supabase session, so
-  // we don't need an API key — runs once per arrival.
+  // Auto-start checkout when arriving with ?autostart=1. Checkout is
+  // authenticated by the Supabase session, so we don't need an API key —
+  // runs once per arrival.
   const [autostartAttempted, setAutostartAttempted] = useState(false);
   useEffect(() => {
     if (autostartAttempted) return;
     if (searchParams.get("autostart") !== "1") return;
     if (subscription?.status === "active") return;
     setAutostartAttempted(true);
-    handleSubscribe(searchParams.get("promo") || "FIRST1");
+    handleSubscribe();
   }, [searchParams, subscription, autostartAttempted]);
 
   if (isLoading) {
@@ -512,6 +541,45 @@ const Billing = () => {
         </p>
       </div>
 
+      {/* Card-failed banner. Surfaces when the pre-billing health check
+          (signup or daily cron) couldn't verify the card. Cleared by the
+          payment_method.attached webhook once the user updates it. */}
+      {cardFailing && (
+        <div
+          role="alert"
+          className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4"
+        >
+          <AlertTriangle
+            className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0"
+            strokeWidth={2}
+          />
+          <div className="flex-1">
+            <p className="font-semibold text-red-900 dark:text-red-100">
+              We couldn't verify your card on file
+            </p>
+            <p className="text-sm text-red-800 dark:text-red-200 mt-1">
+              {cardFailingReason
+                ? `Reason from the bank: ${cardFailingReason}`
+                : "Your card was declined when we tried to verify it."}{" "}
+              Update it now to avoid losing access at the end of your trial.
+            </p>
+          </div>
+          <Button
+            onClick={handleOpenPortal}
+            disabled={openingPortal}
+            className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+          >
+            {openingPortal ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                Update card <ExternalLink className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       {/* Projected savings hero (only for unsubscribed users) */}
       {!isActive && (
         <ProjectedSavingsHero
@@ -530,10 +598,10 @@ const Billing = () => {
           </CardHeader>
           <CardContent>
             <p className="mono text-[24px] font-bold tracking-tight text-foreground leading-none mb-2">
-              {isActive ? "Pro" : "Free"}
+              {isActive ? "Active" : "Free"}
             </p>
             <span className={isActive ? "chip chip-ok" : "chip chip-neutral"}>
-              {isActive ? (isCanceling ? "cancels at period end" : "active") : "open source"}
+              {isActive ? (isCanceling ? "cancels at period end" : "billing active") : "no base fee"}
             </span>
           </CardContent>
         </Card>
@@ -561,7 +629,7 @@ const Billing = () => {
               ${formatUSD(fee.total)}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              <span className="mono">${formatUSD(fee.base)}</span> base + <span className="mono">${formatUSD(fee.variable)}</span> variable
+              <span className="mono">${formatUSD(fee.variable)}</span> savings fee · no base fee
             </p>
           </CardContent>
         </Card>
@@ -579,12 +647,7 @@ const Billing = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid sm:grid-cols-5 gap-4 text-center mb-6">
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="text-xs text-muted-foreground">Base fee</div>
-              <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.base)}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">flat monthly</div>
-            </div>
+          <div className="grid sm:grid-cols-3 gap-4 text-center mb-6">
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-xs text-muted-foreground">25% on first $2K saved</div>
               <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.first2k)}</div>
@@ -593,13 +656,6 @@ const Billing = () => {
               <div className="text-xs text-muted-foreground">10% above $2K saved</div>
               <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.above2k)}</div>
             </div>
-            <div className="p-3 bg-muted rounded-lg" title="AWS Bedrock cost on Hosted-mode requests + 20% markup. Zero if you use your own provider keys (BYOK).">
-              <div className="text-xs text-muted-foreground">Hosted Bedrock usage</div>
-              <div className="mono text-lg font-bold text-foreground">${formatUSD(fee.hostedTotal)}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">
-                ${formatUSD(fee.hostedRawCost)} cost + ${formatUSD(fee.hostedMarkup)} markup
-              </div>
-            </div>
             <div
               className="p-3 rounded-lg border"
               style={{
@@ -607,11 +663,14 @@ const Billing = () => {
                 borderColor: "hsl(var(--brand-blue) / 0.25)",
               }}
             >
-              <div className="text-xs text-[hsl(var(--brand-blue-strong))]">Total due</div>
+              <div className="text-xs text-[hsl(var(--brand-blue-strong))]">Total savings fee</div>
               <div className="mono text-lg font-bold text-[hsl(var(--brand-blue-strong))]">${formatUSD(fee.total)}</div>
-              <div className="text-[10px] text-[hsl(var(--brand-blue-strong))]/80 mt-0.5">base + variable + Hosted</div>
+              <div className="text-[10px] text-[hsl(var(--brand-blue-strong))]/80 mt-0.5">no base fee</div>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground -mt-2 mb-6">
+            Hosted (Nadir keys) usage isn't billed here — it's drawn from your prepaid credit balance at cost + 20%.
+          </p>
 
           <div
             className="flex items-center justify-between p-4 rounded-lg border"
@@ -623,29 +682,14 @@ const Billing = () => {
             <div>
               <p className="text-sm font-medium text-[hsl(var(--ok-strong))]">
                 You saved <span className="mono">${formatUSD(currentSavings)}</span> vs always-complex on <span className="mono">${formatUSD(currentSpent)}</span> of routed spend
-                {isActive && fee.hostedRawCost > 0 && (
-                  <>
-                    {" "}(incl. <span className="mono">${formatUSD(fee.hostedRawCost)}</span> on our Hosted Bedrock key, billed back to you + 20% markup)
-                  </>
-                )}
               </p>
               <p className="text-xs text-[hsl(var(--ok))]">
-                Net after <span className="mono">${formatUSD(fee.variable + fee.hostedTotal)}</span> in fees: <b className="mono">${formatUSD(netSavings)}</b>
-                {isActive && <span className="opacity-75"> (the $9 base is billed separately on your subscription)</span>}
-                {!isActive && <span className="opacity-75"> (Free plan, no fees)</span>}
+                Net after <span className="mono">${formatUSD(fee.variable)}</span> savings fee: <b className="mono">${formatUSD(netSavings)}</b>
+                <span className="opacity-75"> (no base fee)</span>
               </p>
             </div>
             {!isActive && (
               <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                  <Input
-                    placeholder="Promo code"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    className="h-8 pl-7 text-xs w-28"
-                  />
-                </div>
                 <Button
                   onClick={handleSubscribe}
                   disabled={subscribing}
@@ -659,7 +703,7 @@ const Billing = () => {
                   ) : (
                     <>
                       <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                      Subscribe
+                      Set up billing
                     </>
                   )}
                 </Button>
@@ -689,6 +733,11 @@ const Billing = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Prepaid credits (Hosted usage) */}
+      <div className="order-2">
+        <CreditsPanel />
+      </div>
 
       {/* Invoice History */}
       {invoices.length > 0 && (
@@ -792,7 +841,7 @@ const Billing = () => {
               <div>
                 <p className="font-medium text-foreground text-sm">We take a percentage of the savings</p>
                 <p className="text-xs text-muted-foreground">
-                  25% on the first $2K saved, dropping to 10% above $2K. Plus $9/mo base.
+                  25% on the first $2K saved, dropping to 10% above $2K. No base fee.
                 </p>
               </div>
             </div>
@@ -812,11 +861,11 @@ const Billing = () => {
               </div>
               <div>
                 <div className="text-muted-foreground text-xs">Nadir fee</div>
-                <div className="font-bold text-foreground">$584</div>
+                <div className="font-bold text-foreground">$575</div>
               </div>
               <div>
                 <div className="text-[hsl(var(--ok-strong))] text-xs font-medium">You keep</div>
-                <div className="font-bold text-[hsl(var(--ok))]">$2,166/mo</div>
+                <div className="font-bold text-[hsl(var(--ok))]">$2,175/mo</div>
               </div>
             </div>
           </div>
@@ -827,64 +876,53 @@ const Billing = () => {
       {!isActive && <div className="order-1">
         <h2 className="text-lg font-semibold text-foreground mb-4">Plans</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Free / Open Source */}
-          {/* Free Hosted */}
-          <Card className={`clean-card ${!isActive ? "border-2 border-[hsl(var(--ok-border))]" : ""}`}>
+          {/* Bring your own keys */}
+          <Card className="clean-card border-2 border-[hsl(var(--ok-border))]">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-foreground">Free</CardTitle>
-                {!isActive && (
-                  <span className="chip chip-ok">Current</span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">Hosted (BYOK)</p>
+              <CardTitle className="text-foreground">Bring your own keys</CardTitle>
+              <p className="text-sm text-muted-foreground">Your provider keys</p>
             </CardHeader>
             <CardContent>
-              <p className="mono text-3xl font-bold text-foreground tracking-tight mb-1">Free</p>
-              <p className="text-sm text-muted-foreground mb-4">no credit card required</p>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="mono text-3xl font-bold text-foreground tracking-tight">25%</span>
+                <span className="text-sm text-muted-foreground">of savings</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">10% above $2K saved · no base fee</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Hosted proxy (api.getnadir.com)
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Use your OpenAI / Anthropic / Google keys
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> 50 requests/month on shared keys
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Free to start, pay only on savings
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Unlimited with BYOK
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Intelligent routing across tiers
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Intelligent routing
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Web dashboard & analytics
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Semantic cache & fallback chains
                 </li>
               </ul>
             </CardContent>
           </Card>
 
-          {/* Pro */}
-          <Card className={`clean-card border-2 ${isActive ? "border-[hsl(var(--ok-border))]" : "border-[hsl(var(--brand-blue)/0.3)]"}`}>
+          {/* Use our keys (Hosted, prepaid) */}
+          <Card className="clean-card border-2 border-[hsl(var(--brand-blue)/0.3)]">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-foreground">Pro</CardTitle>
-                {isActive && (
-                  <span className="chip chip-ok">Current</span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">Hosted proxy</p>
+              <CardTitle className="text-foreground">Use our keys</CardTitle>
+              <p className="text-sm text-muted-foreground">Prepaid · Nadir-managed keys</p>
             </CardHeader>
             <CardContent>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="mono text-3xl font-bold text-foreground tracking-tight">$9</span>
-                <span className="text-sm text-muted-foreground">/mo + 25% of savings</span>
+                <span className="mono text-3xl font-bold text-foreground tracking-tight">Prepaid</span>
+                <span className="text-sm text-muted-foreground">+ 25% of savings</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-4">10% above $2K saved</p>
+              <p className="text-xs text-muted-foreground mb-4">Top up in $5, drawn down at cost + 20%</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Everything in Free, unlimited
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Nadir-managed keys, zero setup
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Hosted keys or BYOK
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Prepaid credits with auto-recharge
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Semantic cache & dedup
@@ -893,19 +931,6 @@ const Billing = () => {
                   <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Fallback chains & context optimization
                 </li>
               </ul>
-              {!isActive && (
-                <div className="flex gap-2 mb-3">
-                  <div className="relative flex-1">
-                    <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                    <Input
-                      placeholder="Promo code"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="h-9 pl-8 text-sm"
-                    />
-                  </div>
-                </div>
-              )}
               <Button
                 className="w-full"
                 disabled={isActive || subscribing}
@@ -917,9 +942,9 @@ const Billing = () => {
                     Loading...
                   </>
                 ) : isActive ? (
-                  "Current Plan"
+                  "Billing active"
                 ) : (
-                  "Subscribe"
+                  "Set up billing"
                 )}
               </Button>
             </CardContent>
@@ -936,7 +961,7 @@ const Billing = () => {
               <p className="text-sm text-muted-foreground mb-4">let's talk</p>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Everything in Pro
+                  <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> Everything in the self-serve plans
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-[hsl(var(--brand-blue-strong))]" /> SSO / SAML

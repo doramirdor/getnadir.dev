@@ -241,12 +241,12 @@ Specific comparison pages:
 - Full web dashboard, intelligent routing, semantic cache
 - No credit card required
 
-### Pro — $9 per month plus variable savings fee
+### Hosted — no base fee, variable savings fee only
 
-- $9 flat monthly base.
+- No base fee. You pay only when Nadir cuts your bill.
 - Variable fee: 25 percent of the first $2,000 of monthly savings,
   10 percent above $2,000.
-- If Nadir saves you nothing, you pay only the $9 base.
+- If Nadir saves you nothing, you pay nothing.
 - Everything in Free, unlimited.
 - Hosted keys or BYOK.
 - Verifier-gated cascade, semantic cache, dedup, fallback chains,
@@ -254,15 +254,15 @@ Specific comparison pages:
 
 ### Enterprise — custom
 
-- Everything in Pro.
+- Everything in Hosted.
 - SSO / SAML.
 - Custom routing models trained on your traffic.
 - 99.9 percent SLA.
 - Annual contract with invoicing.
 
 Savings math: Net savings = (benchmark cost − routed cost) − variable
-fee. The $9 base is a subscription cost, billed separately, and is not
-deducted from the displayed net savings.
+fee. There is no base subscription fee, so net savings is simply your
+gross savings minus the variable fee.
 
 ---
 

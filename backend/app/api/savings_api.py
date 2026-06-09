@@ -18,7 +18,7 @@ class SavingsSummary(BaseModel):
     total_benchmark_usd: float
     savings_rate: float
     requests_routed: int
-    base_fee: float = 9.00
+    base_fee: float = 0.00
     savings_fee: float
     total_fee: float
     net_savings: float

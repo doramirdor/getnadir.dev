@@ -1,0 +1,15 @@
+# Local trainer deps for verifier/train_local.py.
+#
+# Kept separate from the backend's runtime requirements.txt so production
+# images stay slim. Install only when training the verifier on a local
+# workstation (CUDA GPU, Apple Silicon MPS, or CPU).
+#
+#   pip install -r verifier/requirements_local.txt
+#
+# Versions pinned to match verifier/colab_train.ipynb so checkpoints
+# trained locally are byte-compatible with the Colab variant.
+transformers>=4.46.0
+torch>=2.2
+datasets>=3.0.0
+accelerate>=1.0.0
+scikit-learn

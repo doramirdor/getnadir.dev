@@ -253,6 +253,21 @@ async def startup_event():
         logger.warning(f"Failed to start invoice scheduler: {e}")
         degraded_services.append("invoice_scheduler")
 
+    # Schedule daily card-health check (09:00 UTC). Validates each
+    # active subscriber's saved PM 4-6 days before their next invoice so
+    # dead/blocked cards get flagged + emailed before access is cut.
+    try:
+        from app.services.payment_health_scheduler import payment_health_scheduler_loop
+
+        app.state.payment_health_scheduler_task = asyncio.create_task(
+            payment_health_scheduler_loop()
+        )
+        logger.info("Payment-health scheduler started")
+        healthy_services.append("payment_health_scheduler")
+    except Exception as e:
+        logger.warning(f"Failed to start payment-health scheduler: {e}")
+        degraded_services.append("payment_health_scheduler")
+
     # Startup summary
     logger.info(
         f"Startup complete — healthy: [{', '.join(healthy_services)}], "
@@ -266,7 +281,12 @@ async def shutdown_event():
     logger.info("Shutdown initiated — cleaning up services...")
 
     # Cancel periodic background loops and wait for clean exit
-    for task_name in ("centroid_refresh_task", "health_snapshot_task", "invoice_scheduler_task"):
+    for task_name in (
+        "centroid_refresh_task",
+        "health_snapshot_task",
+        "invoice_scheduler_task",
+        "payment_health_scheduler_task",
+    ):
         task = getattr(app.state, task_name, None)
         if task and not task.done():
             task.cancel()

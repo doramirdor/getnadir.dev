@@ -13,42 +13,43 @@ type Tier = {
   blurb: string;
   features: string[];
   cta: string;
-  ctaAction: "signup" | "contact";
+  ctaAction: "signup" | "contact" | "selfhost";
   ctaLink?: string;
   highlighted: boolean;
 };
 
 const TIERS: Tier[] = [
   {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    blurb: "Perfect for side projects and trying Nadir out.",
+    name: "Self-host",
+    price: "Free",
+    period: "open source · MIT",
+    blurb: "Run NadirClaw on your own infrastructure. Yours forever, no fees.",
     features: [
-      "Hosted proxy (api.getnadir.com)",
-      "50 requests per month on our keys",
-      "Unlimited with BYOK",
-      "Intelligent routing",
-      "Dashboard and analytics",
+      "MIT licensed — run it anywhere",
+      "Bring your own provider keys",
+      "4-tier routing + context optimization",
+      "Local CLI dashboard",
+      "No account, no limits, no fees",
+      "Community support",
     ],
-    cta: "Start free, no card",
-    ctaAction: "signup",
+    cta: "Self-host free",
+    ctaAction: "selfhost",
     highlighted: false,
   },
   {
-    name: "Pro",
-    price: "$9",
-    period: "per month + variable savings fee",
-    blurb: "For production teams routing real traffic.",
+    name: "Hosted",
+    price: "25%",
+    period: "of savings · 10% above $2K",
+    blurb: "Bring your own keys or use ours. You pay only on what we save you.",
     features: [
-      "Everything in Free, no request cap",
-      "Hosted keys or BYOK",
-      "Semantic cache and dedup",
-      "Fallback chains and automatic retry",
-      "Context optimization",
-      "Priority email support",
+      "Bring your own keys, or use ours",
+      "No base fee, no minimums",
+      "25% of first $2K saved, 10% above",
+      "Use our keys: usage billed at cost + 20%",
+      "Routing, semantic cache, fallback chains",
+      "Dashboard and analytics",
     ],
-    cta: "Start free, save by tomorrow",
+    cta: "Start saving",
     ctaAction: "signup",
     highlighted: true,
   },
@@ -58,7 +59,7 @@ const TIERS: Tier[] = [
     period: "volume pricing",
     blurb: "For scale, compliance, and dedicated infrastructure.",
     features: [
-      "Everything in Pro",
+      "Everything in the self-serve plans",
       "SSO and SAML",
       "Custom routing models",
       "Dedicated infrastructure",
@@ -106,7 +107,7 @@ const STEPS: [string, string, string][] = [
   [
     "04",
     "You keep 75 percent, or 90 percent above $2K.",
-    "First $2K of monthly savings carries a 25 percent fee. Everything above that drops to 10 percent. Plus $9 per month for hosting.",
+    "First $2K of monthly savings carries a 25 percent fee. Everything above that drops to 10 percent. No base fee — you only pay when we save you money.",
   ],
 ];
 
@@ -147,28 +148,23 @@ export default function Pricing() {
     offers: [
       {
         "@type": "Offer",
-        name: "Free",
+        name: "Bring your own keys",
         price: "0",
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
-        description: "Hosted proxy with BYOK, 50 requests per month on shared keys, dashboard, and analytics.",
+        description:
+          "No base fee. Use your own provider keys and pay 25% of the first $2,000 of monthly savings, 10% above. Intelligent routing, semantic cache, fallback chains, dashboard, and analytics.",
         url: "https://getnadir.com/auth?mode=signup",
         ...digitalDeliveryFields,
       },
       {
         "@type": "Offer",
-        name: "Pro",
-        price: "9",
+        name: "Use our keys",
+        price: "0",
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "$9 per month base plus 25% of the first $2,000 of monthly savings and 10% above. Hosted keys or BYOK, semantic cache, fallback chains, context optimization.",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "9",
-          priceCurrency: "USD",
-          billingDuration: "P1M",
-        },
+          "Route on Nadir-managed keys with zero setup. Usage is billed at cost plus 20%, and you pay 25% of the first $2,000 of monthly savings, 10% above. You only pay on what we save you.",
         url: "https://getnadir.com/auth?mode=signup",
         ...digitalDeliveryFields,
       },
@@ -179,7 +175,7 @@ export default function Pricing() {
     <MarketingLayout>
       <SEO
         title="Pricing - Nadir"
-        description="Start free. Upgrade to Pro for $9 a month plus a variable fee tied to what we save you. Self-host NadirClaw for free under MIT."
+        description="No base fee. Bring your own keys or use ours. Either way, you pay only on what we save you: 25% of the first $2K, 10% above. Self-host NadirClaw for free under MIT."
         path="/pricing"
         jsonLd={pricingJsonLd}
       />
@@ -187,7 +183,7 @@ export default function Pricing() {
       {/*
         Tier cards lead the page — buckets first, pitch second. The eyebrow
         label replaces the huge hero headline so the fold is dominated by
-        something users can actually click (Free / Pro / Enterprise), not
+        something users can actually click (BYOK / Hosted / Enterprise), not
         a marketing sentence. The full "Simple pricing. You keep the
         savings." intro now sits below the cards as supporting copy.
       */}
@@ -201,7 +197,7 @@ export default function Pricing() {
               Pick your tier. We only earn when we cut your bill.
             </h1>
             <p className="text-[16px] md:text-[18px] text-[#424245] max-w-[640px] mx-auto leading-[1.5] tracking-[-0.005em]">
-              $9 base. 25% of the first $2K of monthly savings, 10% above. If we save you nothing, you pay $9.
+              No base fee. 25% of the first $2K of monthly savings, 10% above. If we save you nothing, you pay nothing.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
@@ -319,7 +315,7 @@ export default function Pricing() {
             </span>
           </h2>
           <p className="text-[17px] md:text-[19px] text-[#424245] max-w-[640px] mx-auto leading-[1.45] tracking-[-0.01em]">
-            Start free with your own keys. Upgrade when you need hosted routing. We only earn when we cut your bill.
+            Bring your own keys or use ours. Either way, you pay only on what we save you.
           </p>
         </div>
       </section>

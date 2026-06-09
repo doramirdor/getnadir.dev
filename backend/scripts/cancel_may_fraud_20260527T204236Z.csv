@@ -1,0 +1,5 @@
+email,customer_id,subscription_id,stripe_status,supabase_updated,error
+jamesriyo9940@gmail.com,cus_UT6pI7xyrz90di,sub_1TUAgoE5pNFif9nQW3mKl5l5,canceled,True,
+kbxy2365806687@gmail.com,cus_UZfliHnYBiG3wJ,sub_1TaWQAE5pNFif9nQLzmvawms,canceled,True,
+2365806687@qq.com,cus_UZfzDMKiu3o1sT,sub_1TaWhOE5pNFif9nQKDZHAzIl,canceled,True,
+hd6c6a2@push.tg,cus_UaQ46gDts1DCaw,sub_1TbFF7E5pNFif9nQsvFwS0UE,canceled,True,

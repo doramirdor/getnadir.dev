@@ -11,8 +11,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Python deps (install first for Docker cache)
+# Install the CPU-only torch wheels first so `pip install -r requirements.txt`
+# sees torch already satisfied and does NOT pull the multi-GB CUDA build.
+# App Runner has no GPU; the verifier is INT8-quantized on CPU at load time and
+# the analyzers are CPU-only, so CUDA libraries would only add ~5GB of dead weight.
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser

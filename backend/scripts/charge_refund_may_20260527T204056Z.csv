@@ -1,0 +1,6 @@
+email,customer_id,payment_method_id,payment_intent_id,pi_status,charge_id,decline_code,error_code,error_message,refund_id,refund_status,verdict
+jamesriyo9940@gmail.com,cus_UT6pI7xyrz90di,pm_1TUAg9E5pNFif9nQqcH04tVW,pi_3TboFzE5pNFif9nQ01lGEY3H,requires_payment_method,,generic_decline,card_declined,Your card was declined.,,,declined
+kbxy2365806687@gmail.com,cus_UZfliHnYBiG3wJ,pm_1TaWPxE5pNFif9nQBTfuEP1w,pi_3TboG0E5pNFif9nQ1kNXXSjf,requires_payment_method,,transaction_not_allowed,card_declined,Your card does not support this type of purchase.,,,declined
+2365806687@qq.com,cus_UZfzDMKiu3o1sT,pm_1TaWhDE5pNFif9nQOwdfzNXa,pi_3TboG2E5pNFif9nQ1RjrbzoM,requires_payment_method,,generic_decline,card_declined,Your card was declined.,,,declined
+alptekin.egeksl@gmail.com,cus_UZqBdFtkaSJHle,,,,,,,,,,no_payment_method
+hd6c6a2@push.tg,cus_UaQ46gDts1DCaw,pm_1TbFF3E5pNFif9nQw8S5tk4c,pi_3TboG3E5pNFif9nQ0dAaCmhq,requires_payment_method,,generic_decline,card_declined,Your card was declined.,,,declined

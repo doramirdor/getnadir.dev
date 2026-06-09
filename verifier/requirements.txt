@@ -1,0 +1,10 @@
+# Verifier package — Day-1 OAuth-judge validation harness deps.
+#
+# httpx and supabase are runtime deps for the validation runner.
+# nadirclaw is OPTIONAL: only needed when OAuthJudgeClient is
+# instantiated without a credential_fn override (i.e. in production,
+# not in tests). The test suite injects credential_fn and never
+# imports nadirclaw.
+httpx>=0.27
+supabase>=2.0
+# nadirclaw>=0.13.0  # optional in test environments; uncomment for Day-2 run

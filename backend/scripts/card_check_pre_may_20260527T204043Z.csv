@@ -1,0 +1,8 @@
+email,customer_id,payment_method_id,card_brand,card_last4,card_exp,status,error_code,decline_code,error_message,setup_intent_id
+felipe.truman@outlook.com,cus_UKkUETgurq0MTH,pm_1TM52xE5pNFif9nQRBTJV79k,mastercard,5042,04/2034,dry_run,,,,
+jerickogarcia0@gmail.com,cus_UPgCWPbv39vY2B,pm_1TQqubE5pNFif9nQq3UCqZ9T,mastercard,2058,08/2027,dry_run,,,,
+sqaroo@indogmail.com,cus_UPgMVnShm1UUnP,pm_1TQr1XE5pNFif9nQRkyT0PJX,mastercard,4421,09/2032,dry_run,,,,
+zahra.sh2058@gmail.com,cus_UPgZMv0XgfWBrc,pm_1TQrCZE5pNFif9nQYeKTVaXq,mastercard,8164,07/2031,dry_run,,,,
+h4k3rit@gmail.com,cus_UPgYKGdSLmtUpP,pm_1TQrCTE5pNFif9nQXAUxKzag,mastercard,6270,12/2030,dry_run,,,,
+zouabilouay4@gmail.com,cus_UPgbF9GE4tqJNm,pm_1TQrEyE5pNFif9nQePiEurSj,mastercard,0205,07/2031,dry_run,,,,
+sufian012al@gmail.com,cus_UPhY17TsDGL5kX,pm_1TQs9wE5pNFif9nQu8DXK2h1,mastercard,4111,06/2030,dry_run,,,,

@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 # Default DAILY budget for hosted keys (same for all plans)
 DEFAULT_DAILY_HOSTED_BUDGET = 50.0  # $50/day
 
-# Tightened budget for users in their first 30 days of subscription. FIRST1
-# zeroes the first invoice, so a determined user can use Hosted for ~30 days
-# without paying us anything. Capping daily spend during this window bounds
-# our worst-case AWS Bedrock exposure on trial users.
+# Tightened budget for users in their first 30 days. Hosted usage is now
+# prepaid (credits drawn down at cost + 20%), but a daily cap during the early
+# window still bounds worst-case AWS Bedrock exposure as a second line of
+# defense behind the prepaid balance gate.
 TRIAL_DAILY_HOSTED_BUDGET = 5.0  # $5/day for first 30 days
 TRIAL_WINDOW_DAYS = 30
 
@@ -116,9 +116,9 @@ async def check_hosted_budget(user_id: str, plan: str, custom_budget: Optional[f
 def _is_in_trial_window(subscription_created_at: Optional[str]) -> bool:
     """True if the subscription was created within TRIAL_WINDOW_DAYS days.
 
-    First-month FIRST1 users pay $0 on their first invoice. We tighten the
-    daily Hosted budget while they're in this window so a single user can't
-    abuse the trial for $1500+ in AWS Bedrock spend before cancelling.
+    New accounts get a tighter daily Hosted cap so a single user can't run up
+    a large AWS Bedrock bill before their prepaid balance and usage patterns
+    are established.
     """
     if not subscription_created_at:
         return False
@@ -138,17 +138,45 @@ def _is_in_trial_window(subscription_created_at: Optional[str]) -> bool:
 async def enforce_hosted_budget_or_402(current_user) -> None:
     """
     Convenience wrapper used by completion endpoints — raises HTTP 402 with a
-    structured error body when the user has exceeded their daily Hosted spend
-    budget. No-op for BYOK users. Centralized so legacy /v1/chat/completions
-    and /v1/production/completions stay in lockstep.
+    structured error body when a Hosted user can't pay for the request. No-op
+    for BYOK users. Centralized so legacy /v1/chat/completions and
+    /v1/production/completions stay in lockstep.
 
-    Budget resolution priority:
+    Hosted usage is prepaid: the user must have a positive credit balance
+    (topped up in $5 multiples, drawn down at Bedrock cost + 20%). When the
+    balance hits zero we try auto-recharge; if that can't cover it, we 402.
+
+    A daily spend cap still applies as defense-in-depth:
       1. Per-user `hosted_budget_usd` override (admin can lift the cap for VIPs)
-      2. Trial-window cap ($5/day) if subscription < 30 days old
-      3. Default $50/day
+      2. Default $50/day
     """
     if current_user.key_mode != "hosted":
         return
+
+    # ── Prepaid credit balance gate ─────────────────────────────────
+    from app.services.credits_service import credits_service
+
+    balance = await credits_service.get_balance(str(current_user.id))
+    if balance <= 0:
+        # Last-ditch: if auto-recharge is enabled, try to top up now.
+        recharged = await credits_service.maybe_auto_recharge(str(current_user.id))
+        if recharged:
+            balance = await credits_service.get_balance(str(current_user.id))
+    if balance <= 0:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "insufficient_credits",
+                "message": (
+                    "Your Nadir credit balance is empty. Top up your prepaid "
+                    "balance to keep using hosted keys, or add your own provider "
+                    "keys (BYOK) to route without prepaid credits."
+                ),
+                "balance": float(balance),
+                "topup_url": "https://getnadir.com/dashboard/billing",
+            },
+        )
 
     explicit_override = (
         current_user.raw_data.get("hosted_budget_usd")

@@ -8,11 +8,15 @@ type Row = {
   highlighted?: boolean;
 };
 
+// Cost is expressed as a share of always-Opus spend (Opus = 100%), so lower is
+// cheaper. This matches the "40% of the cost / 60% reduction" headline above the
+// table. (The underlying eval baselines on Haiku=1.0x: Opus 12.0x, prompt-only
+// 4.8x, Haiku 1.0x, Nadir 4.7x — divide by 12.0 to get share-of-Opus.)
 const ROWS: Row[] = [
-  { strategy: "Always-Opus (no router)", cost: "12.0x", catastrophic: "0%", quality: "100%" },
-  { strategy: "Prompt-only classifier (wide_deep_asym alone)", cost: "4.8x", catastrophic: "3.4%", quality: "96.6%" },
-  { strategy: "Always-Haiku (cheapest)", cost: "1.0x", catastrophic: "26.0%", quality: "74.0%" },
-  { strategy: "Nadir verifier-gated cascade", cost: "4.7x", catastrophic: "1.7%", quality: "98.3%", highlighted: true },
+  { strategy: "Always-Opus (no router)", cost: "100%", catastrophic: "0%", quality: "100%" },
+  { strategy: "Prompt-only classifier (wide_deep_asym alone)", cost: "40%", catastrophic: "3.4%", quality: "96.6%" },
+  { strategy: "Always-Haiku (cheapest)", cost: "8%", catastrophic: "26.0%", quality: "74.0%" },
+  { strategy: "Nadir verifier-gated cascade", cost: "40%", catastrophic: "1.7%", quality: "98.3%", highlighted: true },
 ];
 
 export const BenchmarkSection = () => {
@@ -41,7 +45,7 @@ export const BenchmarkSection = () => {
         <div className="bg-white border border-black/[0.08] rounded-[18px] overflow-hidden">
           <div className="flex items-center justify-between px-5 md:px-7 py-4 md:py-5 border-b border-black/[0.06] bg-[#fbfbfd]">
             <span className="text-[12px] text-[#1d1d1f] font-semibold tracking-[-0.005em]">
-              RouterBench held-out, n=11,420
+              Cost and quality on RouterBench held-out &middot; n=11,420 triples
             </span>
             <span className="hidden sm:inline text-[11px] text-[#6e6e73] tracking-[-0.005em] font-mono">
               verifier/eval.py
@@ -53,9 +57,9 @@ export const BenchmarkSection = () => {
               <thead>
                 <tr className="text-[10.5px] text-[#86868b] uppercase tracking-[0.08em] font-semibold border-b border-black/[0.06]">
                   <th className="px-5 md:px-7 py-3.5 font-semibold">Strategy</th>
-                  <th className="px-3 md:px-5 py-3.5 font-semibold text-right">Cost</th>
-                  <th className="px-3 md:px-5 py-3.5 font-semibold text-right">Catastrophic</th>
-                  <th className="px-5 md:px-7 py-3.5 font-semibold text-right">Quality preserved</th>
+                  <th className="px-3 md:px-5 py-3.5 font-semibold text-right">Cost vs Opus</th>
+                  <th className="px-3 md:px-5 py-3.5 font-semibold text-right">Catastrophic routes</th>
+                  <th className="px-5 md:px-7 py-3.5 font-semibold text-right">Quality kept</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,8 +106,11 @@ export const BenchmarkSection = () => {
 
           <div className="px-5 md:px-7 py-4 md:py-5 border-t border-black/[0.06] bg-[#fbfbfd]">
             <p className="text-[13px] text-[#424245] m-0 tracking-[-0.005em]">
-              <span className="text-[#1d1d1f] font-semibold">60% cost reduction. 98% quality preserved.</span>
-              {" "}11,420 triples, no prompt seen in both train and test. Reproducible from the open-source eval.
+              <span className="text-[#1d1d1f] font-semibold">60% cheaper than always-Opus, 98% of the quality kept.</span>
+              {" "}Cost is a share of always-Opus spend (lower is cheaper); quality is the share of always-Opus quality preserved (higher is better).
+            </p>
+            <p className="text-[12px] text-[#6e6e73] m-0 mt-1.5 tracking-[-0.005em]">
+              11,420 held-out triples, no prompt seen in both train and test. Reproducible from the open-source eval.
             </p>
           </div>
         </div>
@@ -198,11 +205,11 @@ export const BenchmarkSection = () => {
               type="button"
               className="inline-flex items-center px-7 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
             >
-              Start free, first month on us
+              Start saving
             </button>
           </SignupDialog>
           <p className="mt-3 text-[13px] text-[#6e6e73] tracking-[-0.005em]">
-            No card to start. Bring your own keys. Cancel anytime.
+            Bring your own keys or use ours. Cancel anytime.
           </p>
         </div>
       </div>

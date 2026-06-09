@@ -11,6 +11,7 @@ declare global {
     posthog?: {
       capture: (event: string, properties?: Record<string, unknown>) => void;
       identify: (distinctId: string, properties?: Record<string, unknown>) => void;
+      alias: (alias: string, distinctId?: string) => void;
     };
     fbq?: (...args: unknown[]) => void;
     lintrk?: (action: string, properties?: Record<string, unknown>) => void;
@@ -56,6 +57,26 @@ function identify(userId: string, properties?: Record<string, unknown>) {
   window.posthog?.identify(userId, properties);
 }
 
+// Merges an old PostHog distinct_id into a new one. Used to stitch the
+// pre-existing UUID-keyed person rows to the new email-keyed person row so
+// historical events for returning users don't orphan when we flip the
+// distinct_id. Gated by localStorage so we only alias each user once per
+// browser; PostHog handles the cross-device side server-side.
+function aliasOnce(newId: string, oldId: string) {
+  if (shouldSuppressCapture()) return;
+  if (!newId || !oldId || newId === oldId) return;
+  if (typeof window === "undefined") return;
+  try {
+    const key = `nadir_posthog_aliased_${oldId}`;
+    if (window.localStorage.getItem(key)) return;
+    window.localStorage.setItem(key, "1");
+  } catch {
+    // localStorage unavailable (private mode). Alias is idempotent on the
+    // PostHog side so re-firing on every sign-in is harmless.
+  }
+  window.posthog?.alias(newId, oldId);
+}
+
 // -- Page view (generic) --
 export const trackPageView = (page: string, properties?: Record<string, unknown>) =>
   capture("$pageview", { page, ...properties });
@@ -92,7 +113,7 @@ export const trackSignupConversion = (userId: string, method: string) => {
   window.lintrk?.("track", { conversion_id: 27393514 });
 };
 
-export const trackAuthSuccess = (method: string, userId: string) => {
+export const trackAuthSuccess = (method: string, userId: string, email?: string) => {
   // Idempotent per (userId, tab session). The central AuthProvider listener
   // fires this on every SIGNED_IN / INITIAL_SESSION as a safety net for OAuth
   // signups where the per-page caller races the Supabase hash exchange; the
@@ -105,17 +126,30 @@ export const trackAuthSuccess = (method: string, userId: string) => {
       window.sessionStorage.setItem(key, "1");
     } catch {
       // sessionStorage disabled (private mode, corporate policy). Fall
-      // through and fire anyway — a duplicate capture is cheaper than a
+      // through and fire anyway, a duplicate capture is cheaper than a
       // silent drop.
     }
   }
   const attribution = getStoredAttribution();
-  // Set person properties with $set_once so first-touch attribution sticks
-  // across future sessions (later signups from the same user cannot overwrite).
-  const personProps = Object.keys(attribution).length > 0
-    ? { $set_once: attribution }
-    : undefined;
-  identify(userId, personProps);
+  // Key PostHog persons by email so the user is recognizable in the
+  // dashboard instead of being a Supabase UUID. Fall back to userId when
+  // email is missing (rare with Supabase but possible for some OAuth
+  // providers). Keep the Supabase UUID as a person property for back-ref.
+  const distinctId = email && email.length > 0 ? email : userId;
+  const personProps: Record<string, unknown> = { user_id: userId };
+  if (email) {
+    personProps.email = email;
+    personProps.$email = email;
+  }
+  if (Object.keys(attribution).length > 0) {
+    // $set_once so first-touch attribution sticks across future sessions
+    // (later signins from the same user cannot overwrite).
+    personProps.$set_once = attribution;
+  }
+  if (email && email !== userId) {
+    aliasOnce(email, userId);
+  }
+  identify(distinctId, personProps);
   capture("auth_success", { method, ...attribution });
 };
 

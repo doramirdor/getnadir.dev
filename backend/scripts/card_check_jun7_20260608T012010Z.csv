@@ -1,0 +1,7 @@
+email,customer_id,payment_method_id,card_brand,card_last4,card_exp,status,error_code,decline_code,error_message,setup_intent_id
+jtuplg@indogmail.com,cus_UeHYECCDONyotZ,pm_1Tez0aE5pNFif9nQfsckKbEX,card,5857,06/2031,dry_run,,,,
+very-roamer-seldom@duck.com,cus_UerXMW7ipeQn2U,pm_1TfXpuE5pNFif9nQUGdiY2rL,card,8478,12/2029,dry_run,,,,
+hollymadden8429@outlook.com,cus_Uf4NI3MIK9oi2p,pm_1TfkINE5pNFif9nQo5U9sSWx,card,2343,06/2031,dry_run,,,,
+butterfly.sylvia876+badvq@outlook.com,cus_UetZnCfVYr9kpF,pm_1TfZobE5pNFif9nQef81GzDi,card,4135,05/2030,dry_run,,,,
+ambervaughn5471@outlook.com,cus_Uf4qSBMTlYpBtt,pm_1Tfki0E5pNFif9nQSy6LXXaO,card,8478,12/2029,dry_run,,,,
+ditian923@gmail.com,cus_Uf4uqXtl7Ij2mr,pm_1TfkmJE5pNFif9nQ99p7dx1O,card,8478,12/2029,dry_run,,,,

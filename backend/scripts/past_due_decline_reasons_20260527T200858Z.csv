@@ -1,0 +1,8 @@
+email,customer_id,attempts,decline_code,error_code,network_decline_code,seller_message,message
+felipe.truman@outlook.com,cus_UKkUETgurq0MTH,1,incorrect_number,incorrect_number,79,The bank returned the decline code `incorrect_number`.,Your card number is incorrect.
+jerickogarcia0@gmail.com,cus_UPgCWPbv39vY2B,1,transaction_not_allowed,card_declined,82,The bank returned the decline code `transaction_not_allowed`.,Your card does not support this type of purchase.
+sqaroo@indogmail.com,cus_UPgMVnShm1UUnP,1,transaction_not_allowed,card_declined,82,The bank returned the decline code `transaction_not_allowed`.,Your card does not support this type of purchase.
+zahra.sh2058@gmail.com,cus_UPgZMv0XgfWBrc,1,transaction_not_allowed,card_declined,82,The bank returned the decline code `transaction_not_allowed`.,Your card does not support this type of purchase.
+h4k3rit@gmail.com,cus_UPgYKGdSLmtUpP,1,generic_decline,card_declined,-,Stripe blocked this payment as too risky.,Your card was declined.
+zouabilouay4@gmail.com,cus_UPgbF9GE4tqJNm,1,generic_decline,card_declined,-,Stripe blocked this payment as too risky.,Your card was declined.
+sufian012al@gmail.com,cus_UPhY17TsDGL5kX,1,generic_decline,card_declined,-,Stripe blocked this payment as too risky.,Your card was declined.

@@ -31,8 +31,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Python deps
+# Install CPU-only torch first so requirements.txt doesn't pull the ~5GB CUDA
+# build. No GPU in production; analyzers + verifier run CPU-only.
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+ && pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser

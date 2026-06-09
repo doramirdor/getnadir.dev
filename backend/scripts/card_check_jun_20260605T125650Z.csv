@@ -1,0 +1,4 @@
+email,customer_id,payment_method_id,card_brand,card_last4,card_exp,status,error_code,decline_code,error_message,setup_intent_id
+mib200@gmail.com,cus_Udp8lcsxHjZkvp,,,,,no_payment_method,,,,
+sam@fastino.ai,cus_Udxu3fgmZut1Qx,,,,,no_payment_method,,,,
+xboss182@gmail.com,cus_Ue6WgA5nVLExsf,,,,,no_payment_method,,,,

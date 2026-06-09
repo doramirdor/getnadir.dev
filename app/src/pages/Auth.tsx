@@ -131,7 +131,7 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
-        trackAuthSuccess("email", data.user.id);
+        trackAuthSuccess("email", data.user.id, data.user.email ?? undefined);
         toast({
           title: "Welcome back",
           description: "Successfully signed in.",

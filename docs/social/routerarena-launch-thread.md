@@ -9,24 +9,28 @@ Each tweet kept ~250 chars to leave room for replies and quote-tweets.*
 
 We submitted Nadir to RouterArena.
 
-Result: rank 2 on the public leaderboard, ahead of azure-model-router
-(+1.1pp), Not Diamond (+13.9), Martian's RouterBench-MLP (+13.6), and
-vLLM-SR (+3.9).
+Projected top 5 on the public leaderboard. Ahead of Auto Router
+(+1.13), vLLM-SR (+3.95), Not Diamond (+13.89), and every Martian
+variant.
 
-We are not #1. The post explains why that's the right number to publish.
+Sqwish, OrcaRouter, Azure Model Router, and R2 sit ahead of us. Post
+below explains why those are the right numbers to publish.
 
 ---
 
 **Tweet 2 (the table):**
 
-Top of the RouterArena full split, n=8,400, official scorer:
+Live public leaderboard with our projected slot inserted:
 
-1. orcarouter-adaptive: 0.7204
-2. nadir-cascade-verified: 0.7118
-3. azure-model-router: 0.7107
-4. nadir-cheapest: 0.7043
-5. r2-router: 0.6997
-6. vLLM-SR: 0.6724
+1. Sqwish Router: 75.27
+2. OrcaRouter-Adaptive: 72.08
+3. Azure-Model-Router: 71.87
+4. R2-Router: 71.60
+5. nadir-cascade-verified (projected): 71.18
+6. Auto Router: 70.05
+7. vLLM-SR: 67.23
+...
+13. NotDiamond: 57.29
 
 Two adapters, on purpose.
 
@@ -56,7 +60,7 @@ falls below threshold.
 
 **Tweet 5 (the ND punch):**
 
-Nadir 0.7118. Not Diamond 0.5729. Same scorer, same split.
+Nadir 71.18. Not Diamond 57.29. Same scorer, same split.
 
 In our internal head-to-head on RouterBench's GPT pair, the gap is
 sharper: 65% cost reduction (Nadir) vs 4% (ND's open classifier,
@@ -86,6 +90,11 @@ response distribution. τ=0.70 maximized arena score. Production live
 traffic stays on τ=0.80 (calibrated on RouterBench).
 
 Full table in the repo. No retraining, no peeking at ground truth.
+
+A separate honesty note: Weave Router has prediction files in the
+RouterArena repo but is not on the public board. Their config
+self-describes as cluster-routing trained on the RouterArena full
+split with k=160 clusters. Nadir trained on neither split.
 
 ---
 
@@ -129,11 +138,17 @@ https://getnadir.com/blog/routerarena-submission-2026-05-27
 
 ## Notes for the publisher
 
-- Lead with the headline result, not the architectural claim. Tweet 1
-  is the most-screenshotted; it must say "rank 2, ahead of [named
-  competitors]" and not over-claim. We're #2, not #1; orcarouter-adaptive
-  sits ahead at 0.7204 and Alibaba Cloud uses a different cached pool.
-- Tweet 4 (the verifier hop) is the new flagship. It moves the
+- Lead with "top 5" not "rank 2". Tweet 1 is the most-screenshotted;
+  it must say "projected top 5, ahead of [named competitors]" and
+  not over-claim. Sqwish (75.27), OrcaRouter (72.08), Azure
+  Model Router (71.87), and R2-Router (71.60) all sit ahead on the
+  live published leaderboard.
+- Our 0.7118 is what RouterArena's `compute_scores.py` returns on our
+  stored prediction files. The published leaderboard uses the full
+  evaluation pipeline (live LLM calls fill in `generated_result` /
+  `accuracy` / `cost`), so the final rank when reviewers score us may
+  shift a notch. Disclose that wherever the projected rank is cited.
+- Tweet 4 (the verifier hop) is the flagship. It moves the
   no-verifier cascade (0.7013) to the verifier-gated number (0.7118)
   and is the cleanest expression of why post-generation verification
   matters. Keep it.
@@ -141,20 +156,26 @@ https://getnadir.com/blog/routerarena-submission-2026-05-27
   candidates. They should be screenshot-ready on their own.
 - Tweet 7 is the calibration-honesty tweet. Required: do not skip if
   shortening the thread. We disclose τ-calibration openly to head off
-  any "you tuned a hyperparameter on the test set" objection. We
-  didn't change verifier weights or peek at ground truth.
+  any "you tuned a hyperparameter on the test set" objection. The
+  Weave Router note is also kept here as a citable, non-snarky
+  contrast: we did not train on RouterArena splits, and at least one
+  router that did is missing from the public board.
 - Tweet 8 is the redirect to the RouterBench number. The whole purpose
   of the thread is to get readers from the RouterArena framing to the
   RouterBench full-stack number without leading with the latter.
 - Do not use em dashes. Confirmed scan.
 - Numbers in this thread:
-  - 0.7118 (`nadir-cascade-verified` τ=0.70, official scorer)
+  - 0.7118 / 71.18 (`nadir-cascade-verified` τ=0.70, official scorer
+    on our prediction files; projected top 5)
   - 0.7013 (no-verifier cascade prior baseline)
   - 0.7043 (`nadir-cheapest` Strategy E, official scorer)
-  - 0.7107 (azure-model-router, public leaderboard)
-  - 0.5729 (Not Diamond on RouterArena)
-  - 0.5755 (Martian RouterBench-MLP)
-  - 0.6724 (vLLM-SR)
+  - 75.27 (Sqwish Router, public leaderboard)
+  - 72.08 (OrcaRouter-Adaptive, public leaderboard)
+  - 71.87 (Azure-Model-Router, public leaderboard)
+  - 71.60 (R2-Router, public leaderboard)
+  - 70.05 (Auto Router, public leaderboard)
+  - 67.23 (vLLM-SR, public leaderboard)
+  - 57.29 (Not Diamond, public leaderboard)
   - 0.961 (verifier AUROC, RouterBench held-out)
   - 98% / 60% (full cascade on RouterBench held-out, n=11,420)
   - 65% / 4% (GPT-pair head-to-head vs `notdiamond-0001`)

@@ -6,6 +6,7 @@ Exposes subscription management, checkout, invoices, and Stripe portal.
 import asyncio
 import logging
 import os
+from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,6 +15,11 @@ from pydantic import BaseModel
 from app.auth.supabase_auth import supabase, validate_api_key, validate_jwt, UserSession
 from app.services.stripe_service import stripe_service
 from app.services.savings_billing_service import SavingsBillingService
+from app.services.credits_service import (
+    credits_service,
+    is_valid_topup_amount,
+    TOPUP_INCREMENT_USD,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +36,6 @@ class CheckoutRequest(BaseModel):
     plan_id: str = "pro"  # "pro" or "enterprise"
     success_url: str = f"{_BILLING_BASE}?status=success"
     cancel_url: str = f"{_BILLING_BASE}?status=cancelled"
-    promo_code: Optional[str] = None
 
 
 class CheckoutResponse(BaseModel):
@@ -121,7 +126,6 @@ async def create_checkout(
             plan_id=req.plan_id,
             success_url=req.success_url,
             cancel_url=req.cancel_url,
-            promo_code=req.promo_code,
         )
         return CheckoutResponse(checkout_url=url)
     except Exception as e:
@@ -152,11 +156,11 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
         if not sub_id:
             raise HTTPException(status_code=400, detail="No Stripe subscription found")
 
-        # ── Charge pending fees before cancellation ─────────────────
-        # We attach BOTH the savings fee AND the Hosted Bedrock markup on
-        # cancel. Without this, a user could sign up via FIRST1, burn AWS
-        # Bedrock spend on Hosted mode for ~30 days, then cancel — leaving
-        # us holding the Bedrock bill with no offsetting revenue.
+        # ── Charge pending savings fee before cancellation ──────────
+        # Attach the partial-month savings fee so the user is billed for the
+        # savings delivered up to the cancellation date. Hosted Bedrock usage
+        # is already prepaid (drawn down in real time), so there's nothing to
+        # settle for it here.
         try:
             from datetime import date, timedelta
 
@@ -189,26 +193,10 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
                     invoice.savings_fee_usd, current_user.id,
                 )
 
-            if invoice.hosted_markup_fee_usd > 0:
-                bedrock_total_cents = int(round(
-                    (invoice.hosted_cost_usd + invoice.hosted_markup_fee_usd) * 100
-                ))
-                description = (
-                    f"Hosted Bedrock usage (partial {period_label}): "
-                    f"${invoice.hosted_cost_usd:.2f} cost + "
-                    f"${invoice.hosted_markup_fee_usd:.2f} markup"
-                )
-                await stripe_service.create_usage_invoice_item(
-                    user_id=current_user.id,
-                    amount_cents=bedrock_total_cents,
-                    description=description,
-                )
-                logger.info(
-                    "Attached pending Hosted markup $%.2f (raw $%.2f) for user %s before cancellation",
-                    invoice.hosted_markup_fee_usd, invoice.hosted_cost_usd, current_user.id,
-                )
+            # Hosted Bedrock usage is prepaid (drawn down in real time), so
+            # there is no markup line to settle on cancellation.
 
-            if invoice.savings_fee_usd > 0 or invoice.hosted_markup_fee_usd > 0:
+            if invoice.savings_fee_usd > 0:
                 # Store the partial-month invoice for audit trail.
                 await billing_service.generate_and_store_invoice(
                     current_user.id, period_start, period_end
@@ -287,3 +275,97 @@ async def list_invoices(current_user: UserSession = Depends(validate_api_key)):
     except Exception as e:
         logger.error("Invoice list error for user %s: %s", current_user.id, e)
         raise HTTPException(status_code=500, detail="Failed to fetch invoices")
+
+
+# ── Prepaid credits (Hosted usage) ──────────────────────────────────────
+
+
+class CreditCheckoutRequest(BaseModel):
+    amount_usd: float
+    success_url: str = f"{_BILLING_BASE}?status=topup_success"
+    cancel_url: str = f"{_BILLING_BASE}?status=topup_cancelled"
+
+
+class CreditStatusResponse(BaseModel):
+    balance: float
+    auto_charge_enabled: bool
+    auto_charge_threshold: float
+    auto_charge_amount: float
+    upper_limit: Optional[float] = None
+
+
+class AutoRechargeRequest(BaseModel):
+    enabled: bool
+    threshold_usd: float
+    amount_usd: float
+    upper_limit_usd: Optional[float] = None
+
+
+@router.get("/v1/billing/credits", response_model=CreditStatusResponse)
+async def get_credits(current_user: UserSession = Depends(validate_jwt)):
+    """Return the user's prepaid credit balance + auto-recharge config."""
+    try:
+        return CreditStatusResponse(**await credits_service.get_status(current_user.id))
+    except Exception as e:
+        logger.error("Credit status error for user %s: %s", current_user.id, e)
+        raise HTTPException(status_code=500, detail="Failed to fetch credit balance")
+
+
+@router.post("/v1/billing/credits/checkout", response_model=CheckoutResponse)
+async def create_credit_checkout(
+    req: CreditCheckoutRequest,
+    current_user: UserSession = Depends(validate_jwt),
+):
+    """Create a one-time Stripe Checkout to buy prepaid Nadir credits.
+
+    Amount must be a positive multiple of $5.
+    """
+    amount = Decimal(str(req.amount_usd))
+    if not is_valid_topup_amount(amount):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Top-up amount must be a positive multiple of ${int(TOPUP_INCREMENT_USD)}.",
+        )
+    try:
+        url = await stripe_service.create_credit_topup_session(
+            user_id=current_user.id,
+            amount_usd=float(amount),
+            success_url=req.success_url,
+            cancel_url=req.cancel_url,
+        )
+        return CheckoutResponse(checkout_url=url)
+    except Exception as e:
+        logger.error("Credit checkout error for user %s: %s", current_user.id, e)
+        raise HTTPException(status_code=500, detail=f"Failed to create top-up: {str(e)}")
+
+
+@router.post("/v1/billing/credits/auto-recharge", response_model=CreditStatusResponse)
+async def update_auto_recharge(
+    req: AutoRechargeRequest,
+    current_user: UserSession = Depends(validate_jwt),
+):
+    """Enable/disable and configure prepaid credit auto-recharge."""
+    if req.enabled:
+        amount = Decimal(str(req.amount_usd))
+        threshold = Decimal(str(req.threshold_usd))
+        if not is_valid_topup_amount(amount):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Recharge amount must be a positive multiple of ${int(TOPUP_INCREMENT_USD)}.",
+            )
+        if threshold < 0:
+            raise HTTPException(status_code=400, detail="Threshold must be non-negative.")
+    try:
+        status_dict = await credits_service.update_auto_recharge(
+            current_user.id,
+            enabled=req.enabled,
+            threshold_usd=Decimal(str(req.threshold_usd)),
+            amount_usd=Decimal(str(req.amount_usd)),
+            upper_limit_usd=(
+                Decimal(str(req.upper_limit_usd)) if req.upper_limit_usd is not None else None
+            ),
+        )
+        return CreditStatusResponse(**status_dict)
+    except Exception as e:
+        logger.error("Auto-recharge update error for user %s: %s", current_user.id, e)
+        raise HTTPException(status_code=500, detail="Failed to update auto-recharge")

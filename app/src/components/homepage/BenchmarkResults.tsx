@@ -16,7 +16,8 @@ export const BenchmarkResults = () => {
 
   const roi = useMemo(() => {
     const savings = monthlySpend * 0.6;
-    const fee = savings * 0.252;
+    // Tiered savings fee: 25% on the first $2K, 10% above. No base fee.
+    const fee = Math.min(savings, 2000) * 0.25 + Math.max(savings - 2000, 0) * 0.1;
     const net = savings - fee;
     return { savings, fee, net, annual: net * 12 };
   }, [monthlySpend]);

@@ -38,10 +38,13 @@ async def run_monthly_invoicing() -> dict:
         period_end.isoformat(),
     )
 
-    # Fetch all active subscribers
+    # Fetch all active subscribers. Read from `user_subscriptions` (the
+    # canonical table updated directly by the Stripe webhook); the legacy
+    # `subscriptions` mirror can drift and would silently skip users on
+    # the 1st-of-month invoice run.
     try:
         result = await asyncio.to_thread(
-            lambda: supabase.table("subscriptions")
+            lambda: supabase.table("user_subscriptions")
             .select("user_id")
             .eq("status", "active")
             .execute()
@@ -67,14 +70,10 @@ async def run_monthly_invoicing() -> dict:
                 user_id, period_start, period_end
             )
 
-            # Skip only when there's nothing billable on top of the base fee.
-            # A Hosted-only user can have $0 savings fee but still owe a
-            # Bedrock pass-through markup, so check both lines.
-            if invoice.savings_fee_usd <= 0 and invoice.hosted_markup_fee_usd <= 0:
-                logger.info(
-                    "User %s: no savings or Hosted markup fee — skipping",
-                    user_id,
-                )
+            # Hosted usage is prepaid (drawn down in real time), so the only
+            # monthly line is the savings fee. Nothing to bill if it's $0.
+            if invoice.savings_fee_usd <= 0:
+                logger.info("User %s: no savings fee — skipping", user_id)
                 skipped += 1
                 continue
 
@@ -107,33 +106,9 @@ async def run_monthly_invoicing() -> dict:
                         user_id, invoice.savings_fee_usd,
                     )
 
-            # Line 2: Hosted Bedrock pass-through (raw cost × 1.20)
-            # We bill the markup as a single line so the user sees: "Bedrock
-            # usage: $X cost + $Y markup". Raw cost is a pass-through; the
-            # markup is our margin.
-            if invoice.hosted_markup_fee_usd > 0:
-                bedrock_total_cents = int(round(
-                    (invoice.hosted_cost_usd + invoice.hosted_markup_fee_usd) * 100
-                ))
-                description = (
-                    f"Hosted Bedrock usage ({period_label}): "
-                    f"${invoice.hosted_cost_usd:.2f} cost + "
-                    f"${invoice.hosted_markup_fee_usd:.2f} markup"
-                )
-                item_id = await stripe_service.create_usage_invoice_item(
-                    user_id=user_id,
-                    amount_cents=bedrock_total_cents,
-                    description=description,
-                )
-                if item_id:
-                    invoiced_lines.append(
-                        f"hosted ${invoice.hosted_cost_usd:.2f}+${invoice.hosted_markup_fee_usd:.2f} ({item_id})"
-                    )
-                else:
-                    logger.warning(
-                        "User %s: Hosted markup $%.2f not attached (no Stripe customer)",
-                        user_id, invoice.hosted_markup_fee_usd,
-                    )
+            # Hosted Bedrock usage is prepaid and drawn down in real time
+            # (see credits_service), so it is no longer added to the monthly
+            # invoice. The savings fee above is the only recurring line.
 
             logger.info("User %s: invoiced — %s", user_id, "; ".join(invoiced_lines) or "(nothing attached)")
             processed += 1

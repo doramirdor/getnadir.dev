@@ -1,0 +1,8 @@
+email,customer_id,subscription_id,stripe_status,supabase_updated,error
+felipe.truman@outlook.com,cus_UKkUETgurq0MTH,sub_1TM530E5pNFif9nQjFfkZJvE,,False,stripe: Request req_7dNKqebYAgd70C: No such subscription: 'sub_1TM530E5pNFif9nQjFfkZJvE'
+jerickogarcia0@gmail.com,cus_UPgCWPbv39vY2B,sub_1TQquiE5pNFif9nQ9hTObZ7a,,False,stripe: Request req_uxKq1xA9Aqh0kt: No such subscription: 'sub_1TQquiE5pNFif9nQ9hTObZ7a'
+sqaroo@indogmail.com,cus_UPgMVnShm1UUnP,sub_1TQr1bE5pNFif9nQqBtheBcH,,False,stripe: Request req_Skp65hXIdXunfL: No such subscription: 'sub_1TQr1bE5pNFif9nQqBtheBcH'
+zahra.sh2058@gmail.com,cus_UPgZMv0XgfWBrc,sub_1TQrChE5pNFif9nQkoeto4FF,,False,stripe: Request req_jNlemHMUISsVAG: No such subscription: 'sub_1TQrChE5pNFif9nQkoeto4FF'
+h4k3rit@gmail.com,cus_UPgYKGdSLmtUpP,sub_1TQrCdE5pNFif9nQbZYVZZ8U,,False,stripe: Request req_sHXjzyqDg8FrgI: No such subscription: 'sub_1TQrCdE5pNFif9nQbZYVZZ8U'
+zouabilouay4@gmail.com,cus_UPgbF9GE4tqJNm,sub_1TQrF6E5pNFif9nQq7t6VkuH,,False,stripe: Request req_J9xLjXetZNntjB: No such subscription: 'sub_1TQrF6E5pNFif9nQq7t6VkuH'
+sufian012al@gmail.com,cus_UPhY17TsDGL5kX,sub_1TQs9zE5pNFif9nQXhzvufh8,,False,stripe: Request req_m3IyixXbDC5aB3: No such subscription: 'sub_1TQs9zE5pNFif9nQXhzvufh8'

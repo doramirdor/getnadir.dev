@@ -1634,6 +1634,33 @@ async def create_completion(
             if total_cost > 0:
                 record_hosted_spend(str(current_user.id), float(total_cost))
 
+                # Draw the prepaid credit balance down by (Bedrock cost + 20%).
+                # Hosted usage is prepaid, not invoiced monthly. Best-effort in
+                # the background so it never blocks the response; auto-recharge
+                # tops the balance back up if it dipped below the threshold.
+                async def _draw_down_credits(uid: str, cost: float):
+                    try:
+                        from app.services.credits_service import (
+                            credits_service,
+                            hosted_charge_for_cost,
+                        )
+
+                        await credits_service.deduct(
+                            uid,
+                            hosted_charge_for_cost(cost),
+                            request_id=request_id,
+                            description="Hosted usage",
+                        )
+                        await credits_service.maybe_auto_recharge(uid)
+                    except Exception as draw_err:
+                        logger.warning(
+                            "Credit drawdown failed for %s: %s", request_id, draw_err
+                        )
+
+                background_tasks.add_task(
+                    _draw_down_credits, str(current_user.id), float(total_cost)
+                )
+
         return formatted_response
         
     except HTTPException:

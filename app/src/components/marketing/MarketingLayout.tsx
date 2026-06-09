@@ -1,7 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import PromoBanner from "@/components/PromoBanner";
 import { ContactFooter } from "@/components/homepage/ContactFooter";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
 import { trackCtaClick, trackGitHubClick } from "@/utils/analytics";
@@ -318,7 +317,6 @@ const MarketingLayout = ({ children }: { children: React.ReactNode }) => {
             </nav>
           </div>
         )}
-        <PromoBanner />
       </header>
 
       <main role="main">{children}</main>

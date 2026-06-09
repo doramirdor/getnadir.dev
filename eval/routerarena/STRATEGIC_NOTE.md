@@ -69,16 +69,47 @@ Three reasons.
    not the primary. We never claim cost-arbitrage as production
    routing behavior.
 
-## What "rank 2" actually means
+## What "top 5" actually means
 
-On the public leaderboard ahead of us: `orcarouter-adaptive` (Alibaba
-Cloud) at 0.7204. They use a different cached pool with different
-model pricing; we cannot route to their pool, and they don't have
-our verifier hop. The honest line is: among independent routing-IP
-companies (i.e., excluding hyperscaler-internal routers like Azure
-Model Router and orcarouter-adaptive), Nadir is the highest-scoring
-entry on the leaderboard. We hold that line consistently across PR,
-methodology note, blog, and social thread.
+Earlier drafts of this note claimed "rank 2" based on a local rerun of
+`compute_scores.py` against our stored prediction files, which showed
+Nadir above Azure Model Router (0.7118 vs 0.7107). That rerun is real
+and reproducible, but it is **not** the public leaderboard. The live
+published board (<https://routeworks.github.io/leaderboard>) uses
+RouterArena's full evaluation pipeline (live LLM calls populate
+`generated_result`, `accuracy`, and `cost` per row), so the
+authoritative numbers are different from a local rescore. The
+published top entries:
+
+| Rank | Router | Arena |
+| ---: | --- | ---: |
+| 1 | Sqwish Router | 75.27 |
+| 2 | OrcaRouter-Adaptive | 72.08 |
+| 3 | Azure-Model-Router | 71.87 |
+| 4 | R2-Router | 71.60 |
+| **5 (projected)** | **Nadir cascade-verified (τ=0.70)** | **71.18** |
+| 6 | Auto Router | 70.05 |
+| 7 | vLLM-SR | 67.23 |
+| ... | | |
+| 13 | NotDiamond | 57.29 |
+
+Sqwish, OrcaRouter-Adaptive, Azure-Model-Router, and R2-Router all
+sit above us on the public board. We claim **top 5 projected** and we
+name the specific competitors we beat (Auto Router, vLLM-SR, Martian
+variants, Not Diamond, etc.). We do not claim we beat the four above
+us. We also disclose, in every public surface, that the final rank
+when RouterArena reviewers score our submission may shift by a notch
+in either direction because the public pipeline differs from the
+local rescore.
+
+**Weave Router footnote.** Weave Router has prediction files in the
+upstream `router_inference/predictions/weave-router.json` but is not
+on the public leaderboard. Their config self-describes as
+cluster-routing trained on the RouterArena full split with k=160
+clusters. This is a citable, non-snarky data point about benchmark
+methodology incentives. Nadir trained on neither the sub_10 nor the
+full split; contamination audit at
+`verifier/reports/routerbench_contamination_20260524T122849.json`.
 
 ## Where we push next
 

@@ -149,7 +149,6 @@ const Onboarding = () => {
         },
         body: JSON.stringify({
           plan_id: "pro",
-          promo_code: "FIRST1",
           success_url: `${window.location.origin}/dashboard/onboarding?subscribed=true`,
           // If Stripe cancels, return to the Subscribe step (now step 0).
           cancel_url: `${window.location.origin}/dashboard/onboarding?step=0`,
@@ -434,14 +433,14 @@ console.log(response.choices[0].message.content);`;
                 Continue to dashboard
               </Button>
 
-              {/* Secondary — optional Pro trial for users who are already sold */}
+              {/* Secondary — optional billing setup for users who are already sold */}
               <div className="p-4 bg-muted/40 border border-border rounded-xl space-y-2">
                 <div className="flex items-center gap-2">
                   <Gift className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Already sure you want Pro?</span>
+                  <span className="text-sm font-semibold text-foreground">Ready to set up billing?</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Start a 30-day Pro trial now — adds semantic cache, context optimization, fallback chains, and priority support. Uses promo code <code className="bg-background px-1.5 py-0.5 rounded font-mono font-bold">FIRST1</code> so your first month is $0.
+                  Set up billing now — adds semantic cache, context optimization, fallback chains, and priority support. No base fee; you only pay a percentage of the savings we deliver.
                 </p>
                 <button
                   onClick={handleSubscribe}

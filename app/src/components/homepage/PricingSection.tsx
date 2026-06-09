@@ -23,37 +23,37 @@ type Tier = {
 
 const TIERS: Tier[] = [
   {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    blurb: "For side projects, weekend hacks, and kicking the tires.",
-    proof: "Free, even with your own keys.",
+    name: "Bring your own keys",
+    price: "25%",
+    period: "of savings · 10% above $2K",
+    blurb: "Use your own provider keys. Pay only when we cut your bill.",
+    proof: "Routes a $5K/mo Anthropic bill for ~$575 in fees. You keep ~$2,175.",
     features: [
-      "Hosted proxy (api.getnadir.com)",
-      "50 requests per month on our keys",
-      "Unlimited with BYOK",
-      "Intelligent routing",
+      "Use your OpenAI / Anthropic / Google keys",
+      "No base fee, no minimums",
+      "Intelligent routing across tiers",
+      "Semantic cache and fallback chains",
       "Dashboard and analytics",
     ],
-    cta: "Start free, no card",
+    cta: "Start saving",
     ctaType: "signup",
     highlighted: false,
   },
   {
-    name: "Pro",
-    price: "$9",
-    period: "per month + variable savings fee",
-    blurb: "For production teams routing real traffic.",
-    proof: "Routes a $5K/mo Anthropic bill for ~$430/mo. You keep the other ~$2,070.",
+    name: "Use our keys",
+    price: "25%",
+    period: "of savings · we run the keys",
+    blurb: "Route on Nadir-managed keys. Zero setup. You pay only on what we save you.",
+    proof: "We run the keys at cost + 20%. You keep 75% of the savings we deliver.",
     features: [
-      "Everything in Free, no request cap",
-      "Hosted keys or BYOK",
-      "Semantic cache and dedup",
-      "Fallback chains and automatic retry",
+      "Nadir-managed keys, zero setup",
+      "No subscription, no base fee",
+      "Usage billed at cost + 20%",
+      "Semantic cache, fallback chains",
       "Context optimization",
       "Priority email support",
     ],
-    cta: "Start free, save by tomorrow",
+    cta: "Start saving",
     ctaType: "signup",
     highlighted: true,
   },
@@ -64,7 +64,7 @@ const TIERS: Tier[] = [
     blurb: "For scale, compliance, and dedicated infrastructure.",
     proof: "Volume rates and a 99.9% SLA. Talk to a human.",
     features: [
-      "Everything in Pro",
+      "Everything in the self-serve plans",
       "SSO and SAML",
       "Custom routing models",
       "Dedicated infrastructure",
@@ -103,10 +103,10 @@ export const PricingSection = () => {
             Pricing that pays for itself
           </p>
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
-            Flat base. You keep the savings.
+            No base fee. You keep the savings.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            $9/mo gets you the router. We take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay $9.
+            We take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay nothing.
           </p>
         </div>
 
@@ -211,7 +211,7 @@ export const PricingSection = () => {
           })}
         </div>
         <p className="mt-10 text-center text-[13px] text-[#6e6e73] tracking-[-0.005em]">
-          No card to start &middot; Cancel anytime &middot; BYOK on every tier &middot; First month free with code <span className="font-mono text-[#1d1d1f] bg-black/[0.04] px-1.5 py-0.5 rounded">FIRST1</span>
+          Cancel anytime &middot; No base fee &middot; You pay only on what we save you
         </p>
       </div>
     </section>

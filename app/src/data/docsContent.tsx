@@ -70,8 +70,8 @@ export function QuickstartContent() {
           <a href="/auth?mode=signup" className="text-primary underline underline-offset-2">
             getnadir.com/auth
           </a>
-          . The free tier gives you 50 requests/month on shared keys, unlimited with BYOK.
-          After 50, Pro kicks in at $9/mo plus a variable savings fee (cancel anytime).
+          . Bring your own keys and route for free — we only bill a percentage
+          of the savings we deliver. No base fee (cancel anytime).
         </P>
       </div>
 
@@ -1687,13 +1687,14 @@ export function ProFeaturesContent() {
               </tr>
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-semibold text-foreground">Free (Hosted)</td>
-                <td className="px-4 py-3">Free</td>
-                <td className="px-4 py-3">Hosted proxy, 50 requests/month on shared keys (unlimited with BYOK), web dashboard, intelligent routing</td>
+                <td className="px-4 py-3">Bring your own keys</td>
+                <td className="px-4 py-3">25% of savings, 10% above $2K · no base fee</td>
+                <td className="px-4 py-3">Your provider keys, intelligent routing, semantic cache, fallback chains, web dashboard</td>
               </tr>
               <tr className="border-b border-border">
-                <td className="px-4 py-3 font-semibold text-foreground">Pro</td>
-                <td className="px-4 py-3">$9/mo + up to 25% of savings</td>
-                <td className="px-4 py-3">Unlimited requests, hosted keys or BYOK, semantic cache, fallback chains, context optimization</td>
+                <td className="px-4 py-3 font-semibold text-foreground">Use our keys</td>
+                <td className="px-4 py-3">Prepaid usage at cost + 20%, plus 25% of savings</td>
+                <td className="px-4 py-3">Nadir-managed keys, prepaid credits with auto-recharge, context optimization</td>
               </tr>
               <tr>
                 <td className="px-4 py-3 font-semibold text-foreground">Enterprise</td>

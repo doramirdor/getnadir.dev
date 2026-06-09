@@ -1,0 +1,4 @@
+email,customer_id,payment_method_id,card_brand,card_last4,card_exp,status,error_code,decline_code,error_message,setup_intent_id
+mib200@gmail.com,cus_Udp8lcsxHjZkvp,pm_1TeXUuE5pNFif9nQ5F6NVbxd,link,,,succeeded,,,,seti_1TexLzE5pNFif9nQsmW6hAgt
+sam@fastino.ai,cus_Udxu3fgmZut1Qx,pm_1TefziE5pNFif9nQ5uPuFz0M,link,,,succeeded,,,,seti_1TexM2E5pNFif9nQlijaPu3l
+xboss182@gmail.com,cus_Ue6WgA5nVLExsf,pm_1TepNOE5pNFif9nQzkcvZmAP,link,,,succeeded,,,,seti_1TexM5E5pNFif9nQ1HMRazyd

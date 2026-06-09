@@ -36,7 +36,7 @@ const AuthCallback = () => {
         // Auth.tsx already fires trackAuthSuccess("email", ...); this path
         // only runs for OAuth so passing the provider is the right label.
         const provider = session.user.app_metadata?.provider ?? "oauth";
-        trackAuthSuccess(provider, session.user.id);
+        trackAuthSuccess(provider, session.user.id, session.user.email ?? undefined);
 
         // Redeem any referral code captured before signup. Idempotent on
         // the backend, so safe to call on every callback.

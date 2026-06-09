@@ -156,6 +156,23 @@ pool under cost-weighted scoring. RouterBench is the right benchmark
 for full-stack routing systems that include a verifier or response-
 scoring step. Nadir is published under both.
 
+## Local rescore vs published leaderboard
+
+The 0.7118 figure throughout this note is what RouterArena's
+`compute_scores.py` returns when run locally against our stored
+prediction files (full evaluation set, n=8,400). The public
+leaderboard at <https://routeworks.github.io/leaderboard> uses the
+full RouterArena evaluation pipeline, which fills in
+`generated_result`, `accuracy`, and `cost` via live LLM calls before
+scoring. As a result, the published numbers for any router can differ
+from a local rescore of the same prediction file. We project Nadir at
+top 5 against the live board (above Auto Router at 70.05, vLLM-SR at
+67.23, Not Diamond at 57.29; below Sqwish at 75.27, OrcaRouter at
+72.08, Azure Model Router at 71.87, R2-Router at 71.60). The final
+rank when RouterArena reviewers score our submission through the full
+pipeline may shift by a notch in either direction. We will update
+public surfaces when the official rank lands.
+
 ## What we ask reviewers to take from this
 
 Three things:

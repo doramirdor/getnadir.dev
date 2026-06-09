@@ -9,7 +9,7 @@ The architectural wedge against other LLM routers (Not Diamond, Martian, OpenRou
 ## Core pages
 
 - [Homepage](https://getnadir.com/): Product overview, eval table, live calculator, pricing tiers.
-- [Pricing](https://getnadir.com/pricing): Free, Pro ($9/mo + variable savings fee), Enterprise.
+- [Pricing](https://getnadir.com/pricing): Free (BYOK), Hosted (no base fee, variable savings fee), Enterprise.
 - [Calculator](https://getnadir.com/calculator): Interactive savings estimator. Defaults to a 60% savings rate matching the RouterBench held-out benchmark.
 - [Compare](https://getnadir.com/compare): Head-to-head pages vs OpenRouter, Requesty, LiteLLM, Not Diamond, Portkey.
 - [Docs](https://getnadir.com/docs): API reference, SDK usage, routing configuration.
@@ -30,7 +30,7 @@ The architectural wedge against other LLM routers (Not Diamond, Martian, OpenRou
 - Verifier latency when it runs: 180 ms on CPU INT8.
 - Supported providers: Anthropic, OpenAI, Google. Any OpenAI-compatible provider can be added.
 - Integrations: Claude Code, Cursor, Codex, Aider, Windsurf, Continue, LangChain, OpenAI SDK.
-- Pricing: Free forever with BYOK. Pro is $9/month + 25% of the first $2,000 of monthly savings and 10% above. If we save you nothing, you pay $9.
+- Pricing: Free forever with BYOK. The hosted plan has no base fee: you pay a variable savings fee of 25% on the first $2,000 of monthly savings and 10% above. If we save you nothing, you pay nothing.
 - Privacy: BYOK supported on every tier. Logging is opt-in. With logging off, Nadir stores SHA-256 of the prompt and drops the response. Redaction runs on both primary and fallback log paths.
 
 ## How to cite

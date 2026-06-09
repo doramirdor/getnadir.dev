@@ -23,6 +23,13 @@ import { logger } from "@/utils/logger";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 import { trackPageView, trackApiKeyCreated, trackApiKeyDeleted } from "@/utils/analytics";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+// Stash the freshly-created key here when we redirect to Stripe to collect a
+// card. sessionStorage survives the cross-origin round trip (same tab, same
+// origin on return), so we can re-show the one-time key after checkout.
+const PENDING_KEY_STORAGE = "nadir_pending_reveal_key";
+
 async function sha256(message: string): Promise<string> {
   const data = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -68,6 +75,31 @@ const ApiKeys = () => {
     fetchApiKeys();
   }, []);
 
+  // Returning from the Stripe card-collection round trip: re-reveal the
+  // one-time key we stashed before redirecting, and acknowledge the outcome.
+  useEffect(() => {
+    let pending: string | null = null;
+    try { pending = sessionStorage.getItem(PENDING_KEY_STORAGE); } catch { /* ignore */ }
+    if (pending) {
+      try { sessionStorage.removeItem(PENDING_KEY_STORAGE); } catch { /* ignore */ }
+      setSessionApiKey(pending);
+      setShowOnceKey(pending);
+    }
+    const card = new URLSearchParams(window.location.search).get("card");
+    if (card === "added") {
+      toast({
+        title: "Card on file",
+        description: "You're all set. You only pay on what we save you.",
+      });
+    } else if (card === "skipped") {
+      toast({
+        variant: "destructive",
+        title: "No payment method added",
+        description: "Add a card in Billing before this key can route.",
+      });
+    }
+  }, []);
+
   // Returning from Stripe checkout after upgrading mid-wizard — re-open the
   // create dialog so the user can finish picking Hosted mode + finalize the
   // key. The Pro gate inside CreateApiKeyDialog will now allow Hosted because
@@ -103,6 +135,58 @@ const ApiKeys = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // After creating a key, make sure the user has a card on file. If not,
+  // redirect to Stripe Checkout — the existing $0/mo base subscription with
+  // payment_method_collection: "always" — so the monthly savings-fee invoice
+  // and any "use our keys" usage have a payment method to charge off-session.
+  // Returns true when we're navigating away to Stripe.
+  const ensureCardOnFile = async (newKey: string): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      // An active subscription row means a card is already on file (checkout
+      // forces one), so we don't prompt again on subsequent key creations.
+      const { data: sub } = await supabase
+        .from("user_subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (sub?.status === "active") return false;
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) return false;
+
+      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          plan_id: "pro",
+          success_url: `${window.location.origin}/dashboard/api-keys?card=added`,
+          cancel_url: `${window.location.origin}/dashboard/api-keys?card=skipped`,
+        }),
+      });
+      if (!res.ok) return false;
+      const data = (await res.json()) as { checkout_url?: string };
+      if (!data.checkout_url) return false;
+
+      // Persist the one-time key so it survives the Stripe round trip and can
+      // be re-revealed when the user returns (whether they add the card or not).
+      try { sessionStorage.setItem(PENDING_KEY_STORAGE, newKey); } catch { /* ignore */ }
+      window.location.href = data.checkout_url;
+      return true;
+    } catch (e) {
+      // Never block key creation on a billing hiccup — the key still exists
+      // and the user can add a card later from Billing.
+      logger.error("ensureCardOnFile failed:", e);
+      return false;
     }
   };
 
@@ -149,6 +233,10 @@ const ApiKeys = () => {
       setShowOnceKey(apiKey);
 
       fetchApiKeys();
+
+      // Collect a card with Stripe if the user doesn't have one yet. If this
+      // redirects to Checkout, the key is stashed and re-revealed on return.
+      await ensureCardOnFile(apiKey);
     } catch (error: unknown) {
       logger.error('Create key error:', error);
       const errorMessage = error instanceof Error ? error.message : "Failed to create API key";

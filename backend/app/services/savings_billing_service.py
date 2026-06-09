@@ -2,11 +2,9 @@
 Savings-based billing service.
 
 Pricing model:
-  - $9/month base fee (covers hosting costs)
+  - No base fee.
   - 25% of first $2,000 saved per month
   - 10% of savings above $2,000 per month
-  - 20% markup on AWS Bedrock cost for Hosted-mode requests
-    (BYOK users incur no Bedrock cost so this line is $0 for them)
 
 The savings are calculated per request as:
   savings = benchmark_cost - routed_cost
@@ -16,9 +14,11 @@ default model (e.g., Claude Opus 4.6) for every request, and
 routed_cost is what they actually paid after Nadir's routing +
 context optimization.
 
-For Hosted-mode requests `routed_cost` is also our raw AWS Bedrock
-cost. We add a 20% markup as a separate invoice line so heavy Hosted
-users don't run us at a loss on a percentage-of-savings model alone.
+Hosted-mode (Nadir-managed Bedrock) usage is NOT billed on the monthly
+invoice. It is prepaid: each hosted request draws down the user's credit
+balance at (Bedrock cost + 20%) in real time (see credits_service). The
+monthly invoice therefore only carries the savings fee. `hosted_cost_usd`
+is still computed for transparency, but no markup is added to the invoice.
 """
 
 import logging
@@ -28,10 +28,10 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# Markup applied to raw Bedrock cost for Hosted-mode requests. Covers our
-# AWS overhead and provides margin so that high-volume Hosted users don't
-# end up costing us more than they pay (the savings fee alone is decoupled
-# from raw cost and can underwater us on heavy users).
+# Markup applied to raw Bedrock cost for Hosted-mode requests. Hosted usage is
+# now prepaid (drawn down in real time via credits_service at cost + this
+# markup), so it is NOT added to the monthly invoice. Kept here only for
+# reference / parity with credits_service.HOSTED_COST_MARKUP.
 HOSTED_COST_MARKUP = 0.20
 
 
@@ -71,7 +71,7 @@ def calculate_savings_fee(total_savings: float) -> float:
 class SavingsBillingService:
     """Handles monthly savings-based billing calculations and invoice generation."""
 
-    BASE_FEE = 9.00
+    BASE_FEE = 0.00
 
     def __init__(self, supabase_client):
         self.supabase = supabase_client
@@ -108,8 +108,10 @@ class SavingsBillingService:
             if (r.get("key_mode") or "").lower() == "hosted"
         )
         savings_fee = calculate_savings_fee(total_savings)
-        hosted_markup_fee = round(hosted_cost * HOSTED_COST_MARKUP, 2)
-        total_invoice = self.BASE_FEE + savings_fee + hosted_markup_fee
+        # Hosted usage is prepaid (drawn down in real time), so no markup is
+        # added to the monthly invoice. hosted_cost_usd stays informational.
+        hosted_markup_fee = 0.0
+        total_invoice = self.BASE_FEE + savings_fee
 
         return SavingsInvoice(
             user_id=user_id,

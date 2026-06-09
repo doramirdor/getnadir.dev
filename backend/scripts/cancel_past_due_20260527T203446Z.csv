@@ -1,0 +1,8 @@
+email,customer_id,subscription_id,stripe_status,supabase_updated,error
+felipe.truman@outlook.com,cus_UKkUETgurq0MTH,sub_1TM530E5pNFif9nQjFfkZJvE,canceled,True,
+jerickogarcia0@gmail.com,cus_UPgCWPbv39vY2B,sub_1TQquiE5pNFif9nQ9hTObZ7a,canceled,True,
+sqaroo@indogmail.com,cus_UPgMVnShm1UUnP,sub_1TQr1bE5pNFif9nQqBtheBcH,canceled,True,
+zahra.sh2058@gmail.com,cus_UPgZMv0XgfWBrc,sub_1TQrChE5pNFif9nQkoeto4FF,canceled,True,
+h4k3rit@gmail.com,cus_UPgYKGdSLmtUpP,sub_1TQrCdE5pNFif9nQbZYVZZ8U,canceled,True,
+zouabilouay4@gmail.com,cus_UPgbF9GE4tqJNm,sub_1TQrF6E5pNFif9nQq7t6VkuH,canceled,True,
+sufian012al@gmail.com,cus_UPhY17TsDGL5kX,sub_1TQs9zE5pNFif9nQXhzvufh8,canceled,True,

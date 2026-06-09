@@ -178,8 +178,8 @@ nadirclaw optimize payload.json`}
             </ul>
           </div>
           <div className="p-6 rounded-xl border-2 border-[#0066ff] bg-white">
-            <h3 className="font-semibold mb-1">Nadir Pro (Hosted)</h3>
-            <p className="text-xs text-[#999] mb-4">50 free req/mo, then $9/mo + savings fee</p>
+            <h3 className="font-semibold mb-1">Nadir Hosted</h3>
+            <p className="text-xs text-[#999] mb-4">Prepaid usage at cost + 20%, plus savings fee. No base fee.</p>
             <ul className="space-y-2">
               {[
                 "Everything in self-host",

@@ -151,11 +151,11 @@ export const FeaturesGrid = () => {
               type="button"
               className="inline-flex items-center px-7 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
             >
-              Start free, bring your own keys
+              Bring your own keys
             </button>
           </SignupDialog>
           <p className="mt-3 text-[13px] text-[#6e6e73] tracking-[-0.005em]">
-            No card to start. Cancel anytime. $9/mo flat after the free first month.
+            Cancel anytime. No base fee — you pay only on what we save you.
           </p>
         </Reveal>
       </div>

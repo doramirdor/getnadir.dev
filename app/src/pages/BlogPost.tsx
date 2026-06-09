@@ -344,7 +344,7 @@ export default function BlogPost() {
               size="lg"
               className="rounded-full bg-[#1d1d1f] hover:bg-[#000] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
             >
-              Start free, bring your own keys
+              Bring your own keys
             </Button>
           </div>
         </article>

@@ -519,9 +519,9 @@ const IntegrationsBYOK = () => {
                 How hosted pricing works
               </p>
               <ul className="text-sm text-[hsl(var(--brand-blue-strong))] mt-2 space-y-1">
-                <li>You pay the same token costs as providers charge</li>
-                <li>Nadir adds a savings-based fee: $9/mo base + 25% of first $2K saved, 10% above</li>
-                <li>If Nadir saves you nothing, you only pay the $9 base</li>
+                <li>Prepaid: top up in $5 and we draw down at provider cost + 20%</li>
+                <li>Plus a savings-based fee: 25% of first $2K saved, 10% above</li>
+                <li>No base fee — if Nadir saves you nothing, there's no savings fee</li>
               </ul>
             </div>
 

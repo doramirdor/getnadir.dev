@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (newSession?.user) {
           const provider =
             (newSession.user.app_metadata?.provider as string | undefined) ?? 'email';
-          trackAuthSuccess(provider, newSession.user.id);
+          trackAuthSuccess(provider, newSession.user.id, newSession.user.email ?? undefined);
 
           // Meta Pixel CompleteRegistration: fire once per user when their
           // account is fresh (created within the last 10 minutes). Distinguishes

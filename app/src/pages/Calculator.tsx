@@ -21,7 +21,7 @@ const FAQS: [string, string][] = [
   ],
   [
     "What is the fee?",
-    "A flat $9 per month for hosting, plus 25 percent of the first $2,000 of monthly savings and 10 percent above that. No savings, no variable fee.",
+    "No base fee. 25 percent of the first $2,000 of monthly savings and 10 percent above that. No savings, no fee. Hosted (our keys) usage is prepaid separately at cost plus 20 percent.",
   ],
   [
     "Where does 60 percent come from?",

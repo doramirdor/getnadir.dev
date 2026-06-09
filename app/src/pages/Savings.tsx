@@ -10,10 +10,10 @@ import { formatUSD } from "@/utils/format";
 import type { SavingsSummary, DailySaving, TierBreakdown } from "@/services/savingsApi";
 
 function calculateFee(totalSavings: number): number {
-  const base = 9;
+  // No base fee — only a percentage of the savings delivered.
   const feeOnFirst2K = Math.min(totalSavings, 2000) * 0.25;
   const feeAbove2K = Math.max(totalSavings - 2000, 0) * 0.10;
-  return base + feeOnFirst2K + feeAbove2K;
+  return feeOnFirst2K + feeAbove2K;
 }
 
 // ── Demo data fallback ──────────────────────────────────────────────────
@@ -140,10 +140,9 @@ async function loadSavingsFromSupabase(): Promise<{ summary: SavingsSummary; dai
     }))
     .sort((a, b) => b.savings_usd - a.savings_usd);
 
-  // Net savings = gross savings minus the variable fee only.
-  // We exclude the flat base fee because it's a subscription cost,
-  // not a per-savings deduction.
-  const savings_fee = fee - 9;
+  // Net savings = gross savings minus the variable savings fee. There is no
+  // base fee in the current pricing model.
+  const savings_fee = fee;
 
   return {
     summary: {
@@ -305,8 +304,8 @@ export default function Savings() {
                 <span className="opacity-70"> = gross saved − variable fee</span>
               </div>
               <div className="pt-1 opacity-70">
-                The $9/mo base fee is billed separately as a flat subscription
-                and not deducted from net savings.
+                No base fee — you only pay a percentage of the savings we
+                deliver. Hosted (Nadir keys) usage is prepaid separately.
               </div>
             </div>
           }
@@ -481,11 +480,7 @@ export default function Savings() {
       {/* Fee breakdown */}
       <div className="clean-card p-6">
         <h3 className="font-semibold mb-4 text-foreground">Fee Breakdown</h3>
-        <div className="grid sm:grid-cols-4 gap-4 text-center">
-          <div className="p-4 bg-muted rounded-lg">
-            <div className="text-sm text-muted-foreground">Base fee</div>
-            <div className="mono text-lg font-bold text-foreground">$9.00</div>
-          </div>
+        <div className="grid sm:grid-cols-3 gap-4 text-center">
           <div className="p-4 bg-muted rounded-lg">
             <div className="text-sm text-muted-foreground">25% on first $2K saved</div>
             <div className="mono text-lg font-bold text-foreground">

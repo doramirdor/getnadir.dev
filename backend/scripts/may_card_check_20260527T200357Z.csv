@@ -1,0 +1,6 @@
+email,customer_id,payment_method_id,card_brand,card_last4,card_exp,status,error_code,decline_code,error_message,setup_intent_id
+jamesriyo9940@gmail.com,cus_UT6pI7xyrz90di,pm_1TUAg9E5pNFif9nQqcH04tVW,mastercard,4735,04/2028,succeeded,,,,seti_1TbngEE5pNFif9nQAd6IFh4F
+kbxy2365806687@gmail.com,cus_UZfliHnYBiG3wJ,pm_1TaWPxE5pNFif9nQBTfuEP1w,visa,5232,07/2028,succeeded,,,,seti_1TbngFE5pNFif9nQcuFrvFX8
+2365806687@qq.com,cus_UZfzDMKiu3o1sT,pm_1TaWhDE5pNFif9nQOwdfzNXa,mastercard,1780,05/2031,succeeded,,,,seti_1TbngFE5pNFif9nQl7uZ6tVJ
+alptekin.egeksl@gmail.com,cus_UZqBdFtkaSJHle,,,,,no_payment_method,,,,
+hd6c6a2@push.tg,cus_UaQ46gDts1DCaw,pm_1TbFF3E5pNFif9nQw8S5tk4c,mastercard,8613,11/2027,succeeded,,,,seti_1TbngHE5pNFif9nQfuqYAwbQ

@@ -126,7 +126,7 @@ const pages: ComparePage[] = [
       "Pass-through on inference, with a credit top-up fee and a small BYOK percentage above a free monthly threshold.",
 
     nadirPricing:
-      "$9/month base. Variable fee of 25% on the first $2,000 of gross savings, 10% above. No fee on dollars we did not save. BYOK included at every tier.",
+      "No base fee. Variable fee of 25% on the first $2,000 of gross savings, 10% above. No fee on dollars we did not save. BYOK is free; hosted usage is prepaid at cost + 20%.",
 
     table: [
       {
@@ -172,7 +172,7 @@ const pages: ComparePage[] = [
       },
       {
         heading: "The numbers to weigh",
-        body: "On a $5,000/month mixed workload, the shape usually lands near $3,000 saved, $600 variable fee, $9 base. Net about $2,391/month back with Opus still handling the hard prompts. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961).\n\nIf you already use OpenRouter, run Nadir in front of it. Nadir picks the tier, OpenRouter executes. Your credit balance drops by less each day.",
+        body: "On a $5,000/month mixed workload, the shape usually lands near $3,000 saved, $600 variable fee, no base fee. Net about $2,400/month back with Opus still handling the hard prompts. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961).\n\nIf you already use OpenRouter, run Nadir in front of it. Nadir picks the tier, OpenRouter executes. Your credit balance drops by less each day.",
       },
     ],
 
@@ -239,7 +239,7 @@ const pages: ComparePage[] = [
       "Flat 5% markup on inference. BYOK supported. Enterprise volume discounts via contact.",
 
     nadirPricing:
-      "$9/month base, then 25% of the first $2,000 in savings and 10% above. Variable fee only applies to dollars actually saved versus an always-premium baseline.",
+      "No base fee — 25% of the first $2,000 in savings and 10% above. The variable fee only applies to dollars actually saved versus an always-premium baseline.",
 
     table: [
       {
@@ -277,7 +277,7 @@ const pages: ComparePage[] = [
     sections: [
       {
         heading: "Where your money goes",
-        body: "Nadir moves traffic off the premium tier when the prompt does not need it. The verifier scores the cheap-model answer before it ships, so the move is recoverable rather than absorbed. That is the savings lever on a mixed workload. A semantic cache helps on repeated prompts. A markup on inference does not help at all.\n\nOn a $5,000/month workload, the typical shape with Nadir is about $3,000 saved, $600 variable fee, $9 base. Net near $2,391/month back. A 5% discount-via-markup math on the same $5,000 is $250 in a different direction.",
+        body: "Nadir moves traffic off the premium tier when the prompt does not need it. The verifier scores the cheap-model answer before it ships, so the move is recoverable rather than absorbed. That is the savings lever on a mixed workload. A semantic cache helps on repeated prompts. A markup on inference does not help at all.\n\nOn a $5,000/month workload, the typical shape with Nadir is about $3,000 saved, $600 variable fee, no base fee. Net near $2,400/month back. A 5% discount-via-markup math on the same $5,000 is $250 in a different direction.",
       },
       {
         heading: "What Nadir ships",
@@ -352,7 +352,7 @@ const pages: ComparePage[] = [
       "OSS is free. Enterprise license is custom.",
 
     nadirPricing:
-      "$9/month base, variable 25%/10% on savings. Nadir Open (self-host) is MIT, free, and ships the classifier plus 4-tier routing.",
+      "No base fee, variable 25%/10% on savings. Nadir Open (self-host) is MIT, free, and ships the classifier plus 4-tier routing.",
 
     table: [
       {
@@ -398,7 +398,7 @@ const pages: ComparePage[] = [
       },
       {
         heading: "The numbers that matter to you",
-        body: "Pre-classifier overhead is under 10 ms. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961). On a $5,000/month mixed workload, the shape usually lands near $3,000 saved, $600 variable fee, $9 base.",
+        body: "Pre-classifier overhead is under 10 ms. 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples, scored by a calibrated verifier (AUROC 0.961). On a $5,000/month mixed workload, the shape usually lands near $3,000 saved, $600 variable fee, no base fee.",
       },
     ],
 
@@ -464,7 +464,7 @@ const pages: ComparePage[] = [
       "Pay-as-you-go per routing recommendation, with a separate charge per prompt optimization.",
 
     nadirPricing:
-      "$9/month base plus 25%/10% variable on savings. Routing decisions are not metered separately.",
+      "No base fee, just 25%/10% variable on savings. Routing decisions are not metered separately.",
 
     table: [
       {
@@ -581,7 +581,7 @@ const pages: ComparePage[] = [
       "Tiered on recorded log lines, with Enterprise contracts above the log caps.",
 
     nadirPricing:
-      "$9/month base, 25% on the first $2,000 of savings, 10% above. BYOK included. Self-host (NadirClaw) is free and MIT. Logs are not billed separately.",
+      "No base fee, 25% on the first $2,000 of savings, 10% above. BYOK is free. Self-host (NadirClaw) is free and MIT. Logs are not billed separately.",
 
     table: [
       {

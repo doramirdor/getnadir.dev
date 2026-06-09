@@ -109,8 +109,8 @@ const faqItems = [
         </p>
         <ul className="list-disc list-inside mt-2 space-y-1">
           <li>
-            <strong>$9/month base</strong> -- Covers dashboard access, analytics,
-            and the routing infrastructure.
+            <strong>No base fee</strong> -- Bring your own keys and route for
+            free. You only pay a percentage of the savings we deliver.
           </li>
           <li>
             <strong>25% of the first $2,000 saved</strong> -- Nadir keeps a
@@ -120,10 +120,14 @@ const faqItems = [
             <strong>10% of savings above $2,000</strong> -- The rate drops for
             higher-volume users.
           </li>
+          <li>
+            <strong>Using our keys?</strong> -- Hosted usage is prepaid: top up
+            in $5 increments and we draw it down at provider cost + 20%.
+          </li>
         </ul>
         <p className="mt-2">
-          If Nadir does not save you anything in a billing cycle, you only pay
-          the $9 base -- there is no per-request markup.
+          If Nadir does not save you anything in a billing cycle, you pay
+          nothing -- there is no base fee and no per-request markup.
         </p>
       </>
     ),
