@@ -148,23 +148,23 @@ export default function Pricing() {
     offers: [
       {
         "@type": "Offer",
-        name: "Bring your own keys",
+        name: "Self-host",
         price: "0",
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "No base fee. Use your own provider keys and pay 25% of the first $2,000 of monthly savings, 10% above. Intelligent routing, semantic cache, fallback chains, dashboard, and analytics.",
-        url: "https://getnadir.com/auth?mode=signup",
+          "Free and open source under the MIT license. Run NadirClaw on your own infrastructure with your own provider keys: 4-tier routing, context optimization, and a local CLI dashboard. No account, no limits, no fees.",
+        url: "https://getnadir.com/self-host",
         ...digitalDeliveryFields,
       },
       {
         "@type": "Offer",
-        name: "Use our keys",
+        name: "Hosted",
         price: "0",
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "Route on Nadir-managed keys with zero setup. Usage is billed at cost plus 20%, and you pay 25% of the first $2,000 of monthly savings, 10% above. You only pay on what we save you.",
+          "No base fee. Bring your own keys or use ours. You pay only on what we save you: 25% of the first $2,000 of monthly savings, 10% above. If you use our keys, usage is billed at cost plus 20%. Intelligent routing, semantic cache, fallback chains, dashboard, and analytics.",
         url: "https://getnadir.com/auth?mode=signup",
         ...digitalDeliveryFields,
       },
@@ -269,6 +269,14 @@ export default function Pricing() {
                     >
                       {tier.cta}
                     </Link>
+                  ) : tier.ctaAction === "selfhost" ? (
+                    <Link
+                      to="/self-host"
+                      onClick={() => trackCtaClick(tierCtaKey(tier.name), "pricing_page")}
+                      className={`${ctaClass} ${ctaColors}`}
+                    >
+                      {tier.cta}
+                    </Link>
                   ) : (
                     <SignupDialog
                       ctaLabel={tierCtaKey(tier.name)}
@@ -284,11 +292,7 @@ export default function Pricing() {
             })}
           </div>
           <p className="text-center text-[14px] text-[#86868b] mt-10 tracking-[-0.005em]">
-            Want to run it yourself?{" "}
-            <Link to="/self-host" className="text-[#1d1d1f] underline-offset-2 hover:underline">
-              NadirClaw is open source under MIT.
-            </Link>{" "}
-            Unlimited requests on your own infrastructure.
+            On the hosted plan there's no base fee — we take 25% of the first $2K we save you, 10% above. If we save you nothing, you pay nothing.
           </p>
         </div>
       </section>

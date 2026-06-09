@@ -23,34 +23,35 @@ type Tier = {
 
 const TIERS: Tier[] = [
   {
-    name: "Bring your own keys",
-    price: "25%",
-    period: "of savings · 10% above $2K",
-    blurb: "Use your own provider keys. Pay only when we cut your bill.",
-    proof: "Routes a $5K/mo Anthropic bill for ~$575 in fees. You keep ~$2,175.",
+    name: "Self-host",
+    price: "Free",
+    period: "open source · MIT",
+    blurb: "Run NadirClaw on your own infrastructure. Yours forever, no fees.",
+    proof: "Same routing engine as hosted. Your keys, your servers, your data.",
     features: [
-      "Use your OpenAI / Anthropic / Google keys",
-      "No base fee, no minimums",
-      "Intelligent routing across tiers",
-      "Semantic cache and fallback chains",
-      "Dashboard and analytics",
+      "MIT licensed — run it anywhere",
+      "Bring your own provider keys",
+      "4-tier routing + context optimization",
+      "Local CLI dashboard",
+      "No account, no limits, no fees",
     ],
-    cta: "Start saving",
-    ctaType: "signup",
+    cta: "Self-host free",
+    ctaType: "link",
+    ctaLink: "/self-host",
     highlighted: false,
   },
   {
-    name: "Use our keys",
+    name: "Hosted",
     price: "25%",
-    period: "of savings · we run the keys",
-    blurb: "Route on Nadir-managed keys. Zero setup. You pay only on what we save you.",
-    proof: "We run the keys at cost + 20%. You keep 75% of the savings we deliver.",
+    period: "of savings · 10% above $2K",
+    blurb: "Bring your own keys or use ours. You pay only on what we save you.",
+    proof: "Routes a $5K/mo bill for ~$575 in fees. You keep ~$2,175.",
     features: [
-      "Nadir-managed keys, zero setup",
-      "No subscription, no base fee",
-      "Usage billed at cost + 20%",
+      "Bring your own keys, or use ours",
+      "No base fee, no minimums",
+      "Use our keys: usage billed at cost + 20%",
       "Semantic cache, fallback chains",
-      "Context optimization",
+      "Dashboard and analytics",
       "Priority email support",
     ],
     cta: "Start saving",
@@ -103,10 +104,10 @@ export const PricingSection = () => {
             Pricing that pays for itself
           </p>
           <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] m-0 mb-5 text-[#1d1d1f] leading-[1.05]">
-            No base fee. You keep the savings.
+            Self-host free, or let us run it.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            We take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay nothing.
+            NadirClaw is open source under MIT. On the hosted plan there's no base fee — we take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay nothing.
           </p>
         </div>
 
