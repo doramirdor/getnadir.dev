@@ -5,6 +5,10 @@ Modes
 - ``off``        No processing (zero overhead).
 - ``safe``       Deterministic, lossless transforms only.
 - ``aggressive`` All safe transforms + semantic deduplication via embeddings.
+- ``kompress``   All aggressive transforms + ML/structural compression of
+                 bulky tool/assistant context via headroom-ai (cache-safe:
+                 system and user messages stay byte-stable). Degrades to
+                 ``aggressive`` when headroom-ai is not installed.
 
 All public functions operate on plain ``list[dict]`` messages so the module
 has no dependency on FastAPI, Pydantic, or the rest of the server.
@@ -474,6 +478,7 @@ def optimize_messages(
     messages: list[dict],
     mode: str = "off",
     max_turns: int = 40,
+    model: str | None = None,
 ) -> OptimizeResult:
     """Optimize a list of message dicts for token reduction.
 
@@ -482,10 +487,14 @@ def optimize_messages(
     messages
         List of ``{"role": "...", "content": "..."}`` dicts.
     mode
-        ``"off"`` (no-op), ``"safe"`` (lossless), or ``"aggressive"``
-        (safe + semantic deduplication via sentence embeddings).
+        ``"off"`` (no-op), ``"safe"`` (lossless), ``"aggressive"``
+        (safe + semantic deduplication via sentence embeddings), or
+        ``"kompress"`` (aggressive + headroom-ai compression of bulky
+        tool/assistant context).
     max_turns
         Maximum conversation turns to keep when trimming history.
+    model
+        Target model id, used by kompress mode for accurate token counting.
 
     Returns
     -------
@@ -529,10 +538,24 @@ def optimize_messages(
             applied.append(name)
 
     # --- Aggressive-only transforms ---
-    if mode == "aggressive":
+    if mode in ("aggressive", "kompress"):
         msgs, did_semantic = _semantic_dedup(msgs)
         if did_semantic:
             applied.append("semantic_dedup")
+
+    # --- Kompress (headroom-ai) — compress bulky tool/assistant context.
+    # try/except so this module still loads standalone (tests import it via
+    # importlib without the app package) and degrades to aggressive cleanly.
+    if mode == "kompress":
+        try:
+            from app.services.kompress_compressor import kompress_messages
+        except Exception:
+            kompress_messages = None
+        if kompress_messages is not None:
+            kompress_result = kompress_messages(msgs, model=model)
+            if kompress_result.applied:
+                msgs = kompress_result.messages
+                applied.append("kompress")
 
     # --- Chat history trimming ---
     msgs, did_trim = _trim_chat_history(msgs, max_turns=max_turns)

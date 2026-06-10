@@ -345,7 +345,7 @@ def _resolve_layers(model_params: Dict[str, Any]) -> Dict[str, Any]:
     Layers control which features are active per-preset:
       - routing: bool (default True) — intelligent complexity-based model selection
       - fallback: bool (default True) — auto-retry with fallback chain on failure
-      - optimize: "off"|"safe"|"aggressive" (default "off") — context optimization
+      - optimize: "off"|"safe"|"aggressive"|"kompress" (default "off") — context optimization
 
     Always-on (not toggleable): token tracking, savings tracking, response healing, rate limiting.
     """
@@ -666,7 +666,26 @@ async def get_intelligent_model_recommendation_with_analysis(
         # Extract detailed information from the complexity analysis
         recommended_model = complexity_result.get("recommended_model", available_models[0] if available_models else "gpt-4o-mini")
         complexity_score = complexity_result.get("complexity_score", 0.5)
-        
+
+        # Compression-aware rerank: when the optimize layer is active, prefer a
+        # same-quality candidate whose *effective* cost (input-heavy weighting +
+        # compression + cache-read discounts) is lower. Quality order is
+        # preserved, so this never trades accuracy for cost.
+        effective_cost_rerank = None
+        try:
+            from app.services.compression_policy import rerank_equal_quality
+            _optimize_mode = (user_config.get("layers") or {}).get("optimize", "off")
+            _reranked, effective_cost_rerank = rerank_equal_quality(
+                recommended_model,
+                complexity_result.get("ranked_models") or [],
+                optimize_mode=_optimize_mode,
+                cache_hit_rate=0.7 if sticky_provider else 0.0,
+            )
+            if effective_cost_rerank:
+                recommended_model = _reranked
+        except Exception as rerank_err:
+            logger.debug(f"Effective-cost rerank skipped: {rerank_err}")
+
         # Create detailed analysis result
         analyzer_name = f"{settings.COMPLEXITY_ANALYZER_TYPE}_analysis"
         complexity_analysis = {
@@ -676,6 +695,7 @@ async def get_intelligent_model_recommendation_with_analysis(
             "selected_model": recommended_model,
             "complexity_score": complexity_score,
             "reasoning": complexity_result.get("reasoning", "Model selected based on complexity analysis"),
+            "effective_cost_rerank": effective_cost_rerank,
             "raw_response": complexity_result.get("detailed_analysis", complexity_result.get("reasoning", "Analysis completed")),
             "extracted_metrics": {
                 "complexity_score": complexity_score,
@@ -1061,19 +1081,23 @@ async def create_completion(
             messages_dicts.insert(0, {"role": "system", "content": preset_system_prompt})
 
         # LAYER: Context Optimize — apply optimization + truncation
-        # Activated by: layer setting ("safe"/"aggressive") OR per-request transforms
+        # Activated by: layer setting ("safe"/"aggressive"/"kompress") OR per-request transforms
         # Safe:       5 lossless transforms (whitespace, dedup, JSON minify, trim)
         # Aggressive: Safe + semantic deduplication via sentence embeddings
+        # Kompress:   Aggressive + headroom-ai compression of bulky tool/assistant
+        #             context (system/user messages stay byte-stable for caching)
         transforms_applied = False
         optimize_result = None
         optimize_mode = layer_optimize
         # Per-request transforms override layer setting
         if request.transforms and "middle-out" in request.transforms:
             optimize_mode = "safe"  # middle-out = safe mode
-        if optimize_mode in ("safe", "aggressive"):
+        if optimize_mode in ("safe", "aggressive", "kompress"):
             from app.services.context_optimizer import optimize_messages
             original_tokens = sum(len(m.get("content", "")) // 4 for m in messages_dicts)
-            optimize_result = optimize_messages(messages_dicts, mode=optimize_mode)
+            optimize_result = optimize_messages(
+                messages_dicts, mode=optimize_mode, model=recommended_model
+            )
             messages_dicts = optimize_result.messages
             if optimize_result.tokens_saved > 0:
                 transforms_applied = True
