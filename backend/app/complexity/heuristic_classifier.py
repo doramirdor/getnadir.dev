@@ -24,6 +24,24 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+
+def _shared_rank(tier_name: str, confidence: float, candidates: List[Dict]) -> Optional[List[Dict]]:
+    """Rank via the unified ε-constrained ranker (model_ranker.py).
+
+    Returns None when the ranker can't be imported (standalone module load)
+    or fails — callers fall back to the legacy per-tier sort.
+    """
+    try:
+        from app.complexity.model_ranker import rank_models
+    except Exception:
+        return None
+    try:
+        return rank_models(tier_name, confidence, candidates) or None
+    except Exception as err:
+        logger.warning("model_ranker failed, using legacy ordering: %s", err)
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Pattern constants (compiled once at import time)
 # ---------------------------------------------------------------------------
@@ -427,6 +445,12 @@ class HeuristicClassifier:
                 return model, provider
             return "gpt-4o-mini", "openai"
 
+        ranked = _shared_rank(tier_name, confidence, candidates)
+        if ranked:
+            best = ranked[0]
+            return best["api_id"], best["provider"]
+
+        # Legacy ordering (shared ranker unavailable)
         if tier_name == "complex":
             candidates.sort(key=lambda m: m["quality_index"], reverse=True)
         elif tier_name == "medium":
@@ -442,7 +466,10 @@ class HeuristicClassifier:
         if not candidates:
             return []
 
-        if tier_name == "complex":
+        ranked = _shared_rank(tier_name, confidence, candidates)
+        if ranked:
+            candidates = ranked
+        elif tier_name == "complex":
             candidates.sort(key=lambda m: m["quality_index"], reverse=True)
         elif tier_name == "medium":
             candidates.sort(key=lambda m: m["quality_index"] / max(m["cost"], 0.01), reverse=True)

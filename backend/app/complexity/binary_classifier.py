@@ -524,6 +524,12 @@ class BinaryComplexityClassifier:
                 return model, provider
             return "gpt-4o-mini", "openai"
 
+        ranked = self._shared_rank(tier_name, confidence, candidates)
+        if ranked:
+            best = ranked[0]
+            return best["api_id"], best["provider"]
+
+        # Legacy ordering (shared ranker unavailable)
         if tier_name == "complex":
             # Pick highest-quality model
             candidates.sort(key=lambda m: m["quality_index"], reverse=True)
@@ -539,13 +545,29 @@ class BinaryComplexityClassifier:
         best = candidates[0]
         return best["api_id"], best["provider"]
 
+    @staticmethod
+    def _shared_rank(tier_name: str, confidence: float, candidates: List[Dict]) -> Optional[List[Dict]]:
+        """Rank via the unified ε-constrained ranker; None → legacy fallback."""
+        try:
+            from app.complexity.model_ranker import rank_models
+        except Exception:
+            return None
+        try:
+            return rank_models(tier_name, confidence, candidates) or None
+        except Exception as err:
+            logger.warning("model_ranker failed, using legacy ordering: %s", err)
+            return None
+
     def _build_ranked_models(self, tier_name: str, confidence: float) -> List[Dict[str, Any]]:
         """Build a ranked model list matching the format other analyzers return."""
         candidates = self._get_candidate_models()
         if not candidates:
             return []
 
-        if tier_name == "complex":
+        ranked = self._shared_rank(tier_name, confidence, candidates)
+        if ranked:
+            candidates = ranked
+        elif tier_name == "complex":
             candidates.sort(key=lambda m: m["quality_index"], reverse=True)
         elif tier_name == "medium":
             candidates.sort(
