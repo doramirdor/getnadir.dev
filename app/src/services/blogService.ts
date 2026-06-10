@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "apple-perplexity-google-shipped-routing-architecture-pattern",
+    title: "Apple, Perplexity, and Google all shipped routing this month. The pattern is the architecture.",
+    date: "2026-06-10",
+    author: "Dor Amir",
+    excerpt: "In a single week, Apple revealed that Siri AI routes between on-device foundation models and a $1 billion-per-year Gemini cloud backend. Perplexity demoed a hybrid orchestrator that splits tasks between your laptop and frontier models in real time. Google published a 2026 report showing 88% of early AI agent adopters already see positive ROI. Three companies, three different products, one shared conclusion: the routing layer is not optional. The teams that hardcode a single model are building on an architecture that the biggest platforms just declared obsolete.",
+    thumbnail: "Deep Dive",
+    tags: ["Routing", "Apple", "Perplexity", "Architecture", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
     id: "llm-api-pricing-june-2026-complete-comparison",
     title: "LLM API pricing, June 2026: every major model compared. The cheapest output token is 75x less than the most expensive.",
     date: "2026-06-09",
@@ -307,6 +317,107 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "apple-perplexity-google-shipped-routing-architecture-pattern": `## Three companies shipped the same architecture in one week.
+
+On June 8, Apple took the stage at WWDC 2026 and introduced Siri AI. The new system runs Apple Foundation Models (AFM Core and AFM Core Advanced) directly on Apple Silicon for tasks like dictation, on-screen awareness, and personal-context lookups. When a query requires world knowledge or complex reasoning, it routes to AFM Cloud, powered by a custom 1.2-trillion-parameter Gemini model running on Google's infrastructure through Apple's Private Cloud Compute. Apple is paying Google roughly $1 billion per year for this backend.
+
+[Source: Apple, "Apple unveils next generation of Apple Intelligence, Siri AI, and more," June 8, 2026](https://www.apple.com/newsroom/2026/06/apple-unveils-next-generation-of-apple-intelligence-siri-ai-and-more/)
+
+Three days earlier, at Computex 2026, Perplexity AI demoed what it calls the first hybrid local-server inference orchestrator. CEO Aravind Srinivas demonstrated the system onstage alongside Intel CEO Lip-Bu Tan. A compact local model evaluates each incoming task, weighs privacy, cost, energy, accuracy, and hardware capacity, and decides in real time whether to keep it on device or send it to a frontier cloud model. Sensitive data stays local. Complex reasoning goes to the cloud. No manual configuration required.
+
+[Source: VentureBeat, "Perplexity AI unveils hybrid local-cloud inference system at Computex 2026," June 3, 2026](https://venturebeat.com/technology/perplexity-ai-unveils-hybrid-local-cloud-inference-system-at-computex-2026)
+
+Google's AI Agent Trends 2026 report, published alongside these announcements, found that 88% of early agentic AI adopters are already seeing positive ROI. The report describes a future where businesses connect agents across platforms using open standards like the Agent2Agent (A2A) protocol and Model Context Protocol (MCP), running entire workflows from start to finish with multi-model orchestration.
+
+[Source: Google Cloud, "AI Agent Trends 2026 Report"](https://cloud.google.com/resources/content/ai-agent-trends-2026)
+
+Three companies. Three different products. One shared architectural decision: a routing layer that matches each task to the right model at the right location.
+
+## The pattern is not new. The consensus is.
+
+Intelligent model routing has existed in production for over a year. Teams using multi-model routing report 40 to 70% cost reductions on mixed-complexity workloads. The AICC analyzed 2.4 billion enterprise API calls and found that organizations with intelligent routing achieved median blended costs of $2.31 per million tokens versus $18.40 for organizations without it.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+What changed this month is not the technology. It is the validation. When Apple builds a billion-dollar deal around the premise that simple tasks should stay local and only complex ones should hit the cloud, that is not a startup thesis. That is a platform-level architectural commitment. When Perplexity builds a routing layer into the inference path of a consumer product, that is a bet that users will never go back to single-model, single-location processing. When Google publishes enterprise data showing 88% positive ROI from agentic workflows, and those workflows depend on multi-model orchestration, that is the cloud provider confirming the pattern.
+
+IDC predicts 70% of top AI enterprises will use dynamic model routing by 2028. After this week, that timeline looks conservative.
+
+[Source: IDC, "The Future of AI Is Model Routing," 2026](https://www.idc.com/resource-center/blog/the-future-of-ai-is-model-routing/)
+
+## What Apple's architecture reveals about cost.
+
+Apple's approach is instructive because it is the most transparent about the economics. The on-device models (AFM Core, AFM Core Advanced) run on hardware Apple already sold you. The marginal inference cost to Apple is zero. The cloud backend costs Apple roughly $1 billion per year for a custom Gemini deployment on Nvidia Blackwell B200 chips through Google Cloud.
+
+The routing decision is straightforward: every query that can be handled on-device saves Apple cloud compute costs. Every query that needs world knowledge or heavy reasoning gets routed to the cloud. The routing layer is not a feature. It is a cost containment mechanism at billion-dollar scale.
+
+[Source: MacRumors, "Apple Reveals New AI Architecture Built Around Google Gemini Models," June 8, 2026](https://www.macrumors.com/2026/06/08/apple-reveals-new-ai-architecture/)
+
+This is the same math that every enterprise running LLM APIs faces, just at a different scale. Claude Haiku 4.5 costs $1/$5 per million tokens. Claude Opus 4.8 costs $5/$25. The output token gap is 5x. For teams running mixed-complexity workloads, the majority of API calls, file reads, formatting, classification, simple Q&A, do not need the expensive model. Routing them to the cheap model saves 40 to 60% of the bill without touching the quality of the calls that actually need frontier reasoning.
+
+Apple chose to build a routing layer rather than send everything to a 1.2-trillion-parameter model. If that decision makes sense at Apple's scale, it makes sense at yours.
+
+## What Perplexity's orchestrator reveals about privacy.
+
+Perplexity's hybrid orchestrator adds a dimension that most API-level routing ignores: data location. The system evaluates each subtask and decides not just which model to use, but where to run it. Financial records, health data, and personal files stay on device. Research queries and complex reasoning go to frontier cloud models.
+
+[Source: WinBuzzer, "Perplexity Tests AI PC Privacy With Local-Cloud Router," June 3, 2026](https://winbuzzer.com/2026/06/03/perplexity-tests-ai-pc-privacy-with-local-cloud-mode-xcxwbn/)
+
+This matters for enterprises because data governance is the top concern blocking AI adoption. F5's 2026 State of Application Strategy Report found that 78% of organizations now run inference in production, operating an average of seven AI models. But the operational complexity of managing where data goes across those models is a blocker.
+
+[Source: Help Net Security, "Multi-model AI is creating a routing headache for enterprises," May 7, 2026](https://www.helpnetsecurity.com/2026/05/07/f5-ai-inference-operations-report/)
+
+A routing layer that considers data sensitivity alongside task complexity solves both problems at once. You get cost optimization (cheap model for simple tasks) and data governance (sensitive data stays local or on-prem) from the same architectural component.
+
+Perplexity's orchestration framework is model-agnostic and chip-agnostic, confirmed to run on Intel Core Ultra Series 3 and Nvidia RTX Spark hardware. The feature ships in Perplexity Computer in July 2026, initially on Windows.
+
+[Source: MarkTechPost, "Perplexity AI Introduces Hybrid Local-Server Inference Orchestrator," June 5, 2026](https://www.marktechpost.com/2026/06/05/perplexity-ai-introduces-hybrid-local-server-inference-orchestrator-for-personal-computer-automatic-on-device-and-cloud-task-routing/)
+
+## The edge AI market confirms the direction.
+
+The market numbers reinforce what the product launches show. The edge AI market is valued at $29.98 billion in 2026 and projected to reach $111.7 billion by 2033, growing at over 20% CAGR. The edge inference platform market is growing even faster as enterprises move latency-sensitive and privacy-critical workloads off the cloud.
+
+[Source: Grand View Research, "Edge AI Market Size, Share & Trends," 2026](https://www.grandviewresearch.com/industry-analysis/edge-ai-market-report)
+
+Deloitte's 2026 Tech Trends report frames this as the "AI infrastructure reckoning": the shift from cloud-only inference to hybrid architectures that route workloads based on cost, latency, privacy, and capability requirements.
+
+[Source: Deloitte, "The AI infrastructure reckoning: Optimizing compute strategy in the age of inference economics," 2026](https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/ai-infrastructure-compute-strategy.html)
+
+The VC market agrees. In a single month earlier this year, OpenRouter raised $113 million at a $1.3 billion valuation. DeepInfra closed $107 million for inference infrastructure. Palo Alto Networks acquired Portkey for roughly $130 million. Over $250 million flowed into the routing layer in 30 days.
+
+[Source: SiliconANGLE, "OpenRouter raises $113M to bring order to enterprise AI inference routing," May 26, 2026](https://siliconangle.com/2026/05/26/openrouter-raises-113m-bring-order-enterprise-ai-inference-routing/)
+
+When Apple, Perplexity, Google, and over $250 million in VC funding all converge on the same architectural pattern in the same month, that pattern is not experimental. It is infrastructure.
+
+## What this means for your stack.
+
+If you are building AI-powered features today and hardcoding a single model into every call site, you are building on an architecture that the three largest technology platforms just declared obsolete. The migration path is the same regardless of your scale:
+
+**1. Classify before you call.** Every request has a complexity. A file rename, a format conversion, a simple lookup: these do not need a frontier model. A nuanced analysis, a multi-step reasoning chain, a creative task: these do. The classification can be rule-based, ML-based, or hybrid. The point is that it happens before the API call, not after.
+
+**2. Route to the tier that fits.** Apple routes between on-device and cloud. Perplexity routes between local and frontier. At the API level, you route between Haiku-class ($1/$5), Sonnet-class ($3/$15), and Opus-class ($5/$25) models. The tier spread is 5x on output tokens. On a $30,000 monthly bill, routing 60% of calls to the cheap tier saves $18,000 per month.
+
+**3. Make the routing layer model-agnostic.** Apple built its routing layer to work across AFM Core, AFM Cloud, and Gemini. Perplexity built theirs to be chip-agnostic and model-agnostic. Your routing layer should abstract the provider so that switching from Claude to GPT to Gemini to an open-source model is a configuration change, not a code change. New models launch every month. The teams that can add them to their routing pool in hours rather than weeks capture the price improvements immediately.
+
+**4. Track per-request costs.** The FinOps Foundation reports that 98% of FinOps teams now manage AI costs, but most cannot see token-level costs per request, per feature, or per user. A routing layer with per-request analytics closes that gap. When you can see that 70% of your requests are simple and hitting the expensive model, the optimization path is obvious.
+
+[Source: FinOps Foundation, "State of FinOps 2026"](https://www.finops.org/insights/state-of-finops/)
+
+## The architecture is the moat.
+
+Apple did not build Siri AI by picking the best model and calling it for everything. They built a routing layer that matches each task to the right model at the right location. Perplexity did not build their orchestrator by picking a single inference provider. They built a decision engine that evaluates every subtask in real time.
+
+The lesson is not about Apple or Perplexity specifically. It is about the architectural pattern they both independently converged on: classify the task, route to the cheapest capable model, track the result, and adjust.
+
+That pattern works at Apple's scale ($1 billion per year in cloud inference) and it works at startup scale ($1,000 per month in API calls). The economics are the same. The only question is whether your architecture supports it.
+
+The teams that build routing into their stack today get the cost savings immediately and the architectural flexibility to adapt as models, prices, and providers continue to shift. The teams that hardcode a single model will rewrite when the next price change, provider outage, or new model launch forces their hand.
+
+After this week, the routing layer is not a nice-to-have. It is the architecture.
+
+---
+
+*Sources: [Apple, "Apple unveils next generation of Apple Intelligence, Siri AI, and more"](https://www.apple.com/newsroom/2026/06/apple-unveils-next-generation-of-apple-intelligence-siri-ai-and-more/). [VentureBeat, "Perplexity AI unveils hybrid local-cloud inference system at Computex 2026"](https://venturebeat.com/technology/perplexity-ai-unveils-hybrid-local-cloud-inference-system-at-computex-2026). [Google Cloud, "AI Agent Trends 2026 Report"](https://cloud.google.com/resources/content/ai-agent-trends-2026). [MacRumors, "Apple Reveals New AI Architecture Built Around Google Gemini Models"](https://www.macrumors.com/2026/06/08/apple-reveals-new-ai-architecture/). [MarkTechPost, "Perplexity AI Introduces Hybrid Local-Server Inference Orchestrator"](https://www.marktechpost.com/2026/06/05/perplexity-ai-introduces-hybrid-local-server-inference-orchestrator-for-personal-computer-automatic-on-device-and-cloud-task-routing/). [WinBuzzer, "Perplexity Tests AI PC Privacy With Local-Cloud Router"](https://winbuzzer.com/2026/06/03/perplexity-tests-ai-pc-privacy-with-local-cloud-mode-xcxwbn/). [Help Net Security, "Multi-model AI is creating a routing headache for enterprises"](https://www.helpnetsecurity.com/2026/05/07/f5-ai-inference-operations-report/). [SiliconANGLE, "OpenRouter raises $113M"](https://siliconangle.com/2026/05/26/openrouter-raises-113m-bring-order-enterprise-ai-inference-routing/). [IDC, "The Future of AI Is Model Routing"](https://www.idc.com/resource-center/blog/the-future-of-ai-is-model-routing/). [AICC, "Enterprise Token Costs Drop 67%"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high). [Grand View Research, "Edge AI Market Report"](https://www.grandviewresearch.com/industry-analysis/edge-ai-market-report). [Deloitte, "The AI infrastructure reckoning"](https://www.deloitte.com/us/en/insights/topics/technology-management/tech-trends/2026/ai-infrastructure-compute-strategy.html). [FinOps Foundation, "State of FinOps 2026"](https://www.finops.org/insights/state-of-finops/). Anthropic, OpenAI, Google model pricing as of June 2026.*`,
   "llm-api-pricing-june-2026-complete-comparison": `## The price spread has never been wider. Most teams are ignoring it.
 
 In June 2026, the LLM API market has more models at more price points than at any point in the industry's history. GPT-5.5 charges $30 per million output tokens. Gemini 2.5 Flash-Lite charges $0.40. That is a 75x spread on output pricing alone. On input tokens, the range runs from $0.10 (GPT-4.1 nano, Gemini 2.5 Flash-Lite) to $10.00 (Claude Opus 4.8 Fast Mode), a 100x gap.
