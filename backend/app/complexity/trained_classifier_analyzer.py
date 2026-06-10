@@ -154,7 +154,9 @@ class TrainedClassifierAnalyzer:
         complexity_score = probs.get("medium", 0) * 0.5 + probs.get("complex", 0) * 1.0
 
         # Model selection from allowed models based on tier
-        recommended_model, recommended_provider = self._select_model(tier)
+        recommended_model, recommended_provider, ranked_models = self._select_model_ranked(
+            tier, confidence
+        )
 
         return {
             "recommended_model": recommended_model,
@@ -166,7 +168,7 @@ class TrainedClassifierAnalyzer:
             "complexity_tier": {"simple": 1, "medium": 2, "complex": 3}.get(tier, 2),
             "complexity_name": tier,
             "reasoning": f"TrainedClassifier v{self.CLASSIFIER_VERSION}: {tier} ({confidence:.0%})",
-            "ranked_models": [],
+            "ranked_models": ranked_models,
             "analyzer_latency_ms": meta.get("classify_ms", 0),
             "analyzer_type": f"trained-v{self.CLASSIFIER_VERSION}",
             "selection_method": "trained_classifier",
@@ -174,6 +176,45 @@ class TrainedClassifierAnalyzer:
             "tier_probabilities": probs,
             **meta,
         }
+
+    def _select_model_ranked(
+        self, tier: str, confidence: float
+    ) -> Tuple[str, str, List[Dict[str, Any]]]:
+        """Quality-aware selection via the unified ε-constrained ranker.
+
+        Falls back to the legacy positional pick when the ranker or the
+        performance data is unavailable. Also returns a ranked_models list in
+        the analyzer-standard shape so downstream consumers (effective-cost
+        rerank, response metadata) work on this — the default — analyzer.
+        """
+        try:
+            from app.complexity.model_ranker import load_candidate_models, rank_models
+            candidates = load_candidate_models(self.allowed_providers, self.allowed_models)
+            ranked = rank_models(tier, confidence, candidates) if candidates else []
+        except Exception as err:
+            logger.warning("model_ranker unavailable, using positional pick: %s", err)
+            ranked = []
+
+        if ranked:
+            best = ranked[0]
+            ranked_models = [
+                {
+                    "model_name": c["api_id"],
+                    "provider": c["provider"],
+                    "confidence": confidence,
+                    "reasoning": c.get("rank_reason", ""),
+                    "cost_per_million_tokens": c["cost"],
+                    "quality_index": c["quality_index"],
+                    "api_id": c["api_id"],
+                    "performance_name": c["model_name"],
+                    "suitability_score": round(c.get("q_hat", 0.5) * 100, 2),
+                }
+                for c in ranked[:10]
+            ]
+            return best["api_id"], best["provider"], ranked_models
+
+        model, provider = self._select_model(tier)
+        return model, provider, []
 
     def _select_model(self, tier: str) -> Tuple[str, str]:
         """Pick a model from allowed_models based on tier.
