@@ -48,6 +48,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { trackApiKeyWizardStep } from "@/utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -203,6 +204,13 @@ export default function CreateApiKeyDialog({ open, onClose, onCreate, editConfig
 
   // Map logical step index to step type
   const stepType = (s: number): string => STEP_TITLES[s] || "";
+
+  // Funnel instrumentation: one event per wizard screen the user reaches,
+  // so drop-off inside the wizard is visible in PostHog (not just dialog
+  // open vs. key created).
+  useEffect(() => {
+    if (open && !isEdit) trackApiKeyWizardStep(step, stepType(step));
+  }, [open, step]);
 
   // ── Reset / pre-populate ──
   useEffect(() => {

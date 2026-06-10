@@ -30,6 +30,12 @@ DEFAULT_DAILY_HOSTED_BUDGET = 50.0  # $50/day
 TRIAL_DAILY_HOSTED_BUDGET = 5.0  # $5/day for first 30 days
 TRIAL_WINDOW_DAYS = 30
 
+# Free monthly allowance for hosted keys with no prepaid balance. This is what
+# lets a brand-new user make their first calls during onboarding without a
+# card on file. Mirrors the dashboard quota bar (DailyQuotaBar) which counts
+# usage_logs rows per calendar month against the same limit.
+FREE_HOSTED_MONTHLY_REQUESTS = 50
+
 # In-memory spend tracker: user_id -> (total_spent_usd, last_db_sync_ts)
 _spend_cache: Dict[str, Tuple[float, float]] = {}
 _SYNC_INTERVAL = 300  # Re-sync from DB every 5 minutes
@@ -40,6 +46,35 @@ def _get_day_start_iso() -> str:
     from datetime import datetime
     now = datetime.utcnow()
     return now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+
+def _get_month_start_iso() -> str:
+    """Get the start of the current UTC month as ISO string."""
+    from datetime import datetime
+    now = datetime.utcnow()
+    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+
+async def get_monthly_request_count(user_id: str) -> int:
+    """Count this user's requests this calendar month (all modes).
+
+    Matches the frontend DailyQuotaBar semantics: a plain count of usage_logs
+    rows since the start of the UTC month.
+    """
+    try:
+        result = await asyncio.to_thread(
+            lambda: supabase.table("usage_logs")
+            .select("id", count="exact", head=True)
+            .eq("user_id", user_id)
+            .gte("created_at", _get_month_start_iso())
+            .execute()
+        )
+        return int(result.count or 0)
+    except Exception as e:
+        logger.warning("Failed to count monthly requests for user %s: %s", user_id, e)
+        # Fail closed for the free allowance: treat as exhausted rather than
+        # handing out unmetered Bedrock usage when the DB is unavailable.
+        return FREE_HOSTED_MONTHLY_REQUESTS
 
 
 async def _load_daily_spend(user_id: str) -> float:
@@ -156,6 +191,7 @@ async def enforce_hosted_budget_or_402(current_user) -> None:
     # ── Prepaid credit balance gate ─────────────────────────────────
     from app.services.credits_service import credits_service
 
+    on_free_allowance = False
     balance = await credits_service.get_balance(str(current_user.id))
     if balance <= 0:
         # Last-ditch: if auto-recharge is enabled, try to top up now.
@@ -163,20 +199,33 @@ async def enforce_hosted_budget_or_402(current_user) -> None:
         if recharged:
             balance = await credits_service.get_balance(str(current_user.id))
     if balance <= 0:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=402,
-            detail={
-                "error": "insufficient_credits",
-                "message": (
-                    "Your Nadir credit balance is empty. Top up your prepaid "
-                    "balance to keep using hosted keys, or add your own provider "
-                    "keys (BYOK) to route without prepaid credits."
-                ),
-                "balance": float(balance),
-                "topup_url": "https://getnadir.com/dashboard/billing",
-            },
-        )
+        # No prepaid balance: fall back to the free monthly allowance so new
+        # users can make their first calls without a card on file.
+        used = await get_monthly_request_count(str(current_user.id))
+        if used < FREE_HOSTED_MONTHLY_REQUESTS:
+            on_free_allowance = True
+            logger.info(
+                "Hosted free allowance: user %s at %d/%d requests this month with zero balance",
+                current_user.id, used, FREE_HOSTED_MONTHLY_REQUESTS,
+            )
+        else:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "error": "insufficient_credits",
+                    "message": (
+                        f"You've used your {FREE_HOSTED_MONTHLY_REQUESTS} free requests "
+                        "this month and your Nadir credit balance is empty. Top up your "
+                        "prepaid balance to keep using hosted keys, or add your own "
+                        "provider keys (BYOK) to route without prepaid credits."
+                    ),
+                    "balance": float(balance),
+                    "free_requests_used": used,
+                    "free_requests_limit": FREE_HOSTED_MONTHLY_REQUESTS,
+                    "topup_url": "https://getnadir.com/dashboard/billing",
+                },
+            )
 
     explicit_override = (
         current_user.raw_data.get("hosted_budget_usd")
@@ -184,6 +233,10 @@ async def enforce_hosted_budget_or_402(current_user) -> None:
     )
     if explicit_override:
         custom_budget = explicit_override
+    elif on_free_allowance:
+        # Unpaid usage rides the tight trial cap regardless of account age.
+        # The free allowance is for first calls, not sustained Bedrock spend.
+        custom_budget = TRIAL_DAILY_HOSTED_BUDGET
     elif _is_in_trial_window(getattr(current_user, "subscription_created_at", None)):
         custom_budget = TRIAL_DAILY_HOSTED_BUDGET
         logger.debug("User %s in trial window — using $%.0f/day cap", current_user.id, TRIAL_DAILY_HOSTED_BUDGET)

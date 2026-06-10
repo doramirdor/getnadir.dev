@@ -160,8 +160,18 @@ export const trackOnboardingStep = (step: number, stepName: string) =>
 export const trackOnboardingComplete = (mode: string) =>
   capture("onboarding_complete", { mode });
 
-export const trackApiKeyCreated = (source: "onboarding" | "dashboard") =>
-  capture("api_key_created", { source });
+export const trackApiKeyCreated = (
+  source: "onboarding" | "dashboard",
+  auto = false,
+) => capture("api_key_created", { source, auto });
+
+export const trackApiKeyWizardStep = (step: number, stepName: string) =>
+  capture("api_key_wizard_step", { step, step_name: stepName });
+
+export const trackFirstCallResult = (
+  outcome: "success" | "error",
+  details?: Record<string, unknown>,
+) => capture("first_call_result", { outcome, ...details });
 
 export const trackApiKeyDeleted = () =>
   capture("api_key_deleted");
