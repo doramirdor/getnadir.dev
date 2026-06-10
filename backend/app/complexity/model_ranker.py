@@ -18,16 +18,19 @@ verifier evidence using empirical-Bayes shrinkage:
     q_hat = (k·q_static + n·v_adj) / (k + n)
     v_adj = verifier_mean − μ·escalation_rate     (adverse-selection penalty)
 
-and admission to the floor set uses a lower confidence bound so noisy or thin
-evidence defaults to the static ranking:
+and evidence is promote-only: admission above the static prior requires the
+lower confidence bound
 
     q_lcb = q_hat − z·sqrt(q_hat·(1−q_hat))·sqrt(n)/(k+n)
 
-With n = 0 (cold start) q_lcb = q_hat = q_static — the ranker reduces to the
-static prior by construction. An escalation-rate circuit breaker discards a
-model's online stats when its escalation rate spikes above baseline
-(verifier-drift detector), and provider health demotes unhealthy candidates
-to the fallback tail.
+to clear a floor anchored at the best *static* quality in the pool, while a
+model's membership can never fall below its own static prior — so a noisy,
+biased, or drifting verifier cannot evict the catalog's good models, and
+below the min-evidence sample gate online stats are ignored entirely. With
+no stats the ranker reduces to the static prior by construction. An
+escalation-rate circuit breaker additionally discards a model's online stats
+when its escalation rate spikes above baseline (verifier-drift detector),
+and provider health demotes unhealthy candidates to the fallback tail.
 
 Pure stdlib, O(M log M) over M ≤ ~100 candidates, < 1 ms on CPU.
 """
@@ -66,10 +69,15 @@ class RankerConfig:
     })
     # Pseudo-count weight of the static quality prior in the blend.
     pseudo_counts: float = _env_float("RANKER_PSEUDO_COUNTS", 20.0)
-    # LCB width (1.64 ≈ one-sided 95%).
-    z_score: float = _env_float("RANKER_Z_SCORE", 1.64)
+    # LCB width (2.0 ≈ one-sided 97.7% — sized so a +1σ draw from a
+    # σ=0.15-miscalibrated verifier at the min-evidence boundary cannot
+    # clear the floor, while genuine large-sample evidence still does).
+    z_score: float = _env_float("RANKER_Z_SCORE", 2.0)
     # Escalation-rate penalty on the verifier mean (adverse-selection bias).
     escalation_penalty: float = _env_float("RANKER_ESCALATION_PENALTY", 0.5)
+    # Online stats are ignored entirely below this sample count — thin
+    # evidence is pure churn risk, not signal.
+    min_evidence: float = _env_float("RANKER_MIN_EVIDENCE", 30.0)
     # Discard online stats when escalation rate exceeds mult × baseline.
     escalation_breaker_mult: float = _env_float("RANKER_ESCALATION_BREAKER", 2.0)
     # Candidates whose provider health drops below this go to the fallback tail.
@@ -183,7 +191,7 @@ def _blend_quality(
     """Return (q_hat, q_lcb) on the 0–1 scale."""
     q = min(max(q_static / 100.0, 0.0), 1.0)
 
-    if stats is None or stats.n <= 0:
+    if stats is None or stats.n < config.min_evidence:
         return q, q
 
     # Circuit breaker: escalation-rate spike means the verifier stats can no
@@ -272,19 +280,31 @@ def rank_models(
     healthy = [c for c in enriched if c["health"] >= config.min_health]
     pool = healthy or enriched  # all unhealthy → rank everyone (fail-open)
 
-    # Floor is anchored at the best *lower confidence bound* in the pool, so
-    # comparisons are LCB-to-LCB: at cold start (lcb == q_static) this equals
-    # the legacy quality ceiling, and a model can only displace the incumbent
-    # when its conservative estimate beats the incumbent's conservative
-    # estimate — never on noise.
-    q_star = max(c["q_lcb"] for c in pool)
+    # Promote-only evidence policy. The floor is anchored at the best *static*
+    # prior, and each candidate's membership quality is max(static, LCB):
+    #
+    #   * online evidence can PROMOTE a cheap model into the floor set (its
+    #     LCB must clear the static-anchored floor — noise-resistant because
+    #     the bar never drops),
+    #   * online evidence can never DEMOTE a model below its static prior, so
+    #     a noisy or biased verifier cannot evict the catalog's good models —
+    #     under any verifier behavior the floor set contains at least the
+    #     static ranking's choices. Per-request demotion of genuinely bad
+    #     responses is the cascade verifier's job at runtime.
+    q_static_star = max(
+        min(max(float(c.get("quality_index", 0.0)) / 100.0, 0.0), 1.0) for c in pool
+    )
     confidence = min(max(confidence, 0.0), 1.0)
-    floor = q_star - config.epsilon.get(tier, 0.0) * confidence
+    floor = q_static_star - config.epsilon.get(tier, 0.0) * confidence
 
-    # Floor set: healthy, quality proven (at the LCB) to clear the floor, and
-    # priced — cost ≤ 0 means unknown pricing, which must never win on cost.
+    for c in enriched:
+        q_static = min(max(float(c.get("quality_index", 0.0)) / 100.0, 0.0), 1.0)
+        c["q_member"] = max(c["q_lcb"], q_static)
+
+    # Floor set: healthy, quality clearing the floor (statically, or proven at
+    # the LCB), and priced — cost ≤ 0 means unknown pricing, never "free".
     floor_set = [
-        c for c in pool if c["q_lcb"] >= floor and c["effective_cost"] > 0
+        c for c in pool if c["q_member"] >= floor and c["effective_cost"] > 0
     ]
 
     if floor_set:

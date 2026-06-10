@@ -117,6 +117,26 @@ def test_thin_evidence_cannot_displace_incumbent(ranker):
     assert ranked[0]["api_id"] == "premium"
 
 
+def test_min_evidence_gate_boundary(ranker):
+    # n just below the gate: stats ignored entirely, static incumbent wins.
+    below = {"value": ranker.OnlineModelStats(verifier_mean=0.99, n=29)}
+    assert ranker.rank_models("complex", 0.9, _candidates(), stats=below)[0]["api_id"] == "premium"
+    # Well above the gate with strong evidence: the verified model wins.
+    above = {"value": ranker.OnlineModelStats(verifier_mean=0.99, n=1000)}
+    assert ranker.rank_models("complex", 0.9, _candidates(), stats=above)[0]["api_id"] == "value"
+
+
+def test_negative_evidence_cannot_evict_static_member(ranker):
+    # Promote-only policy: terrible verifier stats for the cold-start medium
+    # pick must not evict it — demoting genuinely bad responses is the
+    # runtime cascade verifier's job, and a biased/drifting ranking verifier
+    # must never make the ranking worse than the static prior.
+    cold = ranker.rank_models("medium", 0.9, _candidates())[0]["api_id"]
+    stats = {cold: ranker.OnlineModelStats(verifier_mean=0.2, n=500)}
+    noisy = ranker.rank_models("medium", 0.9, _candidates(), stats=stats)
+    assert noisy[0]["api_id"] == cold
+
+
 def test_escalation_spike_trips_circuit_breaker(ranker):
     good = {"value": ranker.OnlineModelStats(
         verifier_mean=0.99, n=1000, escalation_rate=0.1, baseline_escalation_rate=0.1)}
