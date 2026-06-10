@@ -67,7 +67,7 @@ class Settings:
         self.COMPLEXITY_ANALYZER_PROVIDER: str = os.getenv("COMPLEXITY_ANALYZER_PROVIDER", "openai")
         
         # New ML-based complexity analyzer settings
-        self.COMPLEXITY_ANALYZER_TYPE: str = os.getenv("COMPLEXITY_ANALYZER_TYPE", "trained")  # trained (default, 96% accuracy), heuristic (zero-dep fallback), binary, two_tower, gemini, bert, matrix_factorization, ensemble
+        self.COMPLEXITY_ANALYZER_TYPE: str = os.getenv("COMPLEXITY_ANALYZER_TYPE", "trained")  # trained (default), cost_aware (NadirRoute per-model heads), heuristic, binary, two_tower, gemini, bert, matrix_factorization, ensemble, wide_deep_asym
         self.BERT_MODEL_PATH: str = os.getenv("BERT_MODEL_PATH", "distilbert-base-uncased")
         self.MF_MODEL_PATH: str = os.getenv("MF_MODEL_PATH", "")  # Path to pre-trained MF model
         self.TWO_TOWER_MODEL_PATH: str = os.getenv("TWO_TOWER_MODEL_PATH", "")  # Path to pre-trained Two-Tower model

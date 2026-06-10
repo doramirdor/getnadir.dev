@@ -65,6 +65,7 @@ class AnalyzerType(str, Enum):
     CONFIDENCE_AWARE = "confidence_aware"  # Binary → two-tower cascade
     TRAINED = "trained"  # Trained GBT classifier with sentence embeddings
     WIDE_DEEP_ASYM = "wide_deep_asym"  # Wide&Deep (BGE + struct) trained with asymmetric-cost loss
+    COST_AWARE = "cost_aware"  # NadirRoute: per-model P(correct) heads + cheapest-clearing-tau selection
 
 
 class ComplexityAnalyzerFactory:
@@ -161,6 +162,13 @@ class ComplexityAnalyzerFactory:
         elif analyzer_type == AnalyzerType.WIDE_DEEP_ASYM:
             return ComplexityAnalyzerFactory._create_wide_deep_asym_analyzer(
                 allowed_providers, allowed_models, **kwargs
+            )
+        elif analyzer_type == AnalyzerType.COST_AWARE:
+            from app.complexity.cost_aware_router import get_cost_aware_analyzer
+            return get_cost_aware_analyzer(
+                allowed_providers=allowed_providers,
+                allowed_models=allowed_models,
+                mode=kwargs.get("mode", "prod"),
             )
         else:
             raise ValueError(f"Unsupported analyzer type: {analyzer_type}")
