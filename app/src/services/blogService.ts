@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "prompt-caching-free-money-llm-cost-reduction",
+    title: "Prompt caching is the closest thing to free money in LLM pricing. 72% of engineering teams haven't touched it.",
+    date: "2026-06-11",
+    author: "Dor Amir",
+    excerpt: "Datadog's 2026 State of AI Engineering report found that 69% of all input tokens in production LLM systems are system prompts, tool schemas, and instruction payloads that repeat identically on every call. Only 28% of teams cache them. At Opus 4.8 pricing, a 2,000-token system prompt repeated across 100,000 daily calls costs $1,000 per day without caching, and $100 per day with it. The engineering work takes an afternoon. The savings are permanent. Three-quarters of production teams are leaving this on the table.",
+    thumbnail: "Deep Dive",
+    tags: ["Prompt Caching", "Cost Optimization", "Token Optimization", "Enterprise", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "apple-perplexity-google-shipped-routing-architecture-pattern",
     title: "Apple, Perplexity, and Google all shipped routing this month. The pattern is the architecture.",
     date: "2026-06-10",
@@ -317,6 +327,129 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "prompt-caching-free-money-llm-cost-reduction": `## The 72% problem.
+
+In May 2026, Datadog published the State of AI Engineering 2026 report, covering production AI telemetry from thousands of companies. One finding stood out: 69% of all input tokens across production LLM systems are system prompts, instruction sets, tool schemas, and policy definitions that send identically on every single API call. Only 28% of teams cache these tokens.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+That means the remaining 72% are paying full input-token price for content that has not changed since the last request. Possibly since last month.
+
+At Opus 4.8 pricing of $5 per million input tokens, a 2,000-token system prompt repeated across 100,000 daily API calls costs $1,000 per day. The same system prompt with prompt caching enabled costs roughly $100 per day on cache reads. Same tokens. Same model. One afternoon of implementation work. 90% savings on that slice of your bill.
+
+Prompt caching is not a new feature. It is not experimental. Anthropic has offered it since 2024. OpenAI's API caches long prompts automatically. Google Gemini offers context caching at a fraction of regular input pricing. The engineering effort is low. The savings are structural. And three-quarters of production teams are leaving it on the table.
+
+## What prompt caching actually is.
+
+Prompt caching is a server-side mechanism where the model provider stores the key-value (KV) cache from the attention computation on a stable prompt prefix. When you send the same prefix again, the provider skips recomputing the attention over those tokens and reads from the stored cache instead. You pay a fraction of the regular input token price for cache reads.
+
+[Source: Anthropic, "Prompt caching with Claude," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+
+This is different from three things that often get confused with it:
+
+**Exact-match response caching.** Storing full model outputs in Redis, Memcached, or a CDN and returning them for identical queries. Fast, but only works for exact string matches. Does not help with rephrased queries.
+
+**Semantic caching.** Using vector embeddings to find queries semantically similar to cached ones and returning the cached response. Works for near-duplicate queries but requires a vector store and similarity threshold tuning. Does not reduce the token cost of new queries.
+
+**Prompt compression.** Reducing the token count of your prompt through summarization or lossless encoding before sending it to the model. Reduces the tokens billed, not the price per token.
+
+Prompt caching reduces the price per token on the stable portion of your prompt. It requires no separate infrastructure component. You add a cache control marker to the parts of your prompt you want cached. The provider handles the rest.
+
+## The pricing math.
+
+In June 2026, major providers offer the following discounts on cached tokens:
+
+| Provider | Model | Regular Input | Cache Write | Cache Read | Savings on Reads |
+|---|---|---|---|---|---|
+| Anthropic | Claude Opus 4.8 | $5.00/M | $1.25/M | $0.25/M | 95% |
+| Anthropic | Claude Sonnet 4.5 | $3.00/M | $0.75/M | $0.15/M | 95% |
+| Anthropic | Claude Haiku 4.5 | $1.00/M | $0.25/M | $0.05/M | 95% |
+| OpenAI | GPT-5.5 | $10.00/M | automatic | $5.00/M | 50% |
+| OpenAI | GPT-4.1 | $2.00/M | automatic | $1.00/M | 50% |
+| Google | Gemini 2.5 Pro | $1.25/M | $0.31/M | $0.31/M | 75% |
+
+[Source: Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing)
+[Source: OpenAI, API Pricing, June 2026](https://openai.com/api/pricing)
+[Source: Google, Gemini API Pricing, June 2026](https://ai.google.dev/gemini-api/docs/pricing)
+
+The write cost is real: the first time you send a cacheable prefix, you pay slightly more than the regular input rate to store the KV cache. Every subsequent read pays the cache read rate. Break-even typically comes after two to three cache reads on the same prefix.
+
+For a system making 1,000 calls per day against the same 3,000-token system prompt on Claude Opus 4.8:
+
+- Without caching: 1,000 calls × 3,000 tokens × $5/M = **$15 per day → $450 per month**
+- With caching: (1 write × 3,000 × $1.25/M) + (999 reads × 3,000 × $0.25/M) ≈ **$0.75 per day → $22.50 per month**
+
+Monthly savings: $427.50. Annual savings: $5,130. From a single system prompt. At 1,000 daily calls.
+
+At 100,000 daily calls, the annual savings from that one prompt exceed $500,000. The break-even on the one-time implementation effort is measured in hours.
+
+## The three reasons 72% of teams skip it.
+
+**1. The prompt is not actually static.**
+
+Prompt caching only works on a stable prefix. If you inject the user's name, the current date, a request ID, or any dynamic value into the system prompt before the static instruction content, the prefix hash changes on every call and nothing caches.
+
+Most teams discover this the first time they try to enable caching and find the savings are zero. The fix is prompt restructuring: move all dynamic variables to the end of the prompt, after the static instruction block. Put the cacheable content first, then the user context. This single change unlocks the savings without changing what the model sees.
+
+[Source: Anthropic, "How to enable prompt caching," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+
+**2. The cache TTL is invisible.**
+
+Anthropic's default cache TTL is 5 minutes. If your traffic is bursty, the cache may expire between request clusters, and you pay cache-write rates repeatedly with few reads to offset the cost. The fix is to understand your traffic pattern before enabling caching. Systems with consistent throughput see near-theoretical savings. Systems with hourly spikes and long gaps between bursts see significantly less.
+
+OpenAI's automatic caching on GPT models has a longer effective TTL tied to the same prefix hash and model version, but the exact duration is not publicly documented. Google's context caching allows explicit TTL configuration up to one hour.
+
+[Source: Anthropic, "Cache storage and lifetime," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching#cache-storage-and-lifetime)
+
+**3. Teams do not know how much of their prompt is static.**
+
+The question "how much of your prompt is static?" is harder to answer than it sounds in production. Most teams have accumulated instructions, tool schemas, few-shot examples, and policy text spread across multiple prompt construction functions. The Datadog finding that 69% of input tokens are static content suggests that most teams have significantly more cacheable content than they realize.
+
+The audit step is usually what unlocks the savings: pull 100 consecutive API requests, compute the longest common prefix, and measure what fraction of total input tokens that prefix represents. Most production systems land between 50% and 80%. That fraction is your immediate caching target.
+
+## The four categories you can cache.
+
+**System prompts.** The most common and highest-impact. A 1,000 to 4,000 token system prompt that repeats on every call is a straightforward cache candidate. Most production assistants, copilots, and agents qualify.
+
+**Tool schemas.** JSON Schema definitions for function calling run 500 to 2,000 tokens per tool and almost never change between calls in the same session. Teams running agents with 10 to 20 tool definitions are often spending 5,000 to 20,000 tokens per call on schema repetition alone. Caching these is lossless and high-impact.
+
+**Few-shot examples.** Static demonstrations appended to the system prompt for behavioral consistency. If your few-shot block is stable, it caches identically to a system prompt. A 10-example block at 200 tokens per example adds up to 2,000 tokens of cacheable content per call.
+
+**Long document context.** For retrieval-augmented workflows where the same document is queried multiple times in a session, the document content is a strong cache candidate. A 10,000-token source document queried 50 times per session costs 500,000 input tokens without caching, versus roughly 12,500 tokens with one cache write and 49 cache reads. That is a 97.5% reduction on the document portion of the prompt.
+
+## Prompt caching and model routing are not competitors. They stack.
+
+A common misconception is that caching and routing solve the same cost problem from different directions. They do not. They compound.
+
+Routing determines which model handles the request. Caching reduces the cost of the tokens that always accompany that request, regardless of which model gets them. A query routed to Claude Haiku 4.5 still includes your system prompt and tool schemas. If those tokens are cached, the already-cheap Haiku call gets 95% cheaper on the static portion.
+
+The compound math is significant. A team routing 70% of calls to Haiku and 30% to Opus, with caching enabled on both, pays:
+
+- Haiku cache read: $0.05/M on static tokens
+- Opus cache read: $0.25/M on static tokens
+- Blended cached rate: ~$0.11/M on all static tokens
+
+Without caching or routing, blended input pricing on the same traffic mix runs approximately $2.20/M. Caching and routing together reduce the static-token cost by 20x. The two levers are independent, additive, and each makes the other more valuable.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," May 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+Teams that implement routing first and caching second typically see a second 40 to 60% reduction on top of their initial routing savings. Teams that implement caching first get the immediate wins and then find routing easier to justify against the leaner baseline.
+
+## What to measure in the next 24 hours.
+
+Three metrics that reveal your caching opportunity:
+
+**Static token fraction.** Pull the last 1,000 API calls. Compute the longest common prompt prefix across them. Divide by total input tokens. Most production systems land between 50% and 80%. That fraction is your immediate caching target.
+
+**Cache hit rate.** If you have caching enabled, check your provider dashboard for cache hit versus miss rates. A hit rate below 80% usually means dynamic content is polluting the cacheable prefix — a date injection, user ID, or request UUID inserted before the static instructions.
+
+**Calls per prefix per day.** Segment your API traffic by prompt template. Templates with fewer than 10 calls per day have minimal caching ROI. Templates with 1,000 or more calls per day should be cached unconditionally. The break-even is reached in hours.
+
+The Datadog finding is direct: 69% of input tokens in the average production system are cacheable. Only 28% of teams have acted on it. The gap is not a technical barrier. It is a prioritization gap. The implementation is a morning of work. The savings compound from day one.
+
+---
+
+*Sources: [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). [Anthropic, "Prompt caching with Claude"](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching). [Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing). [OpenAI, API Pricing, June 2026](https://openai.com/api/pricing). [Google, Gemini API Pricing, June 2026](https://ai.google.dev/gemini-api/docs/pricing). [AICC, "Enterprise Token Costs Drop 67%"](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high).*`,
   "apple-perplexity-google-shipped-routing-architecture-pattern": `## Three companies shipped the same architecture in one week.
 
 On June 8, Apple took the stage at WWDC 2026 and introduced Siri AI. The new system runs Apple Foundation Models (AFM Core and AFM Core Advanced) directly on Apple Silicon for tasks like dictation, on-screen awareness, and personal-context lookups. When a query requires world knowledge or complex reasoning, it routes to AFM Cloud, powered by a custom 1.2-trillion-parameter Gemini model running on Google's infrastructure through Apple's Private Cloud Compute. Apple is paying Google roughly $1 billion per year for this backend.
