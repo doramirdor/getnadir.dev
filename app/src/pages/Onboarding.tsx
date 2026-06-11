@@ -31,6 +31,7 @@ import {
 } from "@/utils/analytics";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 import { DailyQuotaBar } from "@/components/DailyQuotaBar";
+import { getStoredAttribution } from "@/utils/attribution";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -109,6 +110,9 @@ const Onboarding = () => {
   const isMobile = useIsMobile();
 
   const progress = ((currentStep + 1) / STEPS.length) * 100;
+  const campaignLimits: Record<string, number> = {};
+  const storedRef = getStoredAttribution().ref;
+  const freeLimit = (storedRef && campaignLimits[storedRef]) || 50;
   const hasKey = !!createdApiKey || !!existingKeyPrefix;
 
   // Insert an api_keys row and return the plaintext key. Shared by the
@@ -550,7 +554,7 @@ console.log(response.choices[0].message.content);`;
                     <h2 className="text-lg font-semibold text-foreground">Your API key is ready</h2>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    We created it with smart defaults. 50 free requests included, no card and no
+                    We created it with smart defaults. {freeLimit} free requests included, no card and no
                     provider keys needed.
                   </p>
 
@@ -572,7 +576,7 @@ console.log(response.choices[0].message.content);`;
                     {[
                       "Smart routing on: simple prompts go to Haiku, hard ones to Opus",
                       "Fallback chain enabled, failed requests retry automatically",
-                      "50 free requests on our keys, then bring your own or upgrade",
+                      `${freeLimit} free requests on our keys, then bring your own or upgrade`,
                     ].map((item) => (
                       <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-primary shrink-0" />

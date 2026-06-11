@@ -36,6 +36,17 @@ TRIAL_WINDOW_DAYS = 30
 # usage_logs rows per calendar month against the same limit.
 FREE_HOSTED_MONTHLY_REQUESTS = 50
 
+# Campaign-specific overrides: signup_source -> monthly free request limit.
+# Users who signed up via a campaign get a higher free allowance.
+CAMPAIGN_FREE_REQUESTS: Dict[str, int] = {}
+
+
+def get_free_monthly_limit(signup_source: Optional[str] = None) -> int:
+    """Return the free monthly request limit for a user, accounting for campaigns."""
+    if signup_source and signup_source in CAMPAIGN_FREE_REQUESTS:
+        return CAMPAIGN_FREE_REQUESTS[signup_source]
+    return FREE_HOSTED_MONTHLY_REQUESTS
+
 # In-memory spend tracker: user_id -> (total_spent_usd, last_db_sync_ts)
 _spend_cache: Dict[str, Tuple[float, float]] = {}
 _SYNC_INTERVAL = 300  # Re-sync from DB every 5 minutes
@@ -201,12 +212,13 @@ async def enforce_hosted_budget_or_402(current_user) -> None:
     if balance <= 0:
         # No prepaid balance: fall back to the free monthly allowance so new
         # users can make their first calls without a card on file.
+        free_limit = get_free_monthly_limit(getattr(current_user, "signup_source", None))
         used = await get_monthly_request_count(str(current_user.id))
-        if used < FREE_HOSTED_MONTHLY_REQUESTS:
+        if used < free_limit:
             on_free_allowance = True
             logger.info(
-                "Hosted free allowance: user %s at %d/%d requests this month with zero balance",
-                current_user.id, used, FREE_HOSTED_MONTHLY_REQUESTS,
+                "Hosted free allowance: user %s at %d/%d requests this month with zero balance (source=%s)",
+                current_user.id, used, free_limit, getattr(current_user, "signup_source", None),
             )
         else:
             from fastapi import HTTPException
@@ -215,14 +227,14 @@ async def enforce_hosted_budget_or_402(current_user) -> None:
                 detail={
                     "error": "insufficient_credits",
                     "message": (
-                        f"You've used your {FREE_HOSTED_MONTHLY_REQUESTS} free requests "
+                        f"You've used your {free_limit} free requests "
                         "this month and your Nadir credit balance is empty. Top up your "
                         "prepaid balance to keep using hosted keys, or add your own "
                         "provider keys (BYOK) to route without prepaid credits."
                     ),
                     "balance": float(balance),
                     "free_requests_used": used,
-                    "free_requests_limit": FREE_HOSTED_MONTHLY_REQUESTS,
+                    "free_requests_limit": free_limit,
                     "topup_url": "https://getnadir.com/dashboard/billing",
                 },
             )

@@ -43,6 +43,23 @@ const AuthCallback = () => {
         const ref = getStoredAttribution().ref;
         if (ref) {
           redeemReferralCode(ref).catch(() => {});
+          // Persist signup source to profile so the backend can grant
+          // campaign-specific quotas (e.g. 100 free requests for PH).
+          supabase
+            .from("profiles")
+            .select("model_parameters")
+            .eq("id", session.user.id)
+            .maybeSingle()
+            .then(({ data }) => {
+              const existing = (data?.model_parameters as Record<string, unknown>) ?? {};
+              if (!existing.signup_source) {
+                supabase
+                  .from("profiles")
+                  .update({ model_parameters: { ...existing, signup_source: ref } })
+                  .eq("id", session.user.id)
+                  .then(() => {});
+              }
+            });
         }
         navigate("/dashboard", { replace: true });
       } else {

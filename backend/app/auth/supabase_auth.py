@@ -189,6 +189,7 @@ class UserSession:
         # text instead of the raw content. Default True (store raw) preserves adaptive
         # classifier learning.
         self.store_prompts: bool = bool(user_data.get("store_prompts", True))
+        self.signup_source: Optional[str] = user_data.get("signup_source")
         self.raw_data = user_data
 
     @property
@@ -326,6 +327,9 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
         privacy_cfg = (profile_data.get("model_parameters") or {}).get("privacy") or {}
         store_prompts = bool(privacy_cfg.get("store_prompts", True))
 
+        profile_model_params = profile_data.get("model_parameters") or {}
+        signup_source = profile_model_params.get("signup_source")
+
         user_session_data = {
             "id": user_id,
             "email": profile_data.get("email"),
@@ -343,6 +347,7 @@ async def validate_api_key(api_key: str = Header(alias="X-API-Key")) -> UserSess
             "key_mode": key_mode,
             "provider_api_keys": user_provider_keys,
             "store_prompts": store_prompts,
+            "signup_source": signup_source,
         }
 
         session = UserSession(user_session_data)

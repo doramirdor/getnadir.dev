@@ -46,6 +46,7 @@ const SolutionRouting = lazy(() => import("./pages/solutions/Routing"));
 const SolutionFallback = lazy(() => import("./pages/solutions/Fallback"));
 const SolutionAnalytics = lazy(() => import("./pages/solutions/SolutionAnalytics"));
 const SolutionClustering = lazy(() => import("./pages/solutions/Clustering"));
+const ProductHunt = lazy(() => import("./pages/ProductHunt"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -145,6 +146,7 @@ const App = () => (
             <Route path="/compare/:competitor" element={<Compare />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/calculator" element={<Calculator />} />
+            <Route path="/producthunt" element={<ProductHunt />} />
 
             {/* Dashboard (authenticated) */}
             <Route path="/dashboard" element={<Layout />}>

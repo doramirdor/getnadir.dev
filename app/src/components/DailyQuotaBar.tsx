@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap } from "lucide-react";
 
-const MONTHLY_FREE_LIMIT = 50;
+const DEFAULT_MONTHLY_FREE_LIMIT = 50;
+const CAMPAIGN_LIMITS: Record<string, number> = {};
 
 const startOfMonthUtcIso = () => {
   const now = new Date();
@@ -17,6 +18,7 @@ export const DailyQuotaBar = () => {
   const [used, setUsed] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isPaid, setIsPaid] = useState<boolean | null>(null);
+  const [freeLimit, setFreeLimit] = useState(DEFAULT_MONTHLY_FREE_LIMIT);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,11 +29,23 @@ export const DailyQuotaBar = () => {
       if (!user || cancelled) return;
       setUserId(user.id);
 
-      const { data: sub } = await supabase
-        .from("user_subscriptions")
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [{ data: sub }, { data: profile }] = await Promise.all([
+        supabase
+          .from("user_subscriptions")
+          .select("status")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("model_parameters")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
+
+      const source = (profile?.model_parameters as Record<string, unknown>)?.signup_source as string | undefined;
+      if (source && CAMPAIGN_LIMITS[source]) {
+        setFreeLimit(CAMPAIGN_LIMITS[source]);
+      }
 
       const paid = sub?.status === "active" || sub?.status === "trialing";
       if (cancelled) return;
@@ -72,12 +86,12 @@ export const DailyQuotaBar = () => {
   if (!userId || isPaid === null || isPaid) return null;
   if (used === null) return null;
 
-  const overLimit = used >= MONTHLY_FREE_LIMIT;
-  const pct = Math.min(100, (used / MONTHLY_FREE_LIMIT) * 100);
+  const overLimit = used >= freeLimit;
+  const pct = Math.min(100, (used / freeLimit) * 100);
 
   const barColor = overLimit
     ? "bg-amber-500"
-    : used >= MONTHLY_FREE_LIMIT - 10
+    : used >= freeLimit - 10
     ? "bg-amber-400"
     : "bg-emerald-500";
 
@@ -88,14 +102,14 @@ export const DailyQuotaBar = () => {
           <div className="flex items-center gap-2">
             <Zap className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">
-              Free trial usage this month
+              Free plan usage this month
             </span>
           </div>
           <span className="text-sm mono text-muted-foreground">
-            {Math.min(used, MONTHLY_FREE_LIMIT)} / {MONTHLY_FREE_LIMIT}
+            {Math.min(used, freeLimit)} / {freeLimit}
             {overLimit && (
               <span className="ml-2 text-foreground">
-                +{used - MONTHLY_FREE_LIMIT} billed
+                +{used - freeLimit} billed
               </span>
             )}
           </span>
@@ -108,8 +122,8 @@ export const DailyQuotaBar = () => {
         </div>
         <p className="text-xs text-muted-foreground mt-2">
           {overLimit
-            ? "Monthly free cap reached. Additional requests are billed per savings (25% of net). Cancel anytime."
-            : `${MONTHLY_FREE_LIMIT - used} free requests left this month. After that, pay-per-savings kicks in.`}
+            ? "Monthly free cap reached. Additional requests are billed per savings (25% of net)."
+            : `${freeLimit - used} free requests left this month. After that, pay-per-savings kicks in.`}
         </p>
       </CardContent>
     </Card>
