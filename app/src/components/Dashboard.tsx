@@ -19,7 +19,9 @@ export const Dashboard = () => {
     let cancelled = false;
 
     const setupRealtime = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Cached session — avoids a network getUser() before opening the channel.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user || cancelled) return;
 
       const channel = supabase

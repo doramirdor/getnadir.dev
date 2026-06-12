@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+import { RoutingLoader } from "@/components/RoutingLoader";
 
 /**
  * Bar shape replicating the design-system accent bar:
@@ -106,9 +107,7 @@ export const UsageChart = () => {
         </CardHeader>
         <CardContent>
           <div className="h-[280px] flex items-center justify-center">
-            <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-              <div className="h-full w-1/2 bg-primary/40 rounded-full animate-pulse" />
-            </div>
+            <RoutingLoader />
           </div>
         </CardContent>
       </Card>

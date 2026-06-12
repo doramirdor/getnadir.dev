@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+import { RoutingLoader } from "@/components/RoutingLoader";
 
 interface ModelData {
   name: string;
@@ -24,10 +25,16 @@ export const TopModels = () => {
 
   const fetchModelData = async () => {
     try {
+      // Bound the scan: last 30 days, capped. Previously this pulled the entire
+      // usage_logs table unfiltered, which dominated dashboard load time as the
+      // log grew. The widget only needs recent activity to rank the top models.
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: eventsData } = await supabase
         .from('usage_logs')
         .select('model_name, cost, provider, metadata')
-        .order('created_at', { ascending: false });
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(5000);
 
       if (eventsData && eventsData.length > 0) {
         const modelStats = eventsData.reduce((acc, ev) => {
@@ -99,9 +106,7 @@ export const TopModels = () => {
         </CardHeader>
         <CardContent>
           <div className="h-[400px] flex items-center justify-center">
-            <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-              <div className="h-full w-1/2 bg-primary/40 rounded-full animate-pulse" />
-            </div>
+            <RoutingLoader />
           </div>
         </CardContent>
       </Card>

@@ -35,43 +35,52 @@ export const MetricsGrid = () => {
 
   const fetchMetrics = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // getSession() reads the locally cached session (no network round-trip),
+      // unlike getUser() which revalidates against the auth server.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-      // Fetch usage events for the last 30 days
-      let query = supabase
+      const monthStart = new Date();
+      monthStart.setUTCDate(1);
+      monthStart.setUTCHours(0, 0, 0, 0);
+
+      // Fire the three queries in parallel instead of sequentially — they have
+      // no data dependency, so a waterfall just stacked their latencies.
+      let usageQuery = supabase
         .from('usage_logs')
         .select('latency_ms, cost, error, created_at')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .not('latency_ms', 'is', null);
       if (user) {
-        query = query.eq('user_id', user.id);
-      }
-      const { data: eventsData } = await query;
-
-      // Fetch active API keys count
-      let activeApiKeys = 0;
-      if (user) {
-        const { count } = await supabase
-          .from('api_keys')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_active', true);
-        activeApiKeys = count || 0;
+        usageQuery = usageQuery.eq('user_id', user.id);
       }
 
-      // Fetch this-month savings directly from savings_tracking (RLS-scoped to current user)
-      let savedThisMonth = 0;
-      if (user) {
-        const monthStart = new Date();
-        monthStart.setUTCDate(1);
-        monthStart.setUTCHours(0, 0, 0, 0);
-        const { data: savingsRows } = await supabase
-          .from('savings_tracking')
-          .select('savings_usd')
-          .eq('user_id', user.id)
-          .gte('created_at', monthStart.toISOString());
-        savedThisMonth = savingsRows?.reduce((s, r: any) => s + Number(r.savings_usd || 0), 0) || 0;
-      }
+      const apiKeysQuery = user
+        ? supabase
+            .from('api_keys')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+        : null;
+
+      const savingsQuery = user
+        ? supabase
+            .from('savings_tracking')
+            .select('savings_usd')
+            .eq('user_id', user.id)
+            .gte('created_at', monthStart.toISOString())
+        : null;
+
+      const [usageRes, apiKeysRes, savingsRes] = await Promise.all([
+        usageQuery,
+        apiKeysQuery,
+        savingsQuery,
+      ]);
+
+      const eventsData = usageRes.data;
+      const activeApiKeys = apiKeysRes?.count || 0;
+      const savedThisMonth =
+        savingsRes?.data?.reduce((s, r: any) => s + Number(r.savings_usd || 0), 0) || 0;
 
       const totalRequests = eventsData?.length || 0;
 

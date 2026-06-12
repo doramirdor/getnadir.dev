@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/utils/logger";
+import { RoutingLoader } from "@/components/RoutingLoader";
 
 interface LatencyData {
   name: string;
@@ -121,9 +122,7 @@ export const LatencyChart = () => {
         </CardHeader>
         <CardContent>
           <div className="h-[380px] flex items-center justify-center">
-            <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-              <div className="h-full w-1/2 bg-primary/40 rounded-full animate-pulse" />
-            </div>
+            <RoutingLoader />
           </div>
         </CardContent>
       </Card>

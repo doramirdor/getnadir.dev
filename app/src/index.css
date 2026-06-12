@@ -353,6 +353,50 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* ── Nadir routing loader ──────────────────────────────────────────────
+   A request packet travels from the prompt into the router hub, which
+   dispatches it to one of three model tiers (Haiku / Sonnet / Opus).
+   The chosen lane changes each cycle so the loader reads as live routing. */
+@keyframes route-hub-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--brand-blue) / 0.45); }
+  50%      { transform: scale(1.06); box-shadow: 0 0 0 6px hsl(var(--brand-blue) / 0); }
+}
+
+@keyframes route-packet {
+  /* travel along the wire, fading in/out at the ends */
+  0%   { left: 0%;  opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+@keyframes route-lane-on {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.12); }
+}
+
+@keyframes route-wire-flow {
+  to { stroke-dashoffset: -12; }
+}
+
+@layer utilities {
+  .route-hub        { animation: route-hub-pulse 1.6s ease-in-out infinite; }
+  .route-packet     { animation: route-packet 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+  .route-wire-flow  { animation: route-wire-flow 0.6s linear infinite; }
+  /* Three lanes pulse out of phase to suggest tier selection. */
+  .route-lane-0 { animation: route-lane-on 4.8s ease-in-out infinite; }
+  .route-lane-1 { animation: route-lane-on 4.8s ease-in-out 1.6s infinite; }
+  .route-lane-2 { animation: route-lane-on 4.8s ease-in-out 3.2s infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .route-hub, .route-packet, .route-wire-flow,
+    .route-lane-0, .route-lane-1, .route-lane-2 {
+      animation-duration: 0.001ms;
+      animation-iteration-count: 1;
+    }
+  }
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;
