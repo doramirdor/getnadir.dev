@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "semantic-caching-llm-cost-reduction",
+    title: "Semantic caching eliminates 30 to 50% of your LLM API calls. Most teams have never implemented it.",
+    date: "2026-06-14",
+    author: "Dor Amir",
+    excerpt: "Prompt caching saves money on identical prompts. But in production, most prompts are never exactly repeated. A customer service system receives thousands of variations of the same question every month. Semantic caching serves cached responses to semantically similar queries without calling the LLM at all. The cache hit rate on high-volume enterprise workloads runs 30 to 50%. At frontier model pricing, that means 30 to 50% of your API calls simply stop being billed.",
+    thumbnail: "Deep Dive",
+    tags: ["Semantic Caching", "Cost Optimization", "Token Optimization", "Enterprise", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "output-token-cost-optimization-llm",
     title: "Output tokens cost 5x more than input tokens. Most teams have never audited them.",
     date: "2026-06-13",
@@ -347,6 +357,214 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "semantic-caching-llm-cost-reduction": `## The cache miss that isn't a miss.
+
+Prompt caching — storing and reusing LLM responses for identical inputs — is well understood. Anthropic, OpenAI, and Google all support it natively, and the savings on repeated system prompts are documented and measurable.
+
+But exact-match caching has a hard limit: in production, most prompts are never identical twice.
+
+A customer support system handles ten thousand variations of "how do I cancel my subscription" every month. Each has different phrasing, punctuation, and surrounding context. None of them match the cache key of any other. Each one hits the LLM and gets billed at full price.
+
+Semantic caching solves this. Instead of requiring exact text matches, it converts each query into a vector embedding, searches a cache of previous query-response pairs by semantic similarity, and returns a cached answer when the incoming query is close enough to a previously answered one. The threshold is configurable. The savings are not.
+
+Teams that implement semantic caching on high-volume enterprise workloads report cache hit rates of 30 to 50%. At that hit rate, 30 to 50% of your API calls simply stop being billed. The LLM is never called. The response is served from cache in milliseconds.
+
+## Why exact-match caching is not enough.
+
+The Datadog 2026 State of AI Engineering report found that 69% of all input tokens in production LLM systems are system prompts and static instruction payloads that repeat identically on every call. These are the tokens that exact-match prompt caching handles well.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+But the user-side of the prompt — the query, the document, the ticket, the message — is almost never identical across calls. These tokens are not cached. They hit the LLM every time.
+
+In a support system receiving 10,000 tickets per day:
+- System prompt: identical on every call, cached with native prompt caching → 90% discount on that portion.
+- User query: different phrasing on every ticket, not cached → billed at full price on every call.
+
+If 200 of those 10,000 tickets are asking the same semantic question, exact-match caching serves zero of them. Semantic caching serves all 200.
+
+[Source: Anthropic, "Prompt caching," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+
+## How semantic caching works.
+
+The mechanism has three components.
+
+**Embedding model.** Each incoming query is converted to a dense vector using an embedding model. The same model is used for all cache entries to ensure cosine similarity scores are comparable. Small, fast embedding models — OpenAI \`text-embedding-3-small\`, or open-source models like \`all-MiniLM-L6-v2\` — handle this step in under 10ms at a cost of roughly $0.02 per million tokens.
+
+**Vector cache.** Previous query-response pairs are stored as vectors in a vector store: Redis with RediSearch, Pinecone, Weaviate, Qdrant, or pgvector. On each new query, the system runs a nearest-neighbor search against the cache index.
+
+**Similarity threshold.** If the nearest neighbor has a cosine similarity above a configurable threshold (typically 0.90 to 0.95), the cached response is returned without calling the LLM. Below the threshold, the query proceeds to the LLM and the result is added to the cache.
+
+The threshold is the primary tuning lever:
+- **0.95+:** very conservative, high precision, lower cache hit rate, nearly zero false positives.
+- **0.90–0.95:** balanced for most enterprise workloads.
+- **Below 0.90:** aggressive, higher hit rate, risk of returning semantically mismatched responses.
+
+The right threshold depends on the task. For FAQ answering, 0.90 is standard. For medical or legal document processing where a missed nuance is consequential, 0.95 or higher is appropriate. For structured data extraction where the schema is fixed and the input variation is predictable, 0.88 to 0.92 works reliably.
+
+[Source: Redis, "Semantic Caching for AI Applications"](https://redis.io/blog/what-is-semantic-caching/)
+
+## Where semantic caching delivers the highest return.
+
+**Customer support and FAQ systems.** A support system that handles inbound messages about billing, cancellations, account management, or product questions receives the same semantic content rephrased thousands of times per day. Cache hit rates of 40 to 60% are common on mature support deployments.
+
+**Document processing pipelines.** Invoice extraction, contract review, and compliance scanning often process batches of structurally similar documents. If the routing question — "does this document contain a termination clause?" — is semantically similar across documents, the answer can often be cached.
+
+**Internal knowledge base queries.** Enterprise employees querying an internal AI assistant about company policies, HR procedures, or product documentation ask semantically similar questions frequently. An employee asking "what is the parental leave policy?" and another asking "how many weeks of parental leave do I get?" are asking the same question.
+
+**Code review and linting workloads.** Agentic coding systems that check for common error patterns, style violations, or security issues encounter the same patterns repeatedly. Semantic caching serves cached feedback on identical or near-identical code structures.
+
+**E-commerce product recommendations.** Queries like "show me running shoes under $100" and "what are your cheapest running shoes?" are semantically similar. If product inventory is handled in the retrieval layer, the language model's role is to format and rank — and that output can be cached at high similarity thresholds.
+
+## The math at enterprise scale.
+
+A customer service platform handling 500,000 inbound messages per month, using Claude Sonnet 4.5 for intent classification and response drafting.
+
+| Factor | Value |
+|---|---:|
+| Monthly calls | 500,000 |
+| Average input tokens per call | 1,200 |
+| Average output tokens per call | 400 |
+| Sonnet 4.5 input price | $3.00/M |
+| Sonnet 4.5 output price | $15.00/M |
+| Monthly input cost | $1,800 |
+| Monthly output cost | $3,000 |
+| **Total monthly cost** | **$4,800** |
+
+With semantic caching at a 40% cache hit rate:
+
+| Factor | Value |
+|---|---:|
+| Calls served from cache | 200,000 |
+| Calls hitting the LLM | 300,000 |
+| Embedding cost (500K queries × 1,200 tokens × $0.02/M) | ~$12 |
+| Remaining LLM input cost | $1,080 |
+| Remaining LLM output cost | $1,800 |
+| Cache infrastructure (Redis / Pinecone) | ~$100/month |
+| **New total monthly cost** | **$2,992** |
+
+Annual savings: **$21,696.** On one pipeline, from one architectural addition. The cache infrastructure costs under $1,200 per year. The payback is measured in days.
+
+At higher cache hit rates — 50 to 60%, which are common on support and FAQ workloads — the savings push past $28,000 per year on a single pipeline.
+
+## The implementation path.
+
+The core implementation requires an embedding model, a vector store, and a similarity threshold. Most teams can ship a working version in a day.
+
+**Python with Redis and OpenAI embeddings:**
+
+\`\`\`python
+import openai
+import redis
+import numpy as np
+from redis.commands.search.query import Query
+
+client = openai.OpenAI()
+r = redis.Redis(host="localhost", port=6379)
+
+SIMILARITY_THRESHOLD = 0.92
+
+def embed(text: str) -> list[float]:
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )
+    return response.data[0].embedding
+
+def cache_lookup(query: str) -> str | None:
+    query_vec = embed(query)
+    query_bytes = np.array(query_vec, dtype=np.float32).tobytes()
+    results = r.ft("semantic-cache").search(
+        Query("*=>[KNN 1 @embedding $vec AS score]")
+        .sort_by("score")
+        .return_fields("response", "score")
+        .dialect(2),
+        query_params={"vec": query_bytes}
+    ).docs
+    if results and float(results[0].score) >= SIMILARITY_THRESHOLD:
+        return results[0].response
+    return None
+
+def cache_store(query: str, response: str) -> None:
+    vec = embed(query)
+    r.hset(
+        f"cache:{hash(query)}",
+        mapping={
+            "query": query,
+            "response": response,
+            "embedding": np.array(vec, dtype=np.float32).tobytes()
+        }
+    )
+
+def get_llm_response(query: str) -> str:
+    cached = cache_lookup(query)
+    if cached:
+        return cached  # No LLM call, no token spend
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[{"role": "user", "content": query}]
+    )
+    result = response.choices[0].message.content
+    cache_store(query, result)
+    return result
+\`\`\`
+
+[Source: Redis, "Vector Similarity Search"](https://redis.io/docs/stack/search/reference/vectors/)
+[Source: OpenAI, "Embeddings Guide"](https://platform.openai.com/docs/guides/embeddings)
+
+For teams already using managed vector infrastructure (Pinecone, Weaviate, Qdrant), the swap is a minimal change to the search backend. The threshold tuning, cache invalidation policy, and embedding model selection are the real implementation decisions.
+
+## Combining semantic caching with model routing.
+
+Semantic caching and model routing solve complementary parts of the cost problem.
+
+Semantic caching eliminates the call entirely when a sufficiently similar query has been answered before. Model routing ensures that when a call does reach the LLM, it is sent to the cheapest model capable of handling it.
+
+The combined architecture has three layers:
+
+1. **Semantic cache check.** Embed the incoming query, search the vector cache. If a hit above the threshold is found, return immediately. Cost: ~$0.000024 per query (embedding only).
+2. **Model routing.** For cache misses, evaluate the task complexity and route to the appropriate model: an efficient small model for simple queries, a frontier model only for tasks that require it.
+3. **Full LLM call.** Execute the call. The result is stored back into the semantic cache for future similar queries.
+
+Layer 1 eliminates 30 to 50% of calls. Layer 2 reduces the cost of the remaining calls by 40 to 80%. The compound effect on a single high-volume pipeline routinely exceeds 70% cost reduction from baseline.
+
+| Layer | Typical Savings | Applies To |
+|---|---|---|
+| Semantic caching | 30–50% of calls eliminated | Repeated or similar queries |
+| Model routing | 40–80% on remaining calls | All routed workloads |
+| Prompt caching | 50–90% on cached token portions | Repeated system prompts |
+| Combined | Up to 80–90% total | Eligible high-volume workloads |
+
+## Cache invalidation and freshness.
+
+The one operational concern with semantic caching is response staleness. If a cached response was correct three months ago but the underlying policy, product, or data has changed, the cache serves stale information.
+
+Three patterns handle this:
+
+**TTL-based expiration.** Set a time-to-live on cache entries: 24 hours for volatile content (prices, inventory), 30 days for stable content (policy, documentation). The cache evicts entries automatically; fresh queries re-populate it with updated responses.
+
+**Namespace versioning.** When a product update or policy change occurs, increment the cache namespace or prefix. All previous entries are effectively invalidated without a manual flush.
+
+**Confidence-aware caching.** Only cache responses for high-confidence outputs. If a model returns a hedged or uncertain answer, mark it as non-cacheable. Reserve caching for responses where the model's confidence is high.
+
+The staleness risk is real but manageable. Exact-match prompt caches face the same problem and solve it the same way. The additional complexity in semantic caching is choosing the right similarity threshold, which is a one-time calibration task, not an ongoing operational burden.
+
+## Three changes that take less than a day.
+
+**1. Run a semantic similarity audit on your highest-volume workload.** Pull 1,000 recent queries from your most expensive LLM endpoint. Embed them all. Run a clustering analysis or pairwise similarity check. Measure what fraction are semantically similar above 0.90 cosine similarity. That fraction is your cache opportunity. For support and FAQ workloads, it is routinely 35 to 55%.
+
+**2. Add a semantic cache layer to one pipeline.** Pick the highest-volume endpoint where quality is predictable and content does not change frequently. Add an embedding step, a vector store lookup, and a threshold check. Measure the cache hit rate and cost delta over the first two weeks. Tune the threshold based on observed false positive rate.
+
+**3. Combine the cache with your routing layer.** For queries that miss the semantic cache, route by task complexity rather than sending everything to the same model. The cache eliminates the easy repeats; routing handles the rest efficiently. Together they address every layer of cost: redundant calls, misrouted calls, and oversized calls.
+
+Prompt caching saves money on static input. Semantic caching saves money on dynamic input. They solve different problems and the savings stack independently. For most enterprise workloads, implementing both is the difference between incremental optimization and structural cost reduction.
+
+The queries are not as unique as they look. Measure them. You will find out.
+
+---
+
+*Sources: [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). [Anthropic, "Prompt caching," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching). [Redis, "Semantic Caching for AI Applications"](https://redis.io/blog/what-is-semantic-caching/). [Redis, "Vector Similarity Search"](https://redis.io/docs/stack/search/reference/vectors/). [OpenAI, "Embeddings Guide"](https://platform.openai.com/docs/guides/embeddings). [Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing). [OpenAI, API Pricing, June 2026](https://openai.com/api/pricing).*`,
   "output-token-cost-optimization-llm": `## The 5x blind spot in your LLM bill.
 
 At Opus 4.8 pricing, input tokens cost $5 per million. Output tokens cost $25 per million. That is a 5x premium for tokens you generate versus tokens you send.
