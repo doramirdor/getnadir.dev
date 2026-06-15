@@ -826,11 +826,11 @@ For classification and extraction workloads, switching from freeform prose to st
 
 [Source: Anthropic, "Tool use," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
 
-**Separate reasoning from output.** For tasks that require multi-step reasoning, keep the chain-of-thought out of the billed output. Anthropic's extended thinking mode captures reasoning in a separate `thinking` block billed at a different rate. OpenAI's o-series models separate reasoning tokens from response tokens by default. For models without native thinking separation, a two-call pattern works: a cheap model reasons internally, a compact formatted answer is what gets returned and billed at the output rate.
+**Separate reasoning from output.** For tasks that require multi-step reasoning, keep the chain-of-thought out of the billed output. Anthropic's extended thinking mode captures reasoning in a separate \`thinking\` block billed at a different rate. OpenAI's o-series models separate reasoning tokens from response tokens by default. For models without native thinking separation, a two-call pattern works: a cheap model reasons internally, a compact formatted answer is what gets returned and billed at the output rate.
 
 **Output format templates in the system prompt.** Instead of letting the model decide how to format its response, specify the exact format in the system prompt. "Respond in this exact format: CATEGORY: [value]. REASON: [one sentence.]" Most models follow explicit templates without elaboration, which eliminates structural variance across responses.
 
-**Aggressive `max_tokens` caps on well-defined tasks.** Setting `max_tokens` at 2x the expected output length for structured tasks is a safety valve against runaway verbose responses. If you know the answer is a category label, a score, or a short phrase, a `max_tokens` of 20 or 50 eliminates any possibility of preamble. The model will not pad to fill a window you have not given it.
+**Aggressive \`max_tokens\` caps on well-defined tasks.** Setting \`max_tokens\` at 2x the expected output length for structured tasks is a safety valve against runaway verbose responses. If you know the answer is a category label, a score, or a short phrase, a \`max_tokens\` of 20 or 50 eliminates any possibility of preamble. The model will not pad to fill a window you have not given it.
 
 ## The math at enterprise scale.
 
@@ -842,7 +842,7 @@ A team running 500,000 API calls per month on Claude Sonnet 4.5, averaging 800 o
 | Structured output, 65% token reduction | 140M | $15 | $2,100 |
 | Routed 50% of calls to Haiku ($5/M) | 140M blended | ~$10 | $1,400 |
 
-Annualized, the two optimizations combined save $55,200 on output tokens alone for this single workload. Neither change requires a model upgrade, a provider switch, or a prompt redesign beyond adding a tool schema and a `max_tokens` cap.
+Annualized, the two optimizations combined save $55,200 on output tokens alone for this single workload. Neither change requires a model upgrade, a provider switch, or a prompt redesign beyond adding a tool schema and a \`max_tokens\` cap.
 
 For context, 400 million output tokens per month at Sonnet pricing is a $72,000 annual output bill. Structured output plus routing brings that to $16,800. Same workload, same model quality, same downstream results.
 
@@ -879,7 +879,7 @@ Three concrete steps:
 
 **2. Switch your highest-spend extraction or classification workload to structured output.** Pick the pipeline that currently receives prose responses and switch it to JSON schema-constrained output using tool use. Measure the before and after token count. For extraction workloads, the reduction is routinely 60 to 75%.
 
-**3. Set `max_tokens` caps on every task with a predictable output length.** If the answer is a label, a score, an entity, or a short phrase, cap `max_tokens` at 50. This eliminates runaway verbose responses with no accuracy tradeoff. It is a free change that takes minutes per API call site.
+**3. Set \`max_tokens\` caps on every task with a predictable output length.** If the answer is a label, a score, an entity, or a short phrase, cap \`max_tokens\` at 50. This eliminates runaway verbose responses with no accuracy tradeoff. It is a free change that takes minutes per API call site.
 
 The 5x output token premium is a structural fact of how autoregressive generation works. The waste inside those output tokens is not. It is a training artifact, and prompt engineering can undo it in an afternoon.
 
