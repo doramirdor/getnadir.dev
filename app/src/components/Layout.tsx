@@ -79,7 +79,10 @@ const Layout = () => {
   }
 
   if (!user) {
-    return <Auth />;
+    const GATED_NOTICES: Record<string, string> = {
+      "/dashboard/playground": "The Playground is for logged-in users. Sign in or create a free account to try it.",
+    };
+    return <Auth notice={GATED_NOTICES[location.pathname]} />;
   }
 
   const isOnboarding = location.pathname === "/dashboard/onboarding";

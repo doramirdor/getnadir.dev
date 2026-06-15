@@ -9,7 +9,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const faqItems = [
+export const faqItems = [
   {
     id: "routing",
     question: "How does intelligent routing work?",
@@ -250,6 +250,21 @@ const faqItems = [
   },
 ];
 
+export const FaqAccordion = () => (
+  <Accordion type="single" collapsible className="w-full">
+    {faqItems.map((item) => (
+      <AccordionItem key={item.id} value={item.id}>
+        <AccordionTrigger className="text-left text-[15px]">
+          {item.question}
+        </AccordionTrigger>
+        <AccordionContent className="text-muted-foreground leading-relaxed">
+          {item.answer}
+        </AccordionContent>
+      </AccordionItem>
+    ))}
+  </Accordion>
+);
+
 const FAQ = () => {
   const navigate = useNavigate();
   useEffect(() => { trackPageView("faq"); }, []);
@@ -266,18 +281,7 @@ const FAQ = () => {
         </p>
       </div>
 
-      <Accordion type="single" collapsible className="w-full">
-        {faqItems.map((item) => (
-          <AccordionItem key={item.id} value={item.id}>
-            <AccordionTrigger className="text-left text-[15px]">
-              {item.question}
-            </AccordionTrigger>
-            <AccordionContent className="text-muted-foreground leading-relaxed">
-              {item.answer}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <FaqAccordion />
 
       <div className="pt-4 border-t">
         <p className="text-sm text-muted-foreground">

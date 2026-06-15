@@ -25,7 +25,7 @@ const GitHubIcon = () => (
   </svg>
 );
 
-const Auth = () => {
+const Auth = ({ notice }: { notice?: string } = {}) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -211,6 +211,12 @@ const Auth = () => {
             </div>
             <span className="text-sm font-semibold text-foreground">Nadir</span>
           </div>
+
+          {notice && (
+            <div className="mb-6 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+              {notice}
+            </div>
+          )}
 
           <div className="mb-8">
             <h1 className="text-xl font-semibold text-foreground">

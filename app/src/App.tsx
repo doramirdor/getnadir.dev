@@ -34,6 +34,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const FAQPublic = lazy(() => import("./pages/FAQPublic"));
 const OpenClaw = lazy(() => import("./pages/OpenClaw"));
 const Optimize = lazy(() => import("./pages/Optimize"));
 const Playground = lazy(() => import("./pages/Playground"));
@@ -145,6 +146,7 @@ const App = () => (
             <Route path="/compare" element={<Compare />} />
             <Route path="/compare/:competitor" element={<Compare />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQPublic />} />
             <Route path="/calculator" element={<Calculator />} />
             <Route path="/producthunt" element={<ProductHunt />} />
 

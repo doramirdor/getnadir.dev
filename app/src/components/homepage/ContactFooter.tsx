@@ -17,7 +17,7 @@ const GROUPS: Record<string, { label: string; to: string; external?: boolean }[]
   Resources: [
     { label: "GitHub", to: "https://github.com/NadirRouter/NadirClaw", external: true },
     { label: "Playground", to: "/dashboard/playground" },
-    { label: "Help & FAQ", to: "/dashboard/help" },
+    { label: "Help & FAQ", to: "/faq" },
   ],
   Compare: [
     { label: "vs OpenRouter", to: "/compare/openrouter" },
