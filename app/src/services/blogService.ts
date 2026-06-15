@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "prompt-compression-llmlingua-input-token-reduction",
+    title: "Prompt compression cuts input token bills 3-5x. LLMLingua ships in an afternoon.",
+    date: "2026-06-15",
+    author: "Dor Amir",
+    excerpt: "Microsoft Research published LLMLingua in 2023 and LLMLingua-2 in 2024. Both compress long prompts using a small LM to identify and remove low-information tokens while preserving the semantic content the large model needs to answer correctly. On production workloads at Microsoft, the savings run 40 to 62% on input tokens. On RAG pipelines and agentic workflows, where dynamic context is 50 to 70% of total input tokens, 3x compression is achievable with under 3% quality loss. Most teams have never tried it.",
+    thumbnail: "Deep Dive",
+    tags: ["Prompt Compression", "Token Optimization", "Cost Optimization", "LLMLingua", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "semantic-caching-llm-cost-reduction",
     title: "Semantic caching eliminates 30 to 50% of your LLM API calls. Most teams have never implemented it.",
     date: "2026-06-14",
@@ -357,6 +367,166 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "prompt-compression-llmlingua-input-token-reduction": `## The input token bill nobody audits.
+
+Every post about LLM cost optimization starts with the same advice: cache your system prompt, route simple requests to cheaper models, use batch inference for async workloads. Good advice. Most teams still have not done it.
+
+But there is a second category of input token waste that runs beneath all of these: the tokens in your prompts that are not your system prompt, not your user query, and not your cached prefix. They are the surrounding context — the retrieved documents, the conversation history, the tool schemas, the examples — and they often account for 50 to 70% of your total input tokens.
+
+These tokens are not fixed. They can be compressed.
+
+Microsoft Research published LLMLingua in 2023 and LLMLingua-2 in 2024. Both compress long prompts using a small LM to identify and remove low-information tokens while preserving the semantic content the large model needs to answer correctly. On standard benchmarks, LLMLingua-2 achieves 3 to 5x compression ratios with under 3% drop in downstream task performance. On production workloads at Microsoft, the savings run 40 to 62% on input tokens.
+
+[Source: Microsoft Research, "LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression," 2024](https://arxiv.org/abs/2403.12968)
+
+Most teams have never tried it.
+
+## Why context bloat is the next cost problem.
+
+The input token problem has two phases.
+
+Phase one: system prompt bloat. A 2,000-token system prompt repeated across 100,000 daily calls costs $1,000 per day at Opus pricing without caching. This is well understood, and prompt caching solves it. Datadog found that 69% of all input tokens in production systems are static payloads — system prompts, tool schemas, instruction blocks. Caching those static portions drops input costs by 50 to 90% on the cached fraction.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+Phase two: dynamic context bloat. The remaining 31% — the variable portion that changes per call — is not cacheably eliminated. For RAG pipelines, this is the retrieved chunks. For agentic workflows, it is the conversation history, tool outputs, and prior reasoning steps. For document processing, it is the document itself. This portion grows with usage and compounds with context length.
+
+Agentic workloads consume 1,000x more tokens than chat, according to a joint Stanford and Microsoft study. Most of that difference is dynamic context. A multi-step coding agent builds up 50 to 200 thousand tokens of context across a session. Even a 30% reduction in dynamic context tokens is a significant cost reduction at that scale.
+
+[Source: Stanford and Microsoft Research, "SWE-bench Agent Token Analysis," 2026](https://arxiv.org/abs/2310.06770)
+
+Prompt compression is the technique that makes that reduction possible.
+
+## How LLMLingua works.
+
+LLMLingua-2 uses a small token classifier trained on compressed prompt data to score each token in a prompt by its contribution to downstream task performance. Tokens below a configurable threshold are removed. The result is a shorter prompt that preserves the semantic content necessary for the large model to answer.
+
+The compression pipeline:
+
+1. **Tokenize the prompt.** Split into segments at sentence or chunk boundaries.
+2. **Score tokens.** Run each segment through the small compression model (350M parameters, runs in 10 to 30ms on CPU).
+3. **Drop low-score tokens.** Remove tokens whose contribution score falls below the compression ratio target.
+4. **Reconstruct.** Rejoin the remaining tokens into a coherent compressed prompt.
+
+The compressed prompt is passed to the large model in place of the original. The large model never sees the original. From its perspective, it receives a shorter, denser input with the same informational content.
+
+The compression ratio is configurable: 2x, 3x, 4x, 5x. Higher compression ratios remove more tokens and introduce slightly more quality loss. At 3x compression, benchmark quality loss is typically under 2%. At 5x, it rises to 4 to 8% depending on task type.
+
+[Source: Microsoft Research, "LLMLingua: Compressing Prompts for Accelerated Inference of Large Language Models," 2023](https://arxiv.org/abs/2310.05736)
+
+## Selective Context: the lighter alternative.
+
+LLMLingua is powerful but requires a local compression model. For teams not ready for that dependency, Selective Context offers a simpler entry point.
+
+Selective Context uses sentence-level perplexity scoring — querying a small local LM like GPT-2 to score each sentence — and removes the lowest-information sentences before passing the prompt to the frontier model. It achieves 1.5 to 2.5x compression with less operational overhead than token-level compression.
+
+It works best for:
+- Long retrieved documents where most sentences are background but only a few are directly relevant.
+- Conversation histories where early turns are low-relevance but still included.
+- Tool output payloads where API responses include metadata the LLM does not need.
+
+For teams already using RAG, Selective Context is often the first compression technique worth adding because it operates cleanly on the chunk level.
+
+[Source: Li et al., "Compressing Context to Enhance Inference Efficiency of Large Language Models," 2023](https://arxiv.org/abs/2310.06201)
+
+## Where compression delivers the most value.
+
+**RAG pipelines.** Retrieval-augmented generation typically stuffs 5 to 20 retrieved chunks into the prompt context. Many of those chunks contain redundant or tangential content. Compressing the retrieved context 3x before passing it to the large model reduces input tokens by 50 to 70% on the dynamic portion of the call, while preserving the core content the model needs to answer.
+
+**Long conversation histories.** Agentic sessions accumulate conversation history rapidly. After 10 to 20 turns, the history alone can exceed 10,000 tokens per call. Instead of truncating (which loses context) or summarizing (which loses detail), compression retains dense semantic content while cutting the token count.
+
+**Document processing.** Legal review, contract analysis, and compliance checking often pass entire documents to the LLM. A 50-page contract might be 15,000 to 25,000 tokens. Compressing it 3x to 4x before routing reduces input costs dramatically, and the LLM still extracts the clauses and terms it was asked to find.
+
+**Multi-tool agent context.** Tool schemas, prior tool call results, and scratchpad content accumulate quickly in agentic workflows. GitHub found that 37% of tokens in their agentic workflows were waste. Token-level compression on the tool output context is a targeted fix.
+
+[Source: GitHub, "Auditing token consumption across agentic workflows," 2026](https://github.blog/2026-04-15-auditing-token-waste-agentic-ai/)
+
+## The math at enterprise scale.
+
+A document processing pipeline ingesting 50,000 documents per month, routing each through Claude Sonnet 4.5 for clause extraction.
+
+| Factor | Without compression | With 3x compression |
+|---|---:|---:|
+| Average input tokens per document | 12,000 | 4,000 |
+| Monthly input tokens | 600M | 200M |
+| Sonnet 4.5 input price | $3.00/M | $3.00/M |
+| Monthly input cost | $1,800 | $600 |
+| Compression model cost (CPU) | — | $40 |
+| **Net monthly input savings** | — | **$1,160** |
+
+At that scale: $13,920 saved annually on input tokens alone, before counting the downstream effect on model routing (shorter inputs qualify more easily for cheaper model tiers) and latency (fewer tokens means faster time-to-first-token).
+
+The compression model cost is low because the small LM doing the scoring — 350M parameters — runs efficiently on CPU at a fraction of frontier model pricing.
+
+## Implementation.
+
+LLMLingua-2 ships as a Python package. A minimal integration into an existing LLM pipeline:
+
+\`\`\`python
+from llmlingua import PromptCompressor
+import anthropic
+
+compressor = PromptCompressor(
+    model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
+    use_llmlingua2=True,
+    device_map="cpu"
+)
+
+client = anthropic.Anthropic()
+
+def compress_and_call(system_prompt: str, context: str, user_query: str, ratio: float = 0.33):
+    compressed = compressor.compress_prompt(
+        context,
+        rate=ratio,
+        force_tokens=["\\n", ".", "!", "?", ","],
+        drop_consecutive=True,
+    )
+
+    return client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=1024,
+        system=system_prompt,
+        messages=[{
+            "role": "user",
+            "content": compressed["compressed_prompt"] + "\\n\\n" + user_query
+        }]
+    )
+\`\`\`
+
+The \`rate\` parameter is the keep ratio: 0.33 means keep 33% of context tokens (3x compression). The \`force_tokens\` list prevents sentence-boundary characters from being dropped, which preserves grammatical coherence in the compressed output.
+
+Two considerations before deploying:
+
+**Do not compress the system prompt.** The system prompt is static and should already be cached natively by the provider. Apply compression only to the dynamic context portion — retrieved chunks, conversation history, tool outputs, user documents. Compressing the static prefix breaks the cache key and eliminates the prompt caching discount.
+
+**Validate on your actual tasks.** LLMLingua's benchmarks are strong, but quality loss varies by task type. Extraction tasks — finding specific clauses, extracting structured fields — are more sensitive to compression than classification or summarization tasks. Run a held-out evaluation on 200 to 500 examples from your own workload before deploying at production compression ratios.
+
+## How compression stacks with routing and caching.
+
+Prompt compression is not a substitute for routing or caching. It is additive.
+
+| Technique | What it reduces | Typical saving |
+|---|---|---|
+| Native prompt caching | Static input tokens (system prompt, schemas) | 50–90% on cached portion |
+| Semantic caching | Full API calls for similar queries | 30–50% cache hit rate |
+| Prompt compression | Dynamic input tokens (context, history, docs) | 40–70% on compressed portion |
+| Model routing | Per-call model cost | 40–70% blended reduction |
+
+A pipeline with all four layers: prompt caching on the static prefix, semantic caching on repeated queries, compression on dynamic context, and routing that sends compressed calls to cheaper model tiers.
+
+The compression layer has a secondary effect on routing: shorter inputs score closer to the "simple" end of the complexity distribution, which means more requests qualify for cheaper models. A 12,000-token document processing call is likely to route to Opus; the same call compressed to 4,000 tokens may route to Sonnet. The routing savings amplify the compression savings.
+
+## Three changes that take less than a day.
+
+**1. Audit your dynamic context volume.** Pull a sample of 100 production calls and measure what fraction of input tokens are: (a) static system prompt, (b) user query, (c) dynamic context — retrieved chunks, history, tool outputs. If category (c) is above 40%, you have a compression opportunity.
+
+**2. Run LLMLingua-2 at 3x on a held-out evaluation set.** Install \`llmlingua\`, compress 200 examples from your production workload at 0.33 compression ratio, and measure task quality against uncompressed. If quality loss is under 3%, deploy to production. Most RAG and document processing workloads pass this threshold at 3x.
+
+**3. Stack compression before your routing classifier.** If you are already routing requests by complexity, apply compression to the dynamic context first, then route the compressed call. Shorter inputs classify more reliably and route cheaper. The two techniques compound directly.
+
+---
+
+*Sources: [Microsoft Research, "LLMLingua-2," 2024](https://arxiv.org/abs/2403.12968). [Microsoft Research, "LLMLingua," 2023](https://arxiv.org/abs/2310.05736). [Li et al., "Selective Context Compression," 2023](https://arxiv.org/abs/2310.06201). [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). [Stanford and Microsoft Research, "SWE-bench Agent Token Analysis"](https://arxiv.org/abs/2310.06770). [GitHub, "Auditing token consumption across agentic workflows," 2026](https://github.blog/2026-04-15-auditing-token-waste-agentic-ai/). Anthropic, Claude Sonnet 4.5 pricing as of June 2026.*`,
   "semantic-caching-llm-cost-reduction": `## The cache miss that isn't a miss.
 
 Prompt caching — storing and reusing LLM responses for identical inputs — is well understood. Anthropic, OpenAI, and Google all support it natively, and the savings on repeated system prompts are documented and measurable.
