@@ -48,7 +48,7 @@ export default function SolutionAnalytics() {
           {[
             { label: "Saved this month", value: "$4,812", sub: "vs always-Opus 4.7", color: "#028a3e" },
             { label: "Requests routed", value: "1.8M", sub: "across 3 providers", color: "#0066ff" },
-            { label: "Catastrophic routes", value: "0.00%", sub: "quality stayed flat", color: "#7c3aed" },
+            { label: "Catastrophic routes", value: "1.7%", sub: "on RouterBench held-out", color: "#7c3aed" },
           ].map((k) => (
             <div key={k.label} className="p-5 bg-white border border-[#e5e5e5] rounded-xl">
               <div className="text-xs text-[#666] mb-1">{k.label}</div>

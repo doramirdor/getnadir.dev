@@ -19,7 +19,7 @@
     />
 
     <title>Nadir | Verifier-Gated LLM Router | 60% Cheaper, 98% of Always-Opus Quality</title>
-    <meta name="description" content="Nadir is a verifier-gated cascade LLM router. The cheap model answers first, a calibrated verifier scores it before we ship, and we escalate only when quality fails the bar. 60% cost reduction with 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Independently verified on RouterArena's public scorer (arena_score 0.7118, n=8,400). OpenAI compatible, BYOK, two-line change." />
+    <meta name="description" content="Nadir is a verifier-gated cascade LLM router. The cheap model answers first, a calibrated verifier scores it before we ship, and we escalate only when quality fails the bar. 60% cost reduction with 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Independently verified on RouterArena's public scorer (arena_score 72.3, #4 of 21 routers). OpenAI compatible, BYOK, two-line change." />
     <meta name="keywords" content="Nadir, verifier-gated cascade, LLM router, RouterBench, calibrated verifier, AUROC, AI cost optimization, Claude API savings, GPT API costs, open-source LLM proxy, prompt routing, model routing, AI gateway, reduce LLM costs, Claude Code cost savings, Cursor cost optimization, intelligent model selection, OpenAI compatible" />
     <meta name="author" content="Nadir" />
     <link rel="canonical" href="https://getnadir.com/" />
@@ -155,7 +155,7 @@
           "@type": "SoftwareApplication",
           "name": "Nadir",
           "alternateName": "NadirClaw",
-          "description": "Verifier-gated cascade LLM router. The cheap model answers first; a calibrated verifier (AUROC 0.961) scores it before we ship; escalate only when quality fails the bar. 60% cost reduction with 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Independently verified on RouterArena's public scorer (arena_score 0.7118 on the full evaluation set, n=8,400), projected top 5 ahead of Auto Router, vLLM-SR, and Not Diamond. OpenAI compatible, BYOK.",
+          "description": "Verifier-gated cascade LLM router. The cheap model answers first; a calibrated verifier (AUROC 0.961) scores it before we ship; escalate only when quality fails the bar. 60% cost reduction with 98% of always-Opus quality preserved on 11,420 RouterBench held-out triples. Independently verified on RouterArena's public scorer (arena_score 72.3, #4 of 21 routers on the public leaderboard). OpenAI compatible, BYOK.",
           "url": "https://getnadir.com",
           "image": "https://getnadir.com/og-image.png",
           "applicationCategory": "DeveloperApplication",
@@ -349,7 +349,7 @@
               "name": "What are the benchmark results?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "On 11,420 held-out RouterBench triples (eval JSON: verifier/reports/eval_composed_20260526T191001.json), Nadir's verifier-gated cascade preserves 98% of always-Opus quality at 60% lower cost. Catastrophic-route rate is 1.7%. Verifier AUROC is 0.961 and calibration ECE is 0.016 on the same held-out split. Pre-classifier overhead is under 10 ms; verifier latency is 180 ms on CPU INT8 when it runs, and most requests skip the verifier entirely because the pre-classifier is confident. On RouterArena's public scorer, Nadir scored arena_score 0.7118 on the full evaluation set (n=8,400), which projects into the public leaderboard's top 5, ahead of Auto Router (70.05), vLLM-SR (67.23), and Not Diamond (57.29). The published top entries above us are Sqwish Router (75.27), OrcaRouter-Adaptive (72.08), Azure-Model-Router (71.87), and R2-Router (71.60). A contamination audit confirmed zero prompt overlap between Nadir training corpora and the RouterArena eval splits. Savings vary with your prompt mix; the eval methodology and full threshold sweep are reproducible from the open-source eval harness."
+                "text": "On 11,420 held-out RouterBench triples (eval JSON: verifier/reports/eval_composed_20260526T191001.json), Nadir's verifier-gated cascade preserves 98% of always-Opus quality at 60% lower cost. Catastrophic-route rate is 1.7%. Verifier AUROC is 0.961 and calibration ECE is 0.016 on the same held-out split. Pre-classifier overhead is under 10 ms; verifier latency is 180 ms on CPU INT8 when it runs, and most requests skip the verifier entirely because the pre-classifier is confident. On RouterArena's public scorer, Nadir scored arena_score 72.3, ranking #4 of 21 routers on the public leaderboard. A contamination audit confirmed zero prompt overlap between Nadir training corpora and the RouterArena eval splits. Savings vary with your prompt mix; the eval methodology and full threshold sweep are reproducible from the open-source eval harness."
               }
             },
             {
