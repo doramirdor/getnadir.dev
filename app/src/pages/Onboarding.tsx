@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,9 +46,10 @@ async function sha256(message: string): Promise<string> {
 
 type Mode = "byok" | "hosted";
 
-// Two-step onboarding: the key is generated for the user with smart defaults
-// the moment they land (hosted mode rides the 50 requests/month free
-// allowance, so no card and no provider keys are needed), then they make
+// Two-step onboarding. Step 0 makes the user choose how they want to run:
+// "Use our keys" (hosted, rides the free monthly allowance, no card and no
+// provider keys needed) or "Bring your keys" (BYOK, paste a provider key).
+// Whichever they pick, we create a key with smart defaults, then they make
 // their first call in the page and see real savings. The full configuration
 // wizard (CreateApiKeyDialog) stays available behind the "Customize" link
 // and on the API Keys page.
@@ -76,9 +78,61 @@ const DEFAULT_KEY_CONFIG = {
   },
 };
 
-// Module-level guard so React StrictMode double-mount (and quick
-// navigate-away-and-back) can't auto-create two keys.
-let autoCreateAttempted = false;
+// Per-provider routing defaults for the BYOK quick path. Mirrors the model
+// catalog in CreateApiKeyDialog (which is module-private there). Simple =
+// cheapest, complex = most capable, benchmark = complex.
+const BYOK_DEFAULTS: Record<string, {
+  selected_models: string[];
+  benchmark_model: string;
+  tier_models: { simple: string; medium?: string; complex: string };
+}> = {
+  anthropic: {
+    selected_models: ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-6"],
+    benchmark_model: "claude-opus-4-6",
+    tier_models: { simple: "claude-haiku-4-5", medium: "claude-sonnet-4-6", complex: "claude-opus-4-6" },
+  },
+  openai: {
+    selected_models: ["gpt-4o-mini", "gpt-5-mini", "gpt-5.4"],
+    benchmark_model: "gpt-5.4",
+    tier_models: { simple: "gpt-4o-mini", medium: "gpt-5-mini", complex: "gpt-5.4" },
+  },
+  google: {
+    selected_models: ["gemini-2.0-flash", "gemini-2.5-pro"],
+    benchmark_model: "gemini-2.5-pro",
+    tier_models: { simple: "gemini-2.0-flash", complex: "gemini-2.5-pro" },
+  },
+  openrouter: {
+    selected_models: ["openrouter/auto"],
+    benchmark_model: "openrouter/auto",
+    tier_models: { simple: "openrouter/auto", complex: "openrouter/auto" },
+  },
+  groq: {
+    selected_models: ["groq/llama-3.3-70b-versatile", "groq/mixtral-8x7b-32768"],
+    benchmark_model: "groq/llama-3.3-70b-versatile",
+    tier_models: { simple: "groq/mixtral-8x7b-32768", complex: "groq/llama-3.3-70b-versatile" },
+  },
+};
+
+const PROVIDER_FIELDS = [
+  { key: "anthropic", label: "Anthropic", placeholder: "sk-ant-..." },
+  { key: "openai", label: "OpenAI", placeholder: "sk-..." },
+  { key: "google", label: "Google AI", placeholder: "AI..." },
+  { key: "openrouter", label: "OpenRouter", placeholder: "sk-or-..." },
+  { key: "groq", label: "Groq", placeholder: "gsk_..." },
+];
+
+// Replicates isProviderKeyFormatValid() from CreateApiKeyDialog.tsx. Note
+// google has no prefix check (length only), matching the dialog's behavior.
+function isProviderKeyFormatValid(provider: string, key: string): boolean {
+  if (!key.trim()) return false;
+  switch (provider) {
+    case "openai": return key.startsWith("sk-") && key.length > 20;
+    case "anthropic": return key.startsWith("sk-ant-") && key.length > 20;
+    case "openrouter": return key.startsWith("sk-or-") && key.length > 20;
+    case "groq": return key.startsWith("gsk_") && key.length > 20;
+    default: return key.length > 10;
+  }
+}
 
 interface TestResult {
   ok: boolean;
@@ -98,6 +152,10 @@ const Onboarding = () => {
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
   const [existingKeyPrefix, setExistingKeyPrefix] = useState<string | null>(null);
   const [creatingKey, setCreatingKey] = useState(false);
+  const [bootstrapLoading, setBootstrapLoading] = useState(true);
+  const [chooserMode, setChooserMode] = useState<Mode | null>(null);
+  const [byokProvider, setByokProvider] = useState("anthropic");
+  const [byokKey, setByokKey] = useState("");
   const [copied, setCopied] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -113,7 +171,7 @@ const Onboarding = () => {
   const progress = ((currentStep + 1) / STEPS.length) * 100;
   const campaignLimits: Record<string, number> = {};
   const storedRef = getStoredAttribution().ref;
-  const freeLimit = (storedRef && campaignLimits[storedRef]) || 50;
+  const freeLimit = (storedRef && campaignLimits[storedRef]) || 5;
   const hasKey = !!createdApiKey || !!existingKeyPrefix;
 
   // Insert an api_keys row and return the plaintext key. Shared by the
@@ -178,7 +236,7 @@ const Onboarding = () => {
       setSessionApiKey(keyValue);
       setExistingKeyPrefix(null);
       setTestResult(null);
-      trackApiKeyCreated("onboarding", true);
+      trackApiKeyCreated("onboarding", false);
     } catch (e: any) {
       toast({
         variant: "destructive",
@@ -190,11 +248,66 @@ const Onboarding = () => {
     }
   };
 
-  // Bootstrap: if the user has no keys yet, generate one with smart defaults
-  // immediately. If they already have keys (revisit), we can't show the
-  // plaintext again, so offer to generate a fresh one instead.
+  // BYOK quick path: save the provider key (encrypted server-side via JWT),
+  // then create a key_mode:"byok" key with routing defaults for that provider.
+  const handleCreateByokKey = async () => {
+    if (!isProviderKeyFormatValid(byokProvider, byokKey)) return;
+    setCreatingKey(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      // 1) Persist the BYOK provider key (Fernet-encrypted server-side).
+      const resp = await fetch(`${API_BASE}/v1/provider-keys/setup`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ provider: byokProvider, api_key: byokKey.trim() }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || "Couldn't save your provider key.");
+      }
+
+      // 2) Create the api_keys row in byok mode.
+      const d = BYOK_DEFAULTS[byokProvider] || BYOK_DEFAULTS.anthropic;
+      const routingEnabled = d.selected_models.length > 1;
+      const keyValue = await insertApiKey({
+        name: "My first key",
+        selected_models: d.selected_models,
+        benchmark_model: d.benchmark_model,
+        model_parameters: {
+          key_mode: "byok",
+          layers: { routing: routingEnabled, fallback: true, optimize: "off" },
+          ...(routingEnabled ? { tier_models: d.tier_models } : {}),
+          fallback_chain: [...d.selected_models].reverse(),
+        },
+      });
+
+      setMode("byok");
+      setCreatedApiKey(keyValue);
+      setSessionApiKey(keyValue);
+      setExistingKeyPrefix(null);
+      setTestResult(null);
+      trackApiKeyCreated("onboarding", false);
+    } catch (e: any) {
+      toast({
+        variant: "destructive",
+        title: "Couldn't create your key",
+        description: e.message || "Please try again.",
+      });
+    } finally {
+      setCreatingKey(false);
+    }
+  };
+
+  // Bootstrap: read-only. We no longer auto-create a key — the user picks a
+  // mode in the chooser first. If they already have a key (revisit), we can't
+  // show the plaintext again, so we offer to set up a new one or continue.
   useEffect(() => {
-    if (!user?.id || createdApiKey) return;
+    if (!user?.id || createdApiKey) { setBootstrapLoading(false); return; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase
@@ -204,13 +317,8 @@ const Onboarding = () => {
         .eq("is_active", true)
         .limit(1);
       if (cancelled) return;
-      if (data && data.length > 0) {
-        setExistingKeyPrefix(data[0].prefix);
-        return;
-      }
-      if (autoCreateAttempted) return;
-      autoCreateAttempted = true;
-      await createDefaultKey();
+      if (data && data.length > 0) setExistingKeyPrefix(data[0].prefix);
+      setBootstrapLoading(false);
     })();
     return () => {
       cancelled = true;
@@ -475,7 +583,7 @@ console.log(response.choices[0].message.content);`;
           <Sparkles className="w-5 h-5 text-primary" />
           <h1 className="page-title">Welcome to Nadir</h1>
         </div>
-        <p className="page-description">Your key is ready. Two quick steps and you're routing.</p>
+        <p className="page-description">Pick how you want to run, then make your first call.</p>
       </div>
 
       {/* Progress */}
@@ -516,15 +624,18 @@ console.log(response.choices[0].message.content);`;
       {/* Step Content */}
       <Card className="clean-card">
         <CardContent className="pt-6 space-y-4">
-          {/* ═══ STEP 0: Your key (auto-generated with smart defaults) ═══ */}
+          {/* ═══ STEP 0: Choose how you want to run, then reveal the key ═══ */}
           {currentStep === 0 && (
             <div className="space-y-5">
-              {creatingKey ? (
+              {bootstrapLoading ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
                   <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">
-                    Generating your key with smart defaults...
-                  </p>
+                  <p className="text-sm text-muted-foreground">Loading your account...</p>
+                </div>
+              ) : creatingKey ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Setting up your key...</p>
                 </div>
               ) : createdApiKey ? (
                 <>
@@ -532,10 +643,16 @@ console.log(response.choices[0].message.content);`;
                     <Key className="w-5 h-5 text-primary" />
                     <h2 className="text-lg font-semibold text-foreground">Your API key is ready</h2>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    We created it with smart defaults. {freeLimit} free requests included, no card and no
-                    provider keys needed.
-                  </p>
+                  {mode === "hosted" ? (
+                    <p className="text-sm text-muted-foreground">
+                      Routing on our keys. {freeLimit} free requests a month, no card needed.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Routing on your own provider keys. You pay your provider directly. Nadir
+                      charges a savings fee only.
+                    </p>
+                  )}
 
                   <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
                     <p className="text-sm text-primary font-medium mb-2">
@@ -552,11 +669,18 @@ console.log(response.choices[0].message.content);`;
                   </div>
 
                   <div className="space-y-2">
-                    {[
-                      "Smart routing on: simple prompts go to Haiku, hard ones to Opus",
-                      "Fallback chain enabled, failed requests retry automatically",
-                      `${freeLimit} free requests on our keys, then bring your own or upgrade`,
-                    ].map((item) => (
+                    {(mode === "hosted"
+                      ? [
+                          "Smart routing on: simple prompts go to Haiku, hard ones to Opus",
+                          "Fallback chain enabled, failed requests retry automatically",
+                          `${freeLimit} free requests on our keys, then bring your own or upgrade`,
+                        ]
+                      : [
+                          "Smart routing on across your provider's models",
+                          "Fallback chain enabled, failed requests retry automatically",
+                          "You pay your provider directly. Nadir's fee is 25% of what we save you, 10% above $2K a month.",
+                        ]
+                    ).map((item) => (
                       <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="w-4 h-4 text-primary shrink-0" />
                         <span>{item}</span>
@@ -585,12 +709,12 @@ console.log(response.choices[0].message.content);`;
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Your key starting with <code className="px-1 py-0.5 bg-muted rounded text-xs">{existingKeyPrefix}...</code> is
-                    active. For security we can't show it again, but you can generate a fresh one
-                    with smart defaults in one click.
+                    active. For security we can't show it again. You can set up a new key or
+                    continue with the one you have.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button onClick={createDefaultKey} disabled={creatingKey}>
-                      <Key className="w-4 h-4 mr-2" /> Generate a fresh key
+                    <Button onClick={() => setExistingKeyPrefix(null)} disabled={creatingKey}>
+                      <Key className="w-4 h-4 mr-2" /> Set up a new key
                     </Button>
                     <Button variant="outline" onClick={() => goToStep(1)}>
                       Continue with my existing key
@@ -598,9 +722,142 @@ console.log(response.choices[0].message.content);`;
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Loading your account...</p>
+                /* ═══ CHOOSER: explicit BYOK vs Hosted ═══ */
+                <div className="space-y-5">
+                  <div className="text-center space-y-1">
+                    <h2 className="text-lg font-semibold text-foreground">Choose how you want to run Nadir</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Bring your own keys (BYOK) or use ours. You pay only on what we save you.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Use our keys (hosted) */}
+                    <button
+                      type="button"
+                      onClick={() => setChooserMode("hosted")}
+                      className={`relative p-4 border-2 rounded-xl text-left transition-all ${
+                        chooserMode === "hosted"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Zap className={`w-4 h-4 ${chooserMode === "hosted" ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="font-semibold text-sm text-foreground">Use our keys</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        We run the keys, nothing to set up. Start free, then pay only on what we save you.
+                      </p>
+                      <div className="space-y-1.5">
+                        {[
+                          `${freeLimit} free requests a month, no card needed`,
+                          "Then prepaid credits, billed at cost + 20%",
+                          "Powered by Claude on AWS Bedrock",
+                        ].map((b) => (
+                          <div key={b} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                            <span>{b}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </button>
+
+                    {/* Bring your keys (BYOK) */}
+                    <button
+                      type="button"
+                      onClick={() => setChooserMode("byok")}
+                      className={`relative p-4 border-2 rounded-xl text-left transition-all ${
+                        chooserMode === "byok"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Key className={`w-4 h-4 ${chooserMode === "byok" ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="font-semibold text-sm text-foreground">Bring your keys</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Use your own provider keys. You pay providers directly at your rate.
+                      </p>
+                      <div className="space-y-1.5">
+                        {[
+                          "No usage markup, Nadir adds nothing per call",
+                          "A savings fee only: 25% of the first $2K saved a month, 10% above",
+                          "No base fee. If we save you nothing, you pay nothing.",
+                        ].map((b) => (
+                          <div key={b} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                            <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                            <span>{b}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* BYOK inline provider entry */}
+                  {chooserMode === "byok" && (
+                    <div className="p-4 bg-muted/40 border border-border rounded-xl space-y-3">
+                      <Label className="text-sm font-medium">Add a provider key to start</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {PROVIDER_FIELDS.map((p) => (
+                          <button
+                            key={p.key}
+                            type="button"
+                            onClick={() => { setByokProvider(p.key); setByokKey(""); }}
+                            className={`px-2.5 py-1 rounded-md text-xs border transition-all ${
+                              byokProvider === p.key
+                                ? "bg-primary/10 border-primary text-primary font-medium"
+                                : "bg-muted/30 border-transparent text-muted-foreground hover:border-border"
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                      <Input
+                        type="password"
+                        autoComplete="off"
+                        placeholder={PROVIDER_FIELDS.find((p) => p.key === byokProvider)?.placeholder}
+                        value={byokKey}
+                        onChange={(e) => setByokKey(e.target.value)}
+                      />
+                      {byokKey && !isProviderKeyFormatValid(byokProvider, byokKey) && (
+                        <p className="text-xs text-destructive">
+                          That doesn't look like a {PROVIDER_FIELDS.find((p) => p.key === byokProvider)?.label} key.
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Your key is encrypted and used only to route your requests. You can add more providers later.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Primary CTA depends on the choice */}
+                  {chooserMode === "hosted" && (
+                    <Button className="w-full" size="lg" onClick={createDefaultKey} disabled={creatingKey}>
+                      Start free with our keys
+                    </Button>
+                  )}
+                  {chooserMode === "byok" && (
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={handleCreateByokKey}
+                      disabled={creatingKey || !isProviderKeyFormatValid(byokProvider, byokKey)}
+                    >
+                      Save key and continue
+                    </Button>
+                  )}
+
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setCreateDialogOpen(true)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                    >
+                      Customize routing and providers instead
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

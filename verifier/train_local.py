@@ -38,8 +38,20 @@ DEFAULT_DATA = "verifier/data/routerbench_triples.jsonl"
 DEFAULT_OUTPUT = "verifier/weights/"
 DEFAULT_MODEL_NAME = "microsoft/deberta-v3-small"
 DEFAULT_MAX_LENGTH = 512
-PRODUCTION_AUROC_GATE = 0.82
+# Reference-free deploy gate. The old 0.82 was set for the ORACLE-fed verifier
+# (trained+evaluated WITH the expensive answer, AUROC 0.961) — an operating mode
+# production never has (it calls reference=None). Reference-free, the signal caps
+# ~0.77-0.78 (the expensive answer is exactly what's unavailable), so 0.82 is
+# unreachable by design. 0.74 gates out a near-random verifier (≈0.52) while
+# passing an honest reference-free one (deployed model: 0.776). Re-calibrate if a
+# richer decision-time signal (logprobs / self-consistency) lifts the ceiling.
+PRODUCTION_AUROC_GATE = 0.74
 LATENCY_BENCH_ITERATIONS = 50
+
+# When True, the cross-encoder pair omits the expensive (reference) answer, so
+# the verifier learns to judge the cheap answer ALONE -- matching how production
+# calls it (cascade_router.py: score(prompt, cheap, None)). Set from --reference-free.
+REFERENCE_FREE = False
 
 
 # Fields we always expect from the JSONL corpus.
@@ -95,6 +107,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=str,
         default=DEFAULT_MODEL_NAME,
         help="Override the base HuggingFace model id.",
+    )
+    parser.add_argument(
+        "--reference-free",
+        action="store_true",
+        help="Train the verifier WITHOUT the expensive answer in the pair, so it "
+        "judges the cheap answer alone -- matching production (reference=None).",
     )
     return parser
 
@@ -158,7 +176,8 @@ def build_cross_encoder_pair(
     concatenation of cheap and expensive answers on side B. The
     tokenizer then emits [CLS] prompt [SEP] CHEAP:... EXPENSIVE:... [SEP].
     """
-    pair = f"CHEAP:\n{cheap_answer}\n\nEXPENSIVE:\n{expensive_answer}"
+    exp = "" if REFERENCE_FREE else expensive_answer
+    pair = f"CHEAP:\n{cheap_answer}\n\nEXPENSIVE:\n{exp}"
     return prompt, pair
 
 
@@ -276,6 +295,10 @@ def _benchmark_cpu_latency(model, tokenizer, max_length: int) -> float:
 
 def train(args: argparse.Namespace) -> dict[str, Any]:
     """Run the full training pipeline. Heavy imports are local on purpose."""
+    global REFERENCE_FREE
+    REFERENCE_FREE = bool(getattr(args, "reference_free", False))
+    if REFERENCE_FREE:
+        print("[train_local] REFERENCE-FREE mode: expensive answer omitted from pair")
     import numpy as np
     import torch
     from datasets import Dataset

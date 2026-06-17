@@ -34,7 +34,7 @@ TRIAL_WINDOW_DAYS = 30
 # lets a brand-new user make their first calls during onboarding without a
 # card on file. Mirrors the dashboard quota bar (DailyQuotaBar) which counts
 # usage_logs rows per calendar month against the same limit.
-FREE_HOSTED_MONTHLY_REQUESTS = 50
+FREE_HOSTED_MONTHLY_REQUESTS = 5
 
 # Campaign-specific overrides: signup_source -> monthly free request limit.
 # Users who signed up via a campaign get a higher free allowance.

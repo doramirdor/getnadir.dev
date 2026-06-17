@@ -237,7 +237,7 @@ Specific comparison pages:
 ### Free (BYOK)
 
 - $0 forever
-- 50 requests per month on the hosted proxy keys, unlimited with BYOK
+- 5 requests per month on the hosted proxy keys, unlimited with BYOK
 - Full web dashboard, intelligent routing, semantic cache
 - No credit card required
 

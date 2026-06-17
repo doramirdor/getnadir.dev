@@ -23,6 +23,11 @@ remotion/
 # safetensors via torch.quantization.quantize_dynamic), embedding cache,
 # eval reports, papers, training data.
 verifier/weights/best/verifier_int8.pt
+# Reference-free verifier (production): ship verifier/weights/reffree_full/best/
+# (safetensors, quantized at runtime) but strip its training-only artifacts.
+verifier/weights/**/verifier_int8.pt
+verifier/weights/reffree_full/checkpoints/
+verifier/weights/reffree/
 verifier/weights/router_v2_embeddings.npz
 verifier/weights_smoke/
 verifier/data/

@@ -183,8 +183,8 @@ nadirclaw optimize payload.json`}
             <ul className="space-y-2">
               {[
                 "Everything in self-host",
-                "50 requests/month free on our keys",
-                "Pay-per-savings after 50 (cancel anytime)",
+                "5 requests/month free on our keys",
+                "Pay-per-savings after 5 (cancel anytime)",
                 "Hosted proxy, zero setup",
                 "Web dashboard and analytics",
                 "Semantic cache and dedup",

@@ -29,7 +29,7 @@ const STEPS = [
   {
     n: "01",
     title: "Grab a key",
-    body: "Sign up and a key is generated for you with smart defaults. 50 requests free on our keys, no card or provider keys needed to try it.",
+    body: "Sign up, pick how you want to run, and get a key with smart defaults. 5 requests free on our keys, no card or provider keys needed to try it.",
   },
   {
     n: "02",
