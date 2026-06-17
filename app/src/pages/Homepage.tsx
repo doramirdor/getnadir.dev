@@ -6,6 +6,7 @@ import { StatBand } from "@/components/homepage/StatBand";
 import { BenchmarkSection } from "@/components/homepage/BenchmarkSection";
 import { CalculatorTeaser } from "@/components/homepage/CalculatorTeaser";
 import { HowItWorks } from "@/components/homepage/HowItWorks";
+import { CodeSwitchSection } from "@/components/homepage/CodeSwitchSection";
 import { FeaturesGrid } from "@/components/homepage/FeaturesGrid";
 import { ComparisonTable } from "@/components/homepage/ComparisonTable";
 import { PricingSection } from "@/components/homepage/PricingSection";
@@ -35,6 +36,7 @@ const Homepage = () => {
           moment happens before we ask the visitor to do anything. */}
       <Reveal><CalculatorTeaser /></Reveal>
       <Reveal><HowItWorks /></Reveal>
+      <Reveal><CodeSwitchSection /></Reveal>
       <FeaturesGrid />
       <Reveal><ComparisonTable /></Reveal>
       <Reveal><PricingSection /></Reveal>

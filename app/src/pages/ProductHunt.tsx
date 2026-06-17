@@ -63,7 +63,7 @@ const ProductHunt = () => {
       style={{ fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif" }}
     >
       <SEO
-        title="Nadir — LLM router that cuts your AI bill 60% | Product Hunt"
+        title="Nadir: LLM router that cuts your AI bill 60% | Product Hunt"
         description="Route every prompt to the cheapest model that can handle it. 60% cost savings, 98% quality preserved. Two-line integration, OpenAI compatible."
         path="/producthunt"
       />
@@ -77,7 +77,7 @@ const ProductHunt = () => {
       >
         <div className="max-w-[720px] mx-auto px-6 py-3 flex items-center justify-center gap-2 sm:gap-3 text-[13px] flex-wrap text-center">
           <span className="text-[#ff6154] font-semibold">Featured on Product Hunt</span>
-          <span className="text-[#86868b] hidden sm:inline">—</span>
+          <span className="text-[#86868b] hidden sm:inline">·</span>
           <span className="text-[#424245]">$5 off for supporters. Upvote us →</span>
         </div>
       </a>
@@ -113,7 +113,7 @@ const ProductHunt = () => {
                 boxDecorationBreak: "clone",
               }}
             >
-              Zero quality loss.
+              Keep 98% of the quality.
             </span>
           </h1>
           <p className="text-[17px] md:text-[19px] text-[#424245] mb-8 leading-[1.55] tracking-[-0.01em] max-w-[560px]">
@@ -183,7 +183,12 @@ const ProductHunt = () => {
                 <code className="text-[13px] bg-black/[0.04] px-1.5 py-0.5 rounded font-mono">model="auto"</code>.
                 Watch how little actually changes:
               </p>
-              <CodeSwitchAnimation showTakeaway={false} analyticsLocation="producthunt" />
+              {/* Let the editor breathe wider than the prose column on large
+                  screens (prose stays a readable ~720px; the editor reaches its
+                  native ~860px so even the longest Bedrock line fits). */}
+              <div className="lg:-mx-[80px]">
+                <CodeSwitchAnimation showTakeaway={false} analyticsLocation="producthunt" />
+              </div>
             </div>
             <div>
               <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-1.5">2. Nadir routes each prompt</h3>
@@ -216,33 +221,49 @@ const ProductHunt = () => {
             <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd]">
               <div className="text-[14px] font-semibold text-[#1d1d1f] mb-1">RouterArena #4</div>
               <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
-                72.3 arena_score on RouterArena's official scorer. #4 of 21 routers on the public leaderboard.
+                72.3 arena score on RouterArena's official scorer. #4 of 21 routers on the public leaderboard.
               </p>
             </div>
             <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd]">
-              <div className="text-[14px] font-semibold text-[#1d1d1f] mb-1">RouterBench: 92.1% accuracy</div>
+              <div className="text-[14px] font-semibold text-[#1d1d1f] mb-1">RouterBench: 92.1% routing accuracy</div>
               <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
-                Head-to-head vs Not Diamond's open-source router (27.0%) on 3,313 held-out RouterBench triples.
+                Vs Not Diamond's open-source router (27.0%) on 3,313 held-out RouterBench triples (GPT-3.5/GPT-4 pair).
+                Our cascade verifier reads the candidate answer; the one-shot router does not.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Product Hunt launch offer */}
+        {/* Product Hunt launch offers — two codes, one per account path:
+            PRODUCTHUNT for BYOK subscribers, PHLAUNCH for hosted-credit users. */}
         <section className="py-14 border-t border-black/[0.06]">
           <p className="text-[12px] text-[#86868b] uppercase tracking-[0.1em] font-semibold mb-6">
-            Product Hunt launch offer
+            Product Hunt launch offers
           </p>
-          <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd] max-w-[460px]">
-            <div className="flex items-center justify-between gap-3 mb-1.5">
-              <div className="text-[14px] font-semibold text-[#1d1d1f]">$5 off, BYOK accounts only</div>
-              <code className="text-[12px] bg-black/[0.04] px-2 py-1 rounded font-mono text-[#1d1d1f]">PRODUCTHUNT</code>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd]">
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <div className="text-[14px] font-semibold text-[#1d1d1f]">$5 off your first month</div>
+                <code className="text-[12px] bg-black/[0.04] px-2 py-1 rounded font-mono text-[#1d1d1f]">PRODUCTHUNT</code>
+              </div>
+              <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
+                Using your own provider keys (BYOK). Go Pro and apply the code at checkout. The $5 comes off your Nadir fee, never your API usage.
+              </p>
             </div>
-            <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
-              Bring your own provider keys, go Pro, and apply the code at checkout. The $5 comes off your Nadir fee, never your API usage.{" "}
-              <Link to="/terms#promotions" className="underline hover:text-[#1d1d1f]">Offer terms</Link>.
-            </p>
+            <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd]">
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <div className="text-[14px] font-semibold text-[#1d1d1f]">$5 off a $25 credit top-up</div>
+                <code className="text-[12px] bg-black/[0.04] px-2 py-1 rounded font-mono text-[#1d1d1f]">PHLAUNCH</code>
+              </div>
+              <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
+                On Nadir-managed keys? Add $25 or more of prepaid credit and the code takes $5 off at checkout.
+              </p>
+            </div>
           </div>
+          <p className="text-[12px] text-[#86868b] leading-[1.5] mt-4">
+            First-time customers only, one offer per account.{" "}
+            <Link to="/terms#promotions" className="underline hover:text-[#1d1d1f]">Offer terms</Link>.
+          </p>
         </section>
 
         {/* Bottom CTA */}

@@ -161,6 +161,14 @@ export default function Terms() {
               API usage charges, hosted-key credits, or pass-through provider costs. The offer is limited
               to first-time subscribers and is valid while the promotion is active.
             </p>
+            <p>
+              <strong className="text-foreground">Product Hunt top-up offer.</strong> The code{" "}
+              <code className="text-sm bg-muted px-1.5 py-0.5 rounded font-mono">PHLAUNCH</code>{" "}
+              grants $5 off a prepaid credit top-up of $25 or more, for accounts using Nadir-managed
+              (hosted) keys. It is limited to first-time top-ups, applies to the top-up amount at
+              checkout, and is valid while the promotion is active. Standard pricing applies to
+              subsequent top-ups.
+            </p>
           </section>
 
           <section id="data-deletion" className="space-y-3">

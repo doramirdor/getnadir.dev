@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -225,6 +225,13 @@
     font-family: 'Geist Mono', 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
+  }
+
+  /* Editorial display serif — used for celebratory / headline moments
+     (e.g. the end-of-onboarding "Nice job!" screen). */
+  .font-display {
+    font-family: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+    letter-spacing: -0.01em;
   }
 
   /*
