@@ -272,7 +272,7 @@ const ProductHunt = () => {
             Stop paying Opus rates for Haiku work.
           </h2>
           <p className="text-[15px] text-[#424245] mb-1.5">
-            50 free API calls to start. No credit card.
+            5 free API calls to start. No credit card.
           </p>
           <p className="text-[14px] text-[#424245] mb-8">
             Product Hunt supporters: <code className="text-[13px] bg-black/[0.04] px-1.5 py-0.5 rounded font-mono">PRODUCTHUNT</code> for $5 off your first month, BYOK accounts.

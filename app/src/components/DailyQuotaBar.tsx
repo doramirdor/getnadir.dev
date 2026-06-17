@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap } from "lucide-react";
 
-const DEFAULT_MONTHLY_FREE_LIMIT = 50;
+const DEFAULT_MONTHLY_FREE_LIMIT = 5;
 const CAMPAIGN_LIMITS: Record<string, number> = {};
 
 const startOfMonthUtcIso = () => {
@@ -91,7 +91,7 @@ export const DailyQuotaBar = () => {
 
   const barColor = overLimit
     ? "bg-amber-500"
-    : used >= freeLimit - 10
+    : used >= freeLimit - 2
     ? "bg-amber-400"
     : "bg-emerald-500";
 
