@@ -28,7 +28,7 @@ const STATS = [
   { value: "60%", label: "Lower LLM bill" },
   { value: "98%", label: "Quality preserved" },
   { value: "2 lines", label: "To integrate" },
-  { value: "#3", label: "RouterArena leaderboard" },
+  { value: "#4", label: "RouterArena leaderboard" },
 ];
 
 const ProductHunt = () => {
@@ -72,7 +72,7 @@ const ProductHunt = () => {
         <div className="max-w-[720px] mx-auto px-6 py-3 flex items-center justify-center gap-3 text-[13px]">
           <span className="text-[#ff6154] font-semibold">Featured on Product Hunt</span>
           <span className="text-[#86868b]">—</span>
-          <span className="text-[#424245]">50 free API calls for PH supporters</span>
+          <span className="text-[#424245]">$5 off for launch-day supporters</span>
         </div>
       </div>
 
@@ -221,17 +221,34 @@ response = client.chat.completions.create(
           </p>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd]">
-              <div className="text-[14px] font-semibold text-[#1d1d1f] mb-1">RouterArena #3</div>
+              <div className="text-[14px] font-semibold text-[#1d1d1f] mb-1">RouterArena #4</div>
               <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
-                0.733 arena_score on the official scorer (n=8,400). Top 3 on the public leaderboard.
+                72.3 arena_score on RouterArena's official scorer. #4 of 21 routers on the public leaderboard.
               </p>
             </div>
             <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd]">
               <div className="text-[14px] font-semibold text-[#1d1d1f] mb-1">RouterBench: 92.1% accuracy</div>
               <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
-                Head-to-head vs Not Diamond (27.0%) on 11,420 held-out triples. Zero training-set contamination.
+                Head-to-head vs Not Diamond's open-source router (27.0%) on 3,313 held-out RouterBench triples.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Product Hunt launch offer */}
+        <section className="py-14 border-t border-black/[0.06]">
+          <p className="text-[12px] text-[#86868b] uppercase tracking-[0.1em] font-semibold mb-6">
+            Product Hunt launch offer
+          </p>
+          <div className="p-5 rounded-xl border border-black/[0.08] bg-[#fbfbfd] max-w-[460px]">
+            <div className="flex items-center justify-between gap-3 mb-1.5">
+              <div className="text-[14px] font-semibold text-[#1d1d1f]">$5 off, BYOK accounts only</div>
+              <code className="text-[12px] bg-black/[0.04] px-2 py-1 rounded font-mono text-[#1d1d1f]">PRODUCTHUNT</code>
+            </div>
+            <p className="text-[13px] text-[#424245] leading-[1.5] m-0">
+              Bring your own provider keys, go Pro, and apply the code at checkout. The $5 comes off your Nadir fee, never your API usage.{" "}
+              <Link to="/terms#promotions" className="underline hover:text-[#1d1d1f]">Offer terms</Link>.
+            </p>
           </div>
         </section>
 

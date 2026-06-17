@@ -45,6 +45,12 @@ const COMPARE = [
 /** @type {{path:string,title:string,description:string}[]} */
 const ROUTES = [
   {
+    path: "/producthunt",
+    title: "Nadir — LLM router that cuts your AI bill 60% | Product Hunt",
+    description:
+      "Route every prompt to the cheapest model that can handle it. 60% cost savings, 98% quality preserved. Two-line integration, OpenAI compatible.",
+  },
+  {
     path: "/pricing",
     title: "Pricing - Nadir",
     description:
@@ -114,6 +120,12 @@ const ROUTES = [
     title: "Context Optimize - Nadir | Cut LLM Input Tokens 30-70%",
     description:
       "Lossless context optimization that trims bloated LLM payloads before they hit your bill. Safe mode free, aggressive mode on the hosted plan.",
+  },
+  {
+    path: "/switch",
+    title: "Switch to Nadir | One-line migration from OpenAI, Bedrock & Anthropic",
+    description:
+      "Nadir is an OpenAI-compatible LLM router. Move your OpenAI, AWS Bedrock, or Anthropic calls onto Nadir by swapping the base URL and setting model=auto. See the exact diff.",
   },
   {
     path: "/docs",
