@@ -221,6 +221,8 @@ class StripeService:
             }],
             success_url=success_url,
             cancel_url=cancel_url,
+            # No promo codes on credit top-ups: promotional discounts must come
+            # off Nadir's fee, never off prepaid API usage (hosted-key spend).
             metadata={"purpose": "credit_topup", "nadir_user_id": user_id},
             payment_intent_data={
                 "metadata": {"purpose": "credit_topup", "nadir_user_id": user_id},

@@ -153,6 +153,14 @@ export default function Terms() {
               <li>Promotions are non-transferable and have no cash value.</li>
               <li>Abuse or fraudulent use of promotional codes may result in account suspension or termination.</li>
             </ul>
+            <p>
+              <strong className="text-foreground">Product Hunt launch offer.</strong> The code{" "}
+              <code className="text-sm bg-muted px-1.5 py-0.5 rounded font-mono">PRODUCTHUNT</code>{" "}
+              grants $5 off your first month of Nadir Pro and is available to bring-your-own-key (BYOK)
+              accounts only. The discount applies solely to Nadir's own service fees. It does not reduce
+              API usage charges, hosted-key credits, or pass-through provider costs. The offer is limited
+              to first-time subscribers and is valid while the promotion is active.
+            </p>
           </section>
 
           <section id="data-deletion" className="space-y-3">
