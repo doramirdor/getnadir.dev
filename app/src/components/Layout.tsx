@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
+import { RoutingLoader } from "@/components/RoutingLoader";
 import { useAuth } from "@/hooks/useAuth";
 import { lazy } from "react";
 const Auth = lazy(() => import("@/pages/Auth"));
@@ -66,14 +67,7 @@ const Layout = () => {
     }
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-semibold text-xs">N</span>
-          </div>
-          <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-            <div className="h-full w-1/2 bg-primary rounded-full animate-pulse" />
-          </div>
-        </div>
+        <RoutingLoader label="Loading…" />
       </div>
     );
   }

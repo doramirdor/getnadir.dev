@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RoutingLoader } from "@/components/RoutingLoader";
 import { Button } from "@/components/ui/button";
 import { Plus, Copy, Trash2, Key, Settings2, Eye, EyeOff } from "lucide-react";
 import {
@@ -330,9 +331,7 @@ const ApiKeys = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-          <div className="h-full w-1/2 bg-primary/40 rounded-full animate-pulse" />
-        </div>
+        <RoutingLoader />
       </div>
     );
   }

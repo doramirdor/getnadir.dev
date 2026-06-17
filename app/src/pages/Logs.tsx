@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RoutingLoader } from "@/components/RoutingLoader";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -229,7 +230,7 @@ const Logs = () => {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="h-1 w-16 bg-muted rounded-full overflow-hidden"><div className="h-full w-1/2 bg-primary/40 rounded-full animate-pulse" /></div>
+              <RoutingLoader />
             </div>
           ) : (
             <Table>
