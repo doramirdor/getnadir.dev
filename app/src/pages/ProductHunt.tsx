@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { trackPageView, trackCtaClick, trackAuthAttempt } from "@/utils/analytics";
+import { CodeSwitchAnimation } from "@/components/marketing/CodeSwitchAnimation";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -67,14 +68,19 @@ const ProductHunt = () => {
         path="/producthunt"
       />
 
-      {/* PH banner */}
-      <div className="bg-[#ff6154]/[0.06] border-b border-[#ff6154]/[0.12]">
-        <div className="max-w-[720px] mx-auto px-6 py-3 flex items-center justify-center gap-3 text-[13px]">
+      {/* PH banner — links to the live Product Hunt post so visitors can upvote */}
+      <a
+        href="https://www.producthunt.com/posts/nadir"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block bg-[#ff6154]/[0.06] border-b border-[#ff6154]/[0.12] no-underline hover:bg-[#ff6154]/[0.1] transition-colors"
+      >
+        <div className="max-w-[720px] mx-auto px-6 py-3 flex items-center justify-center gap-2 sm:gap-3 text-[13px] flex-wrap text-center">
           <span className="text-[#ff6154] font-semibold">Featured on Product Hunt</span>
-          <span className="text-[#86868b]">—</span>
-          <span className="text-[#424245]">$5 off for launch-day supporters</span>
+          <span className="text-[#86868b] hidden sm:inline">—</span>
+          <span className="text-[#424245]">$5 off for supporters. Upvote us →</span>
         </div>
-      </div>
+      </a>
 
       {/* Header — minimal */}
       <header className="border-b border-black/[0.06] bg-white">
@@ -172,25 +178,12 @@ const ProductHunt = () => {
           <div className="space-y-8">
             <div>
               <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-1.5">1. Swap the base URL</h3>
-              <p className="text-[14px] text-[#424245] mb-4 leading-[1.5]">
-                Point your existing OpenAI SDK at Nadir. Set <code className="text-[13px] bg-black/[0.04] px-1.5 py-0.5 rounded font-mono">model="auto"</code>.
-                Everything else stays the same.
+              <p className="text-[14px] text-[#424245] mb-5 leading-[1.5]">
+                Point your existing OpenAI, Bedrock, or Anthropic call at Nadir and set{" "}
+                <code className="text-[13px] bg-black/[0.04] px-1.5 py-0.5 rounded font-mono">model="auto"</code>.
+                Watch how little actually changes:
               </p>
-              <div className="bg-[#1d1d1f] rounded-xl p-5 overflow-x-auto">
-                <pre className="text-[13px] text-[#e5e5e7] font-mono leading-[1.7] m-0">
-                  <code>{`from openai import OpenAI
-
-client = OpenAI(
-    base_url="https://api.getnadir.com/v1",
-    api_key="nd-..."  # your Nadir key
-)
-
-response = client.chat.completions.create(
-    model="auto",  # Nadir picks the best model
-    messages=[{"role": "user", "content": prompt}]
-)`}</code>
-                </pre>
-              </div>
+              <CodeSwitchAnimation showTakeaway={false} analyticsLocation="producthunt" />
             </div>
             <div>
               <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-1.5">2. Nadir routes each prompt</h3>
@@ -257,22 +250,43 @@ response = client.chat.completions.create(
           <h2 className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.03em] mb-4 text-[#1d1d1f]">
             Stop paying Opus rates for Haiku work.
           </h2>
-          <p className="text-[15px] text-[#424245] mb-8">
-            50 free API calls. No credit card. No strings attached.
+          <p className="text-[15px] text-[#424245] mb-1.5">
+            50 free API calls to start. No credit card.
           </p>
-          <button
-            type="button"
-            onClick={() => handleOAuth("github")}
-            disabled={oauthLoading !== null}
-            className="inline-flex items-center justify-center gap-3 px-7 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] disabled:opacity-60"
-          >
-            {oauthLoading === "github" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitHubIcon />}
-            Get started with GitHub
-          </button>
-          <div className="mt-4">
+          <p className="text-[14px] text-[#424245] mb-8">
+            Product Hunt supporters: <code className="text-[13px] bg-black/[0.04] px-1.5 py-0.5 rounded font-mono">PRODUCTHUNT</code> for $5 off your first month, BYOK accounts.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center max-w-[440px] mx-auto">
+            <button
+              type="button"
+              onClick={() => handleOAuth("github")}
+              disabled={oauthLoading !== null}
+              className="inline-flex items-center justify-center gap-3 px-7 py-[14px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)] disabled:opacity-60"
+            >
+              {oauthLoading === "github" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitHubIcon />}
+              Get started with GitHub
+            </button>
+            <button
+              type="button"
+              onClick={() => handleOAuth("google")}
+              disabled={oauthLoading !== null}
+              className="inline-flex items-center justify-center gap-3 px-7 py-[14px] bg-white text-[#1d1d1f] border border-black/[0.12] rounded-full text-[15px] font-medium hover:bg-[#f5f5f7] active:scale-[0.97] transition-[background-color,transform] duration-150 ease-out tracking-[-0.01em] disabled:opacity-60"
+            >
+              {oauthLoading === "google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              Continue with Google
+            </button>
+          </div>
+          <div className="mt-4 flex items-center justify-center gap-4 text-[13px]">
+            <Link
+              to={`/auth?mode=signup&ref=${PH_REF}`}
+              className="text-[#424245] no-underline hover:text-[#1d1d1f] transition-colors"
+            >
+              Sign up with email
+            </Link>
+            <span className="text-[#d2d2d7]">·</span>
             <Link
               to="/"
-              className="text-[13px] text-[#86868b] no-underline hover:text-[#1d1d1f] transition-colors"
+              className="text-[#86868b] no-underline hover:text-[#1d1d1f] transition-colors"
             >
               See the full site
             </Link>
