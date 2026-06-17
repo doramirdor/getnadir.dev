@@ -67,7 +67,7 @@ class Settings:
         self.COMPLEXITY_ANALYZER_PROVIDER: str = os.getenv("COMPLEXITY_ANALYZER_PROVIDER", "openai")
         
         # New ML-based complexity analyzer settings
-        self.COMPLEXITY_ANALYZER_TYPE: str = os.getenv("COMPLEXITY_ANALYZER_TYPE", "trained")  # trained (default), cost_aware (NadirRoute per-model heads), heuristic, binary, two_tower, gemini, bert, matrix_factorization, ensemble, wide_deep_asym
+        self.COMPLEXITY_ANALYZER_TYPE: str = os.getenv("COMPLEXITY_ANALYZER_TYPE", "trained")  # trained (default), cost_aware (NadirRoute per-model heads), planspace (FLIGHTPLAN plan-space + conformal floors), heuristic, binary, two_tower, gemini, bert, matrix_factorization, ensemble, wide_deep_asym
         self.BERT_MODEL_PATH: str = os.getenv("BERT_MODEL_PATH", "distilbert-base-uncased")
         self.MF_MODEL_PATH: str = os.getenv("MF_MODEL_PATH", "")  # Path to pre-trained MF model
         self.TWO_TOWER_MODEL_PATH: str = os.getenv("TWO_TOWER_MODEL_PATH", "")  # Path to pre-trained Two-Tower model
@@ -161,23 +161,35 @@ class Settings:
     # latency/cost shortcut on high-confidence cases, verifier-gated cascade
     # handles the rest. Rollback to legacy routing: CASCADE_ENABLED=false.
         self.CASCADE_ENABLED: bool = os.getenv("CASCADE_ENABLED", "True").lower() in ("true", "1", "t")
+        # Reference-free DeBERTa-v3-small verifier, retrained 2026-06-16 to score
+        # the cheap answer ALONE — matching how this cascade actually calls it
+        # (reference=None, see cascade_router.py). The previous default
+        # (verifier/weights/best) was trained WITH the expensive answer in the
+        # pair; called reference-free in prod it scored AUROC ~0.52 (≈random) and
+        # its published 0.961 was oracle-fed (only valid with the expensive answer
+        # this cascade exists to avoid). New checkpoint: held-out test AUROC 0.776,
+        # ECE 0.028 (well-calibrated). Rollback: CASCADE_ENABLED=false.
         self.CASCADE_VERIFIER_WEIGHTS_PATH: str = os.getenv(
             "CASCADE_VERIFIER_WEIGHTS_PATH",
-            "verifier/weights/best",
+            "verifier/weights/reffree_full/best",
         )
-        # Operating point τ=0.80 matches the public marketing claim of
-        # "98% of always-Opus quality preserved" on RouterBench held-out
-        # (catastrophic ≤ 1.7%, see verifier/reports/eval_20260526T184516.json
-        # thresholds[]). Earlier default was 0.70 (97.6% quality preserved).
-        # Per-customer overrides via profiles.model_parameters.cascade.acceptance_threshold.
-        self.CASCADE_DEFAULT_THRESHOLD: float = float(os.getenv("CASCADE_DEFAULT_THRESHOLD", "0.80"))
+        # Operating point τ=0.85 on the reference-free verifier. Honest held-out
+        # deployed numbers (RouterBench, GPT-4 baseline, cost_ratio 12):
+        # ≈38% cost saved / 95% served-accuracy / ~5% catastrophic. Raise to trade
+        # savings for safety (0.90→27%/3.4%, 0.92→20%/2.4%). The earlier "98%
+        # quality / catastrophic ≤1.7%" was the ORACLE-fed figure and does NOT hold
+        # reference-free — re-calibrate τ on real logged traffic before quoting
+        # numbers externally. Per-customer override: model_parameters.cascade.acceptance_threshold.
+        self.CASCADE_DEFAULT_THRESHOLD: float = float(os.getenv("CASCADE_DEFAULT_THRESHOLD", "0.85"))
         self.CASCADE_TIMEOUT_MS: int = int(os.getenv("CASCADE_TIMEOUT_MS", "80"))
         # Mode applied when a profile does not explicitly set
         # `model_parameters.cascade.mode`. "active" routes traffic through
         # the cascade and serves escalated responses when the verifier
-        # rejects; "shadow" only logs decisions. We default to active now
-        # that the verifier is calibrated (AUROC 0.961 on RouterBench
-        # held-out, ECE 0.016, kill switch + fail-open both wired).
+        # rejects; "shadow" only logs decisions. Default active: the
+        # reference-free verifier is calibrated (held-out AUROC 0.776, ECE
+        # 0.028), kill switch (CASCADE_ENABLED) + fail-open both wired.
+        # (Prior comment cited AUROC 0.961 — that was the oracle-fed eval,
+        # not the deployed reference-free path; see CASCADE_VERIFIER_WEIGHTS_PATH.)
         self.CASCADE_DEFAULT_MODE: str = os.getenv("CASCADE_DEFAULT_MODE", "active")
         # Iterative refinement (IP-1 Move 5): when the verifier rejects
         # the cheap response, instead of immediately escalating to the
