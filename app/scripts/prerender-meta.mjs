@@ -46,7 +46,7 @@ const COMPARE = [
 const ROUTES = [
   {
     path: "/producthunt",
-    title: "Nadir — LLM router that cuts your AI bill 60% | Product Hunt",
+    title: "Nadir: LLM router that cuts your AI bill 60% | Product Hunt",
     description:
       "Route every prompt to the cheapest model that can handle it. 60% cost savings, 98% quality preserved. Two-line integration, OpenAI compatible.",
   },

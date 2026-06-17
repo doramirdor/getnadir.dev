@@ -48,6 +48,7 @@ const SolutionFallback = lazy(() => import("./pages/solutions/Fallback"));
 const SolutionAnalytics = lazy(() => import("./pages/solutions/SolutionAnalytics"));
 const SolutionClustering = lazy(() => import("./pages/solutions/Clustering"));
 const ProductHunt = lazy(() => import("./pages/ProductHunt"));
+const Switch = lazy(() => import("./pages/Switch"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -91,21 +92,46 @@ const GlobalAsyncErrorHandler = () => {
 };
 
 const ScrollToTop = () => {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (!hash) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    // Hash deep-link (e.g. /terms#promotions): scroll to the anchor instead of
+    // the top. Routes are lazy-loaded, so the target may not be in the DOM on
+    // the first tick — poll briefly before giving up.
+    const id = decodeURIComponent(hash.slice(1));
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ block: "start" });
+        return;
+      }
+      if (tries++ < 20) timer = setTimeout(tryScroll, 100);
+    };
+    tryScroll();
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [pathname, hash]);
   return null;
 };
 
-// Capture first-touch attribution (ref / utm_*) once at app boot, so every
-// subsequent auth event can be broken down by signup source in PostHog.
+// Capture first-touch attribution (ref / utm_*) at app boot AND on client-side
+// navigations that arrive carrying params (e.g. the Product Hunt page's
+// /auth?ref=producthunt email link, which never triggers a full reload).
+// captureAttributionFromUrl is first-touch and idempotent, so re-running it
+// only ever stores the first attribution seen in the session.
 const AttributionCapture = () => {
+  const { pathname, search } = useLocation();
   useEffect(() => {
     import("@/utils/attribution").then(({ captureAttributionFromUrl }) => {
       captureAttributionFromUrl();
     });
-  }, []);
+  }, [pathname, search]);
   return null;
 };
 
@@ -137,6 +163,7 @@ const App = () => (
             <Route path="/self-host" element={<OpenClaw />} />
             <Route path="/openclaw" element={<OpenClaw />} />
             <Route path="/optimize" element={<Optimize />} />
+            <Route path="/switch" element={<Switch />} />
             <Route path="/solutions" element={<Solutions />} />
             <Route path="/solutions/optimize" element={<Optimize />} />
             <Route path="/solutions/routing" element={<SolutionRouting />} />

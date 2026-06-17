@@ -30,6 +30,7 @@ import {
   trackFirstCallResult,
 } from "@/utils/analytics";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
+import OnboardingCelebration from "@/components/OnboardingCelebration";
 import { DailyQuotaBar } from "@/components/DailyQuotaBar";
 import { getStoredAttribution } from "@/utils/attribution";
 
@@ -411,14 +412,10 @@ const Onboarding = () => {
     }
   };
 
-  useEffect(() => {
-    if (!showCelebration) return;
-    const timer = setTimeout(() => {
-      navigate("/dashboard");
-      toast({ title: "Welcome to Nadir!", description: "Your setup is complete." });
-    }, 2400);
-    return () => clearTimeout(timer);
-  }, [showCelebration, navigate, toast]);
+  const handleCelebrationContinue = () => {
+    navigate("/dashboard");
+    toast({ title: "Welcome to Nadir!", description: "Your setup is complete." });
+  };
 
   const getSnippet = (lang: string) => {
     const key = createdApiKey || "<YOUR_NADIR_API_KEY>";
@@ -459,32 +456,14 @@ console.log(response.choices[0].message.content);`;
   }'`;
   };
 
-  // Celebration overlay
+  // Celebration takeover — the editorial "Nice job!" end-of-onboarding moment.
   if (showCelebration) {
     return (
-      <div className="max-w-2xl mx-auto flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
-          <div className="relative mx-auto w-20 h-20">
-            <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
-            <div className="relative w-20 h-20 bg-primary rounded-full flex items-center justify-center">
-              <Check className="w-10 h-10 text-primary-foreground" strokeWidth={3} />
-            </div>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">You're all set!</h1>
-            <p className="text-muted-foreground mt-1">Redirecting you to the dashboard...</p>
-          </div>
-          <div className="flex justify-center gap-1">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                style={{ animationDelay: `${i * 150}ms` }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      <OnboardingCelebration
+        result={testResult}
+        freeLimit={freeLimit}
+        onContinue={handleCelebrationContinue}
+      />
     );
   }
 

@@ -291,6 +291,15 @@ export const HeroSection = () => {
             Drop-in replacement for the SDKs you already use
           </p>
           <IntegrationLogos />
+          <div className="mt-6 text-center">
+            <a
+              href="/switch"
+              onClick={() => trackCtaClick("see_the_switch", "hero_integrations")}
+              className="inline-flex items-center text-[13.5px] font-medium text-[#1d1d1f] no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
+            >
+              See the one-line switch from OpenAI or Bedrock <span className="ml-1 text-[13px]">›</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
