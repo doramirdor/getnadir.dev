@@ -142,10 +142,10 @@ export const BenchmarkSection = () => {
                 RouterArena
               </p>
               <div className="text-[44px] md:text-[52px] font-semibold tracking-[-0.035em] leading-[0.95] tabular-nums mb-3">
-                0.733
+                72.3
               </div>
               <p className="text-[14px] md:text-[15px] text-[#d2d2d7] m-0 leading-[1.5] tracking-[-0.005em] mb-5">
-                arena_score on the official scorer, full split (n=8,400). Top 3 on the public RouterArena leaderboard, behind only Sqwish and AgentForge.
+                arena_score on the official scorer. #4 of 21 routers on the public RouterArena leaderboard.
               </p>
               <a
                 href="https://routeworks.github.io/leaderboard"
