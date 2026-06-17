@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { RoutingLoader } from "@/components/RoutingLoader";
 import { trackAuthSuccess } from "@/utils/analytics";
 import { getStoredAttribution } from "@/utils/attribution";
 import { redeemReferralCode } from "@/services/referralsApi";
@@ -79,15 +80,7 @@ const AuthCallback = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-          <span className="text-primary-foreground font-semibold text-xs">N</span>
-        </div>
-        <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
-          <div className="h-full w-1/2 bg-primary rounded-full animate-pulse" />
-        </div>
-        <p className="text-sm text-muted-foreground mt-2">Signing you in...</p>
-      </div>
+      <RoutingLoader label="Signing you in…" />
     </div>
   );
 };
