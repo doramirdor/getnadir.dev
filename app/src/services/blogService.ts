@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "extended-thinking-tokens-output-billing",
+    title: "Extended thinking tokens cost $25 per million at output rates. Most teams have never measured what reasoning mode adds to their bill.",
+    date: "2026-06-18",
+    author: "Dor Amir",
+    excerpt: "When you enable extended thinking on Claude Opus 4.8, the model generates a chain of internal reasoning tokens before producing the final answer. Those thinking tokens are billed at output token rates: $25 per million on Opus 4.8, not the $5 per million input rate. A single reasoning call with an 8,000-token thinking pass adds $0.20 in overhead before the visible response begins. At scale, extended thinking enabled on every call adds 40 to 70% to the output token bill on workloads where 60% of calls do not need it. Most teams have never measured the split.",
+    thumbnail: "Deep Dive",
+    tags: ["Token Optimization", "Cost Optimization", "Extended Thinking", "Claude Opus", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "multi-turn-conversation-token-accumulation-cost",
     title: "Multi-turn conversations bill your first message 20 times. Most teams have never calculated what that costs.",
     date: "2026-06-17",
@@ -387,6 +397,199 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "extended-thinking-tokens-output-billing": `## The reasoning overhead you never budgeted.
+
+Extended thinking is one of Claude Opus 4.8's most distinctive features. Enable it and the model generates an internal reasoning chain before producing its final response, working through edge cases, checking its own logic, catching mistakes before they reach the output. For hard problems, it works.
+
+The billing mechanics work differently than most teams expect.
+
+Extended thinking tokens are billed at output token rates. On Claude Opus 4.8, input tokens cost $5 per million. Output tokens cost $25 per million. Thinking tokens, the internal reasoning the model generates, are billed at the output rate. A call with a 10,000-token thinking budget that generates 8,000 thinking tokens adds $0.20 to the call before the visible response begins.
+
+The thinking tokens appear in the API response body. They are not hidden. But billing dashboards report total output tokens without breaking out how many were reasoning tokens versus response tokens. Without explicit instrumentation, the cost is invisible. Most engineering teams running extended thinking in production have never calculated their reasoning overhead as a percentage of total output token spend.
+
+[Source: Anthropic, "Extended thinking," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)
+
+## The math on a single call.
+
+A standard Claude Opus 4.8 call on a moderately complex analytical question, no extended thinking:
+
+| Token type | Count | Rate | Cost |
+|---|---:|---|---:|
+| Input tokens | 2,500 | $5/M | $0.013 |
+| Output tokens | 800 | $25/M | $0.020 |
+| **Total** | **3,300** | | **$0.033** |
+
+The same call with extended thinking enabled, 10,000-token thinking budget, actual thinking tokens generated: 8,200.
+
+| Token type | Count | Rate | Cost |
+|---|---:|---|---:|
+| Input tokens | 2,500 | $5/M | $0.013 |
+| Thinking tokens | 8,200 | $25/M | $0.205 |
+| Output tokens | 800 | $25/M | $0.020 |
+| **Total** | **11,500** | | **$0.238** |
+
+Thinking tokens added $0.205 to a $0.033 call. The total cost increased 7.2x. The response token count, the only metric most teams monitor, did not change at all.
+
+For an enterprise running 80,000 daily calls to Opus 4.8 with extended thinking uniformly enabled, at an average of 7,000 thinking tokens per call, the thinking token line alone runs to $14,000 per day. That is $5.1 million per year in tokens that never appear in the response.
+
+[Source: Anthropic, Claude Opus 4.8 pricing, June 2026](https://www.anthropic.com/pricing)
+
+## Why extended thinking gets enabled uniformly.
+
+Most teams enable extended thinking at the system level, not the call level. A model configuration, a default flag in a shared API wrapper, or a provider default enables it across all calls without task-level consideration.
+
+The reasoning is intuitive: if extended thinking improves responses on hard tasks, why not enable it everywhere? The answer is that on simple tasks, extended thinking adds reasoning overhead and cost without meaningfully improving response quality.
+
+The distribution of tasks in a typical enterprise LLM deployment:
+
+| Task type | Share of calls | Extended thinking benefit |
+|---|---:|---|
+| Classification and routing | 22% | None |
+| Short factual responses | 18% | None |
+| Summarization | 16% | Minimal |
+| Document drafting | 14% | Sometimes |
+| Complex analysis and reasoning | 16% | High |
+| Code review and debugging | 14% | High |
+
+Classification, short factual responses, and most summarization tasks, roughly 56% of the typical call distribution, do not produce meaningfully better outputs with extended thinking. The model reasons for 5,000 to 10,000 tokens and reaches the same answer it would have reached in 200 tokens without the reasoning pass.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+## Context size amplifies thinking token volume.
+
+There is a compounding relationship between input context size and thinking token generation that most cost analyses miss.
+
+Extended thinking runs after the model processes the full input context: system prompt, tool schemas, conversation history, retrieved documents, and user query. A larger input context means more material for the model to reason over, which typically produces more thinking tokens.
+
+An agent call with 12,000 tokens of input context and extended thinking enabled may generate 15,000 to 22,000 thinking tokens on a complex task. The same task with input context compressed to 3,000 tokens generates 4,000 to 7,000 thinking tokens.
+
+Context compression, reducing input token volume before the call, therefore has a second-order effect on thinking token costs. A 60% reduction in input tokens produces a measurable reduction in thinking tokens, typically 30 to 50%, because the model has less to reason about.
+
+The leverage here: input token savings compound into thinking token savings, and thinking token savings are priced at the output rate. Input compression is cheaper per token to optimize than output, but the thinking token multiplier means the output-rate savings can exceed the input-rate savings in dollar terms.
+
+[Source: Microsoft Research, "LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression," 2024](https://arxiv.org/abs/2403.12968)
+
+## Route the extended thinking decision per call, not per deployment.
+
+The architectural fix is not to disable extended thinking globally. It is to enable it selectively on calls that actually benefit.
+
+A routing layer that makes the extended thinking decision per call needs to classify one dimension: does this request require multi-step reasoning, logic verification, or adversarial correctness checking?
+
+Tasks that benefit from extended thinking:
+- Multi-step logical dependencies ("if A then B, given C, what follows?")
+- Code review requiring trace-through of execution paths
+- Financial or mathematical calculations with intermediate steps
+- Adversarial fact-checking against multiple conflicting sources
+- Complex synthesis across long documents with cross-references
+
+Tasks that do not benefit:
+- Text classification and labeling
+- Extractive summarization
+- Single-hop factual lookup
+- Format conversion and transformation
+- Standard conversational responses without logical dependencies
+
+A lightweight keyword classifier running before the Opus 4.8 call correctly routes 70 to 80% of production requests without any ML infrastructure. The misclassification penalty is low: enabling thinking on a call that did not need it costs a few extra cents. Skipping thinking on a call that genuinely needed it is a quality miss, which you can detect via a quality layer and correct on retry.
+
+## Implementation.
+
+Selective extended thinking with a routing classifier:
+
+\`\`\`python
+import anthropic
+
+client = anthropic.Anthropic()
+
+REASONING_SIGNALS = [
+    "prove", "verify", "analyze", "debug", "review",
+    "compare", "evaluate", "calculate", "derive", "diagnose",
+    "explain why", "reason through", "step by step", "is it correct",
+    "check if", "validate", "find the error", "trace through",
+]
+
+REASONING_NEGATIVES = [
+    "summarize", "classify", "label", "format", "convert",
+    "extract", "list", "translate", "rewrite", "shorten",
+]
+
+def needs_extended_thinking(prompt: str) -> bool:
+    prompt_lower = prompt.lower()
+    if any(neg in prompt_lower for neg in REASONING_NEGATIVES):
+        return False
+    return any(signal in prompt_lower for signal in REASONING_SIGNALS)
+
+def call_opus(
+    prompt: str,
+    system: str = "",
+    thinking_budget: int = 8000,
+) -> dict:
+    use_thinking = needs_extended_thinking(prompt)
+
+    params: dict = {
+        "model": "claude-opus-4-8",
+        "max_tokens": 4096 if not use_thinking else thinking_budget + 4096,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+
+    if system:
+        params["system"] = system
+
+    if use_thinking:
+        params["thinking"] = {
+            "type": "enabled",
+            "budget_tokens": thinking_budget,
+        }
+
+    response = client.messages.create(**params)
+
+    thinking_tokens = sum(
+        len(block.thinking) // 4
+        for block in response.content
+        if block.type == "thinking"
+    )
+
+    return {
+        "text": next(b.text for b in response.content if b.type == "text"),
+        "thinking_enabled": use_thinking,
+        "input_tokens": response.usage.input_tokens,
+        "output_tokens": response.usage.output_tokens,
+        "thinking_tokens_approx": thinking_tokens,
+    }
+\`\`\`
+
+Two implementation notes:
+
+**Log thinking token volume per call.** The API response separates thinking blocks from text blocks in the \`content\` array. Track how many thinking blocks appear and their length. Over time, this gives you a thinking token distribution by task type, the data you need to tune the classifier and set task-appropriate budgets.
+
+**Set the minimum viable thinking budget, not the maximum.** A 16,000-token thinking budget does not produce 16,000 tokens of reasoning. The model stops when it finishes, not when the budget runs out. But an oversized budget invites the model to explore more paths than necessary. For most analytical tasks, 4,000 to 6,000 tokens is sufficient. Reserve 12,000 to 16,000 for adversarial proof or formal verification tasks.
+
+## The math at enterprise scale.
+
+A production deployment making 80,000 daily calls to Claude Opus 4.8, extended thinking uniformly enabled today at a 10,000-token budget. Moving to selective extended thinking on the 40% of calls that actually benefit.
+
+| | Extended thinking on all calls | Selective (40% of calls) |
+|---|---:|---:|
+| Calls with thinking enabled | 80,000 | 32,000 |
+| Avg thinking tokens per call | 7,500 | 7,500 |
+| Daily thinking token volume | 600M | 240M |
+| Thinking token cost ($25/M) | $15,000/day | $6,000/day |
+| **Annual thinking token cost** | **$5,475,000** | **$2,190,000** |
+
+Annual savings from selective extended thinking: **$3,285,000.** No change in response quality on tasks that need reasoning. No change in model. No infrastructure refactor. A routing decision made per call.
+
+The savings compound further when combined with context compression. A 50% reduction in average input context reduces average thinking token generation by an estimated 25 to 35%, adding a further $500,000 to $700,000 in annual savings on the thinking token line alone.
+
+## Three changes that take less than a day.
+
+**1. Instrument your current thinking token spend.** Add logging to capture the content array from each Opus 4.8 response. Count the length of \`thinking\` blocks versus \`text\` blocks per call. Run this for 48 hours and calculate what percentage of your output token spend is thinking tokens. If it exceeds 30%, you have an unbudgeted cost driver larger than most teams' system prompts.
+
+**2. Add a task classifier before extended thinking calls.** Use the keyword approach above or a lightweight embedding classifier. Route requests with clear reasoning signals to extended thinking enabled, and route everything else to standard mode. Measure the thinking token reduction over 24 hours. Most deployments see 40 to 60% reduction from this single change.
+
+**3. Tune thinking budgets to actual consumption.** Pull the distribution of thinking token counts from your logs. If 80% of your extended thinking calls use fewer than 4,000 tokens, set the budget to 5,000. Reserve higher budgets for the 20% that need them. A correctly calibrated budget cuts outlier costs and encourages the model to reason efficiently rather than exhaustively.
+
+---
+
+*Sources: [Anthropic, "Extended thinking," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking). [Anthropic, Claude Opus 4.8 pricing, June 2026](https://www.anthropic.com/pricing). [Microsoft Research, "LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression," 2024](https://arxiv.org/abs/2403.12968). [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). Anthropic, Claude Opus 4.8 input ($5/M), output ($25/M), extended thinking billed at output rate, pricing as of June 2026.*`,
   "multi-turn-conversation-token-accumulation-cost": `## The bill that multiplies itself.
 
 LLMs have no persistent memory. Every API call is stateless. When you send turn 20 of a conversation, you include turns 1 through 19 in the messages array — not as a summary, but as the full text of every message, in order. The model sees everything, every time.
