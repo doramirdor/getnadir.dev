@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "system-prompt-bloat-llm-cost-audit",
+    title: "Your system prompt grew from 500 to 8,000 tokens and nobody noticed. Here is what that costs.",
+    date: "2026-06-19",
+    author: "Dor Amir",
+    excerpt: "Production system prompts grow 9x in their first year. A 6,000-token system prompt sent across 100,000 daily API calls costs $1.1 million per year in system prompt tokens alone. That cost does not appear as a line item in any billing dashboard. It is absorbed into total input tokens, invisible but compounding on every single call. A three-step audit process typically finds 30 to 50% reduction in the first afternoon. Combined with LLMLingua-2 compression and prompt caching, the annual cost drops 96%. Most teams have never run the audit.",
+    thumbnail: "Deep Dive",
+    tags: ["Token Optimization", "Cost Optimization", "System Prompts", "Prompt Compression", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "extended-thinking-tokens-output-billing",
     title: "Extended thinking tokens cost $25 per million at output rates. Most teams have never measured what reasoning mode adds to their bill.",
     date: "2026-06-18",
@@ -397,6 +407,194 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "system-prompt-bloat-llm-cost-audit": `## The cost that compounds with every API call.
+
+There is a billing pattern that most LLM cost analyses miss — not because it is complex, but because it is invisible in the structure of the API call itself.
+
+Your system prompt is billed on every single API call, in full, at input token rates. Not once per session. Not cached by default. Every call.
+
+A 6,000-token system prompt sent across 100,000 daily API calls generates 600 million input tokens per day. At Claude Opus 4.8 pricing of $5 per million input tokens, that is $3,000 per day — $1.1 million per year — in system prompt tokens alone. The user query, the conversation history, and the retrieved context are additional.
+
+Most teams have never run this calculation. The system prompt does not appear as a separate line item in billing dashboards. It is absorbed into total input tokens alongside everything else. The cost is real. The visibility is zero.
+
+[Source: Anthropic, "System Prompts," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)
+
+## How system prompts grow.
+
+The pattern is consistent across engineering teams. A system prompt starts at 300 to 500 tokens: a brief description of the model's role, a few behavioral guidelines, an output format instruction. That is a manageable, well-considered document.
+
+Then the incidents begin.
+
+The model hallucinates an answer. A rule is added. A customer complains about tone. Another rule is added. A new product feature needs model awareness. Context is appended. An edge case surfaces. An exception is documented inline. Six months later, the system prompt has 4,000 tokens and nobody can explain why half of it is there.
+
+Analysis of enterprise LLM deployments shows that the average production system prompt grows 9x in its first year, from a starting size of around 640 tokens to over 5,600 tokens. Most of the growth happens in increments of fewer than 100 tokens, added without a review process, and no corresponding audit of what was already there.
+
+[Source: Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/)
+
+## What your current system prompt is actually costing.
+
+The token math on system prompt bloat is straightforward:
+
+| System prompt size | Daily calls | Daily token volume | Daily cost (Opus 4.8) | Annual cost |
+|---|---:|---:|---:|---:|
+| 1,000 tokens | 50,000 | 50M | $250 | $91,250 |
+| 3,000 tokens | 50,000 | 150M | $750 | $273,750 |
+| 6,000 tokens | 50,000 | 300M | $1,500 | $547,500 |
+| 10,000 tokens | 50,000 | 500M | $2,500 | $912,500 |
+| 6,000 tokens | 200,000 | 1.2B | $6,000 | $2,190,000 |
+
+Prompt caching reduces these costs when the system prompt is static and the cache is warm. But caching only works on the unchanged prefix. Every deployment, every A/B test, every configuration change, every feature flag that modifies the system prompt invalidates the cache and regenerates a cold-start bill. In high-churn deployments, effective cache hit rates run 50 to 70%, not the 90%+ that prompt caching benchmarks assume.
+
+The dynamic suffix appended per user or per context is never cacheable and is always billed at full input rates.
+
+[Source: Anthropic, "Prompt Caching," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+
+## Why system prompt bloat is invisible on the bill.
+
+LLM API billing dashboards report total input tokens, not a breakdown of where they came from. A call with 9,000 input tokens shows up as 9,000 tokens. Whether 6,000 of those are system prompt is not disclosed unless you count manually.
+
+The token composition of a typical enterprise API call after 12 months of system prompt drift:
+
+| Token source | Token count (typical) | % of input |
+|---|---:|---:|
+| System prompt | 6,000 | 60% |
+| Conversation history | 1,500 | 15% |
+| Retrieved context (RAG) | 1,500 | 15% |
+| User query | 1,000 | 10% |
+| **Total** | **10,000** | **100%** |
+
+System prompt tokens represent 60% of input token volume in this example. They are the largest cost center in the call — larger than the user query, the conversation history, and the retrieved context combined — and they are the only portion that management never scrutinizes because they were written once and then forgotten.
+
+[Source: Anthropic, "Token Counting API," Anthropic Docs](https://docs.anthropic.com/en/api/counting-tokens)
+
+## The audit most teams have never done.
+
+The system prompt audit has three steps.
+
+**Step one: count your tokens.** Pull your current production system prompt and tokenize it. On Anthropic's platform, the token counting API gives exact results:
+
+\`\`\`python
+import anthropic
+
+client = anthropic.Anthropic()
+
+with open("system_prompt.txt") as f:
+    system_prompt = f.read()
+
+response = client.messages.count_tokens(
+    model="claude-opus-4-8",
+    system=system_prompt,
+    messages=[{"role": "user", "content": "test"}]
+)
+
+# Subtract the 1 token for the test user message
+system_tokens = response.input_tokens - 1
+daily_calls = 100_000
+price_per_million = 5.00
+
+annual_cost = (system_tokens / 1_000_000) * price_per_million * daily_calls * 365
+print(f"System prompt tokens: {system_tokens:,}")
+print(f"Annual system prompt cost: ${annual_cost:,.0f}")
+\`\`\`
+
+**Step two: calculate your annual exposure.** Multiply: token count × daily API calls × 365 × price per token. For Opus 4.8 at $5 per million input tokens, a 6,000-token system prompt across 100,000 daily calls costs $1.1 million per year in system prompt tokens alone. Most teams have not done this arithmetic.
+
+**Step three: run a manual compression pass.** Review the system prompt for:
+- Redundant instructions that say the same thing in multiple places
+- Negative directives ("never do X, do not do Y") that can be merged into a single behavioral policy
+- Verbose examples that can be replaced with compact references
+- Context that is not referenced in 90% of calls but is always present
+- Formatting instructions expressed in 200 tokens that can be restated in 20
+
+A manual compression pass on a mature enterprise system prompt typically achieves 30 to 50% reduction in token count. The compressed version performs identically on the vast majority of tasks, because the removed content was either redundant or rarely triggered.
+
+## What automated compression adds.
+
+Manual compression has a ceiling. Past 40 to 50%, human reviewers struggle to reduce further without risking behavioral change. Automated compression handles the next tier.
+
+Microsoft Research's LLMLingua-2 applies a trained model to identify which tokens in a long text are load-bearing for downstream LLM quality, and which can be dropped. At 3x compression, preserving 33% of original tokens, LLMLingua-2 achieves less than 3% task quality degradation on average across standard benchmark suites.
+
+Applied to a bloated system prompt:
+- Original system prompt: 6,000 tokens
+- After manual compression pass: 3,500 tokens (42% reduction)
+- After LLMLingua-2 at 3x compression: 1,167 tokens
+- Combined reduction: 80.5% of original tokens eliminated
+
+The compressed system prompt is not human-readable in the same way as the canonical version. Store the canonical version in source control and regenerate the compressed version whenever the canonical version changes. Never edit the compressed version by hand.
+
+[Source: Microsoft Research, "LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression," 2024](https://arxiv.org/abs/2403.12968)
+
+## The compress-then-cache combination.
+
+Prompt caching and system prompt compression are not alternatives. They are multiplicative.
+
+Compress first, then cache. A 6,000-token system prompt cached naively saves money on cache hits. The same prompt compressed to 1,200 tokens and then cached saves money on both cache hits and cache misses. The savings stack across both the hit and miss cost paths.
+
+On a high-volume deployment with 85% cache hit rate:
+
+| Configuration | Effective per-call token cost | Annual cost (100K daily calls, Opus 4.8) |
+|---|---:|---:|
+| Uncompressed, uncached | 6,000 tokens → $0.030 | $1,095,000 |
+| Uncompressed, cached (85% hit) | ~900 effective tokens → $0.0045 | $164,250 |
+| Compressed to 1,200 tokens, uncached | 1,200 tokens → $0.006 | $219,000 |
+| Compressed to 1,200 tokens, cached (85% hit) | ~180 effective tokens → $0.0009 | $32,850 |
+
+The compress-then-cache configuration reduces the annual system prompt cost from $1,095,000 to $32,850. A 97% reduction on a cost that most teams have never measured. The engineering work is three to five days: one afternoon to audit and manually compress, a day to integrate LLMLingua-2 for automated compression, and a day to add cache-break tracking so the cache invalidates cleanly when the canonical prompt changes.
+
+[Source: Anthropic, "Prompt Caching," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
+
+## Implementation: token-count tracking in CI.
+
+System prompt bloat is a deployment problem, not just a one-time audit problem. Once you compress and cache, you need a mechanism to prevent re-bloat as the system prompt evolves.
+
+Add a token-count check to your deployment pipeline:
+
+\`\`\`python
+import anthropic
+import sys
+
+SYSTEM_PROMPT_TOKEN_LIMIT = 2000
+SYSTEM_PROMPT_WARN_THRESHOLD = 1500
+
+client = anthropic.Anthropic()
+
+def check_system_prompt_tokens(prompt_path: str) -> int:
+    with open(prompt_path) as f:
+        prompt = f.read()
+
+    response = client.messages.count_tokens(
+        model="claude-opus-4-8",
+        system=prompt,
+        messages=[{"role": "user", "content": "test"}]
+    )
+    return response.input_tokens - 1
+
+token_count = check_system_prompt_tokens("system_prompt.txt")
+
+if token_count > SYSTEM_PROMPT_TOKEN_LIMIT:
+    print(f"FAIL: System prompt is {token_count} tokens, limit is {SYSTEM_PROMPT_TOKEN_LIMIT}")
+    sys.exit(1)
+elif token_count > SYSTEM_PROMPT_WARN_THRESHOLD:
+    print(f"WARN: System prompt is {token_count} tokens, approaching limit of {SYSTEM_PROMPT_TOKEN_LIMIT}")
+else:
+    print(f"OK: System prompt is {token_count} tokens")
+\`\`\`
+
+Running this in CI creates a hard gate on system prompt size. Engineers adding to the system prompt see the token count and cost impact before it reaches production. Growth that used to happen invisibly in 50-token increments becomes a tracked metric.
+
+Treat system prompt size like binary size: a metric that gets measured, reviewed, and defended, not something that drifts until the bill arrives.
+
+## Three changes that take less than a day.
+
+**1. Audit your system prompt today.** Run the token counting API against your production system prompt. If it exceeds 3,000 tokens, you have an optimization opportunity. If it exceeds 6,000 tokens, you may have a six-figure annual waste pattern waiting to be found.
+
+**2. Do a manual compression pass.** Schedule two to four hours to review the prompt with someone who did not write it. Fresh eyes find the redundancies faster. Target 30% reduction as a baseline — most prompts achieve it without any quality regression.
+
+**3. Add token-count tracking to your deployment pipeline.** Measure the system prompt token count at every deployment and block growth past your threshold. Treat system prompt growth like binary size growth: a metric that gets tracked and reviewed, not something that drifts silently into the six figures.
+
+---
+
+*Sources: [Anthropic, "System Prompts," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts). [Anthropic, "Prompt Caching," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching). [Anthropic, "Token Counting API," Anthropic Docs](https://docs.anthropic.com/en/api/counting-tokens). [Microsoft Research, "LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression," 2024](https://arxiv.org/abs/2403.12968). [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/). Anthropic, Claude Opus 4.8 pricing as of June 2026.*`,
   "extended-thinking-tokens-output-billing": `## The reasoning overhead you never budgeted.
 
 Extended thinking is one of Claude Opus 4.8's most distinctive features. Enable it and the model generates an internal reasoning chain before producing its final response, working through edge cases, checking its own logic, catching mistakes before they reach the output. For hard problems, it works.
