@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Ways to Cut Your LLM API Costs: Routing, Context Compression, and Prompt Caching — Nadir</title>
+    <meta name="description" content="Most companies overpay for LLM APIs by 60-80%. Three strategies — intelligent routing, context compression, and prompt caching — can stack to cut costs dramatically without touching quality.">
+    <link rel="canonical" href="https://getnadir.com/blog/three-ways-to-cut-llm-api-costs-routing-compression-caching.html" />
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Three Ways to Cut Your LLM API Costs: Routing, Context Compression, and Prompt Caching">
+    <meta property="og:description" content="Most companies overpay for LLM APIs by 60-80%. Three strategies — intelligent routing, context compression, and prompt caching — can stack to cut costs dramatically without touching quality.">
+    <meta property="og:url" content="https://getnadir.com/blog/three-ways-to-cut-llm-api-costs-routing-compression-caching.html">
+    <meta property="og:site_name" content="Nadir">
+    <meta property="og:image" content="https://getnadir.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="article:published_time" content="2026-06-20">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Three Ways to Cut Your LLM API Costs: Routing, Compression, and Caching">
+    <meta name="twitter:description" content="Most companies overpay for LLM APIs by 60-80%. Here is the complete playbook for cutting that bill without sacrificing quality.">
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Three Ways to Cut Your LLM API Costs: Routing, Context Compression, and Prompt Caching",
+      "datePublished": "2026-06-20",
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
+      "url": "https://getnadir.com/blog/three-ways-to-cut-llm-api-costs-routing-compression-caching.html",
+      "description": "Most companies overpay for LLM APIs by 60-80%. Three strategies — intelligent routing, context compression, and prompt caching — can stack to cut costs dramatically without touching quality."
+    }
+    </script>
+    <style>
+      :root { --bg: #ffffff; --text: #0a0a0a; --muted: #666666; --accent: #0066ff; --border: #e5e5e5; --code-bg: #f4f4f4; --success: #00a86b; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+      .page { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; }
+      .back { display: inline-block; color: var(--accent); text-decoration: none; margin-bottom: 2rem; font-size: 0.9rem; }
+      .back:hover { text-decoration: underline; }
+      .nav-links { display: inline; margin-left: 1.5rem; font-size: 0.9rem; }
+      .nav-links a { color: var(--muted); text-decoration: none; margin-left: 1rem; }
+      .nav-links a:hover { color: var(--accent); }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; line-height: 1.3; }
+      .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.2rem; margin: 1.8rem 0 0.6rem; }
+      h3 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; }
+      p { margin-bottom: 1rem; color: #333; }
+      code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.85em; line-height: 1.6; margin-bottom: 1rem; }
+      pre code { background: none; padding: 0; border-radius: 0; }
+      ul, ol { margin: 0 0 1rem 1.5rem; color: #333; }
+      li { margin-bottom: 0.4rem; }
+      .highlight-box { background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+      .highlight-box p:last-child { margin-bottom: 0; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9em; }
+      th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 0.85em; color: var(--muted); }
+      td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+      th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .pct { color: var(--success); font-weight: 600; }
+      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.85rem; }
+      footer a { color: var(--accent); text-decoration: none; }
+
+      @media (max-width: 768px) {
+          .page { padding: 2rem 16px; }
+          h1 { font-size: 28px; }
+          h2 { font-size: 22px; }
+          pre { font-size: 12px; padding: 0.75rem 1rem; }
+          table { font-size: 0.8em; }
+          th, td { padding: 8px 6px; }
+          .nav-links { display: block; margin-left: 0; margin-top: 0.5rem; }
+      }
+    </style>
+</head>
+<body>
+<main class="page">
+    <div>
+        <a href="/#blog" class="back">&larr; Back to blog</a>
+        <span class="nav-links">
+            <a href="/">Home</a>
+            <a href="/docs.html">Docs</a>
+            <a href="/optimize.html">Optimize</a>
+            <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a>
+        </span>
+    </div>
+
+    <h1>Three Ways to Cut Your LLM API Costs: Routing, Context Compression, and Prompt Caching</h1>
+    <p class="meta"><time datetime="2026-06-20">June 20, 2026</time></p>
+
+    <p>Most engineering teams discover the same thing about six weeks after going to production with an LLM-backed product: the bill is much larger than the prototype suggested. Not because usage grew faster than expected (though that happens too), but because the underlying API spend was never optimized in the first place.</p>
+
+    <p>The naive path is to call the best available model on every request and hope the product finds product-market fit before the cloud bill becomes a boardroom conversation. That works at prototype scale. It falls apart at production scale, where the same structural waste compounds across thousands or millions of requests per day.</p>
+
+    <p>There are three independent strategies that can eliminate most of that waste. Each addresses a different cost driver. Each can be applied without changing your application logic. And critically, they stack: getting all three right does not just add their savings — it multiplies them.</p>
+
+    <h2>Where the money actually goes</h2>
+
+    <p>Before optimizing, it helps to understand what you are paying for. LLM API costs have two components: input tokens (everything sent to the model) and output tokens (everything the model generates). Output tokens cost roughly 3-5x more per token than input on most providers, but input usually dominates in volume for agent-heavy and tool-heavy workloads.</p>
+
+    <p>In a typical production LLM application, input token costs break down roughly like this:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Token source</th>
+                <th class="num">Share of input tokens</th>
+                <th>Optimization lever</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>System prompt (repeated every request)</td>
+                <td class="num">15–40%</td>
+                <td>Prompt caching</td>
+            </tr>
+            <tr>
+                <td>Tool / function schemas</td>
+                <td class="num">10–30%</td>
+                <td>Context compression</td>
+            </tr>
+            <tr>
+                <td>Conversation history</td>
+                <td class="num">20–50%</td>
+                <td>Context compression</td>
+            </tr>
+            <tr>
+                <td>Retrieved context (RAG chunks)</td>
+                <td class="num">10–40%</td>
+                <td>Context compression + caching</td>
+            </tr>
+            <tr>
+                <td>Actual user prompt (new content)</td>
+                <td class="num">5–20%</td>
+                <td>Model routing</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>The user's actual prompt is often the smallest component. The overhead — schemas, history, system instructions, retrieved documents — is where most of the tokens go. Any cost strategy that only looks at the user prompt is missing the vast majority of the problem.</p>
+
+    <h2>Strategy 1: Intelligent model routing</h2>
+
+    <p>The first and most impactful strategy is routing requests to the cheapest model that can handle them correctly. This does not mean sending every request to the cheapest model — it means classifying each request by complexity and using appropriately priced models for each tier.</p>
+
+    <p>The economics are striking. Claude Opus 4.6 costs $15 per million input tokens. Claude Haiku costs roughly $0.80 per million. That is a 19x price gap. For a request like "what files are in the src/ directory?", Haiku and Opus produce the same answer. Routing the simple request to Haiku and reserving Opus for genuinely hard tasks (multi-file reasoning, architectural analysis, complex debugging) is where most of the savings come from.</p>
+
+    <p>In practice, workloads that mix simple and complex requests — which is nearly all production LLM applications — see 30-60% cost reductions from routing alone. A coding assistant session might make 200 API calls, of which 130 are simple file reads, directory lookups, and status checks that genuinely do not require a frontier model.</p>
+
+    <div class="highlight-box">
+        <p><strong>The classifier matters:</strong> Routing only works if the classifier is accurate. A false positive — sending a hard prompt to a cheap model — produces a wrong or incomplete answer and potentially costs more overall when the user has to retry. Good classifiers err on the side of routing up, not down.</p>
+    </div>
+
+    <p>Nadir's complexity classifier analyzes each request in under 1ms and assigns it to one of four tiers (Simple, Mid, Complex, Reasoning). The classification is transparent and inspectable — unlike ML-based classifiers, you can trace exactly which signal caused a given routing decision.</p>
+
+    <h2>Strategy 2: Context compression</h2>
+
+    <p>Routing optimizes which model receives a request. Context compression optimizes what gets sent to the model at all. These are independent problems — a request routed to the cheapest model can still carry vastly more tokens than necessary.</p>
+
+    <p>The structural sources of token waste in LLM payloads are well understood:</p>
+
+    <ul>
+        <li><strong>Pretty-printed JSON</strong>: Indentation and newlines make JSON readable to humans but add 20-40% overhead versus compact representation. The model does not need the whitespace.</li>
+        <li><strong>Repeated tool schemas</strong>: Agent frameworks often include the full schema for every tool on every turn of the loop. If a workflow has 10 tools and runs 30 turns, each schema is sent 29 unnecessary times.</li>
+        <li><strong>Stale conversation history</strong>: A 60-turn debugging session carries turns 1-40 in the context even after those turns are no longer relevant to the current task.</li>
+        <li><strong>Duplicated system prompts</strong>: Some orchestration frameworks embed the system prompt in user messages, doubling the cost of the most expensive recurring token block.</li>
+        <li><strong>Whitespace bloat</strong>: Multiple blank lines and trailing spaces in pasted code, logs, or documentation add tokens with zero information content.</li>
+    </ul>
+
+    <p>Lossless transforms — JSON minification, schema deduplication, whitespace normalization, history trimming — typically cut input token counts by 30-70% on payloads where these patterns are present. The savings are largest on agentic workflows (where schemas repeat across many turns) and on structured data analysis (where JSON formatting dominates token counts).</p>
+
+    <p>Beyond lossless transforms, semantic deduplication can identify near-duplicate messages across a conversation and replace redundant content with compact references while preserving meaningful differences. This requires care: a 90%-similar follow-up message might contain the 10% that changes everything about the task. Naive semantic dedup that collapses those refinements produces wrong outputs silently, which is worse than wasting tokens.</p>
+
+    <p>The right implementation extracts and preserves the unique differences before compacting the shared content. Nadir's <a href="/blog/context-optimize-cut-llm-input-tokens.html">Context Optimize feature</a> does this with word-level diff extraction, backed by 60 automated accuracy tests.</p>
+
+    <h2>Strategy 3: Prompt caching</h2>
+
+    <p>Prompt caching is a provider-level feature that both Anthropic and OpenAI now offer. It allows you to mark specific prefixes in your prompt as cacheable — and pay a heavily discounted rate when that prefix is reused across subsequent requests within the cache TTL.</p>
+
+    <p>Anthropic's implementation charges 25% of the normal input rate for cache hits, with a 5-minute TTL (extendable to 1 hour for larger prompts). OpenAI's implementation gives cache hits for free — zero input token cost for the cached prefix.</p>
+
+    <p>The mechanics work like this: you mark a portion of your prompt (typically the system prompt, a large document, or a set of tool schemas) with a cache control marker. On the first request, you pay the full input rate and the provider stores the KV cache for that prefix. On subsequent requests that share the same prefix, you pay the cache write or hit rate instead.</p>
+
+<pre><code># Anthropic: mark the system prompt for caching
+{
+  "model": "claude-opus-4-6",
+  "system": [
+    {
+      "type": "text",
+      "text": "You are a senior software engineer...[long system prompt]",
+      "cache_control": {"type": "ephemeral"}
+    }
+  ],
+  "messages": [...]
+}
+
+# Cache hit on second request with same system prefix:
+# cost = 0.25 × normal_input_rate instead of 1.0 × normal_input_rate</code></pre>
+
+    <p>The savings from caching depend heavily on how much of your input is stable across requests. A customer support bot with a 10,000-token system prompt that gets reused across every conversation sees enormous cache value. A code generation tool with a long, stable context document sees the same benefit. Workloads where every token is unique (summarization of fresh documents, one-shot analysis tasks) see no cache benefit.</p>
+
+    <h3>When caching helps most</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Workload type</th>
+                <th>Stable prefix %</th>
+                <th>Cache benefit</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Customer support (fixed system prompt)</td>
+                <td class="num">60–80%</td>
+                <td><span class="pct">High</span></td>
+            </tr>
+            <tr>
+                <td>Code assistant (stable codebase context)</td>
+                <td class="num">40–70%</td>
+                <td><span class="pct">High</span></td>
+            </tr>
+            <tr>
+                <td>Agentic loop (repeated tool schemas)</td>
+                <td class="num">20–50%</td>
+                <td><span class="pct">Medium</span></td>
+            </tr>
+            <tr>
+                <td>RAG pipeline (rotating retrieved chunks)</td>
+                <td class="num">10–30%</td>
+                <td>Low–Medium</td>
+            </tr>
+            <tr>
+                <td>Document summarization (fresh input each time)</td>
+                <td class="num">&lt;10%</td>
+                <td>Low</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>One practical note: caching requires that the cached prefix is byte-for-byte identical across requests. Templating engines that inject dynamic content early in the system prompt (timestamps, user names, session IDs) break the cache on every request. The fix is to move all dynamic content to the end of the prompt, after the cacheable static section. This is a structural change that pays dividends even if you later switch providers.</p>
+
+    <h2>Stacking all three: the math</h2>
+
+    <p>What happens when all three strategies are applied together? The savings compound rather than add.</p>
+
+    <p>Take a concrete example: a production AI coding assistant running at 1 million requests per month, averaging 4,000 input tokens per request, primarily on Claude Opus 4.6 at $15/M tokens. Baseline monthly input cost: $60,000.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Optimization layer</th>
+                <th>Mechanism</th>
+                <th class="num">Tokens remaining</th>
+                <th class="num">Monthly cost</th>
+                <th class="num">Saved vs. baseline</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Baseline</td>
+                <td>No optimization</td>
+                <td class="num">4,000/req</td>
+                <td class="num">$60,000</td>
+                <td class="num">—</td>
+            </tr>
+            <tr>
+                <td>+ Context compression</td>
+                <td>Lossless transforms (safe mode)</td>
+                <td class="num">~2,000/req</td>
+                <td class="num">$30,000</td>
+                <td class="num"><span class="pct">50%</span></td>
+            </tr>
+            <tr>
+                <td>+ Prompt caching</td>
+                <td>1,200 stable tokens cached</td>
+                <td class="num">~2,000/req (900 billed at 25%)</td>
+                <td class="num">$16,650</td>
+                <td class="num"><span class="pct">72%</span></td>
+            </tr>
+            <tr>
+                <td>+ Model routing</td>
+                <td>60% of requests on Haiku</td>
+                <td class="num">Same tokens, cheaper models</td>
+                <td class="num">~$7,800</td>
+                <td class="num"><span class="pct">87%</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>An 87% reduction on a $60,000 monthly bill is $52,200 per month in savings. The three strategies together achieve what none achieves alone. Routing saves money by choosing the right model. Compression saves money by reducing what is sent to the model. Caching saves money by avoiding re-billing for content the provider already processed.</p>
+
+    <h2>Why most teams only implement one</h2>
+
+    <p>In practice, teams usually implement exactly one of these strategies — whichever one their framework makes easiest. OpenAI's Python SDK makes prompt caching automatic when the conditions are met. Anthropic's documentation leads with system prompt caching. Neither provider's documentation tells you to also compress your context and route your requests.</p>
+
+    <p>The three strategies are also owned by different parts of the stack. Routing is typically a proxy layer concern. Compression is a preprocessing concern. Caching is a prompt engineering and API request construction concern. Getting all three requires someone to own the full picture, not just the piece closest to their current task.</p>
+
+    <p>This is the gap Nadir is designed to close. The proxy layer handles routing automatically on every request. Context Optimize applies lossless transforms before forwarding to the provider. And since Nadir passes requests through the standard Anthropic and OpenAI APIs, cache control markers in your prompts work exactly as they would without the proxy.</p>
+
+<pre><code># Nadir handles routing and compression transparently.
+# Your cache_control markers pass through untouched.
+nadirclaw serve --optimize safe
+
+# Point your client at the local proxy
+export ANTHROPIC_BASE_URL=http://localhost:8856
+
+# Your existing code — unchanged — now gets routing + compression.
+# Cache control markers you already added continue to work.</code></pre>
+
+    <h2>Measuring the results</h2>
+
+    <p>The only way to know what a given optimization actually saves on your workload is to measure it. Synthetic benchmarks (including our own) give directional guidance but cannot predict your exact numbers because your token distribution, prompt structure, and request mix are unique.</p>
+
+    <p>For routing, the key metric is the distribution of classified tiers. If 80% of your requests are classified Simple, routing saves a lot. If 80% are classified Complex or Reasoning, the savings are smaller but quality is fully preserved.</p>
+
+    <p>For compression, measure the before and after token counts on a sample of real production payloads. Nadir's dry-run mode does this without touching any live request:</p>
+
+<pre><code># Analyze a captured payload without touching production
+nadirclaw optimize payload.json --mode safe --format json
+
+# Output includes per-transform breakdown:
+# {
+#   "original_tokens": 3657,
+#   "optimized_tokens": 1573,
+#   "tokens_saved": 2084,
+#   "savings_pct": 57.0,
+#   "transforms_applied": ["json_minify", "tool_dedup", "whitespace_norm"]
+# }</code></pre>
+
+    <p>For prompt caching, your provider's usage dashboard will show cache hit rates once cache control markers are in place. Aim for 50%+ hit rates on the cacheable prefix; below that, the time and engineering cost of structuring your prompts for caching may not pay off.</p>
+
+    <h2>Where to start</h2>
+
+    <p>If you are running LLM-backed features in production and have not optimized your API spend, the order of operations that tends to pay off fastest is:</p>
+
+    <ol>
+        <li><strong>Compression first.</strong> It requires no changes to your prompt design or application logic. Install Nadir, enable safe mode, and capture real savings immediately. This gives you a measurement baseline for the other strategies.</li>
+        <li><strong>Routing second.</strong> Enabled by default when you run <code>nadirclaw serve</code>. Review the tier distribution in your logs to confirm it matches your intuition about your workload complexity mix.</li>
+        <li><strong>Caching third.</strong> Audit your system prompt and context structure. Move dynamic content to the end. Add <code>cache_control</code> markers to stable prefixes. Monitor hit rates over the following week.</li>
+    </ol>
+
+    <div class="highlight-box">
+        <p><strong>Realistic expectations:</strong> Teams that implement all three strategies consistently see 60-85% reductions in input token spend. The wide range reflects real workload differences — a customer support bot with a stable 8,000-token system prompt hitting the same models all day sees different numbers than a code analysis pipeline with varied, fresh inputs. What matters is measuring your specific workload, not benchmarking against averages.</p>
+    </div>
+
+    <p>The underlying economics of LLM APIs are not going away. Model providers compete on capability, and the most capable models command the highest prices. The teams that build sustainable LLM products are the ones that develop infrastructure to use those models selectively — expensive where the task demands it, cheap where it does not.</p>
+
+    <p>Install Nadir with <code>pip install nadirclaw</code> and run <code>nadirclaw serve --optimize safe</code> to get routing and compression running today. The <a href="/optimize.html">Optimize page</a> shows live savings projections for different request volumes. The <a href="https://github.com/NadirRouter/NadirClaw">source code</a> is MIT-licensed and open for inspection.</p>
+</main>
+<footer>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
+</footer>
+</body>
+</html>
