@@ -1,45 +1,87 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
 import { RoutingDemoTerminal } from "@/components/homepage/RoutingDemoTerminal";
 import { trackCtaClick } from "@/utils/analytics";
 
 // Experiment: the "annotated whiteboard" hero treatment seen on script.it,
 // rebuilt in Nadir's voice. Bold centered headline, the key phrase circled by
-// a hand-drawn marker stroke, and three handwritten benefit clusters with
-// curved arrows pointing inward. The live routing terminal anchors the promise
-// below, the same way script.it drops a product screenshot under the fold.
+// a hand-drawn marker stroke, and three handwritten benefit clusters whose
+// curved arrows actually point at the word each one annotates. The live
+// routing terminal anchors the promise below, the way script.it drops a
+// product screenshot under the fold.
+//
+// Arrows are not hand-positioned: we measure the real bounding boxes of the
+// target words and the cluster boxes after layout (and after the web font
+// loads), then draw each arrow from cluster -> word. That keeps every arrow
+// landing on its target across widths and font swaps.
 //
 // The handwriting font (Caveat) is loaded here, not in index.html, so the
-// experiment is fully self-contained and leaves the shipped pages untouched.
+// experiment stays self-contained and leaves the shipped pages untouched.
 
 const HAND = { fontFamily: "'Caveat', ui-rounded, cursive", fontWeight: 600 } as const;
 
-// Three clusters, three lines each, mirroring the script.it information
-// architecture: how it decides / which model / what you get.
-const CLUSTERS = {
-  how: {
-    color: "#028a3e",
-    lines: ["Reads intent, not keywords", "Spots reasoning & vision", "Plays safe when unsure"],
-  },
-  models: {
-    color: "#5b54e6",
-    lines: ["Haiku for the simple stuff", "Sonnet for the real work", "Opus only when it must think"],
-  },
-  outcome: {
-    color: "#c2410c",
-    lines: ["30-60% lower bill", "No quality drop", "Two-line install"],
-  },
+type Pt = { x: number; y: number };
+type Box = { left: number; top: number; right: number; bottom: number; cx: number; cy: number };
+
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+const unit = (a: Pt, b: Pt): Pt => {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const l = Math.hypot(dx, dy) || 1;
+  return { x: dx / l, y: dy / l };
+};
+const nearestOnBox = (b: Box, p: Pt): Pt => ({
+  x: clamp(p.x, b.left, b.right),
+  y: clamp(p.y, b.top, b.bottom),
+});
+
+// A gently curved arrow from S to E with an arrowhead sitting at E.
+function buildArrow(S: Pt, E: Pt) {
+  const mx = (S.x + E.x) / 2, my = (S.y + E.y) / 2;
+  const dx = E.x - S.x, dy = E.y - S.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const off = clamp(len * 0.12, 8, 24);
+  const C = { x: mx + (-dy / len) * off, y: my + (dx / len) * off };
+  const d = `M ${S.x.toFixed(1)} ${S.y.toFixed(1)} Q ${C.x.toFixed(1)} ${C.y.toFixed(1)} ${E.x.toFixed(1)} ${E.y.toFixed(1)}`;
+  const u = unit(C, E); // tangent at the tip
+  const ah = 11, ang = Math.PI / 7;
+  const rot = (s: number): Pt => ({
+    x: -(u.x * Math.cos(s) - u.y * Math.sin(s)),
+    y: -(u.x * Math.sin(s) + u.y * Math.cos(s)),
+  });
+  const r1 = rot(ang), r2 = rot(-ang);
+  const head = `M ${(E.x + r1.x * ah).toFixed(1)} ${(E.y + r1.y * ah).toFixed(1)} L ${E.x.toFixed(1)} ${E.y.toFixed(1)} L ${(E.x + r2.x * ah).toFixed(1)} ${(E.y + r2.y * ah).toFixed(1)}`;
+  return { d, head };
+}
+
+// Three clusters, three lines each: how it decides / which model / what you get.
+const CLUSTER = {
+  how: { color: "#028a3e", lines: ["Reads intent, not keywords", "Catches reasoning & vision", "Plays safe when unsure"] },
+  models: { color: "#5b54e6", lines: ["Haiku for the simple stuff", "Sonnet for the real work", "Opus only when it must think"] },
+  outcome: { color: "#c2410c", lines: ["No quality drop", "Verified before it ships", "30-60% lower bill"] },
 };
 
 const Bullet = ({ color, children }: { color: string; children: React.ReactNode }) => (
-  <span className="block leading-[1.18] text-[22px]" style={{ ...HAND, color }}>
-    <span className="opacity-70">- </span>
+  <span className="block leading-[1.2] text-[21px]" style={{ ...HAND, color }}>
+    <span className="opacity-60">- </span>
     {children}
   </span>
 );
 
+type Arrow = { color: string; d: string; head: string };
+
 export const HeroAnnotated = () => {
-  // Inject the Caveat web font once, scoped to this experiment.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cHow = useRef<HTMLDivElement>(null);
+  const cModels = useRef<HTMLDivElement>(null);
+  const cOutcome = useRef<HTMLDivElement>(null);
+  const tEvery = useRef<HTMLSpanElement>(null);
+  const tCheap = useRef<HTMLSpanElement>(null);
+  const tHandle = useRef<HTMLSpanElement>(null);
+
+  const [arrows, setArrows] = useState<Arrow[]>([]);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+
+  // Load the Caveat web font once, scoped to this experiment.
   useEffect(() => {
     const id = "caveat-font-experiment";
     if (document.getElementById(id)) return;
@@ -50,50 +92,94 @@ export const HeroAnnotated = () => {
     document.head.appendChild(link);
   }, []);
 
+  useLayoutEffect(() => {
+    const measure = () => {
+      const cont = containerRef.current;
+      if (!cont) return;
+      const cr = cont.getBoundingClientRect();
+      const box = (el: Element | null): Box | null => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return {
+          left: r.left - cr.left, top: r.top - cr.top,
+          right: r.right - cr.left, bottom: r.bottom - cr.top,
+          cx: (r.left + r.right) / 2 - cr.left, cy: (r.top + r.bottom) / 2 - cr.top,
+        };
+      };
+      const pairs = [
+        { color: CLUSTER.how.color, c: box(cHow.current), t: box(tEvery.current) },
+        { color: CLUSTER.models.color, c: box(cModels.current), t: box(tCheap.current) },
+        { color: CLUSTER.outcome.color, c: box(cOutcome.current), t: box(tHandle.current) },
+      ];
+      const out: Arrow[] = [];
+      for (const p of pairs) {
+        if (!p.c || !p.t) continue;
+        const tExp: Box = { ...p.t, left: p.t.left - 3, top: p.t.top - 3, right: p.t.right + 3, bottom: p.t.bottom + 3 };
+        const E0 = nearestOnBox(tExp, { x: p.c.cx, y: p.c.cy });
+        const S0 = nearestOnBox(p.c, E0);
+        const dir = unit(S0, E0);
+        const E = { x: E0.x - dir.x * 9, y: E0.y - dir.y * 9 }; // tip sits just off the word
+        const S = { x: S0.x + dir.x * 6, y: S0.y + dir.y * 6 };
+        out.push({ color: p.color, ...buildArrow(S, E) });
+      }
+      setArrows(out);
+      setSize({ w: cr.width, h: cr.height });
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    window.addEventListener("resize", measure);
+    // Re-measure once the handwriting font loads (cluster widths shift).
+    if (document.fonts?.ready) document.fonts.ready.then(measure).catch(() => {});
+    const t = setTimeout(measure, 400);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      clearTimeout(t);
+    };
+  }, []);
+
   return (
     <section className="relative overflow-hidden pt-10 md:pt-14 pb-16 md:pb-20">
-      <div className="relative max-w-[1180px] mx-auto px-6 sm:px-8">
-        {/* ---- Desktop annotation layer (decorative, lg+ only) ---- */}
+      <div ref={containerRef} className="relative max-w-[1240px] mx-auto px-6 sm:px-8">
+        {/* ---- Arrow overlay, measured (lg+ only) ---- */}
+        <svg
+          className="absolute inset-0 hidden lg:block pointer-events-none"
+          width={size.w}
+          height={size.h}
+          viewBox={`0 0 ${size.w} ${size.h}`}
+          fill="none"
+          aria-hidden
+        >
+          {arrows.map((a, i) => (
+            <g key={i}>
+              <path d={a.d} stroke={a.color} strokeWidth="2.5" strokeLinecap="round" />
+              <path d={a.head} stroke={a.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+          ))}
+        </svg>
+
+        {/* ---- Handwritten clusters (lg+ only) ---- */}
         <div className="hidden lg:block" aria-hidden>
-          {/* Outcome cluster — top, above the headline, arrow curving down */}
-          <div className="absolute top-0 left-1/2 -translate-x-[35%] text-left">
-            {CLUSTERS.outcome.lines.map((l) => (
-              <Bullet key={l} color={CLUSTERS.outcome.color}>{l}</Bullet>
-            ))}
+          <div ref={cHow} className="absolute top-[6px] left-0 text-left" style={{ maxWidth: 232 }}>
+            {CLUSTER.how.lines.map((l) => <Bullet key={l} color={CLUSTER.how.color}>{l}</Bullet>)}
           </div>
-          <svg className="absolute top-[78px] left-1/2 -translate-x-[58%]" width="120" height="90" viewBox="0 0 120 90" fill="none">
-            <path d="M96 6 C 70 30, 52 44, 30 80" stroke={CLUSTERS.outcome.color} strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M22 64 L 28 82 L 46 74" stroke={CLUSTERS.outcome.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
-
-          {/* How-it-decides cluster — left, arrow curving right toward the line */}
-          <div className="absolute top-[208px] left-0 text-left">
-            {CLUSTERS.how.lines.map((l) => (
-              <Bullet key={l} color={CLUSTERS.how.color}>{l}</Bullet>
-            ))}
+          <div ref={cModels} className="absolute top-[78px] right-0 text-right" style={{ maxWidth: 232 }}>
+            {CLUSTER.models.lines.map((l) => <Bullet key={l} color={CLUSTER.models.color}>{l}</Bullet>)}
           </div>
-          <svg className="absolute top-[176px] left-[228px]" width="150" height="80" viewBox="0 0 150 80" fill="none">
-            <path d="M6 70 C 50 64, 96 40, 142 12" stroke={CLUSTERS.how.color} strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M124 8 L 144 10 L 138 30" stroke={CLUSTERS.how.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
-
-          {/* Which-model cluster — right, arrow curving down-left to the circle */}
-          <div className="absolute top-[212px] right-0 text-right">
-            {CLUSTERS.models.lines.map((l) => (
-              <Bullet key={l} color={CLUSTERS.models.color}>{l}</Bullet>
-            ))}
+          <div ref={cOutcome} className="absolute top-[152px] left-0 text-left" style={{ maxWidth: 232 }}>
+            {CLUSTER.outcome.lines.map((l) => <Bullet key={l} color={CLUSTER.outcome.color}>{l}</Bullet>)}
           </div>
-          <svg className="absolute top-[206px] right-[250px]" width="170" height="100" viewBox="0 0 170 100" fill="none">
-            <path d="M162 14 C 116 30, 62 50, 12 74" stroke={CLUSTERS.models.color} strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M6 52 L 9 76 L 32 68" stroke={CLUSTERS.models.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
         </div>
 
         {/* ---- Headline + CTA ---- */}
-        <div className="relative z-10 max-w-[860px] mx-auto text-center pt-10 lg:pt-[168px]">
-          <h1 className="text-[40px] sm:text-[52px] lg:text-[60px] font-semibold leading-[1.06] tracking-[-0.035em] text-[#1d1d1f] [text-wrap:balance]">
-            Route every prompt to the{" "}
-            <span className="relative inline-block whitespace-nowrap">
+        <div className="relative z-10 max-w-[720px] mx-auto text-center pt-2 lg:pt-6">
+          <h1 className="text-[40px] sm:text-[50px] lg:text-[58px] font-semibold leading-[1.08] tracking-[-0.035em] text-[#1d1d1f] [text-wrap:balance]">
+            Route{" "}
+            <span ref={tEvery}>every prompt</span>{" "}
+            to the{" "}
+            <span ref={tCheap} className="relative inline-block whitespace-nowrap">
               cheapest model
               <svg
                 className="absolute pointer-events-none"
@@ -111,7 +197,7 @@ export const HeroAnnotated = () => {
                 />
               </svg>
             </span>{" "}
-            that can handle it.
+            that can <span ref={tHandle}>handle it</span>.
           </h1>
 
           <div className="mt-9 flex flex-col items-center gap-3">
@@ -126,30 +212,28 @@ export const HeroAnnotated = () => {
             <span className="text-[13px] text-[#86868b]">No card required</span>
           </div>
 
-          {/* Mobile fallback: the annotations as a plain list */}
+          {/* Mobile fallback: clusters as a plain list */}
           <div className="lg:hidden mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 text-left max-w-[520px] mx-auto">
-            {[CLUSTERS.outcome, CLUSTERS.how, CLUSTERS.models].map((c, i) => (
+            {[CLUSTER.outcome, CLUSTER.how, CLUSTER.models].map((c, i) => (
               <div key={i}>
-                {c.lines.map((l) => (
-                  <Bullet key={l} color={c.color}>{l}</Bullet>
-                ))}
+                {c.lines.map((l) => <Bullet key={l} color={c.color}>{l}</Bullet>)}
               </div>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* ---- Live proof, anchored below the headline ---- */}
-        <div className="relative z-10 max-w-[940px] mx-auto mt-14 md:mt-16">
-          <RoutingDemoTerminal />
-          <div className="mt-6 text-center">
-            <a
-              href="/switch"
-              onClick={() => trackCtaClick("see_the_switch", "hero_annotated")}
-              className="inline-flex items-center text-[13.5px] font-medium text-[#1d1d1f] no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
-            >
-              See the one-line switch from OpenAI or Bedrock <span className="ml-1 text-[13px]">›</span>
-            </a>
-          </div>
+      {/* ---- Live proof, anchored below the headline ---- */}
+      <div className="relative z-10 max-w-[940px] mx-auto px-6 mt-14 md:mt-16">
+        <RoutingDemoTerminal />
+        <div className="mt-6 text-center">
+          <a
+            href="/switch"
+            onClick={() => trackCtaClick("see_the_switch", "hero_annotated")}
+            className="inline-flex items-center text-[13.5px] font-medium text-[#1d1d1f] no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
+          >
+            See the one-line switch from OpenAI or Bedrock <span className="ml-1 text-[13px]">›</span>
+          </a>
         </div>
       </div>
     </section>
