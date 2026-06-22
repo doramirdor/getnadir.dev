@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
-import { HeroSection } from "@/components/homepage/HeroSection";
+import { HeroAnnotated } from "@/components/homepage/HeroAnnotated";
 import { StatBand } from "@/components/homepage/StatBand";
 import { BenchmarkSection } from "@/components/homepage/BenchmarkSection";
 import { CalculatorTeaser } from "@/components/homepage/CalculatorTeaser";
@@ -26,7 +26,7 @@ const Homepage = () => {
         description="Nadir routes every prompt to the cheapest model that can handle it. OpenAI compatible. Open source. Cut your Claude, GPT, and Gemini spend with a two-line change."
         path="/"
       />
-      <HeroSection />
+      <HeroAnnotated />
       <StatBand />
       {/* Benchmark evidence lands right after the headline numbers, before
           any product narrative. The verifier-gated cascade thesis needs the
