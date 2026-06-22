@@ -225,7 +225,7 @@ from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
 from app.processors.request_processor import get_processed_request
 from app.middleware.rate_limiter import check_rate_limit
 from app.middleware.subscription_guard import require_active_subscription
-from app.middleware.hosted_budget import enforce_hosted_budget_or_402, record_hosted_spend
+from app.middleware.hosted_budget import enforce_hosted_budget_or_402, account_hosted_usage
 from app.services.preset_router_service import PresetRouterService
 
 from app.complexity.model_registry import extract_provider as _provider_of
@@ -847,18 +847,35 @@ async def create_completion(
             else:
                 tier_name = "simple"
 
-            selected_models = user_config.get("selected_models", [])
-            model_params = user_config.get("model_parameters", {})
-            tier_model = _map_tier_to_model(tier_name, selected_models, model_params)
-
-            if tier_model and tier_model != recommended_model:
-                logger.info(
-                    "Tier mapping: %s (tier=%s) → %s (was %s)",
-                    tier_name, tier_name, tier_model, recommended_model,
+            # ROUTER_V3 §3.9 item 1: plan-space picks must NOT be remapped by
+            # tier. The planspace analyzer selects a specific model per prompt
+            # (plan record); running _map_tier_to_model on it would collapse
+            # the per-prompt decision back to tier granularity. Detect it via
+            # the analyzer identifiers or a plan record in full_analysis and
+            # keep the analyzer's recommended_model verbatim.
+            _full_analysis = complexity_analysis_result.get("full_analysis") or {}
+            is_planspace_pick = (
+                str(complexity_analysis_result.get("analyzer_type") or "").startswith("planspace")
+                or str(complexity_analysis_result.get("analyzer_used") or "").startswith("planspace")
+                or (
+                    isinstance(_full_analysis, dict)
+                    and ("plan" in _full_analysis or "plan_record" in _full_analysis)
                 )
-                recommended_model = tier_model
-                complexity_analysis_result["tier_mapped"] = True
-                complexity_analysis_result["tier_mapped_from"] = tier_name
+            )
+
+            if not is_planspace_pick:
+                selected_models = user_config.get("selected_models", [])
+                model_params = user_config.get("model_parameters", {})
+                tier_model = _map_tier_to_model(tier_name, selected_models, model_params)
+
+                if tier_model and tier_model != recommended_model:
+                    logger.info(
+                        "Tier mapping: %s (tier=%s) → %s (was %s)",
+                        tier_name, tier_name, tier_model, recommended_model,
+                    )
+                    recommended_model = tier_model
+                    complexity_analysis_result["tier_mapped"] = True
+                    complexity_analysis_result["tier_mapped_from"] = tier_name
 
             complexity_analysis_result["tier"] = tier_name
 
@@ -1227,7 +1244,10 @@ async def create_completion(
                 # provider key (e.g., ANTHROPIC_API_KEY) is NOT set. This allows
                 # operators to use either direct API keys or Bedrock depending on
                 # what's configured in the server environment.
-                from app.complexity.model_registry import extract_provider as _get_provider
+                from app.complexity.model_registry import (
+                    extract_provider as _get_provider,
+                    to_bedrock_model,
+                )
                 model_provider = _get_provider(recommended_model) or ""
                 has_direct_key = (
                     (model_provider in ("anthropic",) and settings.ANTHROPIC_API_KEY)
@@ -1239,15 +1259,7 @@ async def create_completion(
                             recommended_model, model_provider, has_direct_key, use_bedrock, bool(settings.AWS_ACCESS_KEY_ID))
 
                 if use_bedrock and not recommended_model.startswith("bedrock/"):
-                    bedrock_map = {
-                        "claude-opus-4-6": "bedrock/us.anthropic.claude-opus-4-6-v1",
-                        "claude-sonnet-4-6": "bedrock/us.anthropic.claude-sonnet-4-6",
-                        "claude-haiku-4-5": "bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0",
-                        "claude-opus-4-5": "bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0",
-                        "claude-sonnet-4-5": "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-                        "claude-3-5-haiku-20241022": "bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0",
-                    }
-                    bedrock_model = bedrock_map.get(recommended_model)
+                    bedrock_model = to_bedrock_model(recommended_model)
                     if bedrock_model:
                         logger.info("Hosted mode (Bedrock): remapping %s → %s", recommended_model, bedrock_model)
                         recommended_model = bedrock_model
@@ -1652,38 +1664,17 @@ async def create_completion(
             except Exception as sav_setup_err:
                 logger.debug("Savings tracking setup skipped: %s", sav_setup_err)
 
-        # Track hosted spend in-memory (fast, non-blocking)
-        if current_user.key_mode == "hosted":
-            total_cost = cost_section.get("total_cost_usd", 0) or 0
-            if total_cost > 0:
-                record_hosted_spend(str(current_user.id), float(total_cost))
-
-                # Draw the prepaid credit balance down by (Bedrock cost + 20%).
-                # Hosted usage is prepaid, not invoiced monthly. Best-effort in
-                # the background so it never blocks the response; auto-recharge
-                # tops the balance back up if it dipped below the threshold.
-                async def _draw_down_credits(uid: str, cost: float):
-                    try:
-                        from app.services.credits_service import (
-                            credits_service,
-                            hosted_charge_for_cost,
-                        )
-
-                        await credits_service.deduct(
-                            uid,
-                            hosted_charge_for_cost(cost),
-                            request_id=request_id,
-                            description="Hosted usage",
-                        )
-                        await credits_service.maybe_auto_recharge(uid)
-                    except Exception as draw_err:
-                        logger.warning(
-                            "Credit drawdown failed for %s: %s", request_id, draw_err
-                        )
-
-                background_tasks.add_task(
-                    _draw_down_credits, str(current_user.id), float(total_cost)
-                )
+        # Record + bill hosted usage: in-memory spend (per-user cap + global
+        # circuit breaker) plus a background prepaid-credit drawdown. Centralized
+        # in account_hosted_usage so every hosted-serving endpoint stays in
+        # lockstep — no-op for BYOK / zero cost. The savings_tracking row above
+        # stays here because it needs benchmark/token context the helper lacks.
+        account_hosted_usage(
+            current_user,
+            cost_section.get("total_cost_usd", 0),
+            request_id,
+            background_tasks,
+        )
 
         return formatted_response
         
