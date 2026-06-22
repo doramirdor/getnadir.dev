@@ -137,7 +137,7 @@ export const HeroSection = () => {
             </h1>
 
             <p className="text-[17px] md:text-[19px] text-[#424245] mb-9 leading-[1.5] tracking-[-0.01em]">
-              Nadir is an LLM router. It reads every prompt and sends it to the cheapest model that can answer it well.
+              Nadir is an LLM router. It reads every prompt and routes it to the model that fits the job — so you stop paying frontier prices for work a smaller model handles just as well.
               <span className="text-[#1d1d1f] font-medium"> Haiku for classifications, Sonnet for refactors, Opus only when it has to think.</span>
             </p>
 
