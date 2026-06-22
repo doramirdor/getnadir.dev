@@ -49,6 +49,7 @@ const SolutionAnalytics = lazy(() => import("./pages/solutions/SolutionAnalytics
 const SolutionClustering = lazy(() => import("./pages/solutions/Clustering"));
 const ProductHunt = lazy(() => import("./pages/ProductHunt"));
 const Switch = lazy(() => import("./pages/Switch"));
+const HeroAnnotatedPreview = lazy(() => import("./pages/HeroAnnotatedPreview"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -164,6 +165,7 @@ const App = () => (
             <Route path="/openclaw" element={<OpenClaw />} />
             <Route path="/optimize" element={<Optimize />} />
             <Route path="/switch" element={<Switch />} />
+            <Route path="/hero-annotated" element={<HeroAnnotatedPreview />} />
             <Route path="/solutions" element={<Solutions />} />
             <Route path="/solutions/optimize" element={<Optimize />} />
             <Route path="/solutions/routing" element={<SolutionRouting />} />
