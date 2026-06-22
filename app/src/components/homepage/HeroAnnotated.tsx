@@ -6,14 +6,14 @@ import { trackCtaClick } from "@/utils/analytics";
 // Experiment: the "annotated whiteboard" hero treatment seen on script.it,
 // rebuilt in Nadir's voice. Bold centered headline, the key phrase circled by
 // a hand-drawn marker stroke, and three handwritten benefit clusters whose
-// curved arrows actually point at the word each one annotates. The live
-// routing terminal anchors the promise below, the way script.it drops a
-// product screenshot under the fold.
+// curved arrows point at the word each one annotates.
 //
-// Arrows are not hand-positioned: we measure the real bounding boxes of the
+// Arrows are not hand-positioned. We measure the real bounding boxes of the
 // target words and the cluster boxes after layout (and after the web font
-// loads), then draw each arrow from cluster -> word. That keeps every arrow
-// landing on its target across widths and font swaps.
+// loads), then draw each arrow so its tip lands in the WHITESPACE beside the
+// word -- left margin, right margin, or the gap below -- with the arrowhead
+// aligned to that approach. That keeps each arrow pointing AT a word from the
+// outside instead of driving horizontally through the middle of the headline.
 //
 // The handwriting font (Caveat) is loaded here, not in index.html, so the
 // experiment stays self-contained and leaves the shipped pages untouched.
@@ -22,7 +22,9 @@ const HAND = { fontFamily: "'Caveat', ui-rounded, cursive", fontWeight: 600 } as
 
 type Pt = { x: number; y: number };
 type Box = { left: number; top: number; right: number; bottom: number; cx: number; cy: number };
+type Side = "left" | "right" | "bottom" | "top";
 
+const f = (n: number) => n.toFixed(1);
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const unit = (a: Pt, b: Pt): Pt => {
   const dx = b.x - a.x, dy = b.y - a.y;
@@ -34,29 +36,38 @@ const nearestOnBox = (b: Box, p: Pt): Pt => ({
   y: clamp(p.y, b.top, b.bottom),
 });
 
-// A gently curved arrow from S to E with an arrowhead sitting at E.
-function buildArrow(S: Pt, E: Pt) {
-  const mx = (S.x + E.x) / 2, my = (S.y + E.y) / 2;
-  const dx = E.x - S.x, dy = E.y - S.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const off = clamp(len * 0.12, 8, 24);
-  const C = { x: mx + (-dy / len) * off, y: my + (dx / len) * off };
-  const d = `M ${S.x.toFixed(1)} ${S.y.toFixed(1)} Q ${C.x.toFixed(1)} ${C.y.toFixed(1)} ${E.x.toFixed(1)} ${E.y.toFixed(1)}`;
-  const u = unit(C, E); // tangent at the tip
+// Tip point + incoming direction for a given approach side. The tip sits a few
+// px outside the word so the arrowhead never overlaps the glyphs.
+function tipFor(t: Box, side: Side): { E: Pt; dir: Pt } {
+  const g = 12;
+  switch (side) {
+    case "left": return { E: { x: t.left - g, y: t.cy }, dir: { x: 1, y: 0 } };
+    case "right": return { E: { x: t.right + g, y: t.cy }, dir: { x: -1, y: 0 } };
+    case "bottom": return { E: { x: t.cx, y: t.bottom + g }, dir: { x: 0, y: -1 } };
+    case "top": return { E: { x: t.cx, y: t.top - g }, dir: { x: 0, y: 1 } };
+  }
+}
+
+// A curved arrow that arrives at E travelling along `dir`, with the arrowhead
+// aligned to dir. The control point is placed behind E along dir so the curve
+// levels out into the approach direction regardless of where it starts.
+function buildArrow(S: Pt, E: Pt, dir: Pt) {
+  const len = Math.hypot(E.x - S.x, E.y - S.y) || 1;
+  const K = clamp(len * 0.42, 22, 78);
+  const C = { x: E.x - dir.x * K, y: E.y - dir.y * K };
+  const d = `M ${f(S.x)} ${f(S.y)} Q ${f(C.x)} ${f(C.y)} ${f(E.x)} ${f(E.y)}`;
   const ah = 11, ang = Math.PI / 7;
-  const rot = (s: number): Pt => ({
-    x: -(u.x * Math.cos(s) - u.y * Math.sin(s)),
-    y: -(u.x * Math.sin(s) + u.y * Math.cos(s)),
-  });
-  const r1 = rot(ang), r2 = rot(-ang);
-  const head = `M ${(E.x + r1.x * ah).toFixed(1)} ${(E.y + r1.y * ah).toFixed(1)} L ${E.x.toFixed(1)} ${E.y.toFixed(1)} L ${(E.x + r2.x * ah).toFixed(1)} ${(E.y + r2.y * ah).toFixed(1)}`;
+  const back = { x: -dir.x, y: -dir.y };
+  const rot = (v: Pt, a: number): Pt => ({ x: v.x * Math.cos(a) - v.y * Math.sin(a), y: v.x * Math.sin(a) + v.y * Math.cos(a) });
+  const b1 = rot(back, ang), b2 = rot(back, -ang);
+  const head = `M ${f(E.x + b1.x * ah)} ${f(E.y + b1.y * ah)} L ${f(E.x)} ${f(E.y)} L ${f(E.x + b2.x * ah)} ${f(E.y + b2.y * ah)}`;
   return { d, head };
 }
 
 // Three clusters, three lines each: how it decides / which model / what you get.
 const CLUSTER = {
-  how: { color: "#028a3e", lines: ["Reads intent, not keywords", "Catches reasoning & vision", "Plays safe when unsure"] },
-  models: { color: "#5b54e6", lines: ["Haiku for the simple stuff", "Sonnet for the real work", "Opus only when it must think"] },
+  how: { color: "#5b54e6", lines: ["Reads intent, not keywords", "Catches reasoning & vision", "Plays safe when unsure"] },
+  models: { color: "#028a3e", lines: ["Haiku for the simple stuff", "Sonnet for the real work", "Opus only when it must think"] },
   outcome: { color: "#c2410c", lines: ["No quality drop", "Verified before it ships", "30-60% lower bill"] },
 };
 
@@ -74,7 +85,7 @@ export const HeroAnnotated = () => {
   const cHow = useRef<HTMLDivElement>(null);
   const cModels = useRef<HTMLDivElement>(null);
   const cOutcome = useRef<HTMLDivElement>(null);
-  const tEvery = useRef<HTMLSpanElement>(null);
+  const tRoute = useRef<HTMLSpanElement>(null);
   const tCheap = useRef<HTMLSpanElement>(null);
   const tHandle = useRef<HTMLSpanElement>(null);
 
@@ -106,21 +117,19 @@ export const HeroAnnotated = () => {
           cx: (r.left + r.right) / 2 - cr.left, cy: (r.top + r.bottom) / 2 - cr.top,
         };
       };
-      const pairs = [
-        { color: CLUSTER.how.color, c: box(cHow.current), t: box(tEvery.current) },
-        { color: CLUSTER.models.color, c: box(cModels.current), t: box(tCheap.current) },
-        { color: CLUSTER.outcome.color, c: box(cOutcome.current), t: box(tHandle.current) },
+      const specs: { color: string; c: Box | null; t: Box | null; side: Side }[] = [
+        { color: CLUSTER.how.color, c: box(cHow.current), t: box(tRoute.current), side: "left" },
+        { color: CLUSTER.models.color, c: box(cModels.current), t: box(tCheap.current), side: "right" },
+        { color: CLUSTER.outcome.color, c: box(cOutcome.current), t: box(tHandle.current), side: "right" },
       ];
       const out: Arrow[] = [];
-      for (const p of pairs) {
-        if (!p.c || !p.t) continue;
-        const tExp: Box = { ...p.t, left: p.t.left - 3, top: p.t.top - 3, right: p.t.right + 3, bottom: p.t.bottom + 3 };
-        const E0 = nearestOnBox(tExp, { x: p.c.cx, y: p.c.cy });
-        const S0 = nearestOnBox(p.c, E0);
-        const dir = unit(S0, E0);
-        const E = { x: E0.x - dir.x * 9, y: E0.y - dir.y * 9 }; // tip sits just off the word
-        const S = { x: S0.x + dir.x * 6, y: S0.y + dir.y * 6 };
-        out.push({ color: p.color, ...buildArrow(S, E) });
+      for (const s of specs) {
+        if (!s.c || !s.t) continue;
+        const { E, dir } = tipFor(s.t, s.side);
+        const S0 = nearestOnBox(s.c, E);
+        const u = unit(S0, E);
+        const S = { x: S0.x + u.x * 6, y: S0.y + u.y * 6 };
+        out.push({ color: s.color, ...buildArrow(S, E, dir) });
       }
       setArrows(out);
       setSize({ w: cr.width, h: cr.height });
@@ -130,7 +139,6 @@ export const HeroAnnotated = () => {
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
     window.addEventListener("resize", measure);
-    // Re-measure once the handwriting font loads (cluster widths shift).
     if (document.fonts?.ready) document.fonts.ready.then(measure).catch(() => {});
     const t = setTimeout(measure, 400);
     return () => {
@@ -162,23 +170,21 @@ export const HeroAnnotated = () => {
 
         {/* ---- Handwritten clusters (lg+ only) ---- */}
         <div className="hidden lg:block" aria-hidden>
-          <div ref={cHow} className="absolute top-[6px] left-0 text-left" style={{ maxWidth: 232 }}>
+          <div ref={cHow} className="absolute top-0 left-0 text-left" style={{ maxWidth: 230 }}>
             {CLUSTER.how.lines.map((l) => <Bullet key={l} color={CLUSTER.how.color}>{l}</Bullet>)}
           </div>
-          <div ref={cModels} className="absolute top-[78px] right-0 text-right" style={{ maxWidth: 232 }}>
+          <div ref={cModels} className="absolute top-[150px] right-0 text-right" style={{ maxWidth: 230 }}>
             {CLUSTER.models.lines.map((l) => <Bullet key={l} color={CLUSTER.models.color}>{l}</Bullet>)}
           </div>
-          <div ref={cOutcome} className="absolute top-[152px] left-0 text-left" style={{ maxWidth: 232 }}>
+          <div ref={cOutcome} className="absolute top-[270px] right-0 text-right" style={{ maxWidth: 230 }}>
             {CLUSTER.outcome.lines.map((l) => <Bullet key={l} color={CLUSTER.outcome.color}>{l}</Bullet>)}
           </div>
         </div>
 
         {/* ---- Headline + CTA ---- */}
-        <div className="relative z-10 max-w-[720px] mx-auto text-center pt-2 lg:pt-6">
-          <h1 className="text-[40px] sm:text-[50px] lg:text-[58px] font-semibold leading-[1.08] tracking-[-0.035em] text-[#1d1d1f] [text-wrap:balance]">
-            Route{" "}
-            <span ref={tEvery}>every prompt</span>{" "}
-            to the{" "}
+        <div className="relative z-10 max-w-[720px] mx-auto text-center pt-8 lg:pt-[96px]">
+          <h1 className="text-[40px] sm:text-[50px] lg:text-[58px] font-semibold leading-[1.12] tracking-[-0.035em] text-[#1d1d1f] [text-wrap:balance]">
+            <span ref={tRoute}>Route</span> every prompt to the{" "}
             <span ref={tCheap} className="relative inline-block whitespace-nowrap">
               cheapest model
               <svg
@@ -191,7 +197,7 @@ export const HeroAnnotated = () => {
               >
                 <path
                   d="M150 9 C 72 6, 15 25, 17 48 C 19 73, 101 85, 169 82 C 251 79, 291 59, 285 39 C 280 21, 213 9, 149 12"
-                  stroke="#028a3e"
+                  stroke={CLUSTER.models.color}
                   strokeWidth="3"
                   strokeLinecap="round"
                 />
@@ -214,7 +220,7 @@ export const HeroAnnotated = () => {
 
           {/* Mobile fallback: clusters as a plain list */}
           <div className="lg:hidden mt-10 grid grid-cols-1 sm:grid-cols-3 gap-5 text-left max-w-[520px] mx-auto">
-            {[CLUSTER.outcome, CLUSTER.how, CLUSTER.models].map((c, i) => (
+            {[CLUSTER.how, CLUSTER.models, CLUSTER.outcome].map((c, i) => (
               <div key={i}>
                 {c.lines.map((l) => <Bullet key={l} color={c.color}>{l}</Bullet>)}
               </div>
