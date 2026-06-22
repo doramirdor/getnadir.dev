@@ -91,6 +91,9 @@ export const HeroAnnotated = () => {
 
   const [arrows, setArrows] = useState<Arrow[]>([]);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  // Drives the draw-on reveal of the decorative annotation layer.
+  const [played, setPlayed] = useState(false);
+  const reducedRef = useRef(false);
 
   // Load the Caveat web font once, scoped to this experiment.
   useEffect(() => {
@@ -101,6 +104,20 @@ export const HeroAnnotated = () => {
     link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&display=swap";
     document.head.appendChild(link);
+  }, []);
+
+  // Kick off the reveal once the font has loaded and arrows are measured, so
+  // the draw-on plays against final positions. Reduced motion -> show instantly.
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    reducedRef.current = reduced;
+    if (reduced) { setPlayed(true); return; }
+    let cancelled = false;
+    const start = () => setTimeout(() => { if (!cancelled) setPlayed(true); }, 150);
+    if (document.fonts?.ready) document.fonts.ready.then(start).catch(start);
+    else start();
+    const fallback = setTimeout(() => { if (!cancelled) setPlayed(true); }, 900);
+    return () => { cancelled = true; clearTimeout(fallback); };
   }, []);
 
   useLayoutEffect(() => {
@@ -148,6 +165,18 @@ export const HeroAnnotated = () => {
     };
   }, []);
 
+  // Per-cluster fade/slide-in, staggered to match each arrow's draw-on.
+  const clusterStyle = (i: number): React.CSSProperties => {
+    const reduced = reducedRef.current;
+    const delay = 420 + i * 240;
+    return {
+      maxWidth: 230,
+      opacity: played ? 1 : 0,
+      transform: played ? "none" : "translateY(3px)",
+      transition: reduced ? "none" : `opacity 340ms ease-out ${delay}ms, transform 340ms ease-out ${delay}ms`,
+    };
+  };
+
   return (
     <section className="relative overflow-hidden pt-10 md:pt-14 pb-16 md:pb-20">
       <div ref={containerRef} className="relative max-w-[1240px] mx-auto px-6 sm:px-8">
@@ -160,23 +189,48 @@ export const HeroAnnotated = () => {
           fill="none"
           aria-hidden
         >
-          {arrows.map((a, i) => (
-            <g key={i}>
-              <path d={a.d} stroke={a.color} strokeWidth="2.5" strokeLinecap="round" />
-              <path d={a.head} stroke={a.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </g>
-          ))}
+          {arrows.map((a, i) => {
+            const reduced = reducedRef.current;
+            const lineDelay = 440 + i * 240;
+            return (
+              <g key={i}>
+                <path
+                  d={a.d}
+                  stroke={a.color}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  pathLength={1}
+                  style={{
+                    strokeDasharray: 1,
+                    strokeDashoffset: played ? 0 : 1,
+                    transition: reduced ? "none" : `stroke-dashoffset 520ms cubic-bezier(0.65,0,0.35,1) ${lineDelay}ms`,
+                  }}
+                />
+                <path
+                  d={a.head}
+                  stroke={a.color}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    opacity: played ? 1 : 0,
+                    transition: reduced ? "none" : `opacity 160ms ease-out ${lineDelay + 470}ms`,
+                  }}
+                />
+              </g>
+            );
+          })}
         </svg>
 
         {/* ---- Handwritten clusters (lg+ only) ---- */}
         <div className="hidden lg:block" aria-hidden>
-          <div ref={cHow} className="absolute top-0 left-0 text-left" style={{ maxWidth: 230 }}>
+          <div ref={cHow} className="absolute top-0 left-0 text-left" style={clusterStyle(0)}>
             {CLUSTER.how.lines.map((l) => <Bullet key={l} color={CLUSTER.how.color}>{l}</Bullet>)}
           </div>
-          <div ref={cModels} className="absolute top-[150px] right-0 text-right" style={{ maxWidth: 230 }}>
+          <div ref={cModels} className="absolute top-[150px] right-0 text-right" style={clusterStyle(1)}>
             {CLUSTER.models.lines.map((l) => <Bullet key={l} color={CLUSTER.models.color}>{l}</Bullet>)}
           </div>
-          <div ref={cOutcome} className="absolute top-[270px] right-0 text-right" style={{ maxWidth: 230 }}>
+          <div ref={cOutcome} className="absolute top-[270px] right-0 text-right" style={clusterStyle(2)}>
             {CLUSTER.outcome.lines.map((l) => <Bullet key={l} color={CLUSTER.outcome.color}>{l}</Bullet>)}
           </div>
         </div>
@@ -200,6 +254,12 @@ export const HeroAnnotated = () => {
                   stroke={CLUSTER.models.color}
                   strokeWidth="3"
                   strokeLinecap="round"
+                  pathLength={1}
+                  style={{
+                    strokeDasharray: 1,
+                    strokeDashoffset: played ? 0 : 1,
+                    transition: reducedRef.current ? "none" : "stroke-dashoffset 560ms cubic-bezier(0.65,0,0.35,1) 200ms",
+                  }}
                 />
               </svg>
             </span>{" "}
