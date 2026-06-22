@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
 import { RoutingDemoTerminal } from "@/components/homepage/RoutingDemoTerminal";
+import { IntegrationLogos } from "@/components/homepage/IntegrationLogos";
 import { trackCtaClick } from "@/utils/analytics";
 
 // Experiment: the "annotated whiteboard" hero treatment seen on script.it,
@@ -300,14 +301,22 @@ export const HeroAnnotated = () => {
       {/* ---- Live proof, anchored below the headline ---- */}
       <div className="relative z-10 max-w-[940px] mx-auto px-6 mt-14 md:mt-16">
         <RoutingDemoTerminal />
-        <div className="mt-6 text-center">
-          <a
-            href="/switch"
-            onClick={() => trackCtaClick("see_the_switch", "hero_annotated")}
-            className="inline-flex items-center text-[13.5px] font-medium text-[#1d1d1f] no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
-          >
-            See the one-line switch from OpenAI or Bedrock <span className="ml-1 text-[13px]">›</span>
-          </a>
+
+        {/* Integrations row, honestly labeled */}
+        <div className="mt-12 md:mt-16 border-t border-black/[0.06] pt-10">
+          <p className="text-[12px] text-[#6e6e73] uppercase tracking-[0.12em] font-semibold mb-6 text-center">
+            Drop-in replacement for the SDKs you already use
+          </p>
+          <IntegrationLogos />
+          <div className="mt-6 text-center">
+            <a
+              href="/switch"
+              onClick={() => trackCtaClick("see_the_switch", "hero_annotated")}
+              className="inline-flex items-center text-[13.5px] font-medium text-[#1d1d1f] no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
+            >
+              See the one-line switch from OpenAI or Bedrock <span className="ml-1 text-[13px]">›</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
