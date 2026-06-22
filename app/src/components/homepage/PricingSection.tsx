@@ -29,7 +29,7 @@ const TIERS: Tier[] = [
     blurb: "Run NadirClaw on your own infrastructure. Yours forever, no fees.",
     proof: "Same routing engine as hosted. Your keys, your servers, your data.",
     features: [
-      "MIT licensed — run it anywhere",
+      "MIT licensed, run it anywhere",
       "Bring your own provider keys",
       "4-tier routing + context optimization",
       "Local CLI dashboard",
@@ -107,7 +107,7 @@ export const PricingSection = () => {
             Self-host free, or let us run it.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            NadirClaw is open source under MIT. On the hosted plan there's no base fee — we take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay nothing.
+            NadirClaw is open source under MIT. On the hosted plan there's no base fee. We take 25% of what we save you on the first $2K, 10% above. If we save you nothing, you pay nothing.
           </p>
         </div>
 

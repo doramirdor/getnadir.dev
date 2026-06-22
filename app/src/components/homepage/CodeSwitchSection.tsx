@@ -19,8 +19,8 @@ export const CodeSwitchSection = () => (
           Nadir is OpenAI-compatible, so switching is a base-URL swap and{" "}
           <code className="px-1.5 py-0.5 rounded-md bg-black/[0.05] font-mono text-[15px] text-[#1d1d1f]">
             model="auto"
-          </code>{" "}
-          — whether you're on OpenAI, AWS Bedrock, or Anthropic today. Watch it happen:
+          </code>,{" "}
+          whether you're on OpenAI, AWS Bedrock, or Anthropic today. Watch it happen:
         </p>
       </div>
 

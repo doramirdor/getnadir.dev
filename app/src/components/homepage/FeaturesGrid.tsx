@@ -155,7 +155,7 @@ export const FeaturesGrid = () => {
             </button>
           </SignupDialog>
           <p className="mt-3 text-[13px] text-[#6e6e73] tracking-[-0.005em]">
-            Cancel anytime. No base fee — you pay only on what we save you.
+            Cancel anytime. No base fee. You pay only on what we save you.
           </p>
         </Reveal>
       </div>

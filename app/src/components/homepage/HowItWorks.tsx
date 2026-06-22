@@ -89,7 +89,7 @@ export const HowItWorks = () => {
           </CodeBlock>
         </Step>
 
-        <Step num="02" time="~ 30 seconds" title="Set model to auto." desc="Nadir reads the prompt and routes it to the model that fits the job — a frontier model is overkill for a sentiment tag. Pin a model whenever you want full control.">
+        <Step num="02" time="~ 30 seconds" title="Set model to auto." desc="Nadir reads the prompt and routes it to the model that fits the job. A frontier model is overkill for a sentiment tag. Pin a model whenever you want full control.">
           <CodeBlock label="Request">
             {"response = client.chat.completions.create(\n"}
             <HighlightedLine>
