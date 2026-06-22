@@ -166,17 +166,19 @@ export const HeroAnnotated = () => {
   }, []);
 
   // Sequenced reveal, per cluster: the note writes itself in (each line wipes
-  // left-to-right like a pen), THEN its arrow draws toward the word. The circle
-  // is the finale -- it marks the hero phrase only after every note + arrow has
-  // landed. Timings below are the start delays (ms) for each beat.
+  // left-to-right like a pen), THEN its arrow draws toward the word. The green
+  // "cheapest model" cluster (index 1) is deliberately sequenced LAST so its
+  // arrow flows straight into the circle: once the green arrow lands, we mark
+  // the phrase with the hand-drawn circle as the finale. Timings are start
+  // delays (ms) per beat.
   const reduced = reducedRef.current;
   const EASE_WRITE = "cubic-bezier(0.4,0,0.2,1)";
   const EASE_DRAW = "cubic-bezier(0.65,0,0.35,1)";
-  const CSTART = [160, 740, 1320];          // when each cluster begins writing
+  const CSTART = [160, 1320, 740];          // how first, outcome second, green (models) last
   const LINE_DUR = 300, LINE_STAGGER = 90;  // per-line write
   const ARROW_DUR = 380;
   const arrowDelay = (c: number) => CSTART[c] + 2 * LINE_STAGGER + LINE_DUR + 40;
-  const CIRCLE_DELAY = arrowDelay(2) + ARROW_DUR + 120;
+  const CIRCLE_DELAY = arrowDelay(1) + ARROW_DUR + 100; // circle right after the green arrow
 
   // A line "writes" by un-clipping left-to-right.
   const lineStyle = (c: number, li: number): React.CSSProperties => ({
