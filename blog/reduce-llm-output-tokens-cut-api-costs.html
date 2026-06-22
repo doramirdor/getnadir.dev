@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reduce LLM Output Tokens: The Other Half of Your API Cost Problem — Nadir</title>
+    <meta name="description" content="Output tokens cost 5x more than input tokens on Claude and GPT-4. Most teams optimize input and ignore output. Here is how to fix the other half of your LLM API bill.">
+    <link rel="canonical" href="https://getnadir.com/blog/reduce-llm-output-tokens-cut-api-costs.html" />
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Reduce LLM Output Tokens: The Other Half of Your API Cost Problem">
+    <meta property="og:description" content="Output tokens cost 5x more than input tokens on Claude and GPT-4. Most teams optimize input and ignore output. Here is how to fix the other half of your LLM API bill.">
+    <meta property="og:url" content="https://getnadir.com/blog/reduce-llm-output-tokens-cut-api-costs.html">
+    <meta property="og:site_name" content="Nadir">
+    <meta property="og:image" content="https://getnadir.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="article:published_time" content="2026-06-22">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Reduce LLM Output Tokens: The Other Half of Your API Cost Problem">
+    <meta name="twitter:description" content="Output tokens cost 5x more than input. Most teams never optimize them. Here is the playbook.">
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Reduce LLM Output Tokens: The Other Half of Your API Cost Problem",
+      "datePublished": "2026-06-22",
+      "dateModified": "2026-06-22",
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
+      "url": "https://getnadir.com/blog/reduce-llm-output-tokens-cut-api-costs.html",
+      "description": "Output tokens cost 5x more than input tokens on Claude and GPT-4. Most teams optimize input and ignore output. Here is how to fix the other half of your LLM API bill."
+    }
+    </script>
+    <style>
+      :root { --bg: #ffffff; --text: #0a0a0a; --muted: #666666; --accent: #0066ff; --border: #e5e5e5; --code-bg: #f4f4f4; --success: #00a86b; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+      .page { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; }
+      .back { display: inline-block; color: var(--accent); text-decoration: none; margin-bottom: 2rem; font-size: 0.9rem; }
+      .back:hover { text-decoration: underline; }
+      .nav-links { display: inline; margin-left: 1.5rem; font-size: 0.9rem; }
+      .nav-links a { color: var(--muted); text-decoration: none; margin-left: 1rem; }
+      .nav-links a:hover { color: var(--accent); }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; line-height: 1.3; }
+      .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.2rem; margin: 1.8rem 0 0.6rem; }
+      h3 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; }
+      p { margin-bottom: 1rem; color: #333; }
+      code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.85em; line-height: 1.6; margin-bottom: 1rem; }
+      pre code { background: none; padding: 0; border-radius: 0; }
+      ul, ol { margin: 0 0 1rem 1.5rem; color: #333; }
+      li { margin-bottom: 0.4rem; }
+      .highlight-box { background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+      .highlight-box p:last-child { margin-bottom: 0; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9em; }
+      th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 0.85em; color: var(--muted); }
+      td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+      th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .pct { color: var(--success); font-weight: 600; }
+      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.85rem; }
+      footer a { color: var(--accent); text-decoration: none; }
+
+      @media (max-width: 768px) {
+          .page { padding: 2rem 16px; }
+          h1 { font-size: 28px; }
+          h2 { font-size: 22px; }
+          pre { font-size: 12px; padding: 0.75rem 1rem; }
+          table { font-size: 0.8em; }
+          th, td { padding: 8px 6px; }
+          .nav-links { display: block; margin-left: 0; margin-top: 0.5rem; }
+      }
+    </style>
+</head>
+<body>
+<main class="page">
+    <div>
+        <a href="/#blog" class="back">&larr; Back to blog</a>
+        <span class="nav-links">
+            <a href="/">Home</a>
+            <a href="/docs.html">Docs</a>
+            <a href="/optimize.html">Optimize</a>
+            <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a>
+        </span>
+    </div>
+
+    <h1>Reduce LLM output tokens: the other half of your API cost problem</h1>
+    <p class="meta"><time datetime="2026-06-22">June 22, 2026</time></p>
+
+    <p>Most LLM cost discussions focus on input tokens. That makes sense — they are visible. You can read your prompt, count the context, see the tool schemas stacking up across agent turns. Teams audit their system prompts, compress their JSON payloads, trim their conversation histories, and watch the input token numbers fall.</p>
+
+    <p>Then they look at their bill and wonder why it did not fall as much as expected.</p>
+
+    <p>The reason is output tokens. On Claude Opus, output tokens cost $75 per million — five times the $15/M input rate. On GPT-4o the ratio is similar. Most production applications generate 200-800 output tokens per request, and most of those applications have never deliberately optimized what the model generates.</p>
+
+    <p>Optimizing input tokens and ignoring output is like sealing the leaks in the roof while leaving the windows open. You need both sides.</p>
+
+    <h2>The pricing asymmetry most teams do not internalize</h2>
+
+    <p>Here is the full picture across Anthropic's model line, input versus output:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Model</th>
+                <th class="num">Input ($/M tokens)</th>
+                <th class="num">Output ($/M tokens)</th>
+                <th class="num">Output multiplier</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Claude Opus 4.6</td>
+                <td class="num">$15</td>
+                <td class="num">$75</td>
+                <td class="num">5×</td>
+            </tr>
+            <tr>
+                <td>Claude Sonnet 4.6</td>
+                <td class="num">$3</td>
+                <td class="num">$15</td>
+                <td class="num">5×</td>
+            </tr>
+            <tr>
+                <td>Claude Haiku 4.5</td>
+                <td class="num">$0.80</td>
+                <td class="num">$4</td>
+                <td class="num">5×</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>The multiplier is consistent. Every token the model generates costs five times as much as every token you send. For a typical request with 2,000 input tokens and 400 output tokens, the input costs $0.030 on Opus and the output costs $0.030 as well — equal billing despite a 5:1 token count ratio. Push the output to 800 tokens and output starts dominating the request cost.</p>
+
+    <h2>Where output tokens come from</h2>
+
+    <p>A useful way to think about model output is to separate the tokens that deliver value to the user from the tokens that accompany that value. In most production workloads, the ratio is worse than you expect.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Output component</th>
+                <th class="num">Typical token share</th>
+                <th>Eliminable?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Core answer or data</td>
+                <td class="num">10–30%</td>
+                <td>No — this is what you want</td>
+            </tr>
+            <tr>
+                <td>Prose explanation around the answer</td>
+                <td class="num">20–50%</td>
+                <td>Often yes</td>
+            </tr>
+            <tr>
+                <td>Markdown formatting (headers, bullets, bold)</td>
+                <td class="num">5–15%</td>
+                <td>Yes, for non-rendered contexts</td>
+            </tr>
+            <tr>
+                <td>Hedging, caveats, and qualifications</td>
+                <td class="num">10–25%</td>
+                <td>Often yes</td>
+            </tr>
+            <tr>
+                <td>Exposed chain-of-thought reasoning</td>
+                <td class="num">10–40%</td>
+                <td>Yes, with proper prompt design</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>For a classification task, a customer support routing decision, a sentiment label, or an entity extraction job, the core answer is often under 20 tokens. The surrounding prose, qualifications, and formatting can push the total to 300+ tokens. Paying $75/M for that overhead adds up fast.</p>
+
+    <h2>Five patterns that inflate output token counts</h2>
+
+    <h3>Verbose explanations you did not ask for</h3>
+
+    <p>Frontier models default to explaining their reasoning. Ask "what is the sentiment of this review?" and you get a paragraph. The model identifies positive phrases, notes negative signals, weighs them against each other, and arrives at a conclusion — most of which you do not need if you only want the label.</p>
+
+    <p>This is not a model failure. The models are trained to be helpful, and explanation reads as helpful to most users. The fix is not a better model — it is a more specific prompt.</p>
+
+    <h3>Markdown formatting in non-markdown contexts</h3>
+
+    <p>When uncertain about rendering context, models default to markdown. Headers, bullet lists, bold text, and fenced code blocks are inserted liberally. If the consumer of the response is an API client parsing JSON, a database write pipeline, or a downstream system that strips formatting, those tokens are pure waste. A 500-token response with heavy markdown might carry 80 tokens of formatting syntax that disappears before any user ever sees it.</p>
+
+    <h3>Redundant JSON structure</h3>
+
+    <p>Asking for structured output with verbose schemas generates verbose output. An array of objects with long field names repeated on every element is more expensive than a compact equivalent. The difference matters at scale:</p>
+
+<pre><code># Verbose schema: ~30 tokens per item
+{"sentiment_label": "positive", "confidence_score": 0.92, "reasoning_summary": "..."}
+
+# Compact schema: ~8 tokens per item
+{"s": "pos", "c": 0.92}</code></pre>
+
+    <p>For a batch job processing 100,000 reviews, the schema choice alone determines whether the output token cost is $0.08 or $0.30 per 1,000 items.</p>
+
+    <h3>Chain-of-thought exposed in the response</h3>
+
+    <p>Asking the model to "think step by step" before answering improves accuracy on complex tasks. But if that reasoning appears in the API response and you discard it before returning to the user, you pay full output token rates for tokens nobody reads. A 10-step reasoning chain can run 400-600 tokens before the actual answer appears.</p>
+
+    <h3>Runaway responses without limits</h3>
+
+    <p>Without a <code>max_tokens</code> constraint, the model generates as much as the task warrants. An open-ended question about system architecture can produce 2,000 tokens when 300 would serve the user equally well. The model has no incentive to stop early — you do.</p>
+
+    <h2>Five strategies to reduce output token counts</h2>
+
+    <h3>Use structured outputs (JSON mode)</h3>
+
+    <p>The highest-impact single change for most applications is switching to constrained structured output. Instead of asking for an answer in prose, define a schema and request only the data you need. The model still reasons internally, but the response is constrained to your format.</p>
+
+    <p>Both Anthropic and OpenAI support JSON output mode. Anthropic's tool use API and OpenAI's <code>response_format: {"type": "json_object"}</code> parameter enforce structured responses. The token savings are dramatic for extraction, classification, and decision tasks:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Task type</th>
+                <th class="num">Prose output (tokens)</th>
+                <th class="num">Structured output (tokens)</th>
+                <th class="num">Reduction</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Sentiment classification</td>
+                <td class="num">80–200</td>
+                <td class="num">8–15</td>
+                <td class="num"><span class="pct">88–93%</span></td>
+            </tr>
+            <tr>
+                <td>Entity extraction (5 fields)</td>
+                <td class="num">150–400</td>
+                <td class="num">40–80</td>
+                <td class="num"><span class="pct">70–80%</span></td>
+            </tr>
+            <tr>
+                <td>Routing decision (3 categories)</td>
+                <td class="num">60–180</td>
+                <td class="num">5–10</td>
+                <td class="num"><span class="pct">90–95%</span></td>
+            </tr>
+            <tr>
+                <td>Summary generation</td>
+                <td class="num">100–300</td>
+                <td class="num">100–300</td>
+                <td class="num">0% (prose is the deliverable)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Structured output does not help when the deliverable is prose — a user-facing summary, a generated email, an explanation. It helps enormously when the deliverable is data.</p>
+
+    <h3>Set max_tokens on every request</h3>
+
+    <p>This is the easiest change and the one most often skipped. Setting a reasonable upper bound per request type prevents runaway outputs and makes your cost envelope predictable.</p>
+
+<pre><code>from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.getnadir.com/v1",
+    api_key="ndr_..."
+)
+
+# Classification task: cap at 30 tokens
+response = client.chat.completions.create(
+    model="auto",
+    max_tokens=30,
+    messages=[
+        {"role": "system", "content": "Classify the ticket. Reply only with the JSON: {\"category\": \"billing|technical|general\"}"},
+        {"role": "user", "content": user_ticket}
+    ]
+)
+
+# Summary task: cap at 200 tokens
+response = client.chat.completions.create(
+    model="auto",
+    max_tokens=200,
+    messages=[
+        {"role": "system", "content": "Summarize in 2-3 sentences. No markdown."},
+        {"role": "user", "content": document}
+    ]
+)</code></pre>
+
+    <p>Set per-task limits, not a single global limit. A routing decision needs 10 tokens. A code review comment needs 300. A full document summary needs 500. Calibrate to actual task requirements, not a blanket cap that truncates legitimate responses.</p>
+
+    <h3>Tell the model exactly how to respond</h3>
+
+    <p>Explicit format instructions in the system prompt are more effective than most teams expect. The model does not need to infer what format you want — tell it directly:</p>
+
+    <ul>
+        <li>"Respond with a single word: yes or no."</li>
+        <li>"Reply only with the JSON object. No explanation before or after."</li>
+        <li>"Answer in one sentence. Do not use markdown."</li>
+        <li>"List exactly 3 items. Use plain text, not markdown bullets."</li>
+        <li>"Return the score as a number between 0 and 100. Nothing else."</li>
+    </ul>
+
+    <p>These instructions work. A system prompt that says "reply only with JSON" dramatically reduces explanatory prose and hedging. The model follows format instructions reliably on frontier models when they are specific and placed in the system prompt rather than the user message.</p>
+
+    <h3>Separate reasoning from response</h3>
+
+    <p>If your task requires chain-of-thought accuracy but you do not want the reasoning tokens in your billed output, you have two practical options:</p>
+
+    <p><strong>Extended thinking (Anthropic):</strong> Anthropic's extended thinking feature runs reasoning in a separate "thinking" block. The model reasons before responding. You pay for thinking tokens at a lower rate and the final response is typically shorter and more accurate than a prompted chain-of-thought response. If accuracy on complex tasks is the goal, this is often cost-neutral or better even though it adds token volume, because the final answer is more concise and correct on the first attempt.</p>
+
+    <p><strong>Two-step prompting:</strong> Send a reasoning prompt first. Extract the conclusion from the reasoning output. Send only the conclusion to the user. The first call is longer. The second is very short. For tasks where you run many requests and only need the reasoning occasionally (debugging, QA sampling, audit trails), this pattern reduces average output cost significantly.</p>
+
+    <h3>Route to cheaper models for output-heavy tasks</h3>
+
+    <p>Cheaper models are not just cheaper per token — they also generate responses with roughly equivalent length to Opus and Sonnet on straightforward tasks. Routing a classification request to Haiku instead of Opus saves 19x on both input and output at the same time.</p>
+
+    <p>For tasks where output verbosity matters to quality (complex reasoning, nuanced writing, multi-step analysis), keep the expensive model. For tasks where a shorter, accurate response is the goal, a cheaper model often generates fewer tokens naturally while still being correct.</p>
+
+    <div class="highlight-box">
+        <p><strong>The routing-output interaction:</strong> Nadir's tier-based routing automatically handles this. A request classified as Simple routes to Haiku, which generates the correct 15-token classification response at 1/19th the cost of Opus doing the same thing. The output token savings from routing are automatic — you do not need separate prompt changes for routed requests.</p>
+    </div>
+
+    <h2>The math at production scale</h2>
+
+    <p>Take a concrete example: a production customer support triage system running 500,000 requests per month. Each request classifies an incoming ticket into one of six categories. Currently running on Claude Opus with no output constraints, averaging 280 output tokens per response (prose explanation plus the label).</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Configuration</th>
+                <th class="num">Output tokens/req</th>
+                <th class="num">Monthly output cost</th>
+                <th class="num">vs. baseline</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Baseline (Opus, no constraints)</td>
+                <td class="num">280</td>
+                <td class="num">$10,500</td>
+                <td class="num">—</td>
+            </tr>
+            <tr>
+                <td>+ Structured output + max_tokens=20</td>
+                <td class="num">12</td>
+                <td class="num">$450</td>
+                <td class="num"><span class="pct">96%</span></td>
+            </tr>
+            <tr>
+                <td>+ Route to Haiku (via Nadir)</td>
+                <td class="num">12</td>
+                <td class="num">$24</td>
+                <td class="num"><span class="pct">99.8%</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>For a classification task, the output token savings from structured output alone are extreme because classification is a fundamentally data-shaped task. Prose output costs $10,500/month for a response format that serves no user — it gets parsed and discarded. Structured output gets the same label in 12 tokens and a fraction of the cost.</p>
+
+    <p>Not every workload has this much slack. A customer-facing summarization tool, a code generation assistant, or a writing aid genuinely needs prose output and cannot compress to 12 tokens. But most production LLM applications contain at least some structured, extractive, or classification tasks where the output could be dramatically shorter without any quality loss.</p>
+
+    <h2>How to audit your output token spend</h2>
+
+    <p>Every LLM API response includes a usage object with output token counts. Log it. Most teams log the request but not the response metadata, which means they have no visibility into what their output actually costs per endpoint or per task type.</p>
+
+<pre><code>response = client.chat.completions.create(
+    model="auto",
+    messages=[...]
+)
+
+# Log this alongside your request metadata
+usage = response.usage
+print(f"prompt_tokens: {usage.prompt_tokens}")
+print(f"completion_tokens: {usage.completion_tokens}")
+print(f"total_tokens: {usage.total_tokens}")
+
+# Attribute to endpoint + model for cost breakdown
+log_event({
+    "endpoint": "/api/classify",
+    "model": response.model,
+    "input_tokens": usage.prompt_tokens,
+    "output_tokens": usage.completion_tokens,
+    "output_cost_usd": usage.completion_tokens / 1_000_000 * output_price_per_million
+})</code></pre>
+
+    <p>Once you have per-endpoint output token data, the outliers become obvious. A classification endpoint averaging 300 output tokens is a candidate for structured output. An endpoint where output tokens consistently match a natural ceiling (100-150 tokens) may already be well-calibrated. An endpoint with high variance — sometimes 50 tokens, sometimes 800 — is a candidate for explicit <code>max_tokens</code> limits.</p>
+
+    <h2>Output optimization stacks with input optimization</h2>
+
+    <p>Nadir handles the input side automatically: context compression removes formatting waste and redundant tool schemas, model routing directs requests to appropriately priced models. Output optimization requires changes to how you design your prompts and response schemas — but the two strategies compound.</p>
+
+    <p>A request that routes to Haiku instead of Opus (19x cheaper per token) and generates a 12-token structured response instead of a 280-token prose response delivers cost reduction on both dimensions simultaneously. The savings multiply rather than add.</p>
+
+<pre><code># Nadir proxy handles routing and input compression.
+# Add your output constraints on top.
+nadirclaw serve --optimize safe
+
+export OPENAI_BASE_URL=http://localhost:8856
+
+# Your structured, max_tokens-constrained requests
+# now also get routing and context compression automatically.</code></pre>
+
+    <h2>Where to start</h2>
+
+    <p>The order that tends to pay off fastest:</p>
+
+    <ol>
+        <li><strong>Audit first.</strong> Add output token logging to your existing endpoints. Sort by total monthly output tokens. Find the top three endpoints by output cost — those are your targets.</li>
+        <li><strong>Add max_tokens to every endpoint.</strong> Set per-task limits based on what the task actually needs. This takes an hour and immediately caps runaway responses.</li>
+        <li><strong>Switch classification and extraction tasks to structured output.</strong> Any endpoint where you are parsing the model's prose response to extract structured data is a candidate. The savings are typically 80-95% on output tokens for these task types.</li>
+        <li><strong>Add format instructions to system prompts.</strong> "Reply only with JSON. No explanation." on classification and routing tasks. "No markdown formatting." on API-consumed responses. "Answer in two sentences." on summary endpoints with known length requirements.</li>
+    </ol>
+
+    <p>Combined with input-side optimization from <a href="/blog/three-ways-to-cut-llm-api-costs-routing-compression-caching.html">routing, compression, and prompt caching</a>, output optimization closes the loop on both sides of your API cost equation. The teams running LLM-backed products sustainably at scale are the ones who treat both input and output as engineering problems with concrete, measurable solutions.</p>
+
+    <p>Install Nadir with <code>pip install nadirclaw</code> and run <code>nadirclaw serve --optimize safe</code> to get input-side optimization running today. Pair it with the output strategies above, measure your token counts per endpoint, and you have the complete picture. The <a href="https://github.com/NadirRouter/NadirClaw">source code</a> is MIT-licensed and open for inspection.</p>
+</main>
+<footer>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
+</footer>
+</body>
+</html>
