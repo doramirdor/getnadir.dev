@@ -71,8 +71,8 @@ const CLUSTER = {
   outcome: { color: "#c2410c", lines: ["No quality drop", "Verified before it ships", "30-60% lower bill"] },
 };
 
-const Bullet = ({ color, children }: { color: string; children: React.ReactNode }) => (
-  <span className="block leading-[1.2] text-[21px]" style={{ ...HAND, color }}>
+const Bullet = ({ color, children, style }: { color: string; children: React.ReactNode; style?: React.CSSProperties }) => (
+  <span className="block leading-[1.2] text-[21px]" style={{ ...HAND, color, ...style }}>
     <span className="opacity-60">- </span>
     {children}
   </span>
@@ -165,17 +165,24 @@ export const HeroAnnotated = () => {
     };
   }, []);
 
-  // Per-cluster fade/slide-in, staggered to match each arrow's draw-on.
-  const clusterStyle = (i: number): React.CSSProperties => {
-    const reduced = reducedRef.current;
-    const delay = 420 + i * 240;
-    return {
-      maxWidth: 230,
-      opacity: played ? 1 : 0,
-      transform: played ? "none" : "translateY(3px)",
-      transition: reduced ? "none" : `opacity 340ms ease-out ${delay}ms, transform 340ms ease-out ${delay}ms`,
-    };
-  };
+  // Sequenced reveal, per cluster: the note writes itself in (each line wipes
+  // left-to-right like a pen), THEN its arrow draws toward the word. The circle
+  // is the finale -- it marks the hero phrase only after every note + arrow has
+  // landed. Timings below are the start delays (ms) for each beat.
+  const reduced = reducedRef.current;
+  const EASE_WRITE = "cubic-bezier(0.4,0,0.2,1)";
+  const EASE_DRAW = "cubic-bezier(0.65,0,0.35,1)";
+  const CSTART = [160, 740, 1320];          // when each cluster begins writing
+  const LINE_DUR = 300, LINE_STAGGER = 90;  // per-line write
+  const ARROW_DUR = 380;
+  const arrowDelay = (c: number) => CSTART[c] + 2 * LINE_STAGGER + LINE_DUR + 40;
+  const CIRCLE_DELAY = arrowDelay(2) + ARROW_DUR + 120;
+
+  // A line "writes" by un-clipping left-to-right.
+  const lineStyle = (c: number, li: number): React.CSSProperties => ({
+    clipPath: played ? "inset(-15% 0% -15% 0)" : "inset(-15% 100% -15% 0)",
+    transition: reduced ? "none" : `clip-path ${LINE_DUR}ms ${EASE_WRITE} ${CSTART[c] + li * LINE_STAGGER}ms`,
+  });
 
   return (
     <section className="relative overflow-hidden pt-10 md:pt-14 pb-16 md:pb-20">
@@ -190,8 +197,7 @@ export const HeroAnnotated = () => {
           aria-hidden
         >
           {arrows.map((a, i) => {
-            const reduced = reducedRef.current;
-            const lineDelay = 440 + i * 240;
+            const delay = arrowDelay(i);
             return (
               <g key={i}>
                 <path
@@ -203,7 +209,7 @@ export const HeroAnnotated = () => {
                   style={{
                     strokeDasharray: 1,
                     strokeDashoffset: played ? 0 : 1,
-                    transition: reduced ? "none" : `stroke-dashoffset 520ms cubic-bezier(0.65,0,0.35,1) ${lineDelay}ms`,
+                    transition: reduced ? "none" : `stroke-dashoffset ${ARROW_DUR}ms ${EASE_DRAW} ${delay}ms`,
                   }}
                 />
                 <path
@@ -214,7 +220,7 @@ export const HeroAnnotated = () => {
                   strokeLinejoin="round"
                   style={{
                     opacity: played ? 1 : 0,
-                    transition: reduced ? "none" : `opacity 160ms ease-out ${lineDelay + 470}ms`,
+                    transition: reduced ? "none" : `opacity 150ms ease-out ${delay + ARROW_DUR - 60}ms`,
                   }}
                 />
               </g>
@@ -224,14 +230,14 @@ export const HeroAnnotated = () => {
 
         {/* ---- Handwritten clusters (lg+ only) ---- */}
         <div className="hidden lg:block" aria-hidden>
-          <div ref={cHow} className="absolute top-0 left-0 text-left" style={clusterStyle(0)}>
-            {CLUSTER.how.lines.map((l) => <Bullet key={l} color={CLUSTER.how.color}>{l}</Bullet>)}
+          <div ref={cHow} className="absolute top-0 left-0 text-left" style={{ maxWidth: 230 }}>
+            {CLUSTER.how.lines.map((l, li) => <Bullet key={l} color={CLUSTER.how.color} style={lineStyle(0, li)}>{l}</Bullet>)}
           </div>
-          <div ref={cModels} className="absolute top-[150px] right-0 text-right" style={clusterStyle(1)}>
-            {CLUSTER.models.lines.map((l) => <Bullet key={l} color={CLUSTER.models.color}>{l}</Bullet>)}
+          <div ref={cModels} className="absolute top-[150px] right-0 text-right" style={{ maxWidth: 230 }}>
+            {CLUSTER.models.lines.map((l, li) => <Bullet key={l} color={CLUSTER.models.color} style={lineStyle(1, li)}>{l}</Bullet>)}
           </div>
-          <div ref={cOutcome} className="absolute top-[270px] right-0 text-right" style={clusterStyle(2)}>
-            {CLUSTER.outcome.lines.map((l) => <Bullet key={l} color={CLUSTER.outcome.color}>{l}</Bullet>)}
+          <div ref={cOutcome} className="absolute top-[270px] right-0 text-right" style={{ maxWidth: 230 }}>
+            {CLUSTER.outcome.lines.map((l, li) => <Bullet key={l} color={CLUSTER.outcome.color} style={lineStyle(2, li)}>{l}</Bullet>)}
           </div>
         </div>
 
@@ -258,7 +264,7 @@ export const HeroAnnotated = () => {
                   style={{
                     strokeDasharray: 1,
                     strokeDashoffset: played ? 0 : 1,
-                    transition: reducedRef.current ? "none" : "stroke-dashoffset 560ms cubic-bezier(0.65,0,0.35,1) 200ms",
+                    transition: reduced ? "none" : `stroke-dashoffset 560ms ${EASE_DRAW} ${CIRCLE_DELAY}ms`,
                   }}
                 />
               </svg>
