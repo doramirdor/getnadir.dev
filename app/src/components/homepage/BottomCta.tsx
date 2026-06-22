@@ -44,7 +44,7 @@ export const BottomCta = () => {
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckGlyph />
-              No base fee — pay only on savings
+              No base fee, pay only on savings
             </li>
           </ul>
         </div>

@@ -10,12 +10,12 @@ import time
 
 logger = logging.getLogger(__name__)
 
-from fastapi import APIRouter, Depends, Request, HTTPException, Header
+from fastapi import APIRouter, Depends, Request, HTTPException, Header, BackgroundTasks
 from pydantic import BaseModel, Field
 
 from app.auth.supabase_auth import get_current_user, UserSession, check_user_budget, check_rate_limit
 from app.middleware.subscription_guard import require_active_subscription
-from app.middleware.hosted_budget import enforce_hosted_budget_or_402
+from app.middleware.hosted_budget import enforce_hosted_budget_or_402, account_hosted_usage
 from app.schemas.completion import (
     CompletionRequest, CompletionResponse, PlaygroundRequest,
     RecommendationRequest, RecommendationResponse,
@@ -63,6 +63,7 @@ class EnhancedCompletionRequest(BaseModel):
 @router.post("/chat/completions", response_model=CompletionResponse, dependencies=[Depends(check_rate_limit)])
 async def chat_completion(
     request: CompletionRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserSession = Depends(require_active_subscription),
     http_request: Request = None,
     x_nadir_mode: Optional[str] = Header(None, alias="X-Nadir-Mode"),
@@ -378,6 +379,16 @@ async def chat_completion(
                 funnel_tag=x_tag
             )
         
+        # Record + bill hosted usage (drawdown + per-user cap + global breaker).
+        # No-op for BYOK. Must run on the legacy route too, or hosted users get
+        # free Bedrock usage here and evade the global circuit breaker.
+        account_hosted_usage(
+            current_user,
+            (result.get("cost") or {}).get("total_cost_usd", 0),
+            request_id,
+            background_tasks,
+        )
+
         return CompletionResponse(
             # OpenAI-compatible fields
             id=request_id,
@@ -445,6 +456,7 @@ async def chat_completion(
 @router.post("/enhanced/completions", dependencies=[Depends(check_rate_limit)])
 async def enhanced_completion(
     request: EnhancedCompletionRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserSession = Depends(require_active_subscription),
 ) -> Dict[str, Any]:
     """Enhanced completion endpoint with full control over the flow."""
@@ -485,7 +497,16 @@ async def enhanced_completion(
         tools=request.tools,
         stream=False
     )
-    
+
+    # Record + bill hosted usage (drawdown + per-user cap + global breaker).
+    # No-op for BYOK.
+    account_hosted_usage(
+        current_user,
+        (result.get("cost") or {}).get("total_cost_usd", 0),
+        f"enh-{uuid.uuid4().hex[:10]}",
+        background_tasks,
+    )
+
     return {
         "success": True,
         "result": result

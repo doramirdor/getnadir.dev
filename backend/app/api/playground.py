@@ -5,7 +5,7 @@ This module provides endpoints for testing the recommendation system
 and complexity analysis without actually calling LLM providers.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from typing import Dict, Any, List, Optional
 import logging
 import uuid
@@ -14,6 +14,7 @@ from datetime import datetime
 
 from app.auth.supabase_auth import get_current_user, validate_jwt, supabase, UserSession
 from app.services.supabase_unified_llm_service import SupabaseUnifiedLLMService
+from app.middleware.hosted_budget import enforce_hosted_budget_or_402, account_hosted_usage
 # from app.complexity.analyzer_factory import ComplexityAnalyzerFactory
 from app.database.supabase_db import supabase_db
 from pydantic import BaseModel, Field
@@ -747,6 +748,7 @@ async def _hydrate_session_for_key(user_id: str, key_id: str) -> UserSession:
 @router.post("/v1/dashboard/playground")
 async def dashboard_playground(
     request: DashboardPlaygroundRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserSession = Depends(validate_jwt),
 ):
     """
@@ -785,6 +787,11 @@ async def dashboard_playground(
             },
         }
 
+    # Completion mode makes a real routed call. For hosted sessions that draws
+    # Nadir's own provider spend, so enforce the prepaid credit gate first
+    # (no-op for BYOK). Analysis mode returned above without an LLM call.
+    await enforce_hosted_budget_or_402(session)
+
     model_arg = None if request.model in (None, "", "auto") else request.model
     result = await service.process_prompt(
         prompt=prompt,
@@ -799,6 +806,17 @@ async def dashboard_playground(
     usage = result.get("usage") or {}
     cost = result.get("cost") or {}
     complexity = result.get("complexity_analysis") or {}
+
+    # Record + bill hosted usage (drawdown + per-user cap + global breaker).
+    # Playground completions route through the same engine as production and
+    # draw Nadir's Bedrock spend, so they must be metered too. No-op for BYOK.
+    account_hosted_usage(
+        session,
+        cost.get("total_cost_usd"),
+        f"pg-{uuid.uuid4().hex[:10]}",
+        background_tasks,
+    )
+
     return {
         "choices": [{"message": {"role": "assistant", "content": content}}],
         "model_used": result.get("model_used"),

@@ -1,47 +1,7 @@
-import { useEffect, useRef, useState } from "react";
 import { SignupDialog } from "@/components/marketing/SignupDialog";
 import { IntegrationLogos } from "@/components/homepage/IntegrationLogos";
+import { RoutingDemoTerminal } from "@/components/homepage/RoutingDemoTerminal";
 import { trackCtaClick } from "@/utils/analytics";
-
-// Real Anthropic published rates (per million tokens, April 2026).
-// Haiku 4.5: $1 in / $5 out. Sonnet 4.6: $3 / $15. Opus 4.7: $5 / $25.
-const RATES: Record<string, [number, number]> = {
-  haiku: [1, 5],
-  sonnet: [3, 15],
-  opus: [5, 25],
-};
-
-const tokCost = (inTok: number, outTok: number, rates: [number, number]) =>
-  (inTok * rates[0]) / 1e6 + (outTok * rates[1]) / 1e6;
-
-type Req = {
-  type: "simple" | "complex";
-  prompt: string;
-  model: string;
-  routeTo: "haiku" | "sonnet" | "opus";
-  inTok: number;
-  outTok: number;
-  cost: number;
-  premiumCost: number;
-};
-
-const REQUESTS: Req[] = (
-  [
-    { type: "simple", prompt: '"Summarize this support ticket"', model: "haiku-4.5", routeTo: "haiku", inTok: 420, outTok: 140 },
-    { type: "simple", prompt: '"Classify sentiment of this email"', model: "haiku-4.5", routeTo: "haiku", inTok: 180, outTok: 60 },
-    { type: "complex", prompt: '"Refactor this auth module"', model: "sonnet-4.6", routeTo: "sonnet", inTok: 4200, outTok: 1800 },
-    { type: "complex", prompt: '"Debug this race condition"', model: "sonnet-4.6", routeTo: "sonnet", inTok: 3800, outTok: 2400 },
-    { type: "simple", prompt: '"Write a docstring for get_user()"', model: "haiku-4.5", routeTo: "haiku", inTok: 260, outTok: 90 },
-    { type: "complex", prompt: '"Design a migration plan"', model: "opus-4.7", routeTo: "opus", inTok: 900, outTok: 300 },
-  ] as const
-).map((r) => ({
-  ...r,
-  cost: tokCost(r.inTok, r.outTok, RATES[r.routeTo]),
-  premiumCost: tokCost(r.inTok, r.outTok, RATES.opus),
-}));
-
-const fmtCost = (n: number) =>
-  n < 0.01 ? `$${n.toFixed(4)}` : n >= 1 ? `$${n.toFixed(2)}` : `$${n.toFixed(3)}`;
 
 // What you get, stated as outcomes. Kept consistent with the StatBand below
 // the hero (30-60% typical savings) and the observability pillar.
@@ -61,59 +21,6 @@ const BENEFITS: { title: string; detail: string }[] = [
 ];
 
 export const HeroSection = () => {
-  const [visibleRows, setVisibleRows] = useState(0);
-  const [showStats, setShowStats] = useState(false);
-  const [pulseRow, setPulseRow] = useState<number | null>(null);
-  const terminalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setVisibleRows(REQUESTS.length);
-      setShowStats(true);
-      return;
-    }
-    const el = terminalRef.current;
-    if (!el) return;
-    let timers: ReturnType<typeof setTimeout>[] = [];
-    let pulseInterval: ReturnType<typeof setInterval> | null = null;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          REQUESTS.forEach((_, i) => {
-            timers.push(setTimeout(() => setVisibleRows(i + 1), 200 + i * 60));
-          });
-          const settleAt = 200 + REQUESTS.length * 60 + 180;
-          timers.push(setTimeout(() => setShowStats(true), settleAt));
-          // Perpetual rolling highlight after initial reveal. Cycles through
-          // routed rows to suggest a continuous live feed without changing
-          // data or shifting layout. CSS does the visual lift.
-          timers.push(
-            setTimeout(() => {
-              let idx = 0;
-              setPulseRow(idx);
-              pulseInterval = setInterval(() => {
-                idx = (idx + 1) % REQUESTS.length;
-                setPulseRow(idx);
-              }, 1800);
-            }, settleAt + 400),
-          );
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-    obs.observe(el);
-    return () => {
-      obs.disconnect();
-      timers.forEach(clearTimeout);
-      if (pulseInterval) clearInterval(pulseInterval);
-    };
-  }, []);
-
-  const totalWith = REQUESTS.reduce((s, r) => s + r.cost, 0);
-  const totalWithout = REQUESTS.reduce((s, r) => s + r.premiumCost, 0);
-  const savingsPct = Math.round(((totalWithout - totalWith) / totalWithout) * 100);
-
   return (
     <section className="pt-10 md:pt-14 pb-16 md:pb-20">
       <div className="max-w-[1240px] mx-auto px-6 sm:px-8">
@@ -137,7 +44,7 @@ export const HeroSection = () => {
             </h1>
 
             <p className="text-[17px] md:text-[19px] text-[#424245] mb-9 leading-[1.5] tracking-[-0.01em]">
-              Nadir is an LLM router. It reads every prompt and sends it to the cheapest model that can answer it well.
+              Nadir is an LLM router. It reads every prompt and routes it to the model that fits the job, so you stop paying frontier prices for work a smaller model handles just as well.
               <span className="text-[#1d1d1f] font-medium"> Haiku for classifications, Sonnet for refactors, Opus only when it has to think.</span>
             </p>
 
@@ -178,111 +85,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Terminal demo column */}
-          <div
-            ref={terminalRef}
-            className="bg-white border border-black/[0.08] rounded-[18px] overflow-hidden text-left lg:mt-0"
-            style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.04)" }}
-          >
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-black/[0.06] bg-white">
-              <span className="text-[12px] text-[#1d1d1f] font-semibold tracking-[-0.005em]">
-                Live routing decisions
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#028a3e]">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-60 animate-ping" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#028a3e]" />
-                </span>
-                Routing
-              </span>
-            </div>
-
-            <div className="px-4 pt-4 pb-5 sm:px-5 sm:pt-5 sm:pb-6">
-              <div className="hidden sm:grid gap-2.5 px-2 pb-3 text-[10px] text-[#86868b] uppercase tracking-[0.08em] font-semibold" style={{ gridTemplateColumns: "70px 1fr auto auto" }}>
-                <div>Type</div>
-                <div>Prompt</div>
-                <div>Routed to</div>
-                <div className="text-right">Cost</div>
-              </div>
-
-              {REQUESTS.map((req, i) => {
-                const visible = i < visibleRows;
-                const saved = req.premiumCost > req.cost;
-                const pulsing = pulseRow === i;
-                // Highlight intensifies when the rolling pulse lands on this
-                // row. Saved rows pulse green; non-saved (Opus) rows pulse
-                // neutral so we don't fake a savings event we didn't earn.
-                const baseBg = visible && saved ? "rgba(48,209,88,0.06)" : "transparent";
-                const pulseBg = pulsing
-                  ? saved
-                    ? "rgba(48,209,88,0.16)"
-                    : "rgba(0,0,0,0.04)"
-                  : baseBg;
-                return (
-                  <div
-                    key={i}
-                    className="grid gap-2.5 items-center px-2 py-2.5 rounded-lg mb-0.5 text-[13px] transition-[opacity,transform,background-color] duration-500 ease-emil-out"
-                    style={{
-                      gridTemplateColumns: "70px 1fr auto auto",
-                      background: pulseBg,
-                      opacity: visible ? 1 : 0,
-                      transform: visible ? "none" : "translateY(8px)",
-                    }}
-                  >
-                    <span
-                      className="text-[10px] font-semibold px-2 py-[3px] rounded uppercase tracking-[0.08em] justify-self-start"
-                      style={{
-                        background: req.type === "simple" ? "rgba(48,209,88,0.12)" : "rgba(0,113,227,0.10)",
-                        color: req.type === "simple" ? "#028a3e" : "#0071e3",
-                      }}
-                    >
-                      {req.type}
-                    </span>
-                    <span className="text-[#424245] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-[12px]">
-                      {req.prompt}
-                    </span>
-                    <span className="font-medium text-[#1d1d1f] font-mono text-[12px]">
-                      {req.model}
-                    </span>
-                    <span className="flex items-center gap-2 justify-end min-w-[110px]">
-                      {saved && (
-                        <span className="text-[#c7c7cc] line-through text-[11px] font-mono">
-                          {fmtCost(req.premiumCost)}
-                        </span>
-                      )}
-                      <span
-                        className="font-semibold font-mono text-[12px]"
-                        style={{ color: saved ? "#028a3e" : "#1d1d1f" }}
-                      >
-                        {fmtCost(req.cost)}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-
-              <div
-                className="mt-4 pt-4 border-t border-black/[0.06] flex items-center justify-between gap-3 flex-wrap transition-[opacity,transform] duration-300 ease-emil-out"
-                style={{
-                  opacity: showStats ? 1 : 0,
-                  transform: showStats ? "none" : "translateY(6px)",
-                }}
-              >
-                <div className="text-[13px] text-[#424245]">
-                  Would have cost{" "}
-                  <span className="line-through text-[#86868b] font-mono">{fmtCost(totalWithout)}</span>
-                  . You paid{" "}
-                  <span className="text-[#1d1d1f] font-semibold font-mono">{fmtCost(totalWith)}</span>
-                  .
-                </div>
-                <span className="text-[15px] font-semibold text-[#028a3e] tracking-[-0.01em]">
-                  {savingsPct}% saved
-                </span>
-              </div>
-              <p className="mt-3 text-[11px] text-[#86868b] leading-[1.5] tracking-[-0.005em]">
-                Sample of six prompts at current Anthropic rates. Your savings vary with your workload.
-              </p>
-            </div>
-          </div>
+          <RoutingDemoTerminal />
         </div>
 
         {/* Integrations row, honestly labeled */}
