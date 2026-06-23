@@ -32,6 +32,10 @@ if settings.STRIPE_SECRET_KEY:
 REFERRAL_REWARD_USD = Decimal("5.00")
 # Minimum referee prepaid-credit top-up that unlocks the referrer's reward.
 REFERRAL_MIN_TOPUP_USD = Decimal("10.00")
+# Cap on how many rewards one referrer can earn, to bound farming. This is a
+# soft guard: signup IP/device dedupe (the hard guard against multi-account
+# rings) is not in place yet. Tune as needed.
+REFERRAL_MAX_REWARDS_PER_REFERRER = 25
 
 
 async def _db(fn):
@@ -206,6 +210,28 @@ async def grant_referrer_reward_for_topup(
 
     referrer_user_id = referral["referrer_user_id"]
 
+    # Bound farming: cap how many rewards a single referrer can collect.
+    try:
+        rewarded = await _db(
+            lambda: supabase.table("referrals")
+            .select("id", count="exact")
+            .eq("referrer_user_id", referrer_user_id)
+            .eq("status", "rewarded")
+            .execute()
+        )
+        if (rewarded.count or 0) >= REFERRAL_MAX_REWARDS_PER_REFERRER:
+            logger.warning(
+                "Referrer %s hit reward cap (%d) — skipping referee %s",
+                referrer_user_id[:8],
+                REFERRAL_MAX_REWARDS_PER_REFERRER,
+                referee_user_id[:8],
+            )
+            return
+    except Exception as e:
+        # Fail closed: if we can't verify the cap, don't pay out.
+        logger.error("Referral cap check failed for %s: %s", referrer_user_id[:8], e)
+        return
+
     # Reward is spendable Nadir credit, matching the prepaid-credit the referee
     # just bought. Idempotency is enforced by referrer_rewarded_at below, so we
     # don't pass a payment_intent id (the credits ledger would otherwise dedupe
@@ -242,6 +268,52 @@ async def grant_referrer_reward_for_topup(
         referrer_user_id,
         REFERRAL_REWARD_USD,
         referee_user_id[:8],
+    )
+
+
+async def reverse_referrer_reward(referee_user_id: str, reason: str) -> None:
+    """
+    Claw back a referrer's reward when the referee's qualifying funding is
+    refunded or a dispute is lost. Called from the charge.refunded /
+    charge.dispute.funds_withdrawn webhook handlers.
+
+    Deducts REFERRAL_REWARD_USD from the referrer and flips the referral to
+    'rejected' so it drops out of the referrer's summary counts and can't pay
+    out again. Idempotent: get_referral_for_referee filters out 'rejected', so a
+    repeat event finds nothing and no-ops.
+    """
+    referral = await get_referral_for_referee(referee_user_id)
+    if not referral or not referral.get("referrer_rewarded_at"):
+        return  # Never rewarded (or already reversed) — nothing to claw back.
+
+    referrer_user_id = referral["referrer_user_id"]
+    try:
+        from app.services.credits_service import credits_service
+
+        await credits_service.deduct(
+            referrer_user_id,
+            REFERRAL_REWARD_USD,
+            description=f"Referral reward reversed (referee={referee_user_id[:8]}, {reason})",
+        )
+    except Exception as e:
+        logger.error("Failed to reverse referrer reward for %s: %s", referrer_user_id[:8], e)
+        return
+
+    try:
+        await _db(
+            lambda: supabase.table("referrals")
+            .update({"status": "rejected", "rejected_reason": f"referee_{reason}"})
+            .eq("id", referral["id"])
+            .execute()
+        )
+    except Exception as e:
+        logger.error("Failed to mark referral reversed: %s", e)
+
+    logger.info(
+        "Reversed referrer reward: user=%s referee=%s reason=%s",
+        referrer_user_id,
+        referee_user_id[:8],
+        reason,
     )
 
 

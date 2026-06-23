@@ -656,6 +656,43 @@ async def _handle_checkout_session_expired(data: dict) -> None:
     logger.info("Checkout abandoned: user=%s session=%s", user_id, session.get("id"))
 
 
+async def _reverse_referral_for_payment_intent(payment_intent_id: str, reason: str) -> None:
+    """
+    Map a refunded / disputed top-up payment_intent back to the referee who
+    paid it, then claw back any referral reward that top-up unlocked.
+    """
+    if not payment_intent_id:
+        return
+    row = await _db(
+        lambda: supabase.table("credit_transactions")
+        .select("user_id")
+        .eq("stripe_payment_intent_id", payment_intent_id)
+        .limit(1)
+        .execute()
+    )
+    if not row.data:
+        return  # Not a credit top-up we recorded — nothing to reverse.
+    referee_user_id = row.data[0]["user_id"]
+    try:
+        await referral_service.reverse_referrer_reward(referee_user_id, reason)
+    except Exception as e:
+        logger.error("Failed to reverse referral for referee %s: %s", referee_user_id[:8], e)
+
+
+async def _handle_charge_refunded(data: dict) -> None:
+    """Handle charge.refunded — claw back a referral reward if the refunded
+    charge was a referee's qualifying credit top-up."""
+    charge = data.get("object", {})
+    await _reverse_referral_for_payment_intent(charge.get("payment_intent"), "refund")
+
+
+async def _handle_dispute_funds_withdrawn(data: dict) -> None:
+    """Handle charge.dispute.funds_withdrawn — we lost a dispute and funds were
+    pulled. Claw back any referral reward the disputed top-up unlocked."""
+    dispute = data.get("object", {})
+    await _reverse_referral_for_payment_intent(dispute.get("payment_intent"), "chargeback")
+
+
 # ------------------------------------------------------------------
 # Webhook endpoint
 # ------------------------------------------------------------------
@@ -669,6 +706,9 @@ EVENT_HANDLERS = {
     "invoice.paid": _handle_invoice_paid,
     "invoice.payment_failed": _handle_invoice_payment_failed,
     "payment_method.attached": _handle_payment_method_attached,
+    # Referral clawback: reverse the $5 if the referee's funding falls through.
+    "charge.refunded": _handle_charge_refunded,
+    "charge.dispute.funds_withdrawn": _handle_dispute_funds_withdrawn,
 }
 
 
