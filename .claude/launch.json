@@ -10,7 +10,7 @@
     {
       "name": "react-app",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd app && npm run dev -- --port ${PORT:-5173}"],
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/dor/Documents/code/Nadir/getnadir.dev/app && npm run dev -- --port ${PORT:-5173}"],
       "port": 5173,
       "autoPort": true
     },

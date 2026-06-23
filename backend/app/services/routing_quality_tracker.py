@@ -18,6 +18,23 @@ logger = logging.getLogger(__name__)
 OVERRIDE_WINDOW_SECONDS = 60
 LATENCY_THRESHOLD_MS = 10_000  # 10s
 
+# Analyzer types whose usage_events carry classifier-shaped tier/confidence
+# metadata. `metadata.analyzer_type` is stamped with the factory key
+# (settings.COMPLEXITY_ANALYZER_TYPE) by
+# supabase_unified_llm_service._build_classifier_metadata, so these match the
+# AnalyzerType enum values in app/complexity/analyzer_factory.py. Keep in sync
+# with CLASSIFIER_ANALYZER_TYPES in app/api/classifier_analytics.py.
+# "planspace" is the ROUTER_V3 plan-space analyzer (Stage A).
+CLASSIFIER_ANALYZER_TYPES = frozenset({
+    "binary",
+    "heuristic",
+    "confidence_aware",
+    "trained",
+    "wide_deep_asym",
+    "cost_aware",
+    "planspace",
+})
+
 
 class RoutingQualityTracker:
     """Tracks routing accuracy from implicit and explicit signals."""
@@ -142,7 +159,10 @@ class RoutingQualityTracker:
         seen: Dict[str, Dict] = {}
         for event in events:
             meta = event.get("metadata") or {}
-            if meta.get("analyzer_type") != "binary":
+            # Was `!= "binary"`, which silently dropped override/implicit
+            # feedback for every modern analyzer (trained, wide_deep_asym,
+            # cost_aware, planspace, ...). "binary" events behave as before.
+            if meta.get("analyzer_type") not in CLASSIFIER_ANALYZER_TYPES:
                 continue
             total_binary += 1
             total += 1

@@ -108,6 +108,19 @@ class LiteLLMService:
             os.environ.pop("GOOGLE_CLOUD_PROJECT_ID", None)
             os.environ.pop("VERTEX_AI_PROJECT", None)
 
+        # AWS Bedrock: export credentials so LiteLLM's bedrock provider can
+        # authenticate. LiteLLM reads AWS_REGION_NAME (its canonical name), so
+        # mirror settings.AWS_REGION into it. setdefault never clobbers an
+        # explicitly-set container env var.
+        if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+            os.environ.setdefault("AWS_ACCESS_KEY_ID", settings.AWS_ACCESS_KEY_ID)
+            os.environ.setdefault("AWS_SECRET_ACCESS_KEY", settings.AWS_SECRET_ACCESS_KEY)
+            if settings.AWS_SESSION_TOKEN:
+                os.environ.setdefault("AWS_SESSION_TOKEN", settings.AWS_SESSION_TOKEN)
+            if settings.AWS_REGION:
+                os.environ.setdefault("AWS_REGION_NAME", settings.AWS_REGION)
+                os.environ.setdefault("AWS_REGION", settings.AWS_REGION)
+
         # Set additional provider keys if available (only if not already set)
         for provider, key in [
             ("XAI_API_KEY", os.getenv("XAI_API_KEY")),

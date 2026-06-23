@@ -66,6 +66,7 @@ class AnalyzerType(str, Enum):
     TRAINED = "trained"  # Trained GBT classifier with sentence embeddings
     WIDE_DEEP_ASYM = "wide_deep_asym"  # Wide&Deep (BGE + struct) trained with asymmetric-cost loss
     COST_AWARE = "cost_aware"  # NadirRoute: per-model P(correct) heads + cheapest-clearing-tau selection
+    PLANSPACE = "planspace"  # FLIGHTPLAN Stage A: plan-space routing with Mondrian conformal floors
 
 
 class ComplexityAnalyzerFactory:
@@ -170,6 +171,9 @@ class ComplexityAnalyzerFactory:
                 allowed_models=allowed_models,
                 mode=kwargs.get("mode", "prod"),
             )
+        elif analyzer_type == AnalyzerType.PLANSPACE:
+            from app.complexity.planspace_router import get_planspace_analyzer
+            return get_planspace_analyzer()
         else:
             raise ValueError(f"Unsupported analyzer type: {analyzer_type}")
     

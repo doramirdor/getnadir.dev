@@ -17,6 +17,7 @@ import {
   Gift,
   Mail,
   Monitor,
+  CreditCard,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,8 +48,8 @@ async function sha256(message: string): Promise<string> {
 type Mode = "byok" | "hosted";
 
 // Two-step onboarding. Step 0 makes the user choose how they want to run:
-// "Use our keys" (hosted, rides the free monthly allowance, no card and no
-// provider keys needed) or "Bring your keys" (BYOK, paste a provider key).
+// "Use our keys" (hosted, prepaid credits required to start, no provider keys
+// needed) or "Bring your keys" (BYOK, paste a provider key, free monthly trial).
 // Whichever they pick, we create a key with smart defaults, then they make
 // their first call in the page and see real savings. The full configuration
 // wizard (CreateApiKeyDialog) stays available behind the "Customize" link
@@ -645,7 +646,8 @@ console.log(response.choices[0].message.content);`;
                   </div>
                   {mode === "hosted" ? (
                     <p className="text-sm text-muted-foreground">
-                      Routing on our keys. {freeLimit} free requests a month, no card needed.
+                      Routing on our keys. Add prepaid credits to make your first call,
+                      billed at AWS cost + 20%.
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground">
@@ -673,7 +675,7 @@ console.log(response.choices[0].message.content);`;
                       ? [
                           "Smart routing on: simple prompts go to Haiku, hard ones to Opus",
                           "Fallback chain enabled, failed requests retry automatically",
-                          `${freeLimit} free requests on our keys, then bring your own or upgrade`,
+                          "Prepaid credits on our keys, billed at AWS cost + 20%",
                         ]
                       : [
                           "Smart routing on across your provider's models",
@@ -687,6 +689,24 @@ console.log(response.choices[0].message.content);`;
                       </div>
                     ))}
                   </div>
+
+                  {mode === "hosted" && (
+                    <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Hosted keys need a prepaid balance before your first call.
+                        Add credits now, or switch to your own provider keys (BYOK)
+                        to route for free.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => navigate("/dashboard/billing")}
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" /> Add credits
+                      </Button>
+                    </div>
+                  )}
 
                   <Button className="w-full" size="lg" onClick={() => goToStep(1)}>
                     Continue to your first call
@@ -747,12 +767,12 @@ console.log(response.choices[0].message.content);`;
                         <span className="font-semibold text-sm text-foreground">Use our keys</span>
                       </div>
                       <p className="text-xs text-muted-foreground mb-3">
-                        We run the keys, nothing to set up. Start free, then pay only on what we save you.
+                        We run the keys, nothing to set up. Add prepaid credits to start, then pay only on what we save you.
                       </p>
                       <div className="space-y-1.5">
                         {[
-                          `${freeLimit} free requests a month, no card needed`,
-                          "Then prepaid credits, billed at cost + 20%",
+                          "Prepaid credits, billed at AWS cost + 20%",
+                          "No provider keys to manage",
                           "Powered by Claude on AWS Bedrock",
                         ].map((b) => (
                           <div key={b} className="flex items-start gap-1.5 text-xs text-muted-foreground">

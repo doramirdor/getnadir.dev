@@ -38,6 +38,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.auth.supabase_auth import UserSession
 from app.middleware.subscription_guard import require_active_subscription
+from app.middleware.hosted_budget import enforce_hosted_budget_or_402
 from app.services.anthropic_translate import (
     UnsupportedAnthropicFeature,
     anthropic_body_to_openai_body,
@@ -405,6 +406,21 @@ async def anthropic_messages(
         return JSONResponse(
             status_code=400,
             content=make_anthropic_error("invalid_request_error", "body must be a JSON object"),
+        )
+
+    # Hosted requests draw Nadir's own provider spend — enforce the prepaid
+    # credit gate before doing any routing work (no-op for BYOK). Surface the
+    # 402 in the Anthropic error envelope so SDK clients parse it cleanly.
+    try:
+        await enforce_hosted_budget_or_402(current_user)
+    except HTTPException as gate_exc:
+        gate_detail = gate_exc.detail if isinstance(gate_exc.detail, dict) else {"message": str(gate_exc.detail)}
+        return JSONResponse(
+            status_code=gate_exc.status_code,
+            content=make_anthropic_error(
+                str(gate_detail.get("error", "payment_required")),
+                str(gate_detail.get("message", "Payment required.")),
+            ),
         )
 
     is_streaming = bool(body.get("stream"))

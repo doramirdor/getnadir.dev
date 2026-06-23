@@ -249,6 +249,8 @@ class AnalyticsService:
                 "wide_deep_asym",
                 "confidence_aware",
                 "heuristic",
+                "cost_aware",
+                "planspace",
             }
             additional = analytics.additional_metadata or {}
             is_classifier = (

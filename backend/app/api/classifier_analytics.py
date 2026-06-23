@@ -90,6 +90,8 @@ CLASSIFIER_ANALYZER_TYPES = {
     "wide_deep_asym",
     "confidence_aware",
     "heuristic",
+    "cost_aware",
+    "planspace",
 }
 
 

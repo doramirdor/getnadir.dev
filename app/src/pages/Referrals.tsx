@@ -65,7 +65,7 @@ const Referrals = () => {
             <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               <MousePointerClick className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
             </span>
-            They sign up and get a free month of Pro
+            They sign up and get their first month free
           </li>
           <li className="flex items-center gap-4 text-sm text-foreground">
             <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">

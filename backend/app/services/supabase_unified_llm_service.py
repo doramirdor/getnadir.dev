@@ -18,7 +18,11 @@ from fastapi import HTTPException
 
 from app.complexity.gemini_analyzer import GeminiModelRecommender
 from app.complexity.analyzer_factory import ComplexityAnalyzerFactory, AnalyzerConfig
-from app.complexity.model_registry import PERFORMANCE_TO_API, extract_provider as registry_extract_provider
+from app.complexity.model_registry import (
+    PERFORMANCE_TO_API,
+    extract_provider as registry_extract_provider,
+    to_bedrock_model,
+)
 from app.services.litellm_service import LiteLLMService
 from app.services.analytics_service import (
     analytics_service, RequestAnalytics, ModelAnalytics, 
@@ -809,22 +813,57 @@ class SupabaseUnifiedLLMService:
         if not model_name:
             return "gpt-4o-mini"  # Safe default
 
-        # Check direct mapping from centralized registry
+        # Resolve to the LiteLLM API name first…
         if model_name in PERFORMANCE_TO_API:
-            return PERFORMANCE_TO_API[model_name]
+            litellm_name = PERFORMANCE_TO_API[model_name]
+        elif "-" in model_name and model_name.islower():
+            # Already in LiteLLM format (contains dashes, lowercase)
+            litellm_name = model_name
+        else:
+            # Case-insensitive fallback against the registry
+            litellm_name = next(
+                (api_name for perf_name, api_name in PERFORMANCE_TO_API.items()
+                 if model_name.lower() == perf_name.lower()),
+                None,
+            )
+            if litellm_name is None:
+                logger.warning(f"No API mapping found for model: {model_name}, using as-is")
+                litellm_name = model_name
 
-        # If already in LiteLLM format (contains dashes, lowercase), return as-is
-        if "-" in model_name and model_name.islower():
-            return model_name
+        # …then, in hosted mode, route Claude through Bedrock when that's the
+        # only configured backend. Applied to BOTH primary and fallback models.
+        return self._maybe_remap_to_bedrock(litellm_name)
 
-        # Case-insensitive fallback
-        for perf_name, api_name in PERFORMANCE_TO_API.items():
-            if model_name.lower() == perf_name.lower():
-                return api_name
+    def _maybe_remap_to_bedrock(self, model: str) -> str:
+        """Route a model through AWS Bedrock when appropriate (hosted mode only).
 
-        # If no mapping found, return the original (might already be correct)
-        logger.warning(f"No API mapping found for model: {model_name}, using as-is")
-        return model_name
+        Mirrors the remap in ``production_completion.py`` so that EVERY entry
+        point into this service (dashboard playground, completion API, enhanced
+        router) behaves identically. Without it, the dashboard playground sent
+        ``claude-*`` straight to Anthropic and failed with an AuthenticationError
+        on Bedrock-only deployments (no ANTHROPIC_API_KEY).
+
+        Only remaps when: the session is hosted (not BYOK), AWS credentials are
+        configured, and the direct provider key for the model is NOT set —
+        matching the operator's "use Bedrock unless a direct key exists" intent.
+        """
+        if getattr(self.user_session, "key_mode", None) != "hosted":
+            return model
+        if not settings.AWS_ACCESS_KEY_ID:
+            return model
+        provider = registry_extract_provider(model)
+        has_direct_key = (
+            (provider == "anthropic" and settings.ANTHROPIC_API_KEY)
+            or (provider == "openai" and settings.OPENAI_API_KEY)
+            or (provider in ("google", "gemini") and settings.GOOGLE_API_KEY)
+        )
+        if has_direct_key:
+            return model
+        bedrock_model = to_bedrock_model(model)
+        if bedrock_model:
+            logger.info("Hosted mode (Bedrock): remapping %s → %s", model, bedrock_model)
+            return bedrock_model
+        return model
 
     def _simple_fallback_selection(self, allowed_models: List[str], tools: Optional[List[Dict[str, Any]]] = None) -> str:
         """Simple fallback when all else fails."""

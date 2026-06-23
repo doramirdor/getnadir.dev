@@ -10,8 +10,6 @@ credit balance in hosted_budget.enforce_hosted_budget_or_402.
 - Hosted users: allowed here; the prepaid balance gate enforces payment
 """
 import logging
-import time
-from typing import Dict, Tuple
 
 from fastapi import HTTPException, Request, Depends
 
@@ -19,40 +17,12 @@ from app.auth.supabase_auth import validate_api_key, UserSession
 
 logger = logging.getLogger(__name__)
 
-# Free tier limits (BYOK only)
-FREE_TIER_DAILY_LIMIT = 15
+# Free tier (BYOK only): a monthly trial allowance, after which the user must
+# add a payment method so the monthly savings fee can be billed. Counted from
+# usage_logs (same source as the dashboard quota bar) so the limit survives
+# process restarts and is consistent across workers.
+FREE_BYOK_MONTHLY_REQUESTS = 50
 FREE_TIER_RPM = 10
-
-# In-memory daily usage tracker: user_id -> (count, day_start_ts)
-_free_usage: Dict[str, Tuple[int, float]] = {}
-
-
-def _get_day_start() -> float:
-    """Get the start of the current UTC day as a timestamp."""
-    import datetime
-    now = datetime.datetime.utcnow()
-    return now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
-
-
-def _check_free_daily_limit(user_id: str) -> Tuple[bool, int]:
-    """Check if a free-tier user is within their daily limit.
-
-    Returns (allowed, remaining).
-    """
-    day_start = _get_day_start()
-
-    if user_id in _free_usage:
-        count, tracked_day = _free_usage[user_id]
-        if tracked_day < day_start:
-            _free_usage[user_id] = (1, day_start)
-            return True, FREE_TIER_DAILY_LIMIT - 1
-        if count >= FREE_TIER_DAILY_LIMIT:
-            return False, 0
-        _free_usage[user_id] = (count + 1, tracked_day)
-        return True, FREE_TIER_DAILY_LIMIT - count - 1
-    else:
-        _free_usage[user_id] = (1, day_start)
-        return True, FREE_TIER_DAILY_LIMIT - 1
 
 
 async def require_active_subscription(
@@ -96,22 +66,29 @@ async def require_active_subscription(
         request.state.rate_limit_rpm = 60
         return current_user
 
-    # BYOK — allow with daily limit
-    allowed, remaining = _check_free_daily_limit(current_user.id)
-    if not allowed:
+    # BYOK — monthly free trial, then require billing setup. Users who've added
+    # a payment method have subscription_status "active" and were handled above
+    # (full access), so this branch only sees not-yet-billing-enabled users.
+    from app.middleware.hosted_budget import get_monthly_request_count
+
+    used = await get_monthly_request_count(str(current_user.id))
+    if used >= FREE_BYOK_MONTHLY_REQUESTS:
         raise HTTPException(
-            status_code=429,
+            status_code=402,
             detail={
-                "error": "free_tier_limit_exceeded",
+                "error": "free_trial_exhausted",
                 "message": (
-                    f"Free tier limit of {FREE_TIER_DAILY_LIMIT} requests/day exceeded. "
-                    "Subscribe to Pro for unlimited access."
+                    f"You've used your {FREE_BYOK_MONTHLY_REQUESTS} free requests this "
+                    "month. Add a payment method to keep routing with your own keys — "
+                    "you're only billed on the savings Nadir finds, never a base fee."
                 ),
-                "upgrade_url": "https://getnadir.com/dashboard/billing",
+                "free_requests_used": used,
+                "free_requests_limit": FREE_BYOK_MONTHLY_REQUESTS,
+                "billing_url": "https://getnadir.com/dashboard/billing",
             },
         )
 
     request.state.subscription_plan = "free"
     request.state.rate_limit_rpm = FREE_TIER_RPM
-    request.state.free_tier_remaining = remaining
+    request.state.free_tier_remaining = FREE_BYOK_MONTHLY_REQUESTS - used - 1
     return current_user

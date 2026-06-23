@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-05-26T13:11:26.535260+00:00",
+  "n_triples": 1000,
+  "threshold": 0.7,
+  "cost_ratio_expensive_over_cheap": 12.0,
+  "verifier_report": "verifier/reports/eval_20260526T130149.json",
+  "results": {
+    "always_cheap": {
+      "n": 1000,
+      "relative_cost_per_request": 1.0,
+      "relative_cost_per_request_vs_always_cheap": 1.0,
+      "catastrophic_rate": 0.256,
+      "wasted_escalation_rate": 0.0,
+      "accuracy": 0.744,
+      "accept_cheap_rate": 1.0,
+      "escalation_rate": 0.0
+    },
+    "always_expensive": {
+      "n": 1000,
+      "relative_cost_per_request": 12.0,
+      "relative_cost_per_request_vs_always_cheap": 12.0,
+      "catastrophic_rate": 0.0,
+      "wasted_escalation_rate": 0.744,
+      "accuracy": 0.256,
+      "accept_cheap_rate": 0.0,
+      "escalation_rate": 0.0
+    },
+    "verifier_cascade": {
+      "n": 1000,
+      "relative_cost_per_request": 4.528,
+      "relative_cost_per_request_vs_always_cheap": 4.528,
+      "catastrophic_rate": 0.025,
+      "wasted_escalation_rate": 0.063,
+      "accuracy": 0.912,
+      "accept_cheap_rate": 0.706,
+      "escalation_rate": 0.294,
+      "missing_scores": 0
+    }
+  },
+  "classifier_runs": [
+    {
+      "rule": "argmax",
+      "label": "wide_deep (symmetric, argmax)",
+      "metrics": {
+        "n": 1000,
+        "relative_cost_per_request": 10.306,
+        "relative_cost_per_request_vs_always_cheap": 10.306,
+        "catastrophic_rate": 0.078,
+        "wasted_escalation_rate": 0.668,
+        "accuracy": 0.254,
+        "accept_cheap_rate": 0.154,
+        "escalation_rate": 0.0
+      },
+      "tier_counts": {
+        "simple": 154,
+        "medium": 676,
+        "complex": 170
+      }
+    },
+    {
+      "rule": "cost_sensitive_3",
+      "label": "wide_deep (symmetric, cost_sensitive \u03bb=3)",
+      "metrics": {
+        "n": 1000,
+        "relative_cost_per_request": 11.857,
+        "relative_cost_per_request_vs_always_cheap": 11.857,
+        "catastrophic_rate": 0.003,
+        "wasted_escalation_rate": 0.734,
+        "accuracy": 0.263,
+        "accept_cheap_rate": 0.013,
+        "escalation_rate": 0.0
+      },
+      "tier_counts": {
+        "simple": 13,
+        "medium": 734,
+        "complex": 253
+      }
+    },
+    {
+      "rule": "cost_sensitive_20",
+      "label": "wide_deep (symmetric, cost_sensitive \u03bb=20)",
+      "metrics": {
+        "n": 1000,
+        "relative_cost_per_request": 12.0,
+        "relative_cost_per_request_vs_always_cheap": 12.0,
+        "catastrophic_rate": 0.0,
+        "wasted_escalation_rate": 0.744,
+        "accuracy": 0.256,
+        "accept_cheap_rate": 0.0,
+        "escalation_rate": 0.0
+      },
+      "tier_counts": {
+        "simple": 0,
+        "medium": 507,
+        "complex": 493
+      }
+    }
+  ]
+}

@@ -28,3 +28,7 @@ verifier/reports/
 *.safetensors
 verifier_int8.pt
 pitch-site/
+
+# daily-ops-report skill: generated reports contain business metrics + PII
+/reports/
+.agents/skills/daily-ops-report/scripts/_last_merged.json

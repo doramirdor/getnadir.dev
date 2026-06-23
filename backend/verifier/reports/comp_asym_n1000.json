@@ -1,0 +1,80 @@
+{
+  "generated_at": "2026-05-26T13:05:12.515914+00:00",
+  "n_triples": 1000,
+  "threshold": 0.7,
+  "cost_ratio_expensive_over_cheap": 12.0,
+  "verifier_report": "verifier/reports/eval_20260526T130149.json",
+  "results": {
+    "always_cheap": {
+      "n": 1000,
+      "relative_cost_per_request": 1.0,
+      "relative_cost_per_request_vs_always_cheap": 1.0,
+      "catastrophic_rate": 0.256,
+      "wasted_escalation_rate": 0.0,
+      "accuracy": 0.744,
+      "accept_cheap_rate": 1.0,
+      "escalation_rate": 0.0
+    },
+    "always_expensive": {
+      "n": 1000,
+      "relative_cost_per_request": 12.0,
+      "relative_cost_per_request_vs_always_cheap": 12.0,
+      "catastrophic_rate": 0.0,
+      "wasted_escalation_rate": 0.744,
+      "accuracy": 0.256,
+      "accept_cheap_rate": 0.0,
+      "escalation_rate": 0.0
+    },
+    "verifier_cascade": {
+      "n": 1000,
+      "relative_cost_per_request": 4.528,
+      "relative_cost_per_request_vs_always_cheap": 4.528,
+      "catastrophic_rate": 0.025,
+      "wasted_escalation_rate": 0.063,
+      "accuracy": 0.912,
+      "accept_cheap_rate": 0.706,
+      "escalation_rate": 0.294,
+      "missing_scores": 0
+    }
+  },
+  "classifier_runs": [
+    {
+      "rule": "argmax",
+      "label": "wide_deep (asym, argmax)",
+      "metrics": {
+        "n": 1000,
+        "relative_cost_per_request": 12.0,
+        "relative_cost_per_request_vs_always_cheap": 12.0,
+        "catastrophic_rate": 0.0,
+        "wasted_escalation_rate": 0.744,
+        "accuracy": 0.256,
+        "accept_cheap_rate": 0.0,
+        "escalation_rate": 0.0
+      },
+      "tier_counts": {
+        "simple": 0,
+        "medium": 685,
+        "complex": 315
+      }
+    },
+    {
+      "rule": "cost_sensitive_20",
+      "label": "wide_deep (asym, cost_sensitive \u03bb=20)",
+      "metrics": {
+        "n": 1000,
+        "relative_cost_per_request": 12.0,
+        "relative_cost_per_request_vs_always_cheap": 12.0,
+        "catastrophic_rate": 0.0,
+        "wasted_escalation_rate": 0.744,
+        "accuracy": 0.256,
+        "accept_cheap_rate": 0.0,
+        "escalation_rate": 0.0
+      },
+      "tier_counts": {
+        "simple": 0,
+        "medium": 511,
+        "complex": 489
+      }
+    }
+  ]
+}

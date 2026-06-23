@@ -25,7 +25,7 @@ import { logger } from "@/utils/logger";
 import { trackBillingView, trackCheckoutStart, trackCheckoutCancel } from "@/utils/analytics";
 import { formatUSD } from "@/utils/format";
 import { CreditsPanel } from "@/components/billing/CreditsPanel";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 
 // ── Fee calculator ───────────────────────────────────────────────────────
 
@@ -230,7 +230,9 @@ function ProjectedSavingsHero({
                   <>Set up billing <ArrowRight className="w-4 h-4 ml-2" /></>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">No base fee · 25% of savings, 10% above $2K</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                <span className="text-foreground font-medium">No base fee</span> · pay only on what we save you
+              </p>
             </div>
           </div>
         </CardContent>
@@ -265,7 +267,9 @@ function ProjectedSavingsHero({
                   <>Set up billing <ArrowRight className="w-4 h-4 ml-2" /></>
                 )}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">No base fee · 25% of savings, 10% above $2K</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                <span className="text-foreground font-medium">No base fee</span> · pay only on what we save you
+              </p>
             </div>
           </div>
         </CardContent>
@@ -305,7 +309,7 @@ function ProjectedSavingsHero({
               disabled={subscribing}
               className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
-              {subscribing ? "Opening checkout…" : "or set up billing now, no base fee"}
+              {subscribing ? "Opening checkout…" : "or set up billing now"}
             </button>
           </div>
         </div>
@@ -317,7 +321,8 @@ function ProjectedSavingsHero({
 // ── Component ────────────────────────────────────────────────────────────
 
 const Billing = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [subscribing, setSubscribing] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const { toast } = useToast();
@@ -326,16 +331,55 @@ const Billing = () => {
 
   useEffect(() => { trackBillingView(); }, []);
 
-  // When Stripe redirects back with ?status=cancelled the user closed the
-  // checkout tab without paying. Fire a client-side `checkout_cancel` so the
-  // drop-off shows up in the funnel. (The complementary server-side
-  // `checkout_abandon` fires from the `checkout.session.expired` webhook
-  // for users who never come back at all.)
+  // Handle the ?status=… Stripe redirects back to us. We confirm success/
+  // cancellation with a toast, refresh the affected data, then strip the param
+  // so a manual refresh doesn't replay the toast.
+  //   - cancelled     → subscription checkout abandoned (also fires checkout_cancel)
+  //   - success       → subscription checkout completed
+  //   - topup_success → prepaid-credit top-up completed
+  //   - topup_cancelled → top-up abandoned
   useEffect(() => {
-    if (searchParams.get("status") === "cancelled") {
+    const status = searchParams.get("status");
+    if (!status) return;
+
+    if (status === "cancelled") {
+      // Drop-off telemetry. (Server-side `checkout_abandon` fires from the
+      // `checkout.session.expired` webhook for users who never come back.)
       trackCheckoutCancel("pro");
+    } else if (status === "success") {
+      toast({
+        title: "Billing active",
+        description: "You're on Pro — unlimited routing and full optimization unlocked.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+    } else if (status === "topup_success") {
+      toast({
+        title: "Credits added",
+        description: "Your prepaid balance has been topped up.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["billing", "credits"] });
+    } else if (status === "topup_cancelled") {
+      toast({
+        title: "Top-up canceled",
+        description: "No charge was made.",
+      });
     }
-  }, [searchParams]);
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("status");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, toast, queryClient]);
+
+  // Deep-link support: /dashboard/billing#credits (e.g. from the Playground
+  // out-of-credits CTA) scrolls the prepaid-credits panel into view.
+  useEffect(() => {
+    if (location.hash !== "#credits") return;
+    // Defer until after the panel has rendered.
+    const id = window.setTimeout(() => {
+      document.getElementById("credits")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+    return () => window.clearTimeout(id);
+  }, [location.hash]);
 
   // Fetch savings summary directly from Supabase (RLS-scoped to the user)
   // so the Billing page works without an in-memory API key.
@@ -734,7 +778,7 @@ const Billing = () => {
       </Card>
 
       {/* Prepaid credits (Hosted usage) */}
-      <div className="order-2">
+      <div id="credits" className="order-2 scroll-mt-20">
         <CreditsPanel />
       </div>
 
@@ -946,6 +990,11 @@ const Billing = () => {
                   "Set up billing"
                 )}
               </Button>
+              {!isActive && (
+                <p className="text-[11px] text-center text-muted-foreground mt-2">
+                  No base fee, only a share of what we save you
+                </p>
+              )}
             </CardContent>
           </Card>
 

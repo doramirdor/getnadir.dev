@@ -68,7 +68,7 @@ The motion is engineer-led, product-led at the top of funnel. Sales gets involve
 
 ## Common Objections (with responses)
 
-1. **"Will the cheaper model give worse answers?"** Quality floor is per-API-key. Below the threshold, premium model. 0% catastrophic routes on our 50-prompt eval at λ=20.
+1. **"Will the cheaper model give worse answers?"** Quality floor is per-API-key. Below the threshold, premium model. On 11,420 RouterBench held-out triples, ~98% of always-Opus quality is preserved (1.7% catastrophic at τ=0.8).
 2. **"I don't want a vendor between me and Anthropic."** In-memory proxy, BYOK on every tier, OpenAI compatible. Self-host the open-source core if preferred.
 3. **"Adds latency."** Classifier overhead under 10 ms. Faster than DNS lookup.
 4. **"We can build this ourselves."** The classifier, OCR loop, semantic cache, context optimization, retraining pipeline, and per-request observability are months of engineering. $9/mo gets the maintained version today.

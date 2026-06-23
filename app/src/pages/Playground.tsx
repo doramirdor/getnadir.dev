@@ -22,7 +22,10 @@ import {
   DollarSign,
   BarChart3,
   Sparkles,
+  Wallet,
+  ArrowRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -102,6 +105,9 @@ export default function Playground() {
   // Response state
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<string>("");
+  // True when the last request failed because the prepaid (hosted) credit
+  // balance was exhausted — drives the inline "Add funds" CTA.
+  const [creditError, setCreditError] = useState(false);
   const [meta, setMeta] = useState<RoutingMeta | null>(null);
   const [rawJson, setRawJson] = useState<any>(null);
   const [showRaw, setShowRaw] = useState(false);
@@ -157,6 +163,7 @@ export default function Playground() {
 
     setLoading(true);
     setResponse("");
+    setCreditError(false);
     setMeta(null);
     setRawJson(null);
     trackPlaygroundSend(mode);
@@ -222,6 +229,14 @@ export default function Playground() {
       }
       const latencyMs = Date.now() - startTime;
       setElapsed(latencyMs);
+      // A 402 from the hosted-budget guard arrives as a thrown Error whose
+      // message is the backend `detail` ("Insufficient credit balance… Please
+      // add credits to your account"). Detect it so we can offer a direct path
+      // to top up instead of leaving the user at a dead end.
+      const msg = String(error?.message || "");
+      setCreditError(
+        /insufficient credit|add credits|insufficient funds|payment required/i.test(msg)
+      );
       setResponse(`Error: ${error.message}`);
       trackPlaygroundResult(mode, "error", {
         latency_ms: latencyMs,
@@ -525,6 +540,19 @@ export default function Playground() {
                   <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed max-h-[500px] overflow-y-auto">
                     {response}
                   </pre>
+                  {creditError && (
+                    <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-3 font-sans">
+                      <Wallet className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" strokeWidth={1.75} />
+                      <p className="flex-1 text-sm text-amber-900 dark:text-amber-100">
+                        You're out of Nadir credits. Add funds to keep routing on hosted keys.
+                      </p>
+                      <Button asChild size="sm" className="whitespace-nowrap">
+                        <Link to="/dashboard/billing#credits">
+                          Add funds <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-16 text-center">

@@ -17,9 +17,12 @@ import {
   Play,
   Network,
   Gift,
+  Wallet,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { formatUSD } from "@/utils/format";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -57,6 +60,26 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Prepaid (hosted) credit balance — surfaced here so hosted users have
+  // ambient awareness of their balance instead of only seeing it on Billing.
+  // Hidden for BYOK-only users (no credits row → balance 0). Shares the
+  // ["billing","credits"] key prefix so top-ups invalidate it too.
+  const { data: creditBalance } = useQuery({
+    queryKey: ["billing", "credits", "balance"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const { data } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return Number(data?.balance ?? 0);
+    },
+    retry: 1,
+    staleTime: 30_000,
+  });
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -144,6 +167,34 @@ export const Sidebar = ({ activeItem = "dashboard" }: SidebarProps) => {
 
       {/* Footer */}
       <div className="border-t border-sidebar-border p-2">
+        {typeof creditBalance === "number" && creditBalance > 0 && (
+          <button
+            onClick={() => handleNavigate("/dashboard/billing#credits")}
+            title={`Nadir credits: $${formatUSD(creditBalance)}`}
+            className={cn(
+              "w-full flex items-center rounded-lg px-3 py-2 mb-0.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+              isCollapsed && !isMobile && "justify-center"
+            )}
+          >
+            <Wallet
+              className={cn("w-[18px] h-[18px] flex-shrink-0", (!isCollapsed || isMobile) && "mr-3")}
+              strokeWidth={1.5}
+            />
+            {(!isCollapsed || isMobile) && (
+              <>
+                <span className="text-[13px]">Credits</span>
+                <span
+                  className={cn(
+                    "ml-auto mono text-[12px]",
+                    creditBalance < 1 && "text-amber-600 dark:text-amber-400 font-medium"
+                  )}
+                >
+                  ${formatUSD(creditBalance)}
+                </span>
+              </>
+            )}
+          </button>
+        )}
         <ThemeToggle collapsed={isCollapsed && !isMobile} />
         <button
           onClick={handleSignOut}

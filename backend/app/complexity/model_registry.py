@@ -81,6 +81,23 @@ PERFORMANCE_TO_API: dict[str, str] = {
 }
 
 # ──────────────────────────────────────────────────────────────
+# Direct provider model name  →  AWS Bedrock model ID
+#
+# Used in hosted mode when AWS credentials are configured but the direct
+# provider key (e.g. ANTHROPIC_API_KEY) is not — every Claude route is
+# served through Bedrock instead. Single source of truth: both the
+# /v1/chat/completions path and SupabaseUnifiedLLMService consult this.
+# ──────────────────────────────────────────────────────────────
+ANTHROPIC_TO_BEDROCK: dict[str, str] = {
+    "claude-opus-4-6": "bedrock/us.anthropic.claude-opus-4-6-v1",
+    "claude-sonnet-4-6": "bedrock/us.anthropic.claude-sonnet-4-6",
+    "claude-haiku-4-5": "bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "claude-opus-4-5": "bedrock/us.anthropic.claude-opus-4-5-20251101-v1:0",
+    "claude-sonnet-4-5": "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "claude-3-5-haiku-20241022": "bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0",
+}
+
+# ──────────────────────────────────────────────────────────────
 # API provider name → internal provider key
 # ──────────────────────────────────────────────────────────────
 PROVIDER_MAPPING: dict[str, str] = {
@@ -146,3 +163,14 @@ def extract_provider(model: str) -> str:
 def get_api_to_performance_names(api_name: str) -> list[str]:
     """Return all performance-data names that map to a given API name."""
     return _API_TO_PERFORMANCE.get(api_name, [])
+
+
+def to_bedrock_model(model_name: str) -> Optional[str]:
+    """Return the AWS Bedrock model ID for a known Claude model, else None.
+
+    Returns None for unknown models and for names that are already
+    Bedrock-prefixed, so callers can treat None as "leave the model as-is".
+    """
+    if not model_name or model_name.startswith("bedrock/"):
+        return None
+    return ANTHROPIC_TO_BEDROCK.get(model_name)
