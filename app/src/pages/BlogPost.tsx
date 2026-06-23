@@ -1,11 +1,51 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Calendar, User, Tag } from "lucide-react";
-import React, { useEffect } from "react";
+import { ArrowLeft, Clock, Calendar, User, Tag, Copy, Check } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { trackBlogRead } from "@/utils/analytics";
+
+function CodeBlock({ code, lang }: { code: string; lang?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable, no-op */
+    }
+  };
+
+  return (
+    <div className="not-prose group relative my-6 overflow-hidden rounded-xl border border-black/10 bg-[#1d1d1f]">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-white/40">
+          {lang || "code"}
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label="Copy code"
+          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-white/50 transition-colors hover:text-white"
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto px-4 py-4 text-[13px] leading-relaxed">
+        <code className="whitespace-pre font-mono text-[#f5f5f7]">{code}</code>
+      </pre>
+    </div>
+  );
+}
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -34,16 +74,8 @@ export default function BlogPost() {
     );
   }
 
-  const processContent = (content: string) => {
-    if (!content || content.trim() === "") {
-      return [
-        <p key="no-content" className="text-muted-foreground">
-          Content is being loaded...
-        </p>,
-      ];
-    }
-
-    const paragraphs = content.split("\n\n");
+  const renderProse = (text: string) => {
+    const paragraphs = text.split("\n\n");
 
     return paragraphs
       .map((paragraph, index) => {
@@ -188,6 +220,67 @@ export default function BlogPost() {
         );
       })
       .filter(Boolean);
+  };
+
+  const processContent = (content: string) => {
+    if (!content || content.trim() === "") {
+      return [
+        <p key="no-content" className="text-muted-foreground">
+          Content is being loaded...
+        </p>,
+      ];
+    }
+
+    // Split the content into fenced code blocks (```) and prose. Code fences
+    // are handled before the paragraph split because a code block can contain
+    // blank lines, which the prose renderer treats as paragraph breaks.
+    const lines = content.split("\n");
+    const nodes: React.ReactNode[] = [];
+    let buffer: string[] = [];
+    let blockIdx = 0;
+
+    const flushProse = () => {
+      if (buffer.join("\n").trim()) {
+        renderProse(buffer.join("\n")).forEach((node, idx) => {
+          nodes.push(
+            React.isValidElement(node)
+              ? React.cloneElement(node, { key: `prose-${blockIdx}-${idx}` })
+              : node
+          );
+        });
+      }
+      buffer = [];
+      blockIdx += 1;
+    };
+
+    let i = 0;
+    while (i < lines.length) {
+      if (/^\s*```/.test(lines[i])) {
+        flushProse();
+        const lang = lines[i].replace(/^\s*```/, "").trim();
+        i += 1;
+        const codeLines: string[] = [];
+        while (i < lines.length && !/^\s*```/.test(lines[i])) {
+          codeLines.push(lines[i]);
+          i += 1;
+        }
+        i += 1; // consume the closing fence
+        nodes.push(
+          <CodeBlock
+            key={`code-${blockIdx}`}
+            code={codeLines.join("\n")}
+            lang={lang}
+          />
+        );
+        blockIdx += 1;
+      } else {
+        buffer.push(lines[i]);
+        i += 1;
+      }
+    }
+    flushProse();
+
+    return nodes;
   };
 
   const formatInline = (text: string): React.ReactNode[] => {
