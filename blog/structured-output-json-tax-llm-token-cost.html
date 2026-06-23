@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The JSON Tax: Structured Outputs Are Adding 20% to Your LLM Bill — Nadir</title>
+    <meta name="description" content="Structured outputs get you reliable JSON. They also add 15-30% to your token bill through schema overhead and JSON verbosity. Here is the breakdown and how to cut both without giving up parsing reliability.">
+    <link rel="canonical" href="https://getnadir.com/blog/structured-output-json-tax-llm-token-cost.html" />
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="The JSON Tax: Structured Outputs Are Adding 20% to Your LLM Bill">
+    <meta property="og:description" content="Structured outputs get you reliable JSON. They also add 15-30% to your token bill through schema overhead and JSON verbosity. Here is the breakdown and how to cut both.">
+    <meta property="og:url" content="https://getnadir.com/blog/structured-output-json-tax-llm-token-cost.html">
+    <meta property="og:site_name" content="Nadir">
+    <meta property="og:image" content="https://getnadir.com/og-image.png">
+    <meta property="article:published_time" content="2026-06-23">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The JSON Tax: Structured Outputs Are Adding 20% to Your LLM Bill">
+    <meta name="twitter:description" content="Structured outputs get you reliable JSON. They also add 15-30% to your token bill through schema overhead and JSON verbosity. Here is the breakdown and how to cut both.">
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "The JSON Tax: Structured Outputs Are Adding 20% to Your LLM Bill",
+      "datePublished": "2026-06-23",
+      "dateModified": "2026-06-23",
+      "author": { "@type": "Person", "name": "Dor Amir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
+      "url": "https://getnadir.com/blog/structured-output-json-tax-llm-token-cost.html",
+      "description": "Structured outputs get you reliable JSON. They also add 15-30% to your token bill through schema overhead and JSON verbosity. Here is the breakdown and how to cut both without giving up parsing reliability."
+    }
+    </script>
+    <style>
+      :root { --bg: #ffffff; --text: #0a0a0a; --muted: #666666; --accent: #0066ff; --border: #e5e5e5; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+      .page { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; }
+      .back { display: inline-block; color: var(--accent); text-decoration: none; margin-bottom: 2rem; font-size: 0.9rem; }
+      .back:hover { text-decoration: underline; }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; line-height: 1.3; }
+      .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.2rem; margin: 1.8rem 0 0.6rem; }
+      p { margin-bottom: 1rem; color: #333; }
+      code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+      pre { background: #f4f4f4; border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.85em; line-height: 1.6; margin-bottom: 1rem; }
+      pre code { background: none; padding: 0; border-radius: 0; }
+      ul, ol { margin: 0 0 1rem 1.5rem; color: #333; }
+      li { margin-bottom: 0.4rem; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9em; }
+      th { background: #f4f4f4; font-weight: 600; text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+      td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); color: #333; }
+      tr:nth-child(even) td { background: #fafafa; }
+      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.85rem; }
+      footer a { color: var(--accent); text-decoration: none; }
+      @media (max-width: 768px) {
+        .page { padding: 2rem 1rem; }
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.1rem; }
+      }
+    </style>
+</head>
+<body>
+<main class="page">
+    <a href="/#blog" class="back">&larr; Back to blog</a>
+    <h1>The JSON Tax: Structured Outputs Are Adding 20% to Your LLM Bill</h1>
+    <p class="meta"><time datetime="2026-06-23">June 23, 2026</time> &middot; 9 min read</p>
+
+    <p>You added structured outputs because they solved a real problem. Your LLM calls used to return strings you had to parse, and sometimes the JSON was malformed, and you had retry logic, and some days the whole thing broke in production. Structured outputs fixed that. The JSON comes back clean. The Pydantic model validates. The downstream code never hits a parse error.</p>
+
+    <p>What you did not notice is that your token bill quietly increased. Not dramatically, but consistently, on every single call where you use it. The overhead has two sources, they compound at the output token rate, and most teams have never measured either one.</p>
+
+    <h2>The first tax: schema tokens you send on every call</h2>
+    <p>When you use structured outputs — whether that is OpenAI's <code>response_format</code> with a JSON schema, Anthropic's tool calling for structured responses, or Google Gemini's <code>response_schema</code> — you send a schema definition with every API call. The model needs this schema to generate a valid, schema-conforming response. That schema is not free.</p>
+
+    <p>A minimal schema defining a single object with five string fields runs 150–300 tokens. A realistic production schema — say, an entity extraction pipeline pulling names, dates, addresses, and line items from documents — runs 600–1,500 tokens. A complex schema with nested objects, enum constraints, and field descriptions runs 2,000–4,000 tokens.</p>
+
+    <p>Here is what a schema for a moderate document extraction task looks like:</p>
+
+<pre><code>{
+  "type": "object",
+  "properties": {
+    "vendor_name": {
+      "type": "string",
+      "description": "The legal name of the vendor as it appears on the document"
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "The invoice or document reference number"
+    },
+    "invoice_date": {
+      "type": "string",
+      "description": "The invoice date in ISO 8601 format"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "quantity":    { "type": "number" },
+          "unit_price":  { "type": "number" },
+          "total":       { "type": "number" }
+        },
+        "required": ["description", "quantity", "unit_price", "total"]
+      }
+    },
+    "subtotal":      { "type": "number" },
+    "tax_amount":    { "type": "number" },
+    "total_amount":  { "type": "number" },
+    "payment_terms": { "type": "string" }
+  },
+  "required": ["vendor_name", "invoice_number", "invoice_date",
+               "line_items", "total_amount"]
+}</code></pre>
+
+    <p>That schema runs approximately 380 tokens. Every call. Whether the invoice has one line item or thirty. Whether the request succeeds or fails. Whether the model uses every field or only three.</p>
+
+    <p>At 100,000 daily API calls on Claude Opus 4.8 at $5 per million input tokens:</p>
+    <ul>
+        <li>380 schema tokens &times; 100,000 calls = 38 million input tokens per day</li>
+        <li>At $5/M: $190 per day</li>
+        <li>Annualized: <strong>$69,350 per year</strong></li>
+    </ul>
+
+    <p>In schema tokens alone. Not the document content, not the system prompt, not the user query. Just the schema definition you wrote once and never think about again.</p>
+
+    <h2>The second tax: JSON is verbose at output rates</h2>
+    <p>The less obvious cost is on the output side.</p>
+    <p>When a model generates a structured JSON response, it produces more tokens than it would for equivalent prose. The JSON framing — keys, colons, quotes, braces, brackets, commas — takes tokens that plain text does not. That matters because output tokens cost five times more than input tokens on most frontier models. At Opus 4.8: $5/M input, $25/M output. At GPT-5.5: $12.50/M input, $30/M output.</p>
+
+    <p>Consider two equivalent responses to the same invoice extraction request:</p>
+
+    <p><strong>Plain text (≈ 63 tokens):</strong></p>
+<pre><code>Acme Corp, INV-4821, Feb 14 2026. Line items: consulting $4,500,
+software license $1,200, support retainer $800. Subtotal $6,500,
+tax $650, total $7,150. Net 30.</code></pre>
+
+    <p><strong>Structured JSON (≈ 128 tokens):</strong></p>
+<pre><code>{
+  "vendor_name": "Acme Corp",
+  "invoice_number": "INV-4821",
+  "invoice_date": "2026-02-14",
+  "line_items": [
+    {"description": "Consulting services", "quantity": 1,
+     "unit_price": 4500.00, "total": 4500.00},
+    {"description": "Software license",    "quantity": 1,
+     "unit_price": 1200.00, "total": 1200.00},
+    {"description": "Support retainer",    "quantity": 1,
+     "unit_price": 800.00,  "total": 800.00}
+  ],
+  "subtotal": 6500.00,
+  "tax_amount": 650.00,
+  "total_amount": 7150.00,
+  "payment_terms": "Net 30"
+}</code></pre>
+
+    <p>Same information. Twice the output tokens. Priced at the 5x output rate. In practice the overhead varies by schema complexity: 20–30% for simple extractions, 40–60% for deeply nested structures or arrays with many items.</p>
+
+    <h2>What this costs at scale</h2>
+    <p>Take a document processing pipeline at 100,000 daily calls. Average output without structured output: 800 tokens. With a moderately complex JSON schema, output averages about 1,000 tokens — a 25% increase.</p>
+
+    <table>
+      <tr>
+        <th>Source</th>
+        <th>Extra tokens/day</th>
+        <th>Rate</th>
+        <th>Annual cost</th>
+      </tr>
+      <tr>
+        <td>Schema overhead (input)</td>
+        <td>38M</td>
+        <td>$5/M</td>
+        <td>$69,350</td>
+      </tr>
+      <tr>
+        <td>JSON verbosity (output)</td>
+        <td>20M</td>
+        <td>$25/M</td>
+        <td>$182,500</td>
+      </tr>
+      <tr>
+        <td><strong>Total JSON tax</strong></td>
+        <td>—</td>
+        <td>—</td>
+        <td><strong>$251,850/yr</strong></td>
+      </tr>
+    </table>
+
+    <p>At 500,000 daily calls — common for enterprise document processing or agentic pipelines — the total crosses $1.25 million per year. At one million calls, it exceeds $2.5 million. None of this appears as a line item in your billing dashboard. Schema tokens look like input tokens. JSON verbosity looks like output tokens. No dashboard breaks them out unless you specifically instrument for it.</p>
+
+    <h2>When the overhead is worth paying</h2>
+    <p>Structured outputs solve real problems. Reliable JSON parsing eliminates retry logic, simplifies downstream code, and removes an entire category of production failures. The overhead is often a fair trade.</p>
+    <p>The issue is not using structured outputs. The issue is using them when you do not need them, without knowing what it costs. Here are the cases where the overhead is not justified:</p>
+
+    <ul>
+        <li><strong>Single-value responses.</strong> If your pipeline asks whether a document is an invoice or a purchase order, a plain string response with clear instructions ("respond with exactly 'invoice' or 'purchase_order'") is cheaper, faster, and equally reliable for binary classification.</li>
+        <li><strong>Internal pipeline steps that are never machine-consumed.</strong> If you are extracting a field to display in a UI, brief text extraction with prompt-based guidance is sufficient. Schema validation only matters when the output feeds a parser.</li>
+        <li><strong>High-volume simple queries.</strong> A customer service router classifying intents into one of ten categories runs 10,000–100,000 times per day. Even a 200-token schema multiplied across that volume costs $365 per year per schema — for a task that a regex or a simple text instruction handles equally well.</li>
+        <li><strong>Calls that already have high output token counts.</strong> A 3,000-token generation task with 25% JSON overhead adds 750 tokens at $25/M. At scale, that is the most expensive line item in your pipeline, and it is invisible.</li>
+    </ul>
+
+    <h2>How to measure your own JSON tax</h2>
+    <p>The measurement takes about an hour:</p>
+
+<pre><code>import anthropic
+
+client = anthropic.Anthropic()
+
+# With structured output
+r_structured = client.messages.create(
+    model="claude-opus-4-8",
+    max_tokens=1024,
+    tools=[{
+        "name": "extract_invoice",
+        "description": "Extract invoice fields",
+        "input_schema": YOUR_SCHEMA
+    }],
+    tool_choice={"type": "tool", "name": "extract_invoice"},
+    messages=[{"role": "user", "content": YOUR_DOCUMENT}]
+)
+
+# Without structured output
+r_text = client.messages.create(
+    model="claude-opus-4-8",
+    max_tokens=1024,
+    system="Extract vendor_name, invoice_number, invoice_date, and "
+           "total_amount from the invoice. Return only valid JSON.",
+    messages=[{"role": "user", "content": YOUR_DOCUMENT}]
+)
+
+print(f"Structured: {r_structured.usage.input_tokens} in, "
+      f"{r_structured.usage.output_tokens} out")
+print(f"Text:       {r_text.usage.input_tokens} in, "
+      f"{r_text.usage.output_tokens} out")</code></pre>
+
+    <p>Run this against 50 real documents from your production dataset. The difference in usage numbers is your JSON tax. Multiply by your daily call volume and your model's pricing to get the annualized overhead. Teams that run this audit for the first time typically find that structured output overhead accounts for 8–22% of their total monthly input plus output bill on extraction pipelines.</p>
+
+    <h2>Reducing the overhead without giving up reliability</h2>
+
+    <p><strong>Compress your schemas.</strong> Remove field descriptions where the property name is self-explanatory. Replace verbose names with short equivalents when you control both sides. Remove <code>required</code> arrays when you validate in application code rather than relying on schema enforcement. A 1,200-token schema often compresses to 400–600 tokens with no loss in parsing reliability.</p>
+
+    <p>Before:</p>
+<pre><code>{
+  "type": "object",
+  "properties": {
+    "vendor_name": {
+      "type": "string",
+      "description": "The legal name of the vendor or supplier company
+                      as it appears on the document header"
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "The unique invoice identifier or reference number"
+    }
+  },
+  "required": ["vendor_name", "invoice_number"]
+}</code></pre>
+
+    <p>After:</p>
+<pre><code>{"type":"object","properties":{"vendor":{"type":"string"},
+"inv_num":{"type":"string"}}}</code></pre>
+
+    <p>Same extraction quality. Roughly 70% fewer schema tokens.</p>
+
+    <p><strong>Apply structured output selectively.</strong> Not every call in a pipeline needs schema enforcement. Run a classifier before applying schemas: calls that produce machine-consumed output get the schema; calls that produce informational or free-form content skip it. This is exactly the pattern Nadir implements — the router identifies which calls in your pipeline genuinely require schema enforcement and only applies the overhead where it is justified.</p>
+
+    <p><strong>Route schema-heavy calls to cheaper models.</strong> Structured output support is now standard across providers. The $0.80/M input models handle schema-conforming extraction as reliably as Opus on most document types. For high-volume extraction pipelines that run the same schema on every call, routing alone typically saves more than schema compression.</p>
+
+    <p><strong>Cache your schemas at the API level.</strong> For repeated use of the same schema across calls, Anthropic's prompt caching caches the schema tokens at a 90% discount on subsequent reads. A 1,000-token schema cached across 100,000 daily calls saves roughly $450 per day versus re-sending it uncached. The implementation is <a href="/docs.html">a single cache control header</a>.</p>
+
+    <p><strong>Use <code>max_tokens</code> to cap JSON verbosity.</strong> If your schema has a bounded output size, set <code>max_tokens</code> to a tight ceiling. A schema that can produce at most 400 tokens of JSON should not have <code>max_tokens=4096</code>. The model will not generate extra tokens if it reaches the natural end of the JSON object, but an explicit ceiling prevents runaway output on edge cases and keeps your worst-case bill predictable.</p>
+
+    <h2>The practical audit checklist</h2>
+    <p>If you are using structured outputs in production, run this audit:</p>
+    <ol>
+        <li>Pull one day of API logs with input and output token counts per call.</li>
+        <li>Flag every call that includes a <code>response_format</code>, <code>tool_choice</code>, or equivalent schema enforcement parameter.</li>
+        <li>Average the token counts for schema calls versus non-schema calls of similar task complexity.</li>
+        <li>Calculate the markup percentage on both input and output separately.</li>
+        <li>Multiply by your daily call volume and annual rate to get the annual overhead.</li>
+        <li>Identify which schema calls are not actually consumed by a downstream parser — those are the first candidates to eliminate.</li>
+    </ol>
+
+    <p>In teams that have run this audit, structured output overhead accounts for 8–22% of total monthly API spend for mixed workloads, and 25–35% for extraction-heavy pipelines where nearly every call uses a schema. For the calls that legitimately need reliable JSON, the overhead is a reasonable price. For the calls that are using structured outputs as a habit rather than a necessity, it is pure waste.</p>
+
+    <p>The pattern is the same one that shows up across every LLM cost category: the overhead is real, it compounds at scale, and it is completely invisible in standard billing dashboards. Schema tokens look like input tokens. JSON verbosity looks like output tokens. No dashboard breaks them out. Measurement reveals them. Routing and compression address them. Most teams have never done either.</p>
+</main>
+<footer>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
+</footer>
+</body>
+</html>

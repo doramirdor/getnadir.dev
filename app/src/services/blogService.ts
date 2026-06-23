@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "structured-output-json-tax-llm-token-cost",
+    title: "Structured output schemas add 380 tokens to every API call. At 100k daily calls, that is $69,000 per year in schema tokens alone. Most teams have never measured it.",
+    date: "2026-06-23",
+    author: "Dor Amir",
+    excerpt: "You added structured outputs to get reliable JSON parsing. What you didn't notice is that your token bill quietly increased on every single call. There are two sources: schema tokens sent on every request (150–2,000 tokens each), and JSON verbosity in the output (20–40% more tokens than equivalent prose, billed at the 5x output rate). For a document processing pipeline at 100,000 daily calls, the combined JSON tax runs $251,000 per year. None of it appears as a line item in your billing dashboard. Schema compression, selective routing, and prompt caching cut it 60–80%. Most teams have never run the measurement.",
+    thumbnail: "Deep Dive",
+    tags: ["Token Optimization", "Cost Optimization", "Structured Outputs", "JSON Mode", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
     id: "reduce-llm-output-tokens-cut-api-costs",
     title: "Output tokens cost 5x more than input. Most teams optimize the wrong side of their LLM bill.",
     date: "2026-06-22",
