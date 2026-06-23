@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "reduce-llm-output-tokens-cut-api-costs",
+    title: "Output tokens cost 5x more than input. Most teams optimize the wrong side of their LLM bill.",
+    date: "2026-06-22",
+    author: "Dor Amir",
+    excerpt: "Claude Opus output tokens cost $75 per million. Input tokens cost $15. The 5x multiplier is structural and consistent across every major provider. Yet most LLM cost optimization work targets input: compressing context, caching system prompts, trimming conversation history. The output side — where most of the dollar spend actually sits on production workloads — rarely gets the same attention. Structured outputs, max_tokens caps, and format instructions can cut output token counts 60 to 95% on classification and extraction tasks. Most teams have never measured their output token waste.",
+    thumbnail: "Deep Dive",
+    tags: ["Output Tokens", "Cost Optimization", "Token Optimization", "Structured Output", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "rag-over-retrieval-token-cost",
     title: "Your RAG pipeline fetches 20 chunks per query. The model reads 3. The other 17 are billed in full.",
     date: "2026-06-21",
@@ -417,6 +427,179 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "reduce-llm-output-tokens-cut-api-costs": `## The wrong side of the bill.
+
+Most LLM cost optimization work targets input tokens. Engineers compress context payloads, cache system prompts, trim conversation history, and deduplicate tool schemas. These are all real wins. But they address the cheaper side of the pricing table.
+
+On every major provider, output tokens cost significantly more than input tokens. Claude Opus 4.6 charges $15 per million input tokens and $75 per million output tokens. That is a 5x multiplier. GPT-4o carries the same ratio. Gemini 2.5 Pro charges an 8x output premium. The asymmetry is structural, consistent, and public. It is not a fine-print detail. It is the first line of every provider's pricing page.
+
+[Source: Anthropic, Claude Pricing, 2026](https://www.anthropic.com/pricing)
+
+| Model | Input ($/M) | Output ($/M) | Output multiplier |
+|---|---:|---:|---:|
+| Claude Opus 4.6 | $15 | $75 | 5× |
+| Claude Sonnet 4.6 | $3 | $15 | 5× |
+| Claude Haiku 4.5 | $0.80 | $4 | 5× |
+| GPT-4o | $2.50 | $10 | 4× |
+| Gemini 2.5 Pro | $1.25 | $10 | 8× |
+
+For a typical production request with 2,000 input tokens and 400 output tokens, the input cost and output cost are roughly equal in dollar terms despite a 5:1 token count difference. Push output to 800 tokens — common on unoptimized prose tasks — and output starts dominating the per-request cost. Yet most teams measure token counts and focus on the bigger number, which is usually the input. The bigger dollar amount is often the output.
+
+## Where output tokens come from.
+
+A useful frame is to separate tokens that deliver value from tokens that accompany value. On most production workloads, the ratio is worse than expected.
+
+| Output component | Typical share | Eliminable? |
+|---|---:|---|
+| Core answer or data | 10–30% | No — this is what you want |
+| Prose explanation around the answer | 20–50% | Often yes |
+| Markdown formatting (headers, bullets, bold) | 5–15% | Yes, for non-rendered contexts |
+| Hedging and qualifications | 10–25% | Often yes |
+| Exposed chain-of-thought reasoning | 10–40% | Yes, with structured prompts |
+
+For a classification task, a routing decision, a sentiment label, or an entity extraction job, the core answer is typically under 20 tokens. The surrounding prose, qualifications, and formatting can push the total to 300 or more tokens. Those extra 280 tokens are billed at the 5x output rate.
+
+## The five patterns that inflate output counts.
+
+**Verbose explanations you did not ask for.** Frontier models default to explaining their reasoning. Ask "what is the sentiment of this review?" and you receive a paragraph. The model identifies positive phrases, notes negative signals, weighs them, and arrives at a conclusion. If you only needed the label, you paid for a 150-token response to receive a 3-token answer.
+
+**Markdown formatting in non-rendered contexts.** When uncertain about rendering environment, models insert headers, bullet lists, bold text, and code blocks. If the consumer of the response is an API client parsing JSON, a downstream data pipeline, or a logging system, those tokens are pure waste. A 500-token response with heavy markdown may carry 80 tokens of formatting syntax that disappears before any user sees it.
+
+**Redundant JSON structure.** Verbose field names and pretty-printed whitespace in JSON responses add tokens with no information value. An array of `{"sentiment_label": "positive", "confidence_score": 0.92, "reasoning_summary": "..."}` objects costs significantly more than `{"s": "pos", "c": 0.92}` at scale. For a batch job processing 500,000 documents, schema verbosity is a direct cost variable.
+
+**Chain-of-thought exposed in the output.** Asking the model to reason step by step before answering improves accuracy on complex tasks. If that reasoning appears in the billed API response and you discard it before the user ever sees it, you are paying full output token rates for tokens that serve no downstream purpose.
+
+**Responses without max_tokens limits.** Without an upper bound, the model generates as much as the task appears to warrant. An open-ended question about system architecture can produce 2,000 tokens when 400 would answer it. The model has no incentive to stop early. You do.
+
+## Five techniques that reduce output token counts.
+
+**Structured output (JSON schema enforcement).** Switching from freeform prose to constrained JSON output is the highest-impact single change for most classification, extraction, and routing applications. Anthropic's tool use API and OpenAI's `response_format: {"type": "json_object"}` enforce structured responses. The model still reasons internally; the response is constrained to exactly the schema you specified.
+
+\`\`\`python
+import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.messages.create(
+    model="claude-haiku-4-5-20251001",
+    max_tokens=30,
+    system="Classify the support ticket. Respond only via the classify tool.",
+    messages=[{"role": "user", "content": ticket_text}],
+    tools=[{
+        "name": "classify",
+        "description": "Classify a support ticket into a category",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "enum": ["billing", "technical", "account", "general"]
+                },
+                "priority": {"type": "string", "enum": ["low", "medium", "high"]}
+            },
+            "required": ["category", "priority"]
+        }
+    }],
+    tool_choice={"type": "tool", "name": "classify"}
+)
+\`\`\`
+
+The response is 12 to 18 tokens. The equivalent prose response is 80 to 200 tokens. For classification and extraction tasks, switching to structured output typically reduces response token count 60 to 90%.
+
+[Source: Anthropic, "Tool use," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
+
+**max_tokens caps on every task with a predictable output length.** Setting a per-task upper bound prevents runaway outputs and makes cost envelopes predictable. The key is calibrating per task type rather than using a single global default.
+
+\`\`\`python
+# Classification: cap at 30 tokens
+client.chat.completions.create(
+    model="auto",
+    max_tokens=30,
+    messages=[...]
+)
+
+# Summary: cap at 200 tokens
+client.chat.completions.create(
+    model="auto",
+    max_tokens=200,
+    messages=[...]
+)
+\`\`\`
+
+If the answer is a label, a score, a boolean, or a short phrase, a `max_tokens` of 20 to 50 eliminates any possibility of preamble. The model will not pad to fill a window that does not exist.
+
+**Explicit format instructions in the system prompt.** Direct format instructions are more effective than most teams expect. Models follow them reliably when specific and placed in the system prompt rather than the user message.
+
+- "Respond with a single word: yes or no."
+- "Reply only with the JSON object. No explanation before or after."
+- "Answer in one sentence. Do not use markdown."
+- "Return only the numeric score between 0 and 100. Nothing else."
+
+These instructions eliminate the preamble ("Sure, I'd be happy to help..."), the restatement ("You asked me to classify..."), and the hedge ("Please note that this is a general assessment..."). Each eliminated pattern is a direct output token reduction at the 5x rate.
+
+**Separate reasoning from response.** For tasks requiring chain-of-thought accuracy where the reasoning itself is not the deliverable, keep the reasoning out of the billed output. Anthropic's extended thinking mode captures reasoning in a separate thinking block billed at a lower rate. OpenAI's o-series models separate reasoning tokens from response tokens by default. For models without native thinking separation, a two-call pattern achieves the same result: the reasoning call generates the analysis, the response call returns only the conclusion.
+
+**Route to cheaper models for generation tasks.** Cheaper models are not just cheaper per token — they also tend to produce more concise responses on well-defined tasks. Claude Haiku 4.5 answering a classification question returns roughly the same output token count as Opus 4.6, but at one-fifth the output price. For tasks where output verbosity does not improve quality, routing to Haiku reduces both the per-token price and, often, the total token count.
+
+[Source: AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high)
+
+## The math at production scale.
+
+A production customer support triage system running 500,000 requests per month. Each request classifies an incoming ticket into one of six categories. Currently on Claude Opus with no output constraints, averaging 280 output tokens per response.
+
+| Configuration | Output tokens/req | Monthly output cost | vs. baseline |
+|---|---:|---:|---:|
+| Baseline (Opus, no constraints) | 280 | $10,500 | — |
+| + Structured output + max_tokens=20 | 12 | $450 | **96% reduction** |
+| + Routed to Haiku via Nadir | 12 | $24 | **99.8% reduction** |
+
+For a classification task, the savings from structured output alone are extreme because classification is data-shaped, not prose-shaped. The prose response costs $10,500 per month for a format that gets parsed and discarded. The structured response costs $24 per month for the same information.
+
+Not every workload compresses this far. Customer-facing summaries, code generation, and writing assistance genuinely need prose output and cannot collapse to 12 tokens. But most production LLM applications contain at least some structured, extractive, or classification tasks where output could be dramatically shorter with no quality loss.
+
+## How to audit your output token spend.
+
+Every LLM API response includes a usage object with output token counts. Most teams log the request and discard the response metadata, which means they have no visibility into output cost per endpoint or per task type.
+
+\`\`\`python
+response = client.chat.completions.create(
+    model="auto",
+    messages=[...]
+)
+
+usage = response.usage
+log_event({
+    "endpoint": "/api/classify",
+    "model": response.model,
+    "input_tokens": usage.prompt_tokens,
+    "output_tokens": usage.completion_tokens,
+    "output_cost_usd": usage.completion_tokens / 1_000_000 * output_price_per_million
+})
+\`\`\`
+
+Once you have per-endpoint output token data, the outliers are obvious. A classification endpoint averaging 300 output tokens is a candidate for structured output. An endpoint with high variance — sometimes 50 tokens, sometimes 800 — is a candidate for explicit `max_tokens` limits. An endpoint consistently hitting its existing `max_tokens` cap may be truncating valid responses and needs its limit raised.
+
+## How routing amplifies output savings.
+
+Nadir's tier-based routing reduces output costs in two ways. The direct way: cheaper models have lower per-token output prices. Haiku 4.5 charges $4 per million output tokens versus $75 for Opus 4.6. Routing simple tasks to Haiku cuts the output price per token by 95% on those calls.
+
+The indirect way: smaller models calibrated on direct tasks tend to produce more concise responses on well-specified prompts. Opus 4.6, trained extensively on long-form conversational patterns, produces elaborate responses by default. Haiku responds more directly. For classification and extraction tasks, Haiku responses are often 15 to 25% shorter in token count, not because Haiku lacks information, but because it was trained on a different distribution of response lengths.
+
+The compound effect: on a routed call to Haiku versus an unrouted call to Opus, the output cost per call is 6 to 8x lower — accounting for both the price difference and the length difference. This is why output token auditing and routing should be implemented together.
+
+## Three changes that take less than a day.
+
+**1. Add a length constraint to your highest-volume system prompt.** Identify the API endpoint that fires most often. Add "Respond in under [N] words" where N is 2x the typical answer length. Measure average output token count over 1,000 calls before and after. This takes under an hour and is permanently compounding.
+
+**2. Switch your highest-spend extraction or classification workload to structured output.** Pick the pipeline that currently receives prose responses and convert it to JSON schema-constrained output via tool use. Measure before and after token counts. The reduction on extraction workloads is routinely 60 to 75%.
+
+**3. Set max_tokens caps on every endpoint with predictable output length.** If the answer is a label, a score, a boolean, or a short phrase, cap `max_tokens` at 50. This eliminates runaway verbose responses with no accuracy tradeoff on well-constrained tasks.
+
+The 5x output token premium is structural. The waste inside those output tokens is not. It is a training default, and prompt design can eliminate most of it in an afternoon.
+
+---
+
+*Sources: [Anthropic, Claude Pricing, 2026](https://www.anthropic.com/pricing). [OpenAI, API Pricing, 2026](https://openai.com/api/pricing). [Google, Gemini API Pricing, 2026](https://ai.google.dev/pricing). [Anthropic, "Tool use," Anthropic Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use). [AICC, "Enterprise Token Costs Drop 67% Year-Over-Year," 2026](https://www.einpresswire.com/article/911544568/aicc-report-enterprise-token-costs-drop-67-year-over-year-as-multi-model-ai-adoption-hits-record-high). [Datadog, "State of AI Engineering 2026"](https://www.datadoghq.com/state-of-ai-engineering/).*`,
   "rag-over-retrieval-token-cost": `## The retrieval cost nobody budgets.
 
 When you build a RAG pipeline, you make one decision early that silently determines a large portion of your LLM API bill: how many chunks to retrieve per query.
