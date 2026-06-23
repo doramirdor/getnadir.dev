@@ -1,0 +1,21 @@
+{
+  // Cloudflare Workers Static Assets deploy for the getnadir.dev frontend.
+  //
+  // Why this file exists: the Cloudflare project is a Workers project, so the
+  // deploy step runs `npx wrangler deploy`. Without explicit config, wrangler
+  // tries to auto-configure the Workers Vite plugin, which requires Vite >= 6 —
+  // this app is on Vite 5, so that path errors. Declaring `assets` here makes
+  // wrangler do a plain assets-only deploy of the prebuilt dist/, no plugin.
+  //
+  // SPA routing: `not_found_handling: single-page-application` returns
+  // index.html (200) for any path that doesn't match a built asset. It only
+  // fires for non-asset requests, so it never shadows the hashed JS/CSS.
+  // Security headers + caching come from public/_headers (honored by Workers
+  // static assets, same syntax as Netlify/Pages).
+  "name": "getnadir",
+  "compatibility_date": "2026-06-23",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
