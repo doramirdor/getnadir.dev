@@ -8,7 +8,7 @@ export interface ReferralSummary {
   signed_up: number;
   subscribed: number;
   rewarded: number;
-  months_earned: number;
+  credit_earned_usd: number;
   recent: Array<{
     status: "pending" | "subscribed" | "rewarded" | "rejected";
     created_at: string;

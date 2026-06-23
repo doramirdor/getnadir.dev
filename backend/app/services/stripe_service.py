@@ -151,30 +151,9 @@ class StripeService:
             "tax_id_collection": {"enabled": True},
         }
 
-        # If this user signed up via a referral and hasn't redeemed the free
-        # month yet, auto-apply the referral coupon.
-        if "discounts" not in session_params:
-            try:
-                from app.services import referral_service
-
-                referral = await referral_service.get_referral_for_referee(user_id)
-                if referral and not referral.get("referee_rewarded_at"):
-                    referral_service._ensure_referee_coupon()
-                    session_params.pop("allow_promotion_codes", None)
-                    session_params["discounts"] = [
-                        {"coupon": referral_service.REFERRAL_REFEREE_COUPON_ID}
-                    ]
-                    # Threaded into Checkout metadata so the webhook handler
-                    # for checkout.session.completed can mark the row.
-                    session_params["metadata"]["nadir_referral_id"] = referral["id"]
-                    logger.info(
-                        "Applying referral free-month coupon for referee %s (referral=%s)",
-                        user_id, referral["id"],
-                    )
-            except Exception as e:
-                logger.error(
-                    "Failed to apply referral coupon for user %s: %s", user_id, e
-                )
+        # Referees no longer get a free-month coupon. The referral reward is
+        # paid to the *referrer* as Nadir credit once the referee funds $10+
+        # (see referral_service.grant_referrer_reward_for_topup).
 
         session = stripe.checkout.Session.create(**session_params)
 

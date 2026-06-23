@@ -83,7 +83,7 @@ export const FeaturesGrid = () => {
             Six features that show up on your bill.
           </h2>
           <p className="text-lg md:text-[21px] text-[#424245] m-0 leading-[1.4] tracking-[-0.01em]">
-            Smart routing, semantic cache, automatic failover, full observability. Two-line install. First month is on us.
+            Smart routing, semantic cache, automatic failover, full observability. Two-line install. Pay only on savings.
           </p>
         </Reveal>
         <div className="grid grid-cols-1 md:grid-cols-6 gap-5 md:gap-6">

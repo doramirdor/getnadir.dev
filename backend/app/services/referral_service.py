@@ -3,14 +3,15 @@ Referral service.
 
 Each user gets a unique code (e.g. AMIR12345). When they share it and a new
 user signs up via that link:
-  - The referee gets 1 month of Pro Base free, applied as a 100%-off coupon
-    on their first checkout.
-  - The referrer earns 1 month free when the referee's first paid invoice
-    clears (handled in stripe_webhooks._handle_invoice_paid).
+  - The referee gets nothing extra; they just need to fund their account.
+  - The referrer earns $5 in Nadir credit the first time that referee tops up
+    $10 or more in prepaid credit. Triggered from the credit_topup branch of
+    stripe_webhooks._handle_checkout_session_completed.
 """
 
 import asyncio
 import logging
+from decimal import Decimal
 from typing import Optional
 
 import stripe
@@ -27,41 +28,10 @@ if settings.STRIPE_SECRET_KEY:
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-# Stripe coupon used for the referee's free first month. Distinct from FIRST1
-# so we can report referral redemptions separately and so it isn't subject to
-# the first_time_transaction restriction (referrals are by definition
-# first-time customers, but we don't need to gate on it: the referee_user_id
-# uniqueness in referrals already prevents double-claim).
-REFERRAL_REFEREE_COUPON_ID = "referral-free-month"
-
-_coupon_ensured = False
-
-
-def _ensure_referee_coupon() -> None:
-    """
-    Create the referral coupon if it doesn't exist. Lazy-fired on first
-    use so any Stripe-side failure can't crash module import or worker boot.
-    Idempotent: only attempts once per process.
-    """
-    global _coupon_ensured
-    if _coupon_ensured or not settings.STRIPE_SECRET_KEY:
-        return
-    _coupon_ensured = True  # set first so a single transient failure doesn't retry forever
-    try:
-        stripe.Coupon.retrieve(REFERRAL_REFEREE_COUPON_ID)
-    except stripe.error.InvalidRequestError:
-        try:
-            stripe.Coupon.create(
-                id=REFERRAL_REFEREE_COUPON_ID,
-                percent_off=100,
-                duration="once",
-                name="Referral - Free Month",
-            )
-            logger.info("Created Stripe coupon '%s'", REFERRAL_REFEREE_COUPON_ID)
-        except Exception as e:
-            logger.error("Failed to create referral coupon: %s", e)
-    except Exception as e:
-        logger.error("Failed to verify referral coupon: %s", e)
+# Credit granted to the referrer once their referee makes a qualifying top-up.
+REFERRAL_REWARD_USD = Decimal("5.00")
+# Minimum referee prepaid-credit top-up that unlocks the referrer's reward.
+REFERRAL_MIN_TOPUP_USD = Decimal("10.00")
 
 
 async def _db(fn):
@@ -204,33 +174,19 @@ async def get_referral_for_referee(referee_user_id: str) -> Optional[dict]:
     return None
 
 
-async def mark_referee_rewarded(referral_id: str) -> None:
-    """Mark that the referee has redeemed their free-month coupon."""
-    from datetime import datetime, timezone
-
-    try:
-        await _db(
-            lambda: supabase.table("referrals")
-            .update(
-                {
-                    "status": "subscribed",
-                    "referee_rewarded_at": datetime.now(timezone.utc).isoformat(),
-                }
-            )
-            .eq("id", referral_id)
-            .execute()
-        )
-    except Exception as e:
-        logger.error("mark_referee_rewarded failed: %s", e)
-
-
-async def grant_referrer_reward(referee_user_id: str) -> None:
+async def grant_referrer_reward_for_topup(
+    referee_user_id: str, topup_amount_usd
+) -> None:
     """
-    Grant the referrer their free month when the referee's first real
-    paid invoice clears.
+    Grant the referrer REFERRAL_REWARD_USD in Nadir credit the first time
+    their referee tops up at least REFERRAL_MIN_TOPUP_USD in prepaid credit.
 
-    Idempotent: only fires if status='subscribed' (referee_rewarded_at is set
-    but referrer_rewarded_at is not).
+    Called from the credit_topup branch of
+    stripe_webhooks._handle_checkout_session_completed.
+
+    Idempotent: a referral row whose referrer_rewarded_at is already set is
+    skipped, so only the first qualifying top-up pays out. Below-threshold
+    top-ups are a no-op and leave the referral pending for a later one.
     """
     from datetime import datetime, timezone
 
@@ -240,53 +196,31 @@ async def grant_referrer_reward(referee_user_id: str) -> None:
     if referral.get("referrer_rewarded_at"):
         return  # Already rewarded.
 
+    if Decimal(str(topup_amount_usd)) < REFERRAL_MIN_TOPUP_USD:
+        logger.info(
+            "Referee %s top-up below $%s threshold — referral stays pending",
+            referee_user_id[:8],
+            REFERRAL_MIN_TOPUP_USD,
+        )
+        return
+
     referrer_user_id = referral["referrer_user_id"]
-    amount_cents = _base_price_cents()
 
-    customer_row = await _db(
-        lambda: supabase.table("stripe_customers")
-        .select("stripe_customer_id")
-        .eq("user_id", referrer_user_id)
-        .execute()
-    )
+    # Reward is spendable Nadir credit, matching the prepaid-credit the referee
+    # just bought. Idempotency is enforced by referrer_rewarded_at below, so we
+    # don't pass a payment_intent id (the credits ledger would otherwise dedupe
+    # against the referee's top-up intent, not this reward).
+    try:
+        from app.services.credits_service import credits_service
 
-    granted_via = "queued"
-    if customer_row.data:
-        customer_id = customer_row.data[0]["stripe_customer_id"]
-        try:
-            # Negative amount = credit owed to the customer. Auto-applies to
-            # the next invoice. Stacking N of these accumulates N free months.
-            await asyncio.to_thread(
-                lambda: stripe.Customer.create_balance_transaction(
-                    customer_id,
-                    amount=-amount_cents,
-                    currency="usd",
-                    description=f"Nadir referral reward (referee={referee_user_id[:8]})",
-                )
-            )
-            granted_via = "stripe_balance"
-        except Exception as e:
-            logger.error("Failed to credit referrer %s: %s", referrer_user_id, e)
-            granted_via = "queued"
-
-    if granted_via == "queued":
-        # No Stripe customer yet (or credit failed) — queue the credit.
-        # stripe_service.create_customer drains pending credits when the
-        # referrer eventually starts a subscription.
-        try:
-            await _db(
-                lambda: supabase.table("referral_pending_credits")
-                .insert(
-                    {
-                        "user_id": referrer_user_id,
-                        "referral_id": referral["id"],
-                        "amount_cents": amount_cents,
-                    }
-                )
-                .execute()
-            )
-        except Exception as e:
-            logger.error("Failed to queue referral credit: %s", e)
+        await credits_service.add_credits(
+            referrer_user_id,
+            REFERRAL_REWARD_USD,
+            description=f"Referral reward (referee={referee_user_id[:8]})",
+        )
+    except Exception as e:
+        logger.error("Failed to credit referrer %s: %s", referrer_user_id, e)
+        return  # Leave the row un-rewarded so a retry can pay out.
 
     try:
         await _db(
@@ -304,10 +238,10 @@ async def grant_referrer_reward(referee_user_id: str) -> None:
         logger.error("Failed to mark referrer_rewarded: %s", e)
 
     logger.info(
-        "Granted referrer reward: user=%s amount_cents=%d via=%s",
+        "Granted referrer reward: user=%s amount=$%s referee=%s",
         referrer_user_id,
-        amount_cents,
-        granted_via,
+        REFERRAL_REWARD_USD,
+        referee_user_id[:8],
     )
 
 
@@ -356,35 +290,15 @@ async def drain_pending_credits(user_id: str, customer_id: str) -> int:
     return applied
 
 
-def _base_price_cents() -> int:
-    """
-    Read the unit_amount of STRIPE_PRICE_ID_BASE so the credit equals one
-    full month of the base subscription. Falls back to 900 ($9) if Stripe
-    isn't reachable. Cached on the function object after the first call.
-    """
-    cached = getattr(_base_price_cents, "_cached", None)
-    if cached is not None:
-        return cached
-    try:
-        price = stripe.Price.retrieve(settings.STRIPE_PRICE_ID_BASE)
-        amount = int(price.unit_amount or 900)
-    except Exception as e:
-        logger.warning(
-            "Could not fetch base price, defaulting to $9 credit: %s", e
-        )
-        amount = 900
-    _base_price_cents._cached = amount  # type: ignore[attr-defined]
-    return amount
-
-
 async def get_referrer_summary(user_id: str) -> dict:
     """
     Aggregate referrer stats for the dashboard page:
       - code: their referral code
-      - signed_up: referees who have a row but haven't subscribed yet
-      - subscribed: referees in free month, not yet converted
-      - rewarded: conversions where the referrer was credited
-      - months_earned: count of rewarded referrals (== free months earned)
+      - signed_up: referees who signed up but haven't made a qualifying top-up
+      - subscribed: legacy free-month state; ~0 for referrals under the credit
+        model (kept so old rows still tally)
+      - rewarded: referees whose qualifying top-up paid out the referrer
+      - credit_earned_usd: total Nadir credit earned (rewarded x REFERRAL_REWARD_USD)
     """
     code = await get_or_create_code(user_id)
 
@@ -407,6 +321,6 @@ async def get_referrer_summary(user_id: str) -> dict:
         "signed_up": counts["pending"],
         "subscribed": counts["subscribed"],
         "rewarded": counts["rewarded"],
-        "months_earned": counts["rewarded"],
+        "credit_earned_usd": float(counts["rewarded"] * REFERRAL_REWARD_USD),
         "recent": rows.data[:10] if rows.data else [],
     }

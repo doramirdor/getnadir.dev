@@ -229,7 +229,7 @@ export default function SolutionRouting() {
           Put the classifier on your traffic.
         </h3>
         <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[560px] mx-auto">
-          Typical account sees real savings within two days. First month is free. You only pay on what we save you.
+          Typical account sees real savings within two days. You only pay on what we save you.
         </p>
         <SignupDialog ctaLabel="start_saving" ctaLocation="solution_routing_bottom">
           <button

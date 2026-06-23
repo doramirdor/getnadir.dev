@@ -18,7 +18,7 @@ export const BottomCta = () => {
               boxDecorationBreak: "clone",
             }}
           >
-            First month on us.
+            Pay only on savings.
           </span>
         </h2>
         <p className="text-lg md:text-[21px] text-[#424245] m-0 mb-11 leading-[1.4] tracking-[-0.01em]">

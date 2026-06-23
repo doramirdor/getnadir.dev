@@ -130,7 +130,7 @@ export default function Switch() {
       {/* CTA */}
       <section className="max-w-4xl mx-auto px-6 pb-20 text-center">
         <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-5">
-          First month free
+          Pay only on savings
         </p>
         <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
           Change two lines. Cut your bill.

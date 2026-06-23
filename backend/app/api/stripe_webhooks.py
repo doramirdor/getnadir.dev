@@ -210,6 +210,15 @@ async def _handle_checkout_session_completed(data: dict) -> None:
         except Exception as e:
             logger.error("Failed to credit top-up for user %s: %s", user_id, e)
             raise
+        # Referral conversion: if this user was referred and this top-up clears
+        # the threshold, credit the referrer. Idempotent per referral row, so
+        # only the referee's first qualifying top-up pays out.
+        try:
+            await referral_service.grant_referrer_reward_for_topup(user_id, amount_usd)
+        except Exception as e:
+            logger.error(
+                "Failed to grant referrer reward for referee %s: %s", user_id, e
+            )
         await posthog_client.capture(
             distinct_id=user_id,
             event="credit_topup_success",
@@ -236,18 +245,6 @@ async def _handle_checkout_session_completed(data: dict) -> None:
     logger.info(
         "Checkout completed: user=%s subscription=%s", user_id, subscription_id
     )
-
-    # If this checkout used a referral coupon, mark the referee as rewarded
-    # so the dashboard can flip the referral row to "subscribed" state.
-    referral_id = session.get("metadata", {}).get("nadir_referral_id")
-    if referral_id:
-        try:
-            await referral_service.mark_referee_rewarded(referral_id)
-        except Exception as e:
-            logger.error(
-                "Failed to mark referee_rewarded for referral %s: %s",
-                referral_id, e,
-            )
 
     # Server-side conversion event. Pairs with the client-side
     # `checkout_start` to close the funnel. The browser PostHog snippet
@@ -436,18 +433,8 @@ async def _handle_invoice_paid(data: dict) -> None:
         amount_usd,
         invoice.get("id"),
     )
-
-    # Referral conversion: the *first* invoice paid by a referee with amount
-    # > 0 is the trigger for crediting the referrer. amount_paid==0 invoices
-    # are the free-month coupon cycle and don't count. grant_referrer_reward
-    # is idempotent: it only fires once per referral row.
-    if amount_paid > 0:
-        try:
-            await referral_service.grant_referrer_reward(user_id)
-        except Exception as e:
-            logger.error(
-                "Failed to grant referrer reward for referee %s: %s", user_id, e
-            )
+    # Referral rewards no longer trigger on invoices — they fire from the
+    # credit_topup branch of checkout.session.completed (referee funds $10+).
 
 
 async def _handle_subscription_updated(data: dict) -> None:

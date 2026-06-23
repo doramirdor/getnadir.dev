@@ -46,10 +46,10 @@ const Referrals = () => {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-3xl mx-auto">
       <h1 className="text-3xl font-semibold text-foreground tracking-tight">
-        Give a month of Pro.
+        Refer a friend.
       </h1>
       <h2 className="text-3xl font-semibold text-foreground tracking-tight mt-1">
-        Get a month of Pro.
+        Earn $5 in credit.
       </h2>
 
       <div className="mt-10">
@@ -65,13 +65,13 @@ const Referrals = () => {
             <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               <MousePointerClick className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
             </span>
-            They sign up and get their first month free
+            They sign up and add $10 or more in credit
           </li>
           <li className="flex items-center gap-4 text-sm text-foreground">
             <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
               <Crown className="w-4 h-4 text-muted-foreground" strokeWidth={1.75} />
             </span>
-            You get a free month when their first paid invoice clears
+            You get $5 in credit once their top-up clears
           </li>
         </ul>
       </div>
@@ -115,8 +115,8 @@ const Referrals = () => {
       {data && data.total > 0 && (
         <div className="mt-10 grid grid-cols-3 gap-3">
           <StatCard label="Signed up" value={data.signed_up + data.subscribed + data.rewarded} />
-          <StatCard label="Subscribed" value={data.subscribed + data.rewarded} />
-          <StatCard label="Months earned" value={data.months_earned} highlight />
+          <StatCard label="Qualified" value={data.rewarded} />
+          <StatCard label="Credit earned" value={`$${data.credit_earned_usd}`} highlight />
         </div>
       )}
 
@@ -135,7 +135,7 @@ const StatCard = ({
   highlight,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   highlight?: boolean;
 }) => (
   <div

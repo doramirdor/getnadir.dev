@@ -24,7 +24,7 @@ class ReferralSummaryResponse(BaseModel):
     signed_up: int
     subscribed: int
     rewarded: int
-    months_earned: int
+    credit_earned_usd: float
     recent: list
 
 
