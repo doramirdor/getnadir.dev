@@ -475,7 +475,7 @@ For a classification task, a routing decision, a sentiment label, or an entity e
 
 **Markdown formatting in non-rendered contexts.** When uncertain about rendering environment, models insert headers, bullet lists, bold text, and code blocks. If the consumer of the response is an API client parsing JSON, a downstream data pipeline, or a logging system, those tokens are pure waste. A 500-token response with heavy markdown may carry 80 tokens of formatting syntax that disappears before any user sees it.
 
-**Redundant JSON structure.** Verbose field names and pretty-printed whitespace in JSON responses add tokens with no information value. An array of `{"sentiment_label": "positive", "confidence_score": 0.92, "reasoning_summary": "..."}` objects costs significantly more than `{"s": "pos", "c": 0.92}` at scale. For a batch job processing 500,000 documents, schema verbosity is a direct cost variable.
+**Redundant JSON structure.** Verbose field names and pretty-printed whitespace in JSON responses add tokens with no information value. An array of \`{"sentiment_label": "positive", "confidence_score": 0.92, "reasoning_summary": "..."}\` objects costs significantly more than \`{"s": "pos", "c": 0.92}\` at scale. For a batch job processing 500,000 documents, schema verbosity is a direct cost variable.
 
 **Chain-of-thought exposed in the output.** Asking the model to reason step by step before answering improves accuracy on complex tasks. If that reasoning appears in the billed API response and you discard it before the user ever sees it, you are paying full output token rates for tokens that serve no downstream purpose.
 
@@ -483,7 +483,7 @@ For a classification task, a routing decision, a sentiment label, or an entity e
 
 ## Five techniques that reduce output token counts.
 
-**Structured output (JSON schema enforcement).** Switching from freeform prose to constrained JSON output is the highest-impact single change for most classification, extraction, and routing applications. Anthropic's tool use API and OpenAI's `response_format: {"type": "json_object"}` enforce structured responses. The model still reasons internally; the response is constrained to exactly the schema you specified.
+**Structured output (JSON schema enforcement).** Switching from freeform prose to constrained JSON output is the highest-impact single change for most classification, extraction, and routing applications. Anthropic's tool use API and OpenAI's \`response_format: {"type": "json_object"}\` enforce structured responses. The model still reasons internally; the response is constrained to exactly the schema you specified.
 
 \`\`\`python
 import anthropic
@@ -536,7 +536,7 @@ client.chat.completions.create(
 )
 \`\`\`
 
-If the answer is a label, a score, a boolean, or a short phrase, a `max_tokens` of 20 to 50 eliminates any possibility of preamble. The model will not pad to fill a window that does not exist.
+If the answer is a label, a score, a boolean, or a short phrase, a \`max_tokens\` of 20 to 50 eliminates any possibility of preamble. The model will not pad to fill a window that does not exist.
 
 **Explicit format instructions in the system prompt.** Direct format instructions are more effective than most teams expect. Models follow them reliably when specific and placed in the system prompt rather than the user message.
 
@@ -587,7 +587,7 @@ log_event({
 })
 \`\`\`
 
-Once you have per-endpoint output token data, the outliers are obvious. A classification endpoint averaging 300 output tokens is a candidate for structured output. An endpoint with high variance — sometimes 50 tokens, sometimes 800 — is a candidate for explicit `max_tokens` limits. An endpoint consistently hitting its existing `max_tokens` cap may be truncating valid responses and needs its limit raised.
+Once you have per-endpoint output token data, the outliers are obvious. A classification endpoint averaging 300 output tokens is a candidate for structured output. An endpoint with high variance — sometimes 50 tokens, sometimes 800 — is a candidate for explicit \`max_tokens\` limits. An endpoint consistently hitting its existing \`max_tokens\` cap may be truncating valid responses and needs its limit raised.
 
 ## How routing amplifies output savings.
 
@@ -603,7 +603,7 @@ The compound effect: on a routed call to Haiku versus an unrouted call to Opus, 
 
 **2. Switch your highest-spend extraction or classification workload to structured output.** Pick the pipeline that currently receives prose responses and convert it to JSON schema-constrained output via tool use. Measure before and after token counts. The reduction on extraction workloads is routinely 60 to 75%.
 
-**3. Set max_tokens caps on every endpoint with predictable output length.** If the answer is a label, a score, a boolean, or a short phrase, cap `max_tokens` at 50. This eliminates runaway verbose responses with no accuracy tradeoff on well-constrained tasks.
+**3. Set max_tokens caps on every endpoint with predictable output length.** If the answer is a label, a score, a boolean, or a short phrase, cap \`max_tokens\` at 50. This eliminates runaway verbose responses with no accuracy tradeoff on well-constrained tasks.
 
 The 5x output token premium is structural. The waste inside those output tokens is not. It is a training default, and prompt design can eliminate most of it in an afternoon.
 
@@ -867,7 +867,7 @@ price_per_million = 5.00
 
 annual_cost = (system_tokens / 1_000_000) * price_per_million * daily_calls * 365
 print(f"System prompt tokens: {system_tokens:,}")
-print(f"Annual system prompt cost: ${annual_cost:,.0f}")
+print(f"Annual system prompt cost: \${annual_cost:,.0f}")
 \`\`\`
 
 **Step two: calculate your annual exposure.** Multiply: token count × daily API calls × 365 × price per token. For Opus 4.8 at $5 per million input tokens, a 6,000-token system prompt across 100,000 daily calls costs $1.1 million per year in system prompt tokens alone. Most teams have not done this arithmetic.
