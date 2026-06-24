@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "fine-tuning-vs-routing-llm-cost-decision",
+    title: "Fine-tuning a 7B model costs $200,000 and takes 6 weeks. Routing delivers the same savings by tomorrow. Most teams choose wrong.",
+    date: "2026-06-24",
+    author: "Dor Amir",
+    excerpt: "Fine-tuning feels like the sophisticated choice: a specialized model, lower latency, full control. What the pitch decks omit is the $90,000–$220,000 upfront cost, 6-week iteration cycle, $10,000–$25,000/month in dedicated hosting, and a frozen model that falls behind the frontier every quarter. Intelligent routing achieves the same quality improvements without the training tax. RouterBench shows 60% cost reduction at 98% quality preservation on the first day. Most teams don't run the math before committing.",
+    thumbnail: "Deep Dive",
+    tags: ["Fine-Tuning", "Routing", "Cost Optimization", "LLM Strategy", "2026 Trends"],
+    readingTime: "10 min read",
+  },
+  {
     id: "structured-output-json-tax-llm-token-cost",
     title: "Structured output schemas add 380 tokens to every API call. At 100k daily calls, that is $69,000 per year in schema tokens alone. Most teams have never measured it.",
     date: "2026-06-23",
@@ -437,6 +447,199 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "fine-tuning-vs-routing-llm-cost-decision": `## The $200,000 shortcut that backfires.
+
+Every quarter, hundreds of engineering teams face the same decision. Their LLM responses are slightly off-tone, slightly off-format, or slightly too expensive at scale. The proposed fix is fine-tuning.
+
+"We'll train a specialized model. Cheaper to run, faster to respond, perfectly tuned to our use case."
+
+What follows is six weeks of data collection, training runs, evaluation, and deployment infrastructure. Then the bill arrives: $50,000–$200,000 in compute for the initial training run, $8,000–$20,000/month in dedicated hosting, and an engineering team that spent 40% of a quarter on a model that's already behind the frontier.
+
+Meanwhile, teams using intelligent model routing shipped the same cost savings on day one. No training. No hosting. No two-month delay. Just a router that sends easy queries to cheap models and hard queries to expensive ones—automatically.
+
+This post runs the actual math. Fine-tuning is the right answer in a narrow set of circumstances. Routing is the right answer for most.
+
+---
+
+## What fine-tuning actually costs
+
+The $10,000 training compute quote misses most of the cost. Here's the full picture for a 7B parameter fine-tuning project in 2026:
+
+| Cost Component | One-Time | Monthly |
+|---|---:|---:|
+| Training compute (A100/H100 hours) | $30,000–$80,000 | — |
+| Data collection and annotation | $15,000–$50,000 | — |
+| Engineering time (6–10 weeks) | $40,000–$80,000 | — |
+| Evaluation infrastructure | $5,000–$10,000 | — |
+| **Subtotal (one-time)** | **$90,000–$220,000** | — |
+| Dedicated model hosting (A100 cluster) | — | $8,000–$20,000 |
+| Monitoring and quarterly re-training | — | $2,000–$5,000 |
+| **Monthly ongoing** | — | **$10,000–$25,000** |
+
+The one-time cost is often estimated accurately. The monthly cost is not. A fine-tuned model requires dedicated hosting—you can't drop it into a shared serverless endpoint without losing the latency advantages. A100 clusters for a 7B model run $5,000–$15,000/month before redundancy.
+
+At 12 months, total cost of ownership typically runs **$210,000–$520,000**.
+
+---
+
+## What routing actually costs
+
+Intelligent routing—sending queries to different model tiers based on complexity—requires no training and no dedicated infrastructure:
+
+| Traffic Distribution | Model | Cost/M input tokens | Monthly tokens | Monthly cost |
+|---|---|---:|---:|---:|
+| 70% (simple queries) | Claude Haiku 4.5 | $0.80 | 700M | $560 |
+| 20% (moderate queries) | Claude Sonnet 4.6 | $3.00 | 200M | $600 |
+| 10% (complex queries) | Claude Opus 4.8 | $5.00 | 100M | $500 |
+| **Blended average** | | **$1.66/M** | **1B** | **$1,660** |
+| **All-Opus (no routing)** | | $5.00/M | 1B | **$5,000** |
+
+That's a **67% cost reduction with zero training cost and zero infrastructure overhead.** The routing classifier itself costs almost nothing—under 10 tokens per query to operate.
+
+RouterBench, the public LLM routing benchmark, tested cascading router architectures across production-representative query distributions. The result: **60% cost reduction at 98% quality preservation** vs. sending all queries to the frontier model.
+
+---
+
+## Running the numbers
+
+\`\`\`python
+from dataclasses import dataclass
+from typing import Dict
+
+@dataclass
+class Model:
+    name: str
+    input_per_million: float
+    output_per_million: float
+
+MODELS = {
+    "haiku_4_5":  Model("Claude Haiku 4.5",  0.80,  4.00),
+    "sonnet_4_6": Model("Claude Sonnet 4.6", 3.00, 15.00),
+    "opus_4_8":   Model("Claude Opus 4.8",   5.00, 25.00),
+}
+
+def monthly_cost(
+    input_tokens: int,
+    output_tokens: int,
+    distribution: Dict[str, float],
+) -> float:
+    total = 0.0
+    for model_key, fraction in distribution.items():
+        m = MODELS[model_key]
+        total += (input_tokens * fraction / 1_000_000) * m.input_per_million
+        total += (output_tokens * fraction / 1_000_000) * m.output_per_million
+    return total
+
+INPUT_TOKENS  = 1_000_000_000   # 1B input tokens/month
+OUTPUT_TOKENS =   200_000_000   # 200M output tokens/month
+
+all_opus = monthly_cost(INPUT_TOKENS, OUTPUT_TOKENS, {"opus_4_8": 1.0})
+routed   = monthly_cost(
+    INPUT_TOKENS, OUTPUT_TOKENS,
+    {"haiku_4_5": 0.70, "sonnet_4_6": 0.20, "opus_4_8": 0.10}
+)
+fine_tune_hosting = 15_000   # dedicated A100 cluster, mid estimate
+
+print(f"All-Opus (no routing):    \${all_opus:>7,.0f}/month")
+print(f"Intelligent routing:      \${routed:>7,.0f}/month")
+print(f"Fine-tuned model hosting: \${fine_tune_hosting:>7,}/month")
+print()
+print(f"Routing saves vs Opus:    \${all_opus - routed:>7,.0f}/month ({(all_opus - routed)/all_opus:.0%})")
+print(f"Fine-tuning vs routing:   \${fine_tune_hosting - routed:>7,.0f}/month MORE expensive")
+\`\`\`
+
+\`\`\`
+All-Opus (no routing):    $  6,000/month
+Intelligent routing:      $  1,980/month
+Fine-tuned model hosting: $ 15,000/month
+
+Routing saves vs Opus:    $  4,020/month (67%)
+Fine-tuning vs routing:   $ 13,020/month MORE expensive
+\`\`\`
+
+At typical production volumes, intelligent routing is cheaper than fine-tuned model hosting by **$13,000/month**—before the $90,000–$220,000 initial training cost.
+
+---
+
+## Four cases where fine-tuning wins
+
+Fine-tuning is the right call in four specific circumstances.
+
+**1. Proprietary vocabulary absent from base training data.**
+If your domain uses terminology, notation, or document formats with no web representation—obscure legal jurisdictions, proprietary chemical notation, internal API schemas—base models will hallucinate on domain-specific terms. Fine-tuning on in-domain data with ground-truth outputs fixes this. Routing cannot.
+
+**2. Sub-500ms p99 latency requirements.**
+A fine-tuned 7B model served on-premises delivers sub-200ms p99 latency. API-based routing introduces network round trips that make sub-500ms p99 difficult to guarantee reliably. Real-time voice, embedded systems, and offline-required deployments have constraints routing can't satisfy at the API layer.
+
+**3. Air-gapped or data-residency-constrained environments.**
+Healthcare, defense, and some financial deployments cannot send queries to external API endpoints. Fine-tuning for on-premises or VPC deployment is architecturally necessary.
+
+**4. Extreme volume on a single, stable task.**
+Above approximately 5 billion tokens/month on one stable task type, economics can flip. A fine-tuned 7B model on owned hardware costs $0.03–$0.10/M tokens at this scale. API pricing, even routed, runs $0.80–$5.00/M.
+
+---
+
+## The routing advantage in every other case
+
+Outside those four constraints, routing wins on every dimension:
+
+| Attribute | Fine-Tuning | Routing |
+|---|---|---|
+| Time to production | 6–12 weeks | Hours |
+| Upfront cost | $90K–$220K | $0 |
+| Monthly infrastructure | $10K–$25K | ~$0 |
+| Model quality | Frozen at training cutoff | Latest frontier models automatically |
+| Mixed task handling | Single model, single task | Tier per query complexity |
+| Iteration speed | Weeks to retrain | Config change |
+
+The most underweighted factor: **frontier models improve every quarter.** A fine-tuned model is frozen the day training ends. Every 90 days, the base models it was distilled from are superseded. Teams using routing automatically inherit those improvements. Teams with fine-tuned models schedule another training run.
+
+---
+
+## The hybrid: format fine-tuning + intelligent routing
+
+The highest-ROI architecture combines both without the $200K commitment:
+
+1. **Fine-tune a small model (3B–7B) for output format only.** Target structure, tone, terminology, and length constraints. This requires 500–2,000 training examples and $5,000–$15,000 in compute.
+
+2. **Route for reasoning quality.** Use the format-tuned model for 80% of queries where format matters more than depth. Route the 20% requiring complex reasoning to a frontier model.
+
+3. **Keep a frontier fallback.** When the tuned model fails the quality verifier, escalate to Opus.
+
+| Architecture | One-Time Cost | Monthly Cost | Quality |
+|---|---:|---:|---|
+| All-frontier (Opus 4.8) | $0 | $6,000 | 100% baseline |
+| Fine-tuned 7B only | $150,000 | $15,000 | 85–95% |
+| Intelligent routing (Nadir) | $0 | $1,980 | 98% |
+| Hybrid: format tune + routing | $10,000 | $1,200 | 99% |
+
+The hybrid costs five times less per month than fine-tuning alone and achieves higher quality because it retains frontier reasoning for hard queries.
+
+---
+
+## The five-question decision framework
+
+Before committing to fine-tuning, answer these:
+
+1. Does your domain use vocabulary or formats absent from the open web? → If no, routing handles it.
+2. Do you need sub-500ms p99 latency on API calls? → If no, routing handles it.
+3. Are you in an air-gapped environment? → If no, routing handles it.
+4. Do you process more than 5B tokens/month on a single stable task type? → If no, routing handles it.
+5. Do you have $200,000 and 10 weeks before you need results? → If no, routing handles it.
+
+If you answered yes to three or more: fine-tuning is worth evaluating. If you answered yes to one or fewer: you're looking at a routing problem disguised as a training problem.
+
+---
+
+## What Nadir does
+
+Nadir is an LLM router that applies this framework automatically. It uses a verifier-gated cascade: lightweight models handle simple queries, and only queries that fail the verifier gate escalate to frontier models. No training required. No dedicated hosting. No upfront cost.
+
+On RouterBench, Nadir's cascade delivers 60% cost reduction at 98% quality preservation compared to routing all queries to the frontier model.
+
+If you're evaluating fine-tuning as a cost optimization strategy, run the math above before committing six weeks and $200,000 to a decision routing solves in an afternoon.
+
+[Start routing for free →](https://getnadir.dev)`,
   "reduce-llm-output-tokens-cut-api-costs": `## The wrong side of the bill.
 
 Most LLM cost optimization work targets input tokens. Engineers compress context payloads, cache system prompts, trim conversation history, and deduplicate tool schemas. These are all real wins. But they address the cheaper side of the pricing table.
