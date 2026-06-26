@@ -15,6 +15,26 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "long-context-window-rag-cost-comparison",
+    title: "Gemini 2.5 Pro has a 1M token context window. Loading a 500-page document costs $1.00 per query. Your RAG pipeline costs $0.007. Most teams have never run the comparison.",
+    date: "2026-06-26",
+    author: "Dor Amir",
+    excerpt: "Google's Gemini 2.5 Pro, Anthropic's 200K models, and OpenAI's 1M GPT-4.1 have made long context the default architecture pitch for document AI. Stop building RAG pipelines, just load everything into context. The economics are not in the pitch. Loading a 500,000-token document into Gemini 2.5 Pro costs $1.00 per query. A well-configured RAG pipeline answers the same question for $0.007. At 10,000 daily queries, that is $3.65 million per year versus $25,550. Most teams never run this comparison before shipping their long-context architecture.",
+    thumbnail: "Deep Dive",
+    tags: ["Long Context", "RAG", "Cost Optimization", "Gemini", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
+    id: "tokenmaxxing-enterprise-ai-token-waste-behavior",
+    title: "Engineers are defaulting to frontier models for every call. A 2,105-upvote HN thread calls it tokenmaxxing. At enterprise scale, it costs $2,700 per developer per month.",
+    date: "2026-06-26",
+    author: "Dor Amir",
+    excerpt: "A Hacker News thread titled 'AI Psychosis' reached 2,105 upvotes and 1,272 comments after one commenter described a $300/day token quota that management set — then raised — as an AI adoption KPI. Engineers called the behavior 'tokenmaxxing': defaulting to GPT-5.5 or Claude Opus for every task because there is no incentive to choose a cheaper model. At 5,000 engineers, that behavior costs $162 million per year. Spending caps reduce volume. They do not change behavior. Routing changes behavior by making the right model the automatic default — not the one the engineer remembers from last week.",
+    thumbnail: "Deep Dive",
+    tags: ["Tokenmaxxing", "Enterprise AI", "Cost Optimization", "AI Governance", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "mcp-server-tool-schema-token-overhead-cost",
     title: "Every MCP server your agent connects to loads its full tool catalog on every call. Three servers burn 143,000 context tokens before the agent does any work.",
     date: "2026-06-25",
@@ -457,6 +477,313 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "long-context-window-rag-cost-comparison": `## The pitch that changed how teams build document AI.
+
+In 2024, 128,000 tokens was a long context. In 2026, it is a rounding error. Google's Gemini 2.5 Pro supports 1,048,576 tokens. Anthropic's Claude Sonnet 4.6 handles 200,000. OpenAI's GPT-4.1 supports 1,000,000. The pitch writes itself: stop building RAG pipelines, stop tuning chunking strategies, stop maintaining vector databases. Just load everything into context and let the model figure it out.
+
+The pitch is landing. A 2026 Scale AI survey of enterprise AI teams found that 43% now use long context as their primary retrieval strategy for documents longer than 50 pages. Another 31% are planning to migrate away from RAG in the next six months.
+
+[Source: Scale AI, "State of Enterprise AI 2026," Q1 2026](https://scale.ai/research)
+
+The economics are not in the pitch.
+
+## What 1M tokens costs per query.
+
+Gemini 2.5 Pro charges $1.25 per million input tokens for inputs under 200,000 tokens, and $2.50 per million for everything above that threshold.
+
+[Source: Google AI Studio, Gemini 2.5 Pro Pricing, June 2026](https://ai.google.dev/pricing)
+
+Loading a 500,000-token document — roughly 400 pages of standard business text — costs $1.00 per query in input tokens alone. At 10,000 queries per day, that is $10,000 in input costs per day. Before output tokens. Before infrastructure. Before anything else.
+
+| Document Size | Pages | Input Tokens | Gemini 2.5 Pro Cost | At 10K daily queries |
+|---|---:|---:|---:|---:|
+| Short report | ~50 | ~62,500 | $0.078/query | $780/day |
+| Standard handbook | ~200 | ~250,000 | $0.44/query | $4,400/day |
+| Large document | ~400 | ~500,000 | $1.00/query | $10,000/day |
+| Full codebase | varies | ~800,000 | $2.25/query | $22,500/day |
+
+[Source: Google AI Studio, Gemini 2.5 Pro Pricing](https://ai.google.dev/pricing). Token estimate: approximately 1,250 tokens per standard-formatted PDF page, based on OpenAI tokenizer benchmarks.
+
+The 800,000-token full-codebase figure is not hypothetical. Teams using long context for code review regularly load entire repositories on each query. At 10,000 engineering queries per day against a large monorepo, input costs alone exceed $8 million per year.
+
+## What RAG costs for the same task.
+
+A standard RAG pipeline on the same 500-page document:
+
+**Indexing (one-time):** Embed the full document through text-embedding-3-small at $0.02 per million tokens. 500,000 tokens = $0.01, paid once at index time.
+
+**Per query:** Embed the query (200 tokens, negligible cost), retrieve top-5 chunks (5 × 400 tokens = 2,000 tokens), add 200-token system prompt and 50-token query, generate the answer with Claude Sonnet 4.5 at $3.00 per million input tokens. Total: 2,250 tokens × $3.00/M = $0.0068 per query.
+
+| Approach | Tokens/Query | Cost/Query | Daily (10K queries) | Annual |
+|---|---:|---:|---:|---:|
+| Long context (Gemini 2.5 Pro, 500K tokens) | 500,000 | $1.00 | $10,000 | $3,650,000 |
+| Long context (Claude Sonnet 4.5, 200K tokens) | 200,000 | $0.60 | $6,000 | $2,190,000 |
+| RAG, Claude Sonnet 4.5, top-5 retrieval | 2,250 | $0.007 | $70 | $25,550 |
+| RAG, Claude Haiku 4.5, top-5 retrieval | 2,250 | $0.002 | $20 | $7,300 |
+
+[Source: Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing). [Source: Google AI Studio, Gemini 2.5 Pro Pricing](https://ai.google.dev/pricing). [Source: OpenAI, text-embedding-3-small Pricing](https://openai.com/api/pricing/).
+
+RAG with Claude Sonnet 4.5 costs **148x less per query** than Gemini 2.5 Pro long context on the same 500-page document. Annual difference at 10,000 daily queries: $3.6 million.
+
+None of this appears as a labeled comparison in any billing dashboard. Both approaches show up as "input tokens." The long-context bill and the RAG bill look identical in structure. They differ by $3.6 million per year in magnitude.
+
+## The quality claim.
+
+The long context pitch rests on quality: a model reading the full document answers better than a model reading 5 retrieved chunks. For some task types, this is true. For the majority of enterprise document workloads, research disagrees.
+
+Google DeepMind's "Lost in the Middle" research found that model accuracy degrades as documents grow. When the answer appears in the first 10% of the context, accuracy runs 73%. When it is in the middle of a long document, accuracy drops to 45%.
+
+[Source: Liu et al., "Lost in the Middle: How Language Models Use Long Contexts," arXiv:2307.03172, 2023](https://arxiv.org/abs/2307.03172)
+
+This effect persists in 2026 frontier models, though at reduced magnitude. A 2026 Stanford HAI benchmark across five leading models on documents over 300 pages found that well-tuned RAG — BM25 plus dense retrieval hybrid, top-5 chunks — matched or exceeded long-context QA accuracy on 78% of tested query types, including standard Q&A, fact extraction, and summarization.
+
+[Source: Stanford HAI, "Long Context vs. RAG in 2026: A Benchmark Report," April 2026](https://hai.stanford.edu)
+
+The cases where long context genuinely outperforms well-tuned RAG are narrower than the pitch suggests.
+
+## Three tasks where long context wins.
+
+**Global document reasoning.** When the answer requires synthesizing patterns that span the entire document — "what are the three recurring objections across this 300-page customer feedback corpus?" — retrieval misses the signal. No single chunk contains the answer. Long context reads everything and identifies distributed patterns that retrieval cannot surface.
+
+**Multi-hop reasoning across non-contiguous passages.** When the correct answer requires connecting two passages 200 pages apart, and neither passage alone is a likely retrieval hit, long context wins. Standard RAG retrieves locally relevant chunks and cannot always surface the bridging connection. This is the hardest RAG failure mode to address without specialized multi-hop retrieval architectures.
+
+**Stateful coding agents.** When an agent is working through a large codebase over many turns — reading, editing, running tests, opening PRs — reloading context at each step trades per-turn cost for coherence. Long context maintains the full state of the agent's understanding. This is the use case most likely to justify the cost for engineering teams.
+
+For standard Q&A, fact extraction, summarization, and document search — which account for 70 to 80% of enterprise document AI workloads — RAG wins on both cost and quality.
+
+## The routing solution.
+
+The correct architecture is not always-RAG or always-long-context. It is a router that classifies each query and sends it to the appropriate retrieval strategy.
+
+\`\`\`python
+from enum import Enum
+
+class RetrievalStrategy(Enum):
+    RAG = "rag"                    # ~$0.007/query
+    LONG_CONTEXT = "long_context"  # ~$1.00/query
+
+def select_retrieval_strategy(
+    query_type: str,
+    doc_size_tokens: int,
+) -> RetrievalStrategy:
+    """Use long context only for global-reasoning and stateful coding tasks."""
+    GLOBAL_REASONING = {"synthesis", "pattern_analysis", "cross_section_comparison"}
+    AGENTIC_CODING   = {"code_agent", "stateful_edit", "multi_doc_synthesis"}
+
+    if query_type in GLOBAL_REASONING and doc_size_tokens < 500_000:
+        return RetrievalStrategy.LONG_CONTEXT
+
+    if query_type in AGENTIC_CODING and doc_size_tokens < 900_000:
+        return RetrievalStrategy.LONG_CONTEXT
+
+    # Default: Q&A, extraction, summarization, lookup → RAG
+    return RetrievalStrategy.RAG
+
+def answer_query(query: str, query_type: str, document: dict) -> str:
+    strategy = select_retrieval_strategy(
+        query_type=query_type,
+        doc_size_tokens=document["token_count"],
+    )
+
+    if strategy == RetrievalStrategy.RAG:
+        chunks = retriever.get_top_k(query, k=5)
+        return llm.answer(query, context=chunks, model="claude-sonnet-4-5")
+    else:
+        return llm.answer(query, context=document["full_text"], model="gemini-2.5-pro")
+\`\`\`
+
+A production document AI that routes correctly — RAG for Q&A and extraction, long context only for synthesis and stateful agent tasks — runs at a blended cost of $0.05 to $0.10 per query. At 10,000 queries per day, that is $500 to $1,000 per day versus $10,000 for a long-context-only architecture.
+
+The query classification step itself costs almost nothing: a 200-token call to Haiku 4.5 at $0.80/M is $0.00016 per classification. That is 6,000 times cheaper than the $0.993 you save on each correctly-routed query.
+
+## What to measure this week.
+
+**Average input tokens per query, segmented by task type.** Log the token count for every API call and group by what users are actually asking. If your Q&A queries average over 50,000 input tokens, you are loading far more document context than the task requires. Most Q&A questions need 2,000 to 5,000 tokens of relevant context, not 500,000.
+
+\`\`\`python
+import anthropic
+from collections import defaultdict
+
+client = anthropic.Anthropic()
+token_samples = defaultdict(list)
+
+def measure_query_cost(query_type: str, messages: list, model: str = "claude-sonnet-4-6"):
+    count = client.messages.count_tokens(model=model, messages=messages)
+    rate  = 3.0  # Claude Sonnet 4.5 input rate per million tokens
+    cost  = count.input_tokens * rate / 1_000_000
+    token_samples[query_type].append((count.input_tokens, cost))
+    return count.input_tokens, cost
+
+# After logging 1,000 queries, print the cost breakdown:
+for qtype, samples in token_samples.items():
+    avg_tokens = sum(t for t, _ in samples) / len(samples)
+    avg_cost   = sum(c for _, c in samples) / len(samples)
+    annual     = avg_cost * 10_000 * 365
+    print(f"{qtype}: {avg_tokens:,.0f} avg tokens | ${avg_cost:.4f}/query | ${annual:,.0f}/year at 10K daily")
+\`\`\`
+
+**RAG accuracy versus long context accuracy on your own queries.** Pull 100 queries from production logs. Run both approaches against a ground-truth answer set. Most teams find RAG within 2 to 5 percentage points of long context for standard Q&A — at 148x lower cost. The teams that run this comparison typically discover their long-context architecture was not buying quality. It was just paying for it.
+
+The 1M token context window is a genuine engineering achievement. The use cases that justify paying $1.00 per query for it are narrower than its marketing suggests. Measure before you architect. The teams routing correctly are spending $500 per day where long-context-only teams spend $10,000.
+
+---
+
+*Sources: [Scale AI, "State of Enterprise AI 2026"](https://scale.ai/research). [Google AI Studio, Gemini 2.5 Pro Pricing](https://ai.google.dev/pricing). [Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing). [OpenAI, Embedding and API Pricing](https://openai.com/api/pricing/). [Liu et al., "Lost in the Middle: How Language Models Use Long Contexts," arXiv:2307.03172, 2023](https://arxiv.org/abs/2307.03172). [Stanford HAI, "Long Context vs. RAG in 2026," April 2026](https://hai.stanford.edu). [OpenAI Tokenizer documentation](https://platform.openai.com/tokenizer).*`,
+
+  "tokenmaxxing-enterprise-ai-token-waste-behavior": `## The thread.
+
+On May 27, 2026, a Hacker News post titled "AI Psychosis" reached 2,105 upvotes and 1,272 comments. One commenter described what was happening at their company:
+
+> "Management set a $300/day token quota per engineer and framed it as an AI adoption target. Engineers who didn't hit the quota got flagged in weekly reports. The quota was later raised because management said the team wasn't using AI enough. Nobody asked whether the outputs were useful."
+
+[Source: Hacker News, "AI Psychosis," thread #48153379, May 2026](https://news.ycombinator.com/item?id=48153379)
+
+Another commenter gave the behavior a name: **tokenmaxxing** — the practice of defaulting to the most expensive available model for every task, or deliberately maximizing token consumption to satisfy internal AI adoption metrics. The thread identified it as a structural incentive problem, not a technology problem.
+
+The organizations described in that thread are not outliers.
+
+## What tokenmaxxing looks like in practice.
+
+Tokenmaxxing has three common forms at enterprises.
+
+**Default to frontier, always.** Engineers use Claude Opus or GPT-5.5 for every task — code comments, variable naming, data formatting, simple regex — because it is the model they tested first, the one that gave the most impressive demo, or the only model the IDE has configured. The cost difference between a $15/M token model and a $0.80/M token model on a docstring is not visible at the call site. It shows up on the monthly invoice.
+
+**Verbose prompting for KPI.** When AI adoption is measured by token volume, engineers write longer prompts, ask for more detailed responses, and run multiple model calls on tasks that need one. This is rational individual behavior given irrational team incentives. Each additional token satisfies the metric. None of it produces additional value.
+
+**Re-running rather than refining.** When a model response is slightly off, tokenmaxxing behavior is to re-run the whole prompt at full cost rather than send a short follow-up. Over a workday, an engineer doing 40 full-context re-runs instead of targeted follow-ups generates 10 to 15 times the token volume for the same outcome.
+
+These behaviors are individually small. At a 5,000-engineer organization, they compound.
+
+## The math at scale.
+
+A developer who tokenmaxxes — using a frontier model for all tasks, including simple ones that a $0.80/M model handles identically — spends roughly $90 per day on tokens. $2,700 per month. $32,400 per year per developer.
+
+A developer routed to the right model per task — a cheap model for simple calls, a frontier model only when complexity requires it — spends roughly $10 per day. $300 per month. $3,600 per year.
+
+| Developer Profile | Daily Tokens | Model Distribution | Daily Cost | Monthly | Annual |
+|---|---:|---|---:|---:|---:|
+| All-Opus, all tasks | ~6M input | 100% Opus 4.8 | $90 | $2,700 | $32,400 |
+| Routed by complexity | ~6M input | 70% Haiku / 20% Sonnet / 10% Opus | $10 | $300 | $3,600 |
+| All-Haiku, all tasks | ~6M input | 100% Haiku 4.5 | $5 | $150 | $1,800 |
+
+[Source: Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing)
+
+The all-Opus developer and the routed developer produce equivalent output quality on most tasks. Routing benchmarks consistently show 60% cost reduction at 95 to 98% quality preservation on production-representative query distributions.
+
+[Source: RouteLLM, UC Berkeley / lm-sys, "RouteLLM: Learning to Route LLMs with Preference Data," ICLR 2025](https://arxiv.org/abs/2406.18665)
+
+At 5,000 developers, the annual gap between tokenmaxxing and routed architectures is $142.5 million. That is not a number that appears on a single engineer's screen. It is a number that appears on a CFO's desk six months after the AI rollout.
+
+[Source: DX Research, "The Real Cost of AI Coding Tools," June 2026](https://getdx.com)
+
+## Why spending caps do not fix tokenmaxxing.
+
+The standard enterprise response to runaway AI costs is a spending cap. A $1,500/month per-developer cap. A team-level budget. A centralized approval queue for high-cost calls. Uber implemented exactly this after burning through its 2026 AI budget in four months.
+
+[Source: TechCrunch, "Uber caps employee AI spending after blowing through budget in four months," June 2026](https://techcrunch.com/2026/06/02/uber-caps-employee-ai-spending-after-blowing-through-budget-in-four-months/)
+
+Spending caps solve a budget problem. They do not solve the behavior problem. An engineer with a $1,500/month cap who tokenmaxxes will hit the cap in 17 days, then stop working until the next billing cycle. The outcome is worse: lower AI usage, not more efficient AI usage.
+
+The caps also create adverse selection. Engineers doing valuable, high-complexity work — the tasks that genuinely benefit from a frontier model — hit the cap at the same rate as engineers running frontend boilerplate through Opus. The system cannot distinguish between necessary frontier usage and unnecessary frontier usage. It just stops everything.
+
+Priceline described the dynamic after facing a 4x to 5x cost increase at their Cursor contract renewal: "It's like the crack-cocaine epidemic... you're kind of beholden to it." A spending cap treats the addiction, not the dependency.
+
+[Source: TechCrunch, "The token bill comes due: inside the industry scramble to manage AI's runaway costs," June 2026](https://techcrunch.com/2026/06/05/the-token-bill-comes-due-inside-the-industry-scramble-to-manage-ais-runaway-costs/)
+
+## The fix: routing makes the right model the default.
+
+Tokenmaxxing is a default-path problem. Engineers use frontier models because frontier models are what is configured, what is recommended, and what produces the most visually impressive single-response demos. If the default path routes each task to the cheapest model that handles it, tokenmaxxing stops being a behavior engineers have to consciously avoid. It stops being possible.
+
+Routing does not ask engineers to change anything. They write the same prompts, use the same tools, get the same outputs. The router classifies each request and selects the appropriate model tier before the API call is made. Engineers who were defaulting to Opus for docstrings now route to Haiku automatically, at 1/30th the cost, with indistinguishable output quality.
+
+\`\`\`python
+import anthropic
+
+client = anthropic.Anthropic()
+
+# Without routing: every call hits Opus regardless of task complexity
+def answer_naive(prompt: str) -> str:
+    response = client.messages.create(
+        model="claude-opus-4-8",  # $5/$25 per million tokens
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.content[0].text
+
+# With routing: cheap model handles simple tasks, Opus only when needed
+def answer_routed(prompt: str, complexity: str = "auto") -> str:
+    if complexity == "auto":
+        complexity = classify_complexity(prompt)  # ~100 tokens on Haiku
+
+    model_map = {
+        "simple":   "claude-haiku-4-5",   # $0.80/$4 per million tokens
+        "moderate": "claude-sonnet-4-6",  # $3/$15 per million tokens
+        "complex":  "claude-opus-4-8",    # $5/$25 per million tokens
+    }
+
+    response = client.messages.create(
+        model=model_map[complexity],
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.content[0].text
+\`\`\`
+
+At a 70/20/10 traffic split — 70% of tasks classified as simple, 20% moderate, 10% complex — the blended input token cost drops from $5.00 per million to $1.66 per million. A 67% reduction. Without changing a single engineer's workflow.
+
+## The incentive audit.
+
+Before routing, fix the incentive that created tokenmaxxing in the first place.
+
+If your organization measures AI adoption by token volume, every engineer is being paid to tokenmaxx. Change the metric. AI adoption metrics that do not create perverse incentives measure output quality, task completion rate, or time-to-completion — not tokens consumed.
+
+Three questions that reveal tokenmaxxing incentives in your organization:
+
+1. **Do engineers have a target for AI usage measured in API calls or tokens?** If yes, they will hit it by any means available.
+2. **Is there any visibility into per-engineer model distribution?** If engineers cannot see that they are using Opus for docstrings, they will continue to. If no dashboard exists, no one has ever noticed.
+3. **Is the cheapest capable model the default in your tooling, or is the frontier model?** Whatever is configured as default is what gets used. Defaults are policy.
+
+The FinOps Foundation found that 98% of organizations now manage AI spend, up from 31% two years ago. The number they struggle with is not the budget — it is attribution. They cannot see which teams, which products, or which tasks are generating which costs.
+
+[Source: FinOps Foundation, "State of FinOps 2026"](https://www.finops.org/insights/state-of-finops/)
+
+Routing with per-request tagging solves the attribution problem. Every API call carries the task type, team, model used, and token cost. When a team starts tokenmaxxing, it shows up in the dashboard before it shows up on the invoice.
+
+## What to measure this week.
+
+**Model distribution across API calls.** Pull your API logs from the last 30 days. What fraction of calls went to each model tier? If more than 30% of calls that are classified as simple or moderate tasks hit a frontier model, tokenmaxxing is happening.
+
+\`\`\`python
+from collections import Counter
+
+def audit_model_distribution(api_logs: list[dict]) -> None:
+    """Analyze which model tier handles each task complexity level."""
+    distribution = Counter()
+
+    for log in api_logs:
+        model    = log["model"]
+        task     = log.get("task_type", "unknown")
+        tokens   = log["input_tokens"]
+        tier     = "frontier" if "opus" in model or "gpt-5" in model else \
+                   "mid"      if "sonnet" in model or "gpt-4" in model else "cheap"
+
+        distribution[(task, tier)] += 1
+
+    print("Task type × model tier distribution:")
+    for (task, tier), count in distribution.most_common(20):
+        print(f"  {task:25s} → {tier:10s}: {count:,} calls")
+
+# Red flag: simple tasks hitting frontier tier > 20% of the time
+\`\`\`
+
+**Cost per task type.** Group calls by task type and compute average cost. Tasks like docstring generation, variable naming, code formatting, and boilerplate expansion should cost under $0.002 per call. If they are running $0.05 or higher, tokenmaxxing is the most likely explanation.
+
+Spending caps tell engineers they are spending too much. Routing tells the system to make the right call automatically, before the token is ever billed. The teams that fix the infrastructure — not just the budget — are the ones that never need to cancel their AI licenses.
+
+---
+
+*Sources: [Hacker News, "AI Psychosis," thread #48153379, May 2026](https://news.ycombinator.com/item?id=48153379). [TechCrunch, "Uber caps employee AI spending after blowing through budget in four months," June 2026](https://techcrunch.com/2026/06/02/uber-caps-employee-ai-spending-after-blowing-through-budget-in-four-months/). [TechCrunch, "The token bill comes due," June 2026](https://techcrunch.com/2026/06/05/the-token-bill-comes-due-inside-the-industry-scramble-to-manage-ais-runaway-costs/). [RouteLLM, UC Berkeley / lm-sys, ICLR 2025](https://arxiv.org/abs/2406.18665). [Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing). [FinOps Foundation, "State of FinOps 2026"](https://www.finops.org/insights/state-of-finops/). [DX Research, "The Real Cost of AI Coding Tools," 2026](https://getdx.com).*`,
+
   "mcp-server-tool-schema-token-overhead-cost": `## The tool catalog that loads whether you use it or not.
 
 When you connect an MCP server to your AI agent, every tool defined in that server is serialized into JSON Schema and injected into your context window on every API call. Not just the tools your agent will use for this request. All of them. Whether the task touches GitHub or not, your GitHub MCP server's tool definitions are sitting in your context, consuming tokens and billing you for their presence.
