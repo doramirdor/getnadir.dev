@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "mcp-server-tool-schema-token-overhead-cost",
+    title: "Every MCP server your agent connects to loads its full tool catalog on every call. Three servers burn 143,000 context tokens before the agent does any work.",
+    date: "2026-06-25",
+    author: "Dor Amir",
+    excerpt: "GitHub's official MCP server ships 93 tools. Their schema definitions consume 55,000 tokens per session. Connect GitHub, Slack, and Sentry and you have used 143,000 of your 200,000-token context window before the agent sees its first user message. At Opus 4.8 pricing, that is $64,350 per month in schema tokens on 1,000 daily calls — none of it visible as a line item. Dynamic tool loading, schema compression, and lazy registration cut it 40 to 70%. Most teams have never measured it.",
+    thumbnail: "Deep Dive",
+    tags: ["MCP", "Agentic AI", "Token Optimization", "Cost Optimization", "2026 Trends"],
+    readingTime: "9 min read",
+  },
+  {
     id: "fine-tuning-vs-routing-llm-cost-decision",
     title: "Fine-tuning a 7B model costs $200,000 and takes 6 weeks. Routing delivers the same savings by tomorrow. Most teams choose wrong.",
     date: "2026-06-24",
@@ -447,6 +457,181 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "mcp-server-tool-schema-token-overhead-cost": `## The tool catalog that loads whether you use it or not.
+
+When you connect an MCP server to your AI agent, every tool defined in that server is serialized into JSON Schema and injected into your context window on every API call. Not just the tools your agent will use for this request. All of them. Whether the task touches GitHub or not, your GitHub MCP server's tool definitions are sitting in your context, consuming tokens and billing you for their presence.
+
+[Source: GitHub, modelcontextprotocol/modelcontextprotocol, "MCP spec should address tool schema token overhead," 2026](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/2808)
+
+GitHub's official MCP server ships 93 tools. Their schema definitions consume 55,000 tokens per session.
+
+[Source: OnlyCLI, "MCP Token Trap: Why Your AI Agent Burns 35x More Tokens Than a CLI"](https://onlycli.github.io/OnlyCLI/blog/mcp-token-cost-benchmark/)
+
+A typical enterprise agent connects three services: GitHub for code, Slack for communications, and a monitoring tool like Sentry. That combination loads roughly 143,000 tokens of schema definitions before the agent sees its first user message.
+
+[Source: n1n.ai, "The Hidden Costs of Model Context Protocol (MCP) at Scale," June 24, 2026](https://explore.n1n.ai/blog/hidden-costs-model-context-protocol-mcp-2026-06-24)
+
+The model's available context for actual reasoning: 57,000 tokens of a 200,000-token window.
+
+## What MCP tool schemas actually cost.
+
+Each MCP tool definition includes a name, description, parameter list, parameter types, constraints, and examples. A simple tool like `list_files` consumes 500 to 800 tokens. A complex tool with nested schemas and multiple examples can run 1,500 to 2,500 tokens.
+
+[Source: BSWEN, "How MCP Tool Definitions Inflate Your AI Agent Token Costs," 2026](https://docs.bswen.com/blog/2026-04-24-mcp-token-overhead/)
+
+The per-tool overhead sounds manageable. At 10 tools it adds 8,000 tokens. At 30 tools it adds 24,000 tokens. At 93 tools — GitHub's actual count — it consumes 55,000 tokens before the conversation begins.
+
+The financial translation at Opus 4.8 pricing ($15 per million input tokens):
+
+| MCP Setup | Tools | Schema Tokens | Cost Per Call | Daily (1k calls) | Monthly |
+|---|---:|---:|---:|---:|---:|
+| Minimal (1 small server) | 8 | ~6,000 | $0.09 | $90 | $2,700 |
+| Standard (2–3 servers) | 25 | ~20,000 | $0.30 | $300 | $9,000 |
+| GitHub MCP only | 93 | 55,000 | $0.83 | $825 | $24,750 |
+| Three enterprise servers | ~140 | ~143,000 | $2.15 | $2,145 | $64,350 |
+
+[Source: n1n.ai, "The Hidden Costs of Model Context Protocol (MCP) at Scale," June 24, 2026](https://explore.n1n.ai/blog/hidden-costs-model-context-protocol-mcp-2026-06-24)
+[Source: Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing)
+
+None of this appears as a line item. It is absorbed into total input tokens, invisible in every billing dashboard.
+
+## The 12x multiplier.
+
+The sharpest way to understand the MCP tax is to compare it to the alternative.
+
+Researchers tested a simple `list_files` operation three ways: a hard-coded Python function that calls the filesystem directly, the same operation through an MCP server, and the difference measured in tokens.
+
+The MCP server used 12x more tokens than the hard-coded function for the same filesystem operation.
+
+[Source: OnlyCLI, "MCP Token Trap: Why Your AI Agent Burns 35x More Tokens Than a CLI"](https://onlycli.github.io/OnlyCLI/blog/mcp-token-cost-benchmark/)
+
+The 12x figure is not for a complex tool with elaborate schemas. It is for one of the simplest possible operations. For tools with richer schemas and more examples, the ratio runs higher.
+
+This matters because most agent tasks involve a series of tool calls. A coding agent that reads files, checks git status, runs tests, and opens a PR might make 15 tool calls per task. Each carries 12x the token overhead versus a hard-coded implementation. The compound cost difference across a production workload is significant.
+
+## Why this does not show up on your bill.
+
+Every major LLM provider bills by total input tokens per request. Your Anthropic dashboard shows input tokens, output tokens, and cache reads. None of them show tool schema overhead as a separate category.
+
+There is no "MCP overhead" row. No "unused tools" column. No breakdown of tokens consumed by tool definitions that were never invoked this session.
+
+The only way to see it is to log two things:
+
+1. The raw token count of your tool schemas before the first user message
+2. The token count of your active context (user message plus retrieved context plus conversation history)
+
+Divide the first by the second. In a typical three-server MCP setup, teams find that 60 to 80% of their input tokens on every call are tool schema definitions.
+
+## Five approaches that cut MCP overhead.
+
+**1. Dynamic tool loading.**
+
+Instead of registering all tools at session start, load only the tools relevant to the current task. For an agent handling a code review request, load only the GitHub and code-analysis tools. For an agent handling a support ticket, load only the CRM and documentation tools.
+
+Dynamic tool loading requires a classification step at the start of each task, but that step typically costs 200 to 500 tokens on a cheap model — a fraction of the 20,000 to 55,000 tokens you save by not loading unused tool schemas.
+
+\`\`\`python
+def get_tools_for_task(task_description: str) -> list[Tool]:
+    # Route to a cheap model to classify the task type
+    task_type = classify_task(task_description, model="claude-haiku-4-5")
+
+    # Load only the tools relevant to this task type
+    return TOOL_REGISTRY[task_type]  # e.g., {"code": [github_tools], "support": [crm_tools]}
+\`\`\`
+
+[Source: MindStudio, "How to Reduce Token Usage in AI Agents: 10 MCP Optimization Techniques"](https://www.mindstudio.ai/blog/reduce-token-usage-ai-agents-mcp-optimization)
+
+**2. Schema compression.**
+
+MCP tool schemas include names, descriptions, and examples to help the model understand how to use each tool. Many of these descriptions are written for human readability, not token efficiency. Parameter descriptions like "The name of the file to list, as a full filesystem path including the directory separator" can be compressed to "Full path to file" without losing the information the model needs.
+
+Systematic schema compression typically reduces per-tool token counts by 30 to 50%.
+
+[Source: DEV Community, Kuldeep Paul, "Cutting MCP Tool-Call Token Costs by 50%+ with Code Mode"](https://dev.to/kuldeep_paul/cutting-mcp-tool-call-token-costs-by-50-with-code-mode-4cd)
+
+**3. Tool namespacing and filtering.**
+
+Instead of one MCP server with 93 tools, segment by domain: a code-tools server, a communication-tools server, a monitoring-tools server. Connect only the domain-relevant server to each agent role. A documentation-writing agent does not need access to your deployment pipeline tools. A data-analysis agent does not need access to your Slack DM history.
+
+**4. Lazy tool registration with an index.**
+
+Register a lightweight index of available tools (tool names and one-sentence descriptions, 50 to 100 tokens total) instead of full schemas. When the agent requests a tool by name, load its full schema just-in-time.
+
+This pattern — described in the MCP-Zero paper as "active tool discovery" — lets the model see a lightweight menu, pick what it needs, and load the full definition on demand. It reduces initial context overhead by 90% or more for agents with large tool catalogs.
+
+[Source: arxiv.org, "MCP-Zero: Active Tool Discovery for Autonomous LLM Agents," 2026](https://arxiv.org/pdf/2506.01056)
+
+**5. Prompt caching on tool schemas.**
+
+When you do need to load full tool schemas, cache them. Tool schemas almost never change between sessions. With Anthropic's prompt caching, the first call per cache TTL pays the cache-write rate ($0.375 per million on Sonnet 4.5). Every subsequent call in that window pays the cache-read rate ($0.15 per million) — a 95% reduction on the static schema portion.
+
+For 55,000 tokens of GitHub MCP schemas at 1,000 daily calls on Sonnet 4.5: without caching that is $165 per day. With caching after the first call it is approximately $8.25 per day. Prompt caching and schema overhead are directly related problems with the same five-minute implementation fix.
+
+## The context window cost beyond dollars.
+
+The billing cost is only half of the issue.
+
+A 200,000-token context window sounds like more than enough. But 143,000 tokens of MCP schema overhead leaves 57,000 tokens for:
+
+- User message
+- Conversation history
+- Retrieved documents (RAG context)
+- Agent reasoning trace
+- Previous tool call outputs
+
+A multi-step agent reasoning over a 20-page technical document — common in enterprise workflows — needs 30,000 to 50,000 tokens for the document alone. Add conversation history and tool outputs from earlier steps and the available window is gone.
+
+The result is context truncation: the agent starts dropping earlier conversation turns to make room. Truncation causes reasoning errors, repeated tool calls, and incorrect final outputs. Teams debugging mysterious agent failures often find truncation as the root cause — not model quality, not prompt design, but a context window that filled up with definitions for tools the agent never invoked.
+
+## Routing and MCP: how they interact.
+
+MCP overhead is a model selection problem as much as a schema problem.
+
+At Claude Haiku 4.5 pricing ($0.80 per million input tokens), the same 55,000-token GitHub schema overhead costs $44 per day at 1,000 calls — compared to $825 on Opus 4.8. That is a 19x cost difference on the schema portion alone, without counting the task tokens themselves.
+
+Most agentic tasks do not require a frontier model for the tool-selection and invocation step. A cascade that runs task classification on a cheap model, tool invocation on a mid-tier model, and final synthesis on a frontier model — only when the task requires it — runs at a fraction of the always-Opus cost.
+
+| Step | Model | Cost vs. Always-Opus |
+|---|---|---|
+| Task classification | Haiku 4.5 | 94% cheaper |
+| Tool invocation and parsing | Sonnet 4.5 | 80% cheaper |
+| Final synthesis | Opus 4.8 | same |
+| **Blended across full task** | **mixed** | **~60–70% cheaper** |
+
+The math compounds with schema compression. A team that routes the classification step to Haiku and compresses tool schemas by 40% is cutting 75 to 85% of their MCP overhead cost without changing the quality of any final output.
+
+## What to measure before your next sprint.
+
+Three measurements that reveal your MCP overhead in one afternoon.
+
+**Total schema tokens per request.** Log the raw JSON of your tool definitions and count the tokens. If you are using the Anthropic SDK, serialize your tools array and run it through the tokenizer before the API call. The number is almost always higher than teams expect.
+
+\`\`\`python
+import anthropic
+
+client = anthropic.Anthropic()
+
+# Count tokens in your tool schemas before sending
+token_count = client.messages.count_tokens(
+    model="claude-opus-4-8",
+    tools=YOUR_TOOLS,  # your MCP tool definitions
+    messages=[{"role": "user", "content": "placeholder"}]
+)
+
+schema_overhead = token_count.input_tokens
+print(f"Schema overhead: {schema_overhead} tokens per call")
+print(f"Monthly cost at 1k daily calls: ${schema_overhead * 1000 * 30 * 15 / 1_000_000:.2f}")
+\`\`\`
+
+**Schema tokens as a fraction of total input tokens.** Divide schema tokens by total input tokens for a sample of 100 requests. If the fraction exceeds 40%, dynamic tool loading will cut your bill immediately.
+
+**Tool invocation rate by tool.** Over 1,000 agent tasks, which tools were actually called? Most production audits find 20 to 30% of registered tools are never invoked. Those tools' schema definitions are pure overhead on every call and are the first candidates for removal or lazy loading.
+
+MCP is the right architecture for governed, extensible agent tool access. The protocol overhead is not a reason to avoid it. It is a reason to measure it, compress the schemas, and load only what the task requires. The teams doing this are cutting their agentic input token bills by 40 to 70% without changing the model, the task, or the output quality.
+
+---
+
+*Sources: [GitHub, modelcontextprotocol, "MCP spec should address tool schema token overhead (~1000 tokens/tool consumed per session)"](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/2808). [n1n.ai, "The Hidden Costs of Model Context Protocol (MCP) at Scale," June 2026](https://explore.n1n.ai/blog/hidden-costs-model-context-protocol-mcp-2026-06-24). [OnlyCLI, "MCP Token Trap: Why Your AI Agent Burns 35x More Tokens Than a CLI"](https://onlycli.github.io/OnlyCLI/blog/mcp-token-cost-benchmark/). [BSWEN, "How MCP Tool Definitions Inflate Your AI Agent Token Costs," April 2026](https://docs.bswen.com/blog/2026-04-24-mcp-token-overhead/). [MindStudio, "How to Reduce Token Usage in AI Agents: 10 MCP Optimization Techniques"](https://www.mindstudio.ai/blog/reduce-token-usage-ai-agents-mcp-optimization). [DEV Community, Kuldeep Paul, "Cutting MCP Tool-Call Token Costs by 50%+ with Code Mode"](https://dev.to/kuldeep_paul/cutting-mcp-tool-call-token-costs-by-50-with-code-mode-4cd). [arxiv.org, "MCP-Zero: Active Tool Discovery for Autonomous LLM Agents," 2026](https://arxiv.org/pdf/2506.01056). [MMNTM, "The MCP Tax: Hidden Costs of Model Context Protocol"](https://www.mmntm.net/articles/mcp-context-tax). [StackOne, "MCP Token Optimization: 4 Approaches Compared"](https://www.stackone.com/blog/mcp-token-optimization/). [Anthropic, Claude Pricing, June 2026](https://www.anthropic.com/pricing). [Anthropic, "Prompt caching with Claude"](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching).*`,
   "fine-tuning-vs-routing-llm-cost-decision": `## The $200,000 shortcut that backfires.
 
 Every quarter, hundreds of engineering teams face the same decision. Their LLM responses are slightly off-tone, slightly off-format, or slightly too expensive at scale. The proposed fix is fine-tuning.
