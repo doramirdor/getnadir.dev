@@ -619,7 +619,7 @@ for qtype, samples in token_samples.items():
     avg_tokens = sum(t for t, _ in samples) / len(samples)
     avg_cost   = sum(c for _, c in samples) / len(samples)
     annual     = avg_cost * 10_000 * 365
-    print(f"{qtype}: {avg_tokens:,.0f} avg tokens | ${avg_cost:.4f}/query | ${annual:,.0f}/year at 10K daily")
+    print(f"{qtype}: {avg_tokens:,.0f} avg tokens | \${avg_cost:.4f}/query | \${annual:,.0f}/year at 10K daily")
 \`\`\`
 
 **RAG accuracy versus long context accuracy on your own queries.** Pull 100 queries from production logs. Run both approaches against a ground-truth answer set. Most teams find RAG within 2 to 5 percentage points of long context for standard Q&A — at 148x lower cost. The teams that run this comparison typically discover their long-context architecture was not buying quality. It was just paying for it.
@@ -802,7 +802,7 @@ The model's available context for actual reasoning: 57,000 tokens of a 200,000-t
 
 ## What MCP tool schemas actually cost.
 
-Each MCP tool definition includes a name, description, parameter list, parameter types, constraints, and examples. A simple tool like `list_files` consumes 500 to 800 tokens. A complex tool with nested schemas and multiple examples can run 1,500 to 2,500 tokens.
+Each MCP tool definition includes a name, description, parameter list, parameter types, constraints, and examples. A simple tool like \`list_files\` consumes 500 to 800 tokens. A complex tool with nested schemas and multiple examples can run 1,500 to 2,500 tokens.
 
 [Source: BSWEN, "How MCP Tool Definitions Inflate Your AI Agent Token Costs," 2026](https://docs.bswen.com/blog/2026-04-24-mcp-token-overhead/)
 
@@ -826,7 +826,7 @@ None of this appears as a line item. It is absorbed into total input tokens, inv
 
 The sharpest way to understand the MCP tax is to compare it to the alternative.
 
-Researchers tested a simple `list_files` operation three ways: a hard-coded Python function that calls the filesystem directly, the same operation through an MCP server, and the difference measured in tokens.
+Researchers tested a simple \`list_files\` operation three ways: a hard-coded Python function that calls the filesystem directly, the same operation through an MCP server, and the difference measured in tokens.
 
 The MCP server used 12x more tokens than the hard-coded function for the same filesystem operation.
 
@@ -947,7 +947,7 @@ token_count = client.messages.count_tokens(
 
 schema_overhead = token_count.input_tokens
 print(f"Schema overhead: {schema_overhead} tokens per call")
-print(f"Monthly cost at 1k daily calls: ${schema_overhead * 1000 * 30 * 15 / 1_000_000:.2f}")
+print(f"Monthly cost at 1k daily calls: \${schema_overhead * 1000 * 30 * 15 / 1_000_000:.2f}")
 \`\`\`
 
 **Schema tokens as a fraction of total input tokens.** Divide schema tokens by total input tokens for a sample of 100 requests. If the fraction exceeds 40%, dynamic tool loading will cut your bill immediately.
