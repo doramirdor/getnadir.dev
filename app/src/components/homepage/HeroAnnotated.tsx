@@ -285,6 +285,13 @@ export const HeroAnnotated = () => {
               </button>
             </SignupDialog>
             <span className="text-[13px] text-[#86868b]">No card required</span>
+            <a
+              href="#design-partner"
+              onClick={() => trackCtaClick("design_partner", "hero_annotated")}
+              className="mt-1 text-[13.5px] font-medium text-[#1d1d1f] no-underline tracking-[-0.01em] hover:opacity-70 transition-opacity"
+            >
+              Scaling LLMs in production? Become a design partner <span className="text-[13px]">›</span>
+            </a>
           </div>
 
           {/* Mobile fallback: clusters as a plain list */}

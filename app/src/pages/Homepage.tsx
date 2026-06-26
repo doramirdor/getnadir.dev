@@ -10,6 +10,7 @@ import { CodeSwitchSection } from "@/components/homepage/CodeSwitchSection";
 import { FeaturesGrid } from "@/components/homepage/FeaturesGrid";
 import { ComparisonTable } from "@/components/homepage/ComparisonTable";
 import { PricingSection } from "@/components/homepage/PricingSection";
+import { DesignPartnerSection } from "@/components/homepage/DesignPartnerSection";
 import { FAQSection } from "@/components/homepage/FAQSection";
 import { BottomCta } from "@/components/homepage/BottomCta";
 import { Reveal } from "@/components/marketing/Reveal";
@@ -40,6 +41,9 @@ const Homepage = () => {
       <FeaturesGrid />
       <Reveal><ComparisonTable /></Reveal>
       <Reveal><PricingSection /></Reveal>
+      {/* High-touch track: after the self-serve tiers, invite serious teams
+          into a hands-on design-partner relationship. */}
+      <Reveal><DesignPartnerSection /></Reveal>
       <Reveal><FAQSection /></Reveal>
       <Reveal><BottomCta /></Reveal>
     </MarketingLayout>

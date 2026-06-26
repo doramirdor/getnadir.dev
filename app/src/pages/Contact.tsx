@@ -13,6 +13,7 @@ import { trackContactSubmit, trackPageView } from "@/utils/analytics";
 
 const REASONS = [
   { value: "sales", label: "Talk to sales" },
+  { value: "partner", label: "Design partner" },
   { value: "enterprise", label: "Enterprise / SLA" },
   { value: "support", label: "Support" },
   { value: "partnership", label: "Partnership" },
@@ -23,6 +24,7 @@ export default function Contact() {
   const [params] = useSearchParams();
   const initialReason = params.get("reason") || "sales";
   const sourceParam = params.get("source") || "contact_page";
+  const isPartner = initialReason === "partner";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -104,13 +106,17 @@ export default function Contact() {
         <div className="grid md:grid-cols-[1fr_1.2fr] gap-12 lg:gap-16">
           <div>
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
-              Contact · Real humans, one business day
+              {isPartner
+                ? "Design partner program · Real humans, one business day"
+                : "Contact · Real humans, one business day"}
             </p>
             <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.034em] text-[#1d1d1f] leading-[1.05] mb-5 [text-wrap:balance]">
-              Let's talk.
+              {isPartner ? "Let's build it together." : "Let's talk."}
             </h1>
             <p className="text-lg md:text-[20px] text-[#424245] leading-[1.45] tracking-[-0.01em] mb-10 max-w-[460px]">
-              Tell us about your workload. Bigger spend, custom routing models, SSO/SAML, on-prem, an unusual integration. We read every email, and we reply within a business day.
+              {isPartner
+                ? "Tell us about your LLM workload and what you're shipping. Design partners get a direct line to the founders, hands-on onboarding, and founder pricing that stays put as we grow."
+                : "Tell us about your workload. Bigger spend, custom routing models, SSO/SAML, on-prem, an unusual integration. We read every email, and we reply within a business day."}
             </p>
 
             <div className="space-y-6 text-[14px] text-[#1d1d1f]">
