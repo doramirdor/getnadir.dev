@@ -1,0 +1,42 @@
+name: Frontend build
+
+# Catches the failure class that silently red-lined Cloudflare deploys:
+# a broken `vite build` (e.g. unescaped ${ or backticks in a blog post in
+# blogService.ts). This mirrors the Cloudflare Workers build command
+# (`npm ci && npm run build`) so a failure here means the deploy would fail.
+#
+# Runs on every push to main (the branch the blog automation commits to,
+# directly) and on pull requests. To make it actually BLOCK a bad change,
+# enable branch protection on `main` requiring the "Build (vite)" check.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/frontend-build.yml"
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/frontend-build.yml"
+
+concurrency:
+  group: frontend-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run build
