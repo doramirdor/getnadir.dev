@@ -36,6 +36,7 @@ const SOLUTION_LINKS = [
 
 const NAV_LINKS = [
   { to: "/pricing", label: "Pricing" },
+  { to: "/#design-partner", label: "Design partners" },
   { to: "/calculator", label: "Calculator" },
   { to: "/docs", label: "Docs" },
   { to: "/self-host", label: "Self-host" },

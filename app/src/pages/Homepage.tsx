@@ -40,10 +40,10 @@ const Homepage = () => {
       <Reveal><CodeSwitchSection /></Reveal>
       <FeaturesGrid />
       <Reveal><ComparisonTable /></Reveal>
-      <Reveal><PricingSection /></Reveal>
-      {/* High-touch track: after the self-serve tiers, invite serious teams
-          into a hands-on design-partner relationship. */}
+      {/* High-touch track: once the visitor sees how we compare, invite serious
+          teams into a hands-on design-partner relationship, then show pricing. */}
       <Reveal><DesignPartnerSection /></Reveal>
+      <Reveal><PricingSection /></Reveal>
       <Reveal><FAQSection /></Reveal>
       <Reveal><BottomCta /></Reveal>
     </MarketingLayout>
