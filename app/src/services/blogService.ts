@@ -727,7 +727,7 @@ Respond with JSON: {{"acceptable": true/false, "reason": "..."}}
     return results
 \`\`\`
 
-Plot `weak_model_pct` on x-axis against `acceptable_pct` on y-axis. The knee of that curve, where acceptable rate starts dropping faster than routing rate rises, is your threshold.
+Plot \`weak_model_pct\` on x-axis against \`acceptable_pct\` on y-axis. The knee of that curve, where acceptable rate starts dropping faster than routing rate rises, is your threshold.
 
 ## What to measure in production.
 
