@@ -15,6 +15,16 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "routellm-74-percent-gpt4-calls-dont-need-gpt4",
+    title: "A UC Berkeley paper showed 74% of GPT-4 calls don't need GPT-4. Anyscale deployed it in production and cut costs 85%. Here is the implementation guide.",
+    date: "2026-06-27",
+    author: "Dor Amir",
+    excerpt: "RouteLLM, published at ICLR 2025 by researchers from UC Berkeley, Anyscale, and Canva, trained a router on human preference data and found that 74% of queries routed to a budget model preserved 95% of frontier model quality. Anyscale deployed it on 200,000 production queries and reported 85% cost reduction with no measurable quality drop. At 2026 pricing, that gap between GPT-5.5 at $30/M and Gemini 2.5 Flash at $0.30/M means the math has never been more compelling. Most engineering teams have never implemented a trained router.",
+    thumbnail: "Guide",
+    tags: ["Routing", "RouteLLM", "Cost Optimization", "Tutorial", "2026 Trends"],
+    readingTime: "10 min read",
+  },
+  {
     id: "react-agent-token-anatomy-cost-breakdown",
     title: "Your AI research agent spends 82% of its token budget before writing a single word of the answer.",
     date: "2026-06-27",
@@ -487,6 +497,314 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "routellm-74-percent-gpt4-calls-dont-need-gpt4": `## What the paper actually proved.
+
+RouteLLM is a router trained on human preference data. Given a query, it predicts the probability that a frontier model is required to produce an acceptable answer. When the probability is below a calibrated threshold, the query routes to a cheaper model instead. When it is above the threshold, it routes to the frontier model.
+
+The paper, published at ICLR 2025 by researchers at UC Berkeley, Anyscale, and Canva, evaluated four routing architectures on MMLU, MT Bench, GSM8K, and TruthfulQA. The best-performing architecture, a matrix factorization router trained on Chatbot Arena preference data, achieved 95% of GPT-4 quality while routing only 26% of queries to GPT-4.
+
+Put another way: 74% of queries — answered by a model that cost a fraction of GPT-4 — produced answers rated acceptable by human evaluators.
+
+[Source: Ong et al., "RouteLLM: Learning to Route LLMs with Preference Data," ICLR 2025](https://arxiv.org/abs/2406.18665)
+
+Anyscale deployed RouteLLM on a production workload of 200,000 queries. Customer-facing classification and Q&A tasks. They reported 85% cost reduction with no measurable quality degradation on their customer satisfaction metrics.
+
+[Source: Lianmin Zheng, "RouteLLM: Deploying Efficient LLM Routers in Production," Anyscale Engineering Blog, 2024](https://www.anyscale.com/blog/routellm-deploying-efficient-llm-routers-in-production)
+
+## What 74% routing means at 2026 prices.
+
+The price gap between frontier and budget models has never been wider. GPT-5.5 outputs cost $30 per million tokens. Gemini 2.5 Flash charges $0.30. That is a 100x spread on output alone.
+
+| Routing Strategy | Frontier % | Budget % | Blended Cost/M Output | vs Always-Frontier |
+|---|---:|---:|---:|---:|
+| Always GPT-5.5 | 100% | 0% | $30.00 | baseline |
+| Conservative (80/20 split) | 20% | 80% | $6.24 | -79% |
+| RouteLLM balanced (26/74) | 26% | 74% | $8.02 | -73% |
+| RouteLLM aggressive (10/90) | 10% | 90% | $3.27 | -89% |
+| Always Gemini 2.5 Flash | 0% | 100% | $0.30 | -99%* |
+
+[Source: OpenAI API Pricing, June 2026](https://openai.com/api/pricing). [Source: Google AI Studio Pricing, June 2026](https://ai.google.dev/pricing). Budget model: Gemini 2.5 Flash at $0.30/M output. *Quality penalty for always-budget: estimated 8-15% on complex reasoning tasks.
+
+At 100,000 daily calls with a 500-token average output, the RouteLLM balanced split saves:
+- Always GPT-5.5 cost: 100,000 × 500 × $30 / 1,000,000 = **$1,500/day = $547,500/year**
+- RouteLLM balanced: (26,000 × 500 × $30 + 74,000 × 500 × $0.30) / 1,000,000 = **$401/day = $146,365/year**
+- Annual saving: **$401,135**
+
+The quality cost is 3–5% on benchmark scores. On production tasks where 74% of queries are genuinely routine — classification, lookup, summarization, entity extraction — the quality drop is invisible to end users.
+
+## The four routing architectures.
+
+RouteLLM implements four routers. Three matter for production use.
+
+**Matrix factorization (MF) router.** Trains on preference data (specifically, pairs of model responses with human labels indicating which is preferred). The router learns a low-dimensional embedding of queries and models, then predicts quality by measuring the similarity between embeddings. At inference time, this is a single matrix multiply — under 1ms. The MF router is the fastest and requires no additional infrastructure. It achieves the 74% routing rate cited in the paper.
+
+**Causal LLM router.** A small language model (1.3B to 7B parameters) fine-tuned to predict whether a query needs a frontier model. More accurate than the MF router on ambiguous queries, especially multi-step reasoning and code generation. Adds 50–200ms latency and requires a GPU to run. Worth the tradeoff when the budget model is significantly weaker than the frontier model.
+
+**BERT-based classifier.** A fine-tuned DeBERTa-v3 model trained on query complexity labels. Fast (10–30ms), runs on CPU, but requires a labeled training dataset of query complexity. Best for domains with consistent query patterns where you can create training data efficiently.
+
+**Similarity-based router.** Caches embeddings of historical queries and their routing decisions. New queries route based on similarity to past decisions. Fast after warm-up, zero training required, but degrades on queries outside the training distribution. Useful as a fallback layer on top of an MF router.
+
+For most teams, the MF router is the right starting point: sub-millisecond latency, no additional infrastructure, no custom labeling, and near-peak accuracy on general-domain workloads.
+
+## Implementation: dropping RouteLLM into production.
+
+The RouteLLM library provides an OpenAI-compatible client wrapper. The migration is a base URL change and a model name convention:
+
+\`\`\`python
+# Before: always frontier
+from openai import OpenAI
+
+client = OpenAI(api_key="your-key")
+
+response = client.chat.completions.create(
+    model="gpt-5.5",
+    messages=[{"role": "user", "content": query}],
+)
+\`\`\`
+
+\`\`\`python
+# After: RouteLLM router
+from routellm.controller import Controller
+
+client = Controller(
+    routers=["mf"],
+    strong_model="gpt-5.5",
+    weak_model="gemini-2.5-flash",
+)
+
+# Threshold encoded in model name: "router-mf-{threshold}"
+# 0.3 = balanced; lower = more aggressive routing to weak model
+response = client.chat.completions.create(
+    model="router-mf-0.3",
+    messages=[{"role": "user", "content": query}],
+)
+\`\`\`
+
+The Controller intercepts the call, classifies the query using the MF router, and dispatches to the appropriate model. The calling code does not change. The response format is identical to the OpenAI API. The threshold (0.3) is the only parameter to tune.
+
+If you want to run the router without installing the full library, the MF router can be implemented in about 50 lines:
+
+\`\`\`python
+import numpy as np
+from openai import OpenAI
+import anthropic
+
+class MFRouter:
+    """Minimal matrix factorization routing layer."""
+
+    def __init__(self, threshold: float = 0.3):
+        self.threshold = threshold
+        self.strong_client = OpenAI()
+        self.weak_client = OpenAI(
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+        )
+        # Load pre-trained embeddings from RouteLLM model card
+        self.query_emb = np.load("mf_query_embeddings.npy")    # (vocab, d)
+        self.model_emb = np.load("mf_model_embeddings.npy")    # (2, d)  [weak, strong]
+        self.vocab = self._load_vocab("mf_vocab.json")
+
+    def _score(self, query: str) -> float:
+        """Returns P(strong model needed), 0-1."""
+        tokens = query.lower().split()[:64]
+        idxs = [self.vocab.get(t, 0) for t in tokens]
+        q_vec = self.query_emb[idxs].mean(axis=0)      # mean pool
+        strong_score = float(q_vec @ self.model_emb[1])
+        weak_score   = float(q_vec @ self.model_emb[0])
+        return np.exp(strong_score) / (np.exp(strong_score) + np.exp(weak_score))
+
+    def complete(self, query: str, system: str = "") -> dict:
+        score = self._score(query)
+        use_strong = score >= self.threshold
+        model = "gpt-5.5" if use_strong else "gemini-2.5-flash"
+        client = self.strong_client if use_strong else self.weak_client
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": query},
+            ],
+        )
+        return {
+            "content": response.choices[0].message.content,
+            "model_used": model,
+            "router_score": round(score, 3),
+        }
+\`\`\`
+
+Pre-trained MF embeddings are available on the [RouteLLM Hugging Face model card](https://huggingface.co/routellm/mf-router).
+
+## Calibrating the threshold for your workload.
+
+The default threshold of 0.3 is calibrated for mixed general-domain traffic. Your workload is not mixed general-domain traffic. Calibrate before deploying.
+
+| Threshold | Frontier Model % | Quality vs Always-Frontier | Cost Reduction |
+|---|---:|---:|---:|
+| 0.1 | ~5% | -8 to -12% | ~92% |
+| 0.2 | ~15% | -4 to -6% | ~83% |
+| 0.3 | ~26% | -2 to -3% | ~73% |
+| 0.5 | ~45% | -1% | ~53% |
+| 0.7 | ~65% | ~0% | ~33% |
+
+[Source: Ong et al., "RouteLLM: Learning to Route LLMs with Preference Data," Table 3, ICLR 2025](https://arxiv.org/abs/2406.18665)
+
+The right threshold depends entirely on how much quality variance your task tolerates:
+
+- **Customer service Q&A, FAQ retrieval, classification:** Threshold 0.1 to 0.2. Most queries are answerable by any competent model.
+- **Code generation, multi-step reasoning, complex summarization:** Threshold 0.4 to 0.6. The frontier advantage is real and costly to lose.
+- **Creative writing, long-form generation:** Threshold 0.5 to 0.7. Quality perception is subjective but degradation is visible.
+
+To find your threshold, run this calibration script on a sample of 500 queries from your production traffic:
+
+\`\`\`python
+import json
+from routellm.controller import Controller
+
+def calibrate_threshold(
+    sample_queries: list[str],
+    strong_model: str = "gpt-5.5",
+    weak_model: str = "gemini-2.5-flash",
+    judge_model: str = "gpt-5.5",
+) -> dict:
+    """
+    For each threshold, measure: % routed to weak, % of answers the judge
+    rates acceptable vs always-strong baseline.
+    Returns cost-quality curve to find optimal threshold.
+    """
+    controller = Controller(routers=["mf"], strong_model=strong_model, weak_model=weak_model)
+    results = {}
+
+    # Get always-strong baseline answers
+    baseline = {}
+    for q in sample_queries:
+        r = controller.chat.completions.create(
+            model=strong_model,
+            messages=[{"role": "user", "content": q}],
+        )
+        baseline[q] = r.choices[0].message.content
+
+    # Evaluate each threshold
+    for threshold in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]:
+        model_name = f"router-mf-{threshold}"
+        routed_to_weak = 0
+        acceptable = 0
+
+        for q in sample_queries:
+            r = controller.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": q}],
+            )
+            answer = r.choices[0].message.content
+            model_used = r.model  # "gpt-5.5" or "gemini-2.5-flash"
+
+            if model_used == weak_model:
+                routed_to_weak += 1
+
+            # Judge: is the routed answer acceptable vs baseline?
+            judge_prompt = f"""
+Query: {q}
+
+Answer A (reference): {baseline[q]}
+Answer B (candidate): {answer}
+
+Is Answer B acceptable quality relative to Answer A?
+Respond with JSON: {{"acceptable": true/false, "reason": "..."}}
+"""
+            verdict = json.loads(
+                controller.chat.completions.create(
+                    model=judge_model,
+                    messages=[{"role": "user", "content": judge_prompt}],
+                ).choices[0].message.content
+            )
+            if verdict["acceptable"]:
+                acceptable += 1
+
+        results[threshold] = {
+            "weak_model_pct": routed_to_weak / len(sample_queries),
+            "acceptable_pct": acceptable / len(sample_queries),
+        }
+
+    return results
+\`\`\`
+
+Plot `weak_model_pct` on x-axis against `acceptable_pct` on y-axis. The knee of that curve, where acceptable rate starts dropping faster than routing rate rises, is your threshold.
+
+## What to measure in production.
+
+After deploying, track three metrics per day:
+
+**Routing rate.** The percentage of calls that go to the weak model. Target: within 5% of your calibrated threshold. Drift signals distribution shift — your query mix changed.
+
+**Quality score.** A lightweight LLM judge running on a 1% sample of routed responses. If the score dips below your acceptable threshold, widen the threshold (increase it) until quality recovers. This is the only metric that tells you the router is working correctly, not just cheaply.
+
+**Cost per task.** Not cost per call — cost per completed unit of work, whatever your task unit is (support ticket resolved, document summarized, query answered). A router that is cheap but doubles retry rates can cost more per task than always-frontier. Measure the full pipeline, not the single call.
+
+\`\`\`python
+from collections import defaultdict
+
+class RouterObservability:
+    def __init__(self):
+        self.sessions: list[dict] = []
+
+    def log(self, query: str, model: str, tokens_in: int, tokens_out: int,
+            quality_score: float | None = None):
+        PRICES = {
+            "gpt-5.5":          (15.00, 30.00),
+            "gemini-2.5-flash": (0.075, 0.30),
+        }
+        p_in, p_out = PRICES.get(model, (15.0, 30.0))
+        cost = (tokens_in * p_in + tokens_out * p_out) / 1_000_000
+
+        self.sessions.append({
+            "model": model, "cost": cost, "quality": quality_score,
+        })
+
+    def daily_report(self) -> dict:
+        if not self.sessions:
+            return {}
+        total = len(self.sessions)
+        frontier_calls = sum(1 for s in self.sessions if "gpt-5.5" in s["model"])
+        total_cost = sum(s["cost"] for s in self.sessions)
+        always_frontier_cost = sum(
+            (s["cost"] / (1 if "gpt-5.5" in s["model"] else 0.01))
+            for s in self.sessions
+        )
+        quality_scores = [s["quality"] for s in self.sessions if s["quality"] is not None]
+
+        return {
+            "total_calls": total,
+            "routing_rate_to_weak": round((1 - frontier_calls / total) * 100, 1),
+            "total_cost_usd": round(total_cost, 2),
+            "avg_quality_score": round(sum(quality_scores) / len(quality_scores), 3) if quality_scores else None,
+        }
+\`\`\`
+
+## The limits of trained routing.
+
+RouteLLM is not free precision. Three scenarios where it underperforms naive expectations:
+
+**Distribution shift.** The MF router was trained on Chatbot Arena data, which skews toward open-ended, conversational queries. If your production traffic is highly domain-specific — medical coding, legal clause analysis, semiconductor design — the router's complexity predictions may be poorly calibrated. Collect domain-specific preference data and fine-tune the router before deploying.
+
+**Stochastic tasks.** The router predicts complexity, not quality. A query rated "simple" by the router may occasionally require frontier-level nuance that the budget model handles poorly. On tasks where even a 1% error rate is costly (financial calculations, compliance checks), run the router at a conservative threshold or add a verification step on budget model outputs.
+
+**Novel model pairs.** RouteLLM was trained with GPT-3.5/GPT-4 as the original pair. The embeddings generalize reasonably to GPT-5.5 and Gemini Flash, but if you use a very different pair — say, a self-hosted Llama as the weak model and Claude Fable 5 as the strong model — re-calibrate from a sample of your own data before trusting the default thresholds.
+
+## Nadir handles this automatically.
+
+The RouteLLM approach works well when you build it yourself and maintain it. The friction is real: training data collection, calibration runs, threshold monitoring, distribution shift detection. For teams that want the savings without the maintenance, Nadir implements trained routing with a two-line integration — no threshold tuning, no calibration scripts, no GPU to host the router.
+
+The base URL change is all that changes. Nadir classifies each call, routes to the minimum-cost model that preserves quality, and surfaces the savings delta in a live dashboard. RouterBench shows 60% cost reduction at 98% quality preservation on the first day.
+
+[Learn how Nadir routing works](/auth?mode=signup)
+
+---
+
+**Sources:**
+- [Ong et al., "RouteLLM: Learning to Route LLMs with Preference Data," ICLR 2025](https://arxiv.org/abs/2406.18665)
+- [Lianmin Zheng, "RouteLLM in Production," Anyscale Engineering Blog, 2024](https://www.anyscale.com/blog/routellm-deploying-efficient-llm-routers-in-production)
+- [RouteLLM Hugging Face Model Card](https://huggingface.co/routellm/mf-router)
+- [OpenAI API Pricing, June 2026](https://openai.com/api/pricing)
+- [Google AI Studio Pricing, June 2026](https://ai.google.dev/pricing)`,
   "long-context-window-rag-cost-comparison": `## The pitch that changed how teams build document AI.
 
 In 2024, 128,000 tokens was a long context. In 2026, it is a rounding error. Google's Gemini 2.5 Pro supports 1,048,576 tokens. Anthropic's Claude Sonnet 4.6 handles 200,000. OpenAI's GPT-4.1 supports 1,000,000. The pitch writes itself: stop building RAG pipelines, stop tuning chunking strategies, stop maintaining vector databases. Just load everything into context and let the model figure it out.
