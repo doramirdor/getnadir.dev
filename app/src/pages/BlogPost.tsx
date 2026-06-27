@@ -91,6 +91,28 @@ export default function BlogPost() {
           );
         }
 
+        if (/^!\[([^\]]*)\]\(([^)]+)\)$/.test(trimmed)) {
+          const imgMatch = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(trimmed);
+          if (imgMatch) {
+            const [, alt, src] = imgMatch;
+            return (
+              <figure key={index} className="my-8">
+                <img
+                  src={src}
+                  alt={alt}
+                  className="w-full rounded-xl border border-border shadow-sm"
+                  loading="lazy"
+                />
+                {alt && (
+                  <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">
+                    {alt}
+                  </figcaption>
+                )}
+              </figure>
+            );
+          }
+        }
+
         if (trimmed.startsWith("### ")) {
           return (
             <h3
