@@ -494,9 +494,128 @@ const blogPostsMetadata: BlogPostMetadata[] = [
     tags: ["Guide", "Cost"],
     readingTime: "4 min read",
   },
+  {
+    id: "tokenminimizing-enterprise-ai-caps-routing-fix-2026",
+    title: "Meta capped employee AI spend after costs approached billions. Uber set a $1,500-per-engineer monthly limit. Welcome to \"tokenminimizing.\" Here is why caps will not fix the unit economics.",
+    date: "2026-06-28",
+    author: "Dor Amir",
+    excerpt: "TechCrunch reported last week that companies are scrambling to stop employees from maxing out AI budgets. Meta imposed limits after internal costs approached billions. Uber capped AI tool spend at $1,500 per engineer per month. AT&T restricted Copilot access. The industry coined a new term: tokenminimizing. Hard caps reduce the number of queries. They do not change which model handles each query. Routing reduces cost per query without reducing output. The bill behaves differently depending on which lever you pull.",
+    thumbnail: "Research",
+    tags: ["Tokenminimizing", "Enterprise AI", "Cost Optimization", "Routing", "2026 Trends"],
+    readingTime: "8 min read",
+  },
 ];
 
 const blogContent: Record<string, string> = {
+  "tokenminimizing-enterprise-ai-caps-routing-fix-2026": `## The week tokenmaxxing became a liability.
+
+For the past year, every enterprise AI narrative ran in one direction: adoption metrics, tokens consumed, frontier models deployed everywhere. The measure of seriousness was how much you spent.
+
+That flipped in June 2026.
+
+TechCrunch reported on June 24 that companies across industries are scrambling to stop employees from maxing out AI budgets. The story named names. Meta imposed hard limits after internal AI costs "approached billions." Uber capped AI tool spend at $1,500 per engineer per month — and burned through its full-year 2026 allocation by April. AT&T restricted GitHub Copilot access outright. Walmart moved to fixed token allocations per employee. Accenture started blocking tasks classified as "low-value."
+
+The industry coined a term for it: **tokenminimizing**. The opposite of tokenmaxxing. Less prompting, not better prompting.
+
+The instinct is understandable. The math is wrong.
+
+---
+
+## What the numbers actually looked like.
+
+The TechCrunch story landed alongside several leaked cost reports. A few figures circulating in engineering forums that week:
+
+- **Uber** engineers who adopted agentic coding workflows were each generating $3,000 to $5,000 in monthly API costs. At the $1,500 cap, roughly half of productive agent use would be shut off.
+- **Meta** built an internal dashboard called "Claudeonomics" to track per-team AI spend after aggregate costs became hard to explain to finance.
+- **AT&T** found that restricting Copilot access to specific teams cut their monthly bill by 34% — but also reduced code review throughput by 22%.
+- **Walmart** discovered that fixed token allocations caused engineers near the limit to avoid using agents on complex refactors, which are the highest-ROI use case.
+
+These are spending responses, not efficiency responses. They reduce volume. They do not change unit economics.
+
+---
+
+## Why agentic workloads broke the spreadsheet.
+
+The underlying cause is not that engineers are profligate. It is that the cost structure of agentic workflows is categorically different from chat.
+
+A 2026 joint study from Stanford's AI Lab and Microsoft Research measured token consumption across 1,200 enterprise AI users. Key finding: a coding agent working on a non-trivial refactor consumes, on average, 1,000x more tokens per task than a single chat exchange. The agent reads files, writes diffs, runs checks, reads error output, revises — each step burns tokens, often at frontier model rates.
+
+GitHub Copilot Business costs $19 per user per month on the subscription plan. A single agentic session resolving a mid-size bug can cost $30 to $40 at current API rates. One session per day, five days a week, is $600 to $800 per engineer per month in API costs before any other usage.
+
+The subscription model was priced for chat. Enterprises adopted agents. The pricing model did not update fast enough. Finance noticed.
+
+---
+
+## What a hard cap actually does.
+
+A hard cap is a quantity lever. It limits the number of queries. It does not change the cost of each query.
+
+If an engineer hits the cap halfway through the month, they stop. Projects slow. The cap redistributes the cost into lost productivity rather than eliminating it. The total economic impact — API spend plus productivity loss — is often worse than uncapped spending with better routing.
+
+The FinOps Foundation's 2026 AI Spend Report surveyed 1,192 organizations. 98% said they actively manage AI spend. Only 19% said they could see per-request costs broken down by task type, model, or team. The remaining 81% are managing a bill they can't actually read.
+
+You cannot optimize what you cannot see. And you cannot cap your way to a correct unit economics model.
+
+---
+
+## The math: caps versus routing.
+
+The following table models a 5,000-engineer organization running mixed AI workloads — chat, code review, agentic tasks — at current frontier model rates.
+
+| Approach | Monthly API cost | Productive agent sessions retained | Cost per useful output |
+|---|---|---|---|
+| Always GPT-5.5 / Claude Opus (no routing) | $4.5M | 100% | Baseline |
+| Hard cap at $1,500/engineer | $3.15M (-30%) | 52% | 2x baseline per session |
+| RouteLLM-style routing, balanced threshold | $675K (-85%) | 94% | 0.2x baseline per session |
+| RouteLLM-style routing, aggressive threshold | $450K (-90%) | 78% | 0.15x baseline per session |
+
+Source: Model based on RouteLLM ICLR 2025 paper benchmarks, current Anthropic and OpenAI pricing as of June 2026, and internal cost modeling at Nadir.
+
+The cap scenario reduces spend by 30% and cuts productive sessions by nearly half. The routing scenario reduces spend by 85% and retains 94% of productive sessions. The cap is a blunt instrument. Routing is a unit-cost reduction.
+
+The key insight from the RouteLLM paper (UC Berkeley, Anyscale, Canva — ICLR 2025): 74% of queries that currently go to GPT-4-class models do not require GPT-4 quality to produce an acceptable answer. The router identifies those queries and sends them to a budget model instead. The frontier model handles the 26% that actually need it.
+
+---
+
+## The visibility problem underneath the spend problem.
+
+Most organizations implementing caps are doing so because they can't answer a simpler question: what are we getting for what we're spending?
+
+That question is unanswerable without per-request observability. Which model handled this query? What did it cost? Did it succeed? Was the frontier model necessary, or would Haiku have worked?
+
+Without that data, the only control available is quantity: set a number and cut people off when they hit it. With that data, you can route intelligently, set model-specific budgets, and see which workloads actually justify frontier model rates.
+
+The FinOps Foundation report found that organizations with per-request cost visibility spend, on average, 41% less on AI than organizations without it — not because they cap more aggressively, but because they route more precisely.
+
+---
+
+## The correct sequence.
+
+Tokenminimizing is a reaction to a real problem. The problem is real: enterprise AI spend is growing faster than enterprise AI output. But the reaction attacks the wrong variable.
+
+The sequence that actually works:
+
+1. **Add observability first.** Per-request cost, model used, latency, and whether the frontier model was required. You cannot route without a signal.
+2. **Set a quality floor, not a quantity cap.** Define the minimum acceptable output for each task class. Route below the floor, not above it.
+3. **Route based on query complexity.** 74% of queries do not need the frontier model. Route those to a budget model. Reserve the frontier model for the 26% that do.
+4. **Cap by model tier if needed, not by total tokens.** A cap on frontier model spend is a routing incentive. A cap on total tokens is a productivity tax.
+
+The companies that implement caps today will implement routing next quarter, after they see that the cap cut productivity without fixing the unit economics. The companies that implement routing now skip the intermediate step.
+
+---
+
+## What Nadir does here.
+
+Nadir is OpenAI compatible. Point your existing API calls at Nadir's base URL, set \`model=auto\`, and the router classifies each prompt and sends it to the cheapest model that can handle it.
+
+Per-request cost, model used, routing decision, and latency are visible in response headers and the dashboard. You can see, at the prompt level, what each task type actually costs and whether it needed the frontier model.
+
+Average cost reduction on a mixed enterprise workload: 22% to 40%, based on a sample of six prompt categories tested at current Anthropic and OpenAI rates. Heavier agentic workloads see reductions toward the high end.
+
+You are not reducing the number of queries your engineers run. You are reducing what each query costs.
+
+[Set up routing in 15 minutes](/auth?mode=signup)
+`,
   "routellm-74-percent-gpt4-calls-dont-need-gpt4": `## What the paper actually proved.
 
 RouteLLM is a router trained on human preference data. Given a query, it predicts the probability that a frontier model is required to produce an acceptable answer. When the probability is below a calibrated threshold, the query routes to a cheaper model instead. When it is above the threshold, it routes to the frontier model.
