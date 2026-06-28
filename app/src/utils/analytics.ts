@@ -13,8 +13,6 @@ declare global {
       identify: (distinctId: string, properties?: Record<string, unknown>) => void;
       alias: (alias: string, distinctId?: string) => void;
     };
-    fbq?: (...args: unknown[]) => void;
-    lintrk?: (action: string, properties?: Record<string, unknown>) => void;
   }
 }
 
@@ -77,9 +75,14 @@ function aliasOnce(newId: string, oldId: string) {
   window.posthog?.alias(newId, oldId);
 }
 
-// -- Page view (generic) --
+// -- Page view (named) --
+// PostHog autocaptures the canonical `$pageview` / `$pageleave` (configured in
+// index.html, history-aware so every SPA route is covered automatically). This
+// emits a SEPARATE, non-reserved `page_view` event carrying our friendly page
+// slug + any per-page context (competitor, ref, source). Using `$pageview` here
+// would collide with autocapture and double-count every instrumented page.
 export const trackPageView = (page: string, properties?: Record<string, unknown>) =>
-  capture("$pageview", { page, ...properties });
+  capture("page_view", { page, ...properties });
 
 // -- Waitlist events --
 export const trackWaitlistSignup = (method: "email" | "google" | "github", source: string) =>
@@ -92,7 +95,7 @@ export const trackAuthAttempt = (method: "email" | "google" | "github", mode: "s
   capture("auth_attempt", { method, mode, ...getStoredAttribution() });
 
 /**
- * Fires the Meta Pixel CompleteRegistration conversion. Deduped per user via
+ * Fires the first-party signup conversion into PostHog. Deduped per user via
  * localStorage so the email-confirm round trip (signup -> mail link -> new
  * tab) doesn't miss it and a later login doesn't double-count it.
  */
@@ -100,17 +103,13 @@ export const trackSignupConversion = (userId: string, method: string) => {
   if (shouldSuppressCapture()) return;
   if (typeof window === "undefined") return;
   try {
-    const key = `nadir_fb_registration_${userId}`;
+    const key = `nadir_signup_conversion_${userId}`;
     if (window.localStorage.getItem(key)) return;
     window.localStorage.setItem(key, "1");
   } catch {
     // localStorage unavailable; firing once per page is still better than nothing.
   }
-  window.fbq?.("track", "CompleteRegistration", { method });
-  // LinkedIn Insight Tag — fire the signup conversion. The ID is the
-  // event-specific conversion configured in LinkedIn Campaign Manager
-  // for the Nadir signup action.
-  window.lintrk?.("track", { conversion_id: 27393514 });
+  capture("signup_completed", { method, ...getStoredAttribution() });
 };
 
 export const trackAuthSuccess = (method: string, userId: string, email?: string) => {
