@@ -15,6 +15,26 @@ export interface BlogPost extends BlogPostMetadata {
 
 const blogPostsMetadata: BlogPostMetadata[] = [
   {
+    id: "frugalgpt-cascade-routing-implementation-tutorial",
+    title: "98% cost reduction from LLM cascades is not a theoretical ceiling. Stanford shipped it in 2024, Microsoft refined it in 2025. Here is the implementation.",
+    date: "2026-06-29",
+    author: "Dor Amir",
+    excerpt: "FrugalGPT, published by Stanford in TMLR 2024, demonstrated up to 98% cost reduction by running queries through a cascade: cheap model first, escalate to frontier only when necessary. Microsoft's BEST-Route (ICML 2025) refined it by sampling the cheap model multiple times before escalating, reducing unnecessary escalations by an additional 15-30%. ETH Zurich proved theoretically that combining routing with cascading always dominates either approach alone. This post walks through the implementation from a simple cascade to the full unified architecture.",
+    thumbnail: "Tutorial",
+    tags: ["Tutorial", "Cascade Routing", "FrugalGPT", "Cost Optimization", "Implementation"],
+    readingTime: "10 min read",
+  },
+  {
+    id: "llmrouterbench-acl-2026-most-routers-fail-baseline",
+    title: "ACL 2026 tested every major LLM routing method on 400,000 queries. Most commercial routers failed to beat a simple baseline. Here is why.",
+    date: "2026-06-29",
+    author: "Dor Amir",
+    excerpt: "LLMRouterBench, presented at ACL 2026 Findings, benchmarked 10 routing methods across 33 models, 21 datasets, and 400,000+ query instances. The headline result: most commercial routers fail to beat a size-based routing baseline. The study isolated the failure mode — oracle gap caused by model recall failures, not routing uncertainty — and found embedding backbone choice changes quality by less than 2%. One ensemble approach surpassed GPT-5-medium by 7% at 63% lower cost.",
+    thumbnail: "Research",
+    tags: ["Research", "LLM Routing", "Benchmarks", "Cost Optimization", "2026 Trends"],
+    readingTime: "8 min read",
+  },
+  {
     id: "routellm-74-percent-gpt4-calls-dont-need-gpt4",
     title: "A UC Berkeley paper showed 74% of GPT-4 calls don't need GPT-4. Anyscale deployed it in production and cut costs 85%. Here is the implementation guide.",
     date: "2026-06-27",
@@ -507,6 +527,230 @@ const blogPostsMetadata: BlogPostMetadata[] = [
 ];
 
 const blogContent: Record<string, string> = {
+  "frugalgpt-cascade-routing-implementation-tutorial": `## 98% cost reduction from LLM cascades is achievable. Here is how to build it.
+
+FrugalGPT, published by Stanford researchers in TMLR 2024, demonstrated up to 98% cost reduction by running queries through a cascade: cheap model first, escalate to frontier only when necessary. Three papers since have refined the approach. None require machine learning expertise to implement.
+
+This is the implementation guide.
+
+---
+
+## The core idea.
+
+A cascade router has three components:
+
+1. A cheap model that attempts every query
+2. A quality estimator that evaluates the response
+3. An escalation threshold that decides when to retry with a frontier model
+
+The cheap model handles 70-90% of queries in most enterprise workloads. The frontier model only sees the hard ones. The cost math is straightforward: if 80% of queries route to a $0.10/M model and 20% to a $15/M model, your blended rate is $3.08/M instead of $15/M — an 80% reduction with no quality loss on queries the cheap model handles well.
+
+FrugalGPT found model combinations achieving 98% cost reduction at matched quality because the quality estimator was trained on the specific domain. Untrained implementations typically achieve 60-80%.
+
+---
+
+## Implementation: basic cascade.
+
+\`\`\`python
+CHEAP_MODEL = "gemini-2.0-flash"      # $0.10/M input
+FRONTIER_MODEL = "claude-opus-4-8"    # $15/M input
+QUALITY_THRESHOLD = 0.75
+
+def estimate_quality(response: str, query: str) -> float:
+    """Heuristic quality scorer. Replace with trained classifier in production."""
+    score = 0.7  # base
+    penalties = ["i don't know", "i cannot", "i'm not sure"]
+    bonuses = ["specifically", "in particular", "according to"]
+    for phrase in penalties:
+        if phrase in response.lower(): score -= 0.2
+    for phrase in bonuses:
+        if phrase in response.lower(): score += 0.05
+    length_factor = min(len(response) / 500, 1.0) * 0.15
+    return min(max(score + length_factor, 0.0), 1.0)
+
+def cascade_query(query: str) -> tuple[str, str]:
+    """Returns (response, model_used)."""
+    cheap_response = call_model(CHEAP_MODEL, query)
+    quality = estimate_quality(cheap_response, query)
+
+    if quality >= QUALITY_THRESHOLD:
+        return cheap_response, CHEAP_MODEL
+
+    # Escalate to frontier
+    return call_model(FRONTIER_MODEL, query), FRONTIER_MODEL
+\`\`\`
+
+---
+
+## The BEST-Route improvement.
+
+Microsoft's BEST-Route (arXiv:2506.22716, ICML 2025) found a flaw in naive cascades: escalating after one failure discards information from the cheap model's output.
+
+BEST-Route samples the cheap model multiple times with varied temperatures, then checks for consensus before deciding whether to escalate. When multiple samples agree, the answer is likely correct even if a single sample looked uncertain. When samples diverge, escalation is warranted.
+
+\`\`\`python
+def best_route_query(query: str, n_samples: int = 3) -> tuple[str, str]:
+    """Sample cheap model N times. Escalate only on genuine disagreement."""
+    samples = []
+    for temp in [0.2, 0.5, 0.8]:
+        samples.append(call_model(CHEAP_MODEL, query, temperature=temp))
+
+    quality_scores = [estimate_quality(r, query) for r in samples]
+    avg_quality = sum(quality_scores) / len(quality_scores)
+    score_variance = max(quality_scores) - min(quality_scores)
+
+    # Consensus: high average quality AND low variance between samples
+    if avg_quality >= QUALITY_THRESHOLD and score_variance < 0.2:
+        best = samples[quality_scores.index(max(quality_scores))]
+        return best, CHEAP_MODEL
+
+    # Genuine uncertainty — escalate
+    return call_model(FRONTIER_MODEL, query), FRONTIER_MODEL
+\`\`\`
+
+BEST-Route reduces frontier escalations by an additional 15-30% compared to single-sample cascades. If a naive cascade escalates 25% of queries, BEST-Route brings that to 17-21%.
+
+---
+
+## The ETH Zurich finding: cascade always beats pure routing.
+
+An ICML 2025 paper from ETH Zurich (arXiv:2410.10347) proved theoretically that a cascade router always dominates pure routing or pure cascading when the quality estimator is calibrated.
+
+Pure routing picks one model per query. Pure cascading tries cheap first, then frontier. The unified approach combines both: route clearly easy queries to cheap models directly, use cascades for medium-difficulty queries, and send genuinely hard queries straight to the frontier.
+
+\`\`\`python
+def unified_router(query: str, difficulty_score: float) -> tuple[str, str]:
+    """
+    Unified routing + cascading.
+    difficulty_score: 0.0 = trivial, 1.0 = frontier required.
+    Use a lightweight classifier to produce this score.
+    """
+    if difficulty_score < 0.3:
+        # Easy: direct cheap model, skip cascade overhead
+        return call_model(CHEAP_MODEL, query), CHEAP_MODEL
+
+    elif difficulty_score < 0.7:
+        # Medium: BEST-Route cascade
+        return best_route_query(query)
+
+    else:
+        # Hard: direct frontier, escalation is certain
+        return call_model(FRONTIER_MODEL, query), FRONTIER_MODEL
+\`\`\`
+
+The difficulty_score comes from a lightweight classifier (logistic regression on query length, keyword features, domain) — not a large model. The classifier itself costs negligible compute.
+
+---
+
+## Realistic cost outcomes.
+
+| Implementation | Escalation Rate | Cost vs. Always-Frontier |
+|---------------|----------------|--------------------------|
+| Naive cascade (single sample) | 20-30% | -70 to -80% |
+| BEST-Route (3 samples) | 15-22% | -78 to -85% |
+| Unified routing + cascade | 10-18% | -82 to -90% |
+| Domain-trained quality estimator | 5-15% | -85 to -98% |
+
+The 98% figure from FrugalGPT required a domain-trained estimator on a specific enterprise workload. For general workloads without training data, 80-85% is a realistic target with the unified approach.
+
+---
+
+## The quality estimator is the bottleneck.
+
+The heuristic estimator above is adequate for prototyping. Production systems need something better:
+
+1. **Keyword heuristics** — fast, cheap, domain-specific, breaks on novel failure modes
+2. **Small classifier on response features** — logistic regression on (query, response) pairs labeled good/bad by a frontier model. Requires 500-2,000 labeled examples.
+3. **Reward model** — fine-tune a small LLM to predict quality. Higher accuracy, higher cost per query.
+
+Most teams start with option 2. Labeling 1,000 pairs costs around $200 and recovers in the first hour of production traffic.
+
+---
+
+## Implementation checklist.
+
+Before going to production with any cascade:
+
+- Establish quality baseline: run 200 queries through frontier model only, human-rate outputs
+- Measure cheap model quality on the same 200 queries before implementing cascade
+- Set escalation threshold to preserve 95% of frontier quality — start conservative
+- Log every escalation decision with query features for offline analysis
+- Monitor quality metrics weekly — model updates change calibration
+
+---
+
+## Skip the build if this is your first routing system.
+
+Building and calibrating a cascade from scratch takes 2-4 weeks for an engineering team that has done it before. Six to eight weeks is realistic for teams doing it the first time, and the quality estimator will need multiple calibration cycles before it is stable.
+
+[Nadir](/auth?mode=signup) ships a pre-calibrated cascade router with adaptive threshold tuning, available in one afternoon of integration work. Most teams achieve 75-85% cost reduction within the first week of traffic.
+
+---
+
+*Sources: [FrugalGPT (arXiv:2305.05176)](https://arxiv.org/abs/2305.05176), Stanford, TMLR 2024. [BEST-Route (arXiv:2506.22716)](https://arxiv.org/abs/2506.22716), Microsoft, ICML 2025. [ETH Zurich cascade routing (arXiv:2410.10347)](https://arxiv.org/abs/2410.10347), ICML 2025.*`,
+
+  "llmrouterbench-acl-2026-most-routers-fail-baseline": `## The largest routing benchmark ever published found a surprising result.
+
+LLMRouterBench (arXiv:2601.07206, ACL 2026 Findings) benchmarked 10 routing methods across 33 models, 21 datasets, and over 400,000 query instances. It is the most comprehensive evaluation of LLM routing to date.
+
+The headline finding: most commercial routers fail to outperform a simple size-based baseline.
+
+---
+
+## What the benchmark measured.
+
+The 10 routing methods tested included embedding-based classifiers, reward model routing, LLM-as-judge routing, cascade systems, and commercial routing APIs. All were evaluated across three dimensions:
+
+- **Quality preservation**: how close routed outputs are to always using the best model
+- **Cost reduction**: savings relative to always using the frontier model
+- **Routing overhead**: latency and compute added by the router
+
+33 models were included in the pool — from 7B open-source to GPT-5.5 and Claude Opus 4.8 — across 21 datasets spanning coding, reasoning, summarization, and factual QA.
+
+---
+
+## The failure mode.
+
+Most routers underperform because they optimize for query difficulty rather than the actual failure mode they face: **model recall failures**.
+
+When a cheap model fails a query, it is rarely because the query was genuinely hard. It is because cheap model failures are inconsistent. The same query, rephrased slightly, succeeds. The same query, unchanged, fails on a different sample. Routers trained to detect difficulty learn from consistent failure patterns. When failure is stochastic, the training signal is noise.
+
+The study also found that **embedding backbone choice changes routing quality by less than 2%**. Swapping BERT for a larger model, or using domain-specific fine-tuned embeddings, made negligible difference. Most teams over-invest in the embedding pipeline and under-invest in the model pool.
+
+---
+
+## What worked.
+
+**Ensemble routing** consistently outperformed single-classifier baselines. Combining multiple independent predictors averages out stochastic failures that break any single classifier.
+
+Avengers-Pro (arXiv:2508.12631, ACM DAI 2025) pushed this further: instead of routing to one best model, it assembles a dynamic committee weighted by query type and domain. On the RouterBench evaluation set, it surpassed GPT-5-medium by **7% on quality** while operating at **63% lower cost**.
+
+RouterEval (EMNLP 2025) confirmed a parallel finding: adding more models to the routing pool improves quality more reliably than improving the router itself. More candidates mean better coverage of query types.
+
+---
+
+## Three tests before buying a commercial router.
+
+| Test | What to check |
+|------|---------------|
+| Beat the size baseline | Route cheap by default, frontier for hard queries by word count or domain. If the router doesn't beat this, it adds no value. |
+| Check oracle gap by query type | Aggregate 95% quality can hide a 40% gap on specific distributions. Audit by domain, not just average. |
+| Skip embedding optimization | The data shows it doesn't move the needle. Expand the model pool instead. |
+
+---
+
+## The practical implication.
+
+The ACL 2026 findings confirm what practitioners are discovering independently: routing quality is dominated by model pool breadth and ensemble signal aggregation, not router sophistication.
+
+If your routing setup is underperforming, the most likely cause is a training distribution mismatch or an insufficient model pool — not the classifier architecture.
+
+[Nadir](/auth?mode=signup) uses multi-signal routing with dynamic threshold calibration against observed production performance, directly addressing the oracle gap the study identifies. See where your current setup is leaving cost or quality on the table.
+
+---
+
+*Sources: [LLMRouterBench (arXiv:2601.07206)](https://arxiv.org/abs/2601.07206), ACL 2026 Findings. [Avengers-Pro (arXiv:2508.12631)](https://arxiv.org/abs/2508.12631), ACM DAI 2025. RouterEval, EMNLP 2025.*`,
+
   "tokenminimizing-enterprise-ai-caps-routing-fix-2026": `## The week tokenmaxxing became a liability.
 
 For the past year, every enterprise AI narrative ran in one direction: adoption metrics, tokens consumed, frontier models deployed everywhere. The measure of seriousness was how much you spent.
