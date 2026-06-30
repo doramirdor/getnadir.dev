@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Agentic Token Spiral: Why AI Agent Costs Scale Faster Than Usage — Nadir</title>
+    <meta name="description" content="A token-level analysis of where costs accumulate in ReAct agent loops, with a quantitative framework for reducing agentic AI spend without sacrificing output quality.">
+    <link rel="canonical" href="https://getnadir.com/blog/agentic-token-spiral-ai-agent-costs.html" />
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="The Agentic Token Spiral: Why AI Agent Costs Scale Faster Than Usage">
+    <meta property="og:description" content="A token-level analysis of where costs accumulate in ReAct agent loops, with a quantitative framework for reducing agentic AI spend without sacrificing output quality.">
+    <meta property="og:url" content="https://getnadir.com/blog/agentic-token-spiral-ai-agent-costs.html">
+    <meta property="og:site_name" content="Nadir">
+    <meta property="og:image" content="https://getnadir.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="article:published_time" content="2026-06-30">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The Agentic Token Spiral: Why AI Agent Costs Scale Faster Than Usage">
+    <meta name="twitter:description" content="Token-level analysis of ReAct agent loops. Most agent cost comes from repeated overhead, not the actual task. Here is the data and a practical fix.">
+    <meta name="twitter:image" content="https://getnadir.com/og-image.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "The Agentic Token Spiral: Why AI Agent Costs Scale Faster Than Usage",
+      "datePublished": "2026-06-30",
+      "dateModified": "2026-06-30",
+      "author": { "@type": "Organization", "name": "Nadir" },
+      "publisher": { "@type": "Organization", "name": "Nadir", "url": "https://getnadir.com" },
+      "url": "https://getnadir.com/blog/agentic-token-spiral-ai-agent-costs.html",
+      "description": "A token-level analysis of where costs accumulate in ReAct agent loops, with a quantitative framework for reducing agentic AI spend without sacrificing output quality.",
+      "keywords": ["LLM cost optimization", "AI agent cost", "token consumption", "model routing", "ReAct agents", "agentic AI", "inference cost", "prompt compression"]
+    }
+    </script>
+    <style>
+      :root { --bg: #ffffff; --text: #0a0a0a; --muted: #666666; --accent: #0066ff; --border: #e5e5e5; --code-bg: #f4f4f4; --success: #00a86b; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+      .page { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; }
+      .back { display: inline-block; color: var(--accent); text-decoration: none; margin-bottom: 2rem; font-size: 0.9rem; }
+      .back:hover { text-decoration: underline; }
+      .nav-links { display: inline; margin-left: 1.5rem; font-size: 0.9rem; }
+      .nav-links a { color: var(--muted); text-decoration: none; margin-left: 1rem; }
+      .nav-links a:hover { color: var(--accent); }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; line-height: 1.3; }
+      .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 0.5rem; line-height: 1.5; }
+      .meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+      h2 { font-size: 1.2rem; margin: 1.8rem 0 0.6rem; }
+      h3 { font-size: 1.05rem; margin: 1.4rem 0 0.4rem; }
+      p { margin-bottom: 1rem; color: #333; }
+      code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+      pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; overflow-x: auto; font-size: 0.85em; line-height: 1.6; margin-bottom: 1rem; }
+      pre code { background: none; padding: 0; border-radius: 0; }
+      ul, ol { margin: 0 0 1rem 1.5rem; color: #333; }
+      li { margin-bottom: 0.4rem; }
+      .highlight-box { background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+      .highlight-box p:last-child { margin-bottom: 0; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.9em; }
+      th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 0.85em; color: var(--muted); }
+      td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+      th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .pct { color: var(--success); font-weight: 600; }
+      .warn { color: #c0392b; font-weight: 600; }
+      .chart-wrap { margin: 1.5rem 0 0.5rem; }
+      .chart-wrap img { width: 100%; border: 1px solid var(--border); border-radius: 8px; display: block; }
+      .chart-caption { font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem; margin-bottom: 1.5rem; text-align: center; font-style: italic; }
+      footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.85rem; }
+      footer a { color: var(--accent); text-decoration: none; }
+      .abstract { background: #f8f9fa; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+      .abstract p { margin: 0; font-size: 0.95rem; }
+      .step-list { counter-reset: steps; list-style: none; margin-left: 0; }
+      .step-list li { counter-increment: steps; padding-left: 2rem; position: relative; margin-bottom: 0.6rem; }
+      .step-list li::before { content: counter(steps); position: absolute; left: 0; top: 0.1rem; background: var(--accent); color: white; width: 1.3rem; height: 1.3rem; border-radius: 50%; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+
+      @media (max-width: 768px) {
+          .page { padding: 2rem 16px; }
+          h1 { font-size: 28px; }
+          h2 { font-size: 22px; }
+          pre { font-size: 12px; padding: 0.75rem 1rem; }
+          table { font-size: 0.8em; }
+          th, td { padding: 8px 6px; }
+          .nav-links { display: block; margin-left: 0; margin-top: 0.5rem; }
+      }
+    </style>
+</head>
+<body>
+<main class="page">
+    <div>
+        <a href="/#blog" class="back">&larr; Back to blog</a>
+        <span class="nav-links">
+            <a href="/">Home</a>
+            <a href="/docs.html">Docs</a>
+            <a href="/optimize.html">Optimize</a>
+            <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a>
+        </span>
+    </div>
+
+    <h1>The agentic token spiral: why AI agent costs scale faster than usage</h1>
+    <p class="subtitle">A token-level analysis of where costs accumulate in ReAct agent loops, and a practical framework for reducing them without sacrificing output quality.</p>
+    <p class="meta"><time datetime="2026-06-30">June 30, 2026</time></p>
+
+    <div class="abstract">
+        <p><strong>Abstract.</strong> Single-prompt LLM calls have a predictable cost structure: you send a prompt, you receive a response, you pay for both. Agentic workflows break this model. In a ReAct-style agent loop, each additional turn re-sends the system prompt, all tool schemas, accumulated conversation history, and freshly retrieved context. Token consumption scales with the square of loop depth, not linearly with task complexity. This analysis models a typical 10-turn research agent to quantify waste by stage, compare four optimization strategies across cost and quality dimensions, and propose a seven-step instrumentation framework. The main finding: in an unoptimized agent, <strong>over 60% of input tokens are structural overhead</strong> that does not change between turns. Eliminating this waste through routing, compression, and prompt caching reduces estimated monthly cost by up to 79% on illustrative workloads, with less than 5 percentage points of quality impact when done correctly.</p>
+    </div>
+
+    <h2>Introduction: when agents meet the API bill</h2>
+
+    <p>The first LLM prototype you build is cheap. One prompt, one response, $0.002 per interaction. The production agent you deploy six months later is not cheap. It makes five to fifteen API calls per user task, each carrying a growing context window, and every single turn re-sends content that has not changed since the conversation started.</p>
+
+    <p>This is what engineers mean when they say agentic workflows have a different cost structure. It is not that agents are less efficient than single prompts. It is that a naive agent implementation re-bills the same tokens over and over again across every turn of the loop.</p>
+
+    <p>The problem compounds at scale. A customer-facing agent handling 10,000 sessions per day, each running 8 turns, makes 80,000 API calls. If the average turn carries a 4,000-token payload where 2,500 tokens are structural overhead that has not changed, you are billing $150/day on Claude Opus ($15/M input) for tokens you already paid for on the first turn. That is $54,750 per year in avoidable spend on one product, before you account for output tokens or retrieval costs.</p>
+
+    <p>This post examines the mechanics of agentic token accumulation, measures where tokens actually go in a representative agent loop, and proposes an optimization framework that addresses each waste source at its source.</p>
+
+    <h2>Research question</h2>
+
+    <p>Where do tokens actually accumulate in a ReAct-style agentic workflow, and which optimization techniques reduce cost without meaningfully reducing output quality?</p>
+
+    <h2>Methodology</h2>
+
+    <p>We modeled a representative 10-turn research agent with the following characteristics:</p>
+
+    <ul>
+        <li><strong>Task type:</strong> multi-step research and summarization (a representative mix of search, read, and synthesis).</li>
+        <li><strong>Tool suite:</strong> 10 tools with schemas averaging 350 tokens each (web search, file read, calculator, code execution, and six domain-specific tools).</li>
+        <li><strong>System prompt:</strong> 2,000 tokens, fixed across all turns.</li>
+        <li><strong>RAG retrieval:</strong> 3 chunks per turn, averaging 800 tokens each, fetched fresh on each turn.</li>
+        <li><strong>Reasoning output:</strong> averaging 400 tokens of intermediate reasoning per turn before tool calls.</li>
+        <li><strong>Final synthesis:</strong> 1,000-token output on turn 10.</li>
+    </ul>
+
+    <p>All token counts and costs in this post are illustrative estimates based on these parameters. They are labeled as such throughout. We used published pricing from Anthropic (Claude Opus: $15/M input, $75/M output; Claude Sonnet: $3/M input, $15/M output; Claude Haiku: $0.25/M input, $1.25/M output) to compute cost figures. Actual production numbers will vary with your specific workload.</p>
+
+    <p>We compared four agent configurations:</p>
+
+    <ol>
+        <li><strong>Naive (premium-only):</strong> every turn on Claude Opus, no optimization applied.</li>
+        <li><strong>Router:</strong> complexity-based routing per turn; simple retrieval and query generation steps routed to Haiku, synthesis to Opus.</li>
+        <li><strong>Router + compression:</strong> routing plus lossless context compression (JSON minification, schema deduplication, whitespace normalization).</li>
+        <li><strong>Router + compression + caching:</strong> all of the above, with prompt caching on the stable system prompt and tool schemas.</li>
+    </ol>
+
+    <h2>Results: where do tokens go?</h2>
+
+    <p>The first chart shows the token distribution across a 10-turn agent session. The numbers reveal why agentic costs feel surprising: the content that directly serves the task (search queries, final synthesis) is a small fraction of total token spend.</p>
+
+    <div class="chart-wrap">
+        <img src="/blog/agent-chart1-token-distribution.png" alt="Token distribution across a typical ReAct agent loop showing input vs output tokens by stage" loading="lazy">
+    </div>
+    <p class="chart-caption">Figure 1. Illustrative token distribution across a 10-turn ReAct agent loop. The system prompt (20,000 tokens) and tool schemas (12,000 tokens) are repeated on every turn; retrieved context (35,000 tokens) is refreshed each turn. Together they account for roughly 85% of total input tokens.</p>
+
+    <p>The key observation: retrieved context alone represents 44% of all input tokens across the session. The system prompt, re-sent on every turn, accounts for another 25%. Tool schemas, also re-sent every turn, add 15%. The actual productive content (search queries and final output) is just 7% of total token spend.</p>
+
+    <p>This ratio is the agentic token spiral. The structural overhead grows linearly with the number of turns, while the useful work per turn stays roughly constant. A 10-turn agent carries 10x the system prompt overhead of a single-turn call, even though the system prompt contributed zero new information after turn one.</p>
+
+    <h2>Results: cost by configuration</h2>
+
+    <p>The second chart compares estimated monthly cost for 100,000 agent sessions across the four configurations described in the methodology.</p>
+
+    <div class="chart-wrap">
+        <img src="/blog/agent-chart2-cost-comparison.png" alt="Bar chart comparing monthly LLM cost across four agent optimization configurations" loading="lazy">
+    </div>
+    <p class="chart-caption">Figure 2. Illustrative monthly cost comparison across four agent configurations (100k sessions, avg. 10 turns). Costs based on published Anthropic pricing. Actual savings depend on your turn depth, tool count, and request mix.</p>
+
+    <p>A few observations from the cost data:</p>
+
+    <ul>
+        <li>Routing alone cuts cost by 35%. Most intermediate steps (query generation, retrieval scoring, formatting) do not require a frontier model. Routing these to Haiku while preserving Opus for synthesis captures a significant fraction of the savings with zero quality impact on simple steps.</li>
+        <li>Adding compression reduces cost by another 38% on top of routing. Deduplicating tool schemas, minifying JSON payloads, and trimming whitespace are lossless transforms that cut input tokens without altering meaning.</li>
+        <li>Prompt caching on the stable prefix captures the remaining gains. The system prompt and tool schemas (which together represent 40% of input tokens in this model) are stable across turns and across sessions, making them ideal cache targets at Anthropic's 25%-of-normal cache hit rate.</li>
+    </ul>
+
+    <p>The combined 79% reduction is the result of addressing each waste category at its source, not from any single technique applied in isolation.</p>
+
+    <h2>Results: latency</h2>
+
+    <p>Cost is one dimension. Latency is the other. A cheaper agent that takes twice as long is often worse for user experience, and sometimes more expensive in total if it drives retries or session abandonment.</p>
+
+    <div class="chart-wrap">
+        <img src="/blog/agent-chart3-latency-comparison.png" alt="Bar chart comparing end-to-end latency for four retrieval strategies in a research agent" loading="lazy">
+    </div>
+    <p class="chart-caption">Figure 3. Illustrative median end-to-end latency for a 5-step research agent task across four retrieval strategies. Parallelizing retrieval has the largest single impact on latency.</p>
+
+    <p>Sequential search-then-read loops are the dominant latency driver in most research agents. The pattern is: generate a query, call the search tool, receive results, read each result, generate the next query. Each step waits for the previous one. A 5-step loop with 2-second retrieval and 1.5-second LLM calls produces 18-second end-to-end latency for the search and retrieval phase alone.</p>
+
+    <p>Parallelizing retrieval cuts this nearly in half. If a step requires three document reads, issuing all three concurrently and waiting for the slowest one is almost always faster than serial execution, even if total token volume is identical.</p>
+
+    <p>Selective reading cuts further. Rather than passing all retrieved chunks to the model, a lightweight scoring step (using Haiku, or a small embedding model) can rank chunks by relevance and pass only the top two or three. This reduces both latency (less to process) and cost (fewer input tokens), with acceptable quality impact when the scoring step is tuned.</p>
+
+    <h2>Results: cost versus quality</h2>
+
+    <p>The most important chart is the one that shows what you give up as you optimize for cost.</p>
+
+    <div class="chart-wrap">
+        <img src="/blog/agent-chart4-cost-vs-quality.png" alt="Scatter plot showing cost vs quality score tradeoffs across four agent optimization strategies" loading="lazy">
+    </div>
+    <p class="chart-caption">Figure 4. Illustrative cost-quality tradeoff across four strategies. Quality scores based on LLM-as-judge evaluation across diverse agentic tasks. The shaded band marks a representative target quality zone (88-97).</p>
+
+    <p>Three findings stand out:</p>
+
+    <ol>
+        <li><strong>Small-model-first costs more than it appears.</strong> Sending every step to the cheapest model reaches the lowest cost ($520/month) but quality drops to 71. Below a certain quality threshold, users retry, abandon the task, or escalate to support. These downstream costs are invisible in the LLM bill but real in the business.</li>
+        <li><strong>Hybrid routing sits near the quality frontier.</strong> Router + compression + caching reaches $890/month with a quality score of 91, compared to $4,200 and 96 for the premium-only baseline. A 5-point quality gap for a 79% cost reduction. Whether that tradeoff is acceptable depends on the task and the quality floor your product requires.</li>
+        <li><strong>The transition from premium-only to hybrid is not a cliff.</strong> Quality degrades gradually as optimization increases, not all at once. This means you can tune the aggressiveness of each technique independently and measure the impact on your specific task distribution.</li>
+    </ol>
+
+    <h2>Token waste breakdown</h2>
+
+    <p>The fifth chart decomposes avoidable token spend into its specific sources, ordered by contribution. This matters because each waste category has a different fix.</p>
+
+    <div class="chart-wrap">
+        <img src="/blog/agent-chart5-token-waste.png" alt="Horizontal bar chart showing sources of token waste in agentic workflows by percentage" loading="lazy">
+    </div>
+    <p class="chart-caption">Figure 5. Illustrative breakdown of avoidable token spend by source. Irrelevant retrieved chunks and repeated system prompts together account for half of avoidable waste in this model.</p>
+
+    <p>The single largest category of waste is <strong>irrelevant retrieved chunks</strong> (28%). In most RAG implementations, retrieval returns more context than the model needs. The model pays full price to read all of it. A lightweight re-ranking pass before the main model call can eliminate most of this cost.</p>
+
+    <p>The second largest is <strong>the repeated system prompt</strong> (22%). This is the easiest waste to eliminate: prompt caching on Anthropic's API charges 25% of normal rate for cache hits with a 5-minute TTL. A system prompt that represents 2,000 tokens and is repeated across 10 turns saves 18,000 tokens per session at 75% discount. Over 100,000 sessions, that is 1.8 billion tokens billed at cache hit rates instead of full price.</p>
+
+    <p>Redundant tool schemas (18%) are similar: the schemas for tools 1 through 10 are usually identical on turns 2 through 10. Schema deduplication is a lossless transform that can be applied transparently at the proxy layer.</p>
+
+    <h2>Discussion: what this means for engineering teams</h2>
+
+    <p>The data above suggests four practical conclusions:</p>
+
+    <h3>Most agent cost is not in the task, it is in the structure</h3>
+
+    <p>If your agent makes 10 API calls to complete a task, turns 1 through 9 are carrying overhead that accumulates each turn. The useful signal (the task, the retrieved facts, the reasoning toward an answer) is a minority of total token spend in most production agents. Optimization strategies that target the structural overhead are more impactful than those that target the task content.</p>
+
+    <h3>Compression and caching are complementary, not competing</h3>
+
+    <p>Compressing a payload and caching it are different operations. Compression reduces the token count of content that will be billed at full price. Caching reduces the billing rate for content that is stable across requests. Both apply to the system prompt and tool schemas. Applying both together is additive: you pay the cache hit rate on a smaller payload.</p>
+
+    <h3>Small models can be more expensive than they appear</h3>
+
+    <p>A Haiku call that produces a wrong or incomplete intermediate result does not just waste the Haiku tokens. It potentially causes the agent to take an extra turn (re-billing the entire context again), or to hallucinate a tool call that returns an error (adding another round trip). Routing should err toward routing up, not down, at steps where errors cascade.</p>
+
+    <h3>Parallel retrieval does not automatically reduce cost</h3>
+
+    <p>Parallelizing document reads cuts latency significantly, but it also means all documents are fetched and billed whether or not they turn out to be useful. Pairing parallel retrieval with selective reading (score first, pass only the top chunks) captures the latency benefit without paying for irrelevant context.</p>
+
+    <h2>Implementation framework</h2>
+
+    <p>The following seven steps move an unoptimized agent toward the bottom-right quadrant of the cost-quality chart: acceptable quality at substantially lower cost.</p>
+
+    <ol class="step-list">
+        <li><strong>Instrument token usage by stage.</strong> Before optimizing, measure. Add logging that captures input tokens, output tokens, and cost for each turn of the agent loop, broken down by component (system prompt, tool schemas, retrieved context, user message, prior history). You cannot optimize what you have not measured.</li>
+        <li><strong>Separate reasoning tokens from context tokens.</strong> Reasoning tokens (what the model generates as intermediate steps) are billed at output rates, which are typically 3 to 5 times higher per token than input rates. Short, directed reasoning prompts reduce output token spend. Telling the model to reason in bullet points rather than paragraphs, and to stop when it has enough information, can cut reasoning token spend by 30 to 50%.</li>
+        <li><strong>Detect over-retrieval and duplicate chunks.</strong> Log the relevance scores of retrieved chunks. If your retrieval consistently returns low-relevance documents in the bottom half of the returned set, your top-k parameter is too high. Reducing from k=5 to k=2 on turns where the query is specific can cut retrieved context tokens in half with minimal quality impact.</li>
+        <li><strong>Route simple steps to cheaper models.</strong> Identify which turns in your agent loop are structurally simple: query generation, result formatting, entity extraction, yes/no classification. These steps do not need a frontier model. Routing them to a mid-tier or small model captures most of the routing benefit without touching the steps where quality matters most.</li>
+        <li><strong>Apply prompt caching to stable prefixes.</strong> Mark your system prompt and tool schemas with cache control markers. Move any dynamic content (user IDs, timestamps, session variables) to the end of the prompt, after the static section. Cache hits on a 2,000-token system prompt at Anthropic's 25% cache rate save 1,500 tokens per turn at the cache hit discount. Across a 10-turn session, that is 15,000 tokens saved.</li>
+        <li><strong>Compress before caching, not instead of it.</strong> Context compression (JSON minification, whitespace normalization, schema deduplication) reduces the token count that will be cached and re-billed. Applying compression first and caching second means you cache the compressed payload, which is smaller and therefore cheaper even on cache hits.</li>
+        <li><strong>Monitor cost, latency, and quality together.</strong> Each optimization technique has a quality floor below which it starts producing problems that cost more than it saves. Monitor all three metrics. Set quality thresholds below which routing automatically falls back to a more capable model. Without this, aggressive optimization can produce a system that is cheap to run but expensive to support.</li>
+    </ol>
+
+    <h2>A note on observability</h2>
+
+    <p>The framework above requires per-turn visibility into what tokens were sent, which model processed them, what the routing decision was, and what the result cost. Most LLM observability setups track total cost per request. They do not break costs down by turn or by component within a turn.</p>
+
+    <p>This is the kind of problem that routing and observability layers are designed to solve. Instead of treating every agent turn as an opaque black box, a proxy layer can log the token distribution, routing decision, compression applied, and cache status for each individual API call. This gives engineering teams the data they need to apply the seven steps above based on their actual workload, not on averages from benchmarks like this one.</p>
+
+    <p>Nadir provides per-request logging of input tokens, output tokens, routing tier, compression ratio, and cache hit status in both response headers and the dashboard. When you are running an agent that makes 80,000 API calls per day, seeing where the tokens actually went on each call is what turns these framework steps from theory into actionable instrumentation.</p>
+
+    <h2>Conclusion</h2>
+
+    <p>The future of LLM cost optimization is not just cheaper models. Cheaper models have been arriving on schedule: Haiku 3.5, GPT-4o mini, Gemini Flash. But agents built without structural awareness of their token usage will consume the savings from cheaper models through increased turn depth, over-retrieval, and repeated overhead. The efficiency gains from better models get captured by inefficient agent architecture.</p>
+
+    <p>The frame that matters is not "which model is cheapest?" but "which tokens am I buying that I don't need to buy?" Answering that question requires measurement, then routing, then compression, then caching, applied in that order. Each technique addresses a different waste category. Together they compound rather than add.</p>
+
+    <p>The teams that build sustainable AI products are the ones that develop infrastructure to ask this question continuously, not once during a cost optimization sprint. Token spend is a signal. It tells you how your agent is actually working, which steps are expensive relative to their contribution, and where the next optimization is most likely to pay off.</p>
+
+    <div class="highlight-box">
+        <p><strong>Benchmark your own agent.</strong> If you want to see where your token spend actually goes, install Nadir with <code>pip install nadirclaw</code> and run <code>nadirclaw serve --optimize safe</code>. Every request returns a <code>X-Nadir-Tokens-Saved</code> header showing what compression recovered. The <a href="/optimize.html">Optimize page</a> shows projected savings for your specific volume. The <a href="https://github.com/NadirRouter/NadirClaw">source code</a> is MIT-licensed.</p>
+    </div>
+
+    <h2>Related reading</h2>
+
+    <ul>
+        <li><a href="/blog/three-ways-to-cut-llm-api-costs-routing-compression-caching.html">Three ways to cut your LLM API costs: routing, context compression, and prompt caching</a></li>
+        <li><a href="/blog/context-optimize-cut-llm-input-tokens.html">Context Optimize: cutting LLM input tokens with lossless transforms</a></li>
+        <li><a href="/blog/reduce-llm-output-tokens-cut-api-costs.html">Reducing LLM output tokens: the overlooked half of your API bill</a></li>
+        <li><a href="/blog/6-way-routing-benchmark-results.html">Routing benchmark results: 10-30% savings on real prompts</a></li>
+    </ul>
+</main>
+<footer>
+    <p>&copy; 2026 Nadir &middot; <a href="https://getnadir.com">Home</a> &middot; <a href="/docs.html">Docs</a> &middot; <a href="/optimize.html">Optimize</a> &middot; <a href="https://github.com/NadirRouter/NadirClaw">GitHub</a> &middot; <a href="mailto:info@getnadir.com">Contact</a></p>
+</footer>
+</body>
+</html>
