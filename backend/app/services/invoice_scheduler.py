@@ -1,9 +1,12 @@
 """
 Monthly invoice scheduler for savings-based billing.
 
-Runs on the 1st of each month at 00:05 UTC. For each active subscriber,
-calculates the savings fee for the previous month, stores an invoice
-record, and attaches a usage-based line item to their next Stripe invoice.
+Runs on the 1st of each month at 00:05 UTC. For each billing-active user
+(card on file, marked active in user_subscriptions), calculates the savings
+fee for the previous month, stores an invoice record, attaches a usage-based
+line item, and creates + finalizes a standalone Stripe invoice that charges
+the card. There is no subscription in the credit model, so the fee can't ride
+a recurring invoice — each month's fee is its own one-off invoice.
 """
 
 import asyncio
@@ -19,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 async def run_monthly_invoicing() -> dict:
     """
-    Run monthly invoicing for all active subscribers.
+    Run monthly invoicing for all billing-active users.
 
     Calculates the previous calendar month's savings fee for each user,
-    stores an invoice record in the database, and creates a Stripe
-    usage invoice item so the fee appears on their next bill.
+    stores an invoice record in the database, attaches a Stripe usage invoice
+    item, and finalizes a standalone invoice that charges the card on file.
 
     Returns a summary dict with counts of processed / skipped / failed users.
     """
@@ -99,7 +102,19 @@ async def run_monthly_invoicing() -> dict:
                     description=description,
                 )
                 if item_id:
-                    invoiced_lines.append(f"savings ${invoice.savings_fee_usd:.2f} ({item_id})")
+                    # There is no Stripe subscription to sweep this pending item
+                    # onto a recurring invoice, so create + finalize a standalone
+                    # invoice that charges the card on file now.
+                    inv_id = await stripe_service.create_savings_invoice(user_id)
+                    line = f"savings ${invoice.savings_fee_usd:.2f} (item {item_id}"
+                    line += f", invoice {inv_id})" if inv_id else ", invoice FAILED)"
+                    invoiced_lines.append(line)
+                    if not inv_id:
+                        logger.error(
+                            "User %s: savings item %s created but standalone invoice "
+                            "failed — fee will not be charged until retried",
+                            user_id, item_id,
+                        )
                 else:
                     logger.warning(
                         "User %s: savings fee $%.2f not attached (no Stripe customer)",

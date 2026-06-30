@@ -35,6 +35,11 @@ HOSTED_COST_MARKUP = Decimal("0.20")
 # Top-ups must be a positive multiple of this amount.
 TOPUP_INCREMENT_USD = Decimal("5")
 
+# One-time bonus credited on a user's first successful paid top-up. A $5 top-up
+# lands as $7 of usable credit the first time only.
+FIRST_TOPUP_BONUS_USD = Decimal("2")
+FIRST_TOPUP_BONUS_DESC = "First top-up bonus"
+
 _CENTS = Decimal("0.01")
 _MICRO = Decimal("0.0001")
 
@@ -193,6 +198,62 @@ class CreditsService:
             "Credited $%.4f to user %s (balance $%.4f)", amount_usd, user_id, new_balance
         )
         return new_balance
+
+    async def grant_first_topup_bonus(
+        self,
+        user_id: str,
+        paid_payment_intent_id: Optional[str],
+        bonus_usd: Decimal = FIRST_TOPUP_BONUS_USD,
+    ) -> Decimal:
+        """Grant a one-time first-top-up bonus, returning the amount granted ($0 if not eligible).
+
+        Eligible only when this is the user's first paid top-up — i.e. there is
+        no prior `credit_transactions` credit row carrying a real payment intent
+        (excluding this top-up's own payment and any bonus row). Idempotent: the
+        bonus is keyed on a derived payment-intent id so webhook retries can't
+        double-grant it.
+        """
+        if not paid_payment_intent_id:
+            return Decimal("0")
+
+        bonus_pi = f"{paid_payment_intent_id}_firsttopup_bonus"
+
+        # Already granted for this top-up? (webhook retry)
+        existing = await self._db(
+            lambda: self.supabase.table("credit_transactions")
+            .select("id")
+            .eq("stripe_payment_intent_id", bonus_pi)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            return Decimal("0")
+
+        # Any prior real top-up disqualifies the first-time bonus. Exclude this
+        # top-up's own payment and any prior bonus rows from the check.
+        prior = await self._db(
+            lambda: self.supabase.table("credit_transactions")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("transaction_type", "credit")
+            .not_.is_("stripe_payment_intent_id", "null")
+            .neq("stripe_payment_intent_id", paid_payment_intent_id)
+            .neq("description", FIRST_TOPUP_BONUS_DESC)
+            .limit(1)
+            .execute()
+        )
+        if prior.data:
+            return Decimal("0")
+
+        bonus = Decimal(str(bonus_usd))
+        await self.add_credits(
+            user_id,
+            bonus,
+            stripe_payment_intent_id=bonus_pi,
+            description=FIRST_TOPUP_BONUS_DESC,
+        )
+        logger.info("Granted first-top-up bonus $%.2f to user %s", bonus, user_id)
+        return bonus
 
     async def deduct(
         self,

@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 from datetime import date, datetime, timezone
+from typing import Optional
 
 import stripe
 from fastapi import APIRouter, HTTPException, Request, status
@@ -141,6 +142,48 @@ async def _upsert_subscription_tables(
     ).execute())
 
 
+def _billing_marker_id(user_id: str) -> str:
+    """Synthetic stripe_subscription_id for a card-on-file billing marker.
+
+    Distinguishable from real Stripe sub ids (`sub_...`) so it never matches an
+    incoming subscription.* webhook, and non-null so it's safe regardless of the
+    column's nullability.
+    """
+    return f"billing_active:{user_id}"
+
+
+async def mark_billing_active(user_id: str, customer_id: Optional[str]) -> None:
+    """Mark a user billing-active (card on file) WITHOUT a Stripe subscription.
+
+    In the credit model there is no subscription. A completed top-up means a card
+    is on file, which is what `subscription_status='active'` now represents for:
+      - the access gate (`require_active_subscription`), and
+      - the monthly savings-fee scheduler (iterates user_subscriptions status=active).
+
+    Writes a marker row via `_upsert_subscription_tables` with a synthetic
+    subscription id. Never clobbers a real Stripe subscription or an already-active
+    billing row.
+    """
+    existing = await _db(lambda: supabase.table("subscriptions")
+        .select("status, stripe_subscription_id").eq("user_id", user_id).limit(1).execute())
+    if existing.data:
+        row = existing.data[0]
+        sub_id = row.get("stripe_subscription_id") or ""
+        is_real_sub = sub_id.startswith("sub_")
+        if is_real_sub or row.get("status") in ("active", "past_due"):
+            return  # already billing-active (real sub or prior marker) — don't clobber
+
+    await _upsert_subscription_tables(
+        user_id=user_id,
+        customer_id=customer_id,
+        subscription_id=_billing_marker_id(user_id),
+        status_="active",
+        cancel_at_period_end=False,
+        plan="pro",
+    )
+    logger.info("Marked user %s billing-active (card on file, no subscription)", user_id)
+
+
 async def _store_event(event_id: str, event_type: str, payload: dict) -> None:
     """
     Record the event so we never process it twice.
@@ -210,6 +253,22 @@ async def _handle_checkout_session_completed(data: dict) -> None:
         except Exception as e:
             logger.error("Failed to credit top-up for user %s: %s", user_id, e)
             raise
+        # First-top-up bonus: a $5 top-up lands as $7 of credit the first time
+        # only. Idempotent + self-gating (no-op on retries or for repeat top-ups).
+        bonus_usd = Decimal("0")
+        try:
+            bonus_usd = await credits_service.grant_first_topup_bonus(
+                user_id, payment_intent_id
+            )
+        except Exception as e:
+            logger.error("Failed to grant first-top-up bonus for user %s: %s", user_id, e)
+        # Card is now on file — mark the user billing-active so the access gate
+        # and the monthly savings-fee scheduler treat them as a paying account.
+        # Replaces what the old $0 Stripe subscription used to do at signup.
+        try:
+            await mark_billing_active(user_id, customer_id)
+        except Exception as e:
+            logger.error("Failed to mark user %s billing-active: %s", user_id, e)
         # Referral conversion: if this user was referred and this top-up clears
         # the threshold, credit the referrer. Idempotent per referral row, so
         # only the referee's first qualifying top-up pays out.
@@ -224,6 +283,9 @@ async def _handle_checkout_session_completed(data: dict) -> None:
             event="credit_topup_success",
             properties={
                 "amount_usd": float(amount_usd),
+                "bonus_usd": float(bonus_usd),
+                "credited_usd": float(amount_usd + bonus_usd),
+                "first_topup": bool(bonus_usd > 0),
                 "session_id": session.get("id"),
             },
         )

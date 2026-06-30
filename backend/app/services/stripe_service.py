@@ -299,6 +299,50 @@ class StripeService:
         )
         return item.id
 
+    async def create_savings_invoice(self, user_id: str) -> Optional[str]:
+        """Create + finalize a standalone invoice that sweeps the user's pending
+        invoice items (the monthly savings fee) and charges the card on file.
+
+        In the credit model there is no Stripe subscription, so there is no
+        recurring invoice to pick up the pending ``InvoiceItem``s created by
+        ``create_usage_invoice_item``. This creates a one-off invoice that
+        includes them and, because ``collection_method='charge_automatically'``,
+        finalizing it attempts the off-session charge immediately. The existing
+        ``invoice.paid`` / ``invoice.payment_failed`` webhooks then settle the
+        ``savings_invoices`` row and drive dunning — unchanged.
+
+        Returns the finalized invoice id, or None if there's no Stripe customer.
+        """
+        customer_id = await self.get_customer_id(user_id)
+        if not customer_id:
+            logger.warning(
+                "Cannot create savings invoice — no Stripe customer for user %s",
+                user_id,
+            )
+            return None
+
+        # auto_advance=False so WE control finalization (avoids racing Stripe's
+        # async finalizer); finalizing a charge_automatically invoice triggers
+        # the off-session payment attempt right away.
+        invoice = await asyncio.to_thread(
+            lambda: stripe.Invoice.create(
+                customer=customer_id,
+                collection_method="charge_automatically",
+                auto_advance=False,
+                pending_invoice_items_behavior="include",
+                automatic_tax={"enabled": True},
+                description="Nadir savings fee",
+            )
+        )
+        finalized = await asyncio.to_thread(
+            lambda: stripe.Invoice.finalize_invoice(invoice.id)
+        )
+        logger.info(
+            "Created + finalized savings invoice %s (status=%s) for user %s",
+            finalized.id, finalized.status, user_id,
+        )
+        return finalized.id
+
 
 # Global singleton
 stripe_service = StripeService()

@@ -155,6 +155,10 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
         sub_id = result.data[0]["stripe_subscription_id"]
         if not sub_id:
             raise HTTPException(status_code=400, detail="No Stripe subscription found")
+        # A `billing_active:<uid>` marker is a card-on-file flag with no Stripe
+        # subscription behind it (credit model). Only real `sub_...` ids can be
+        # canceled via the Stripe subscription API.
+        is_real_sub = sub_id.startswith("sub_")
 
         # ── Charge pending savings fee before cancellation ──────────
         # Attach the partial-month savings fee so the user is billed for the
@@ -183,7 +187,7 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
                     f"${invoice.total_savings_usd:.2f} saved, "
                     f"${invoice.savings_fee_usd:.2f} fee"
                 )
-                await stripe_service.create_usage_invoice_item(
+                item_id = await stripe_service.create_usage_invoice_item(
                     user_id=current_user.id,
                     amount_cents=amount_cents,
                     description=description,
@@ -192,6 +196,10 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
                     "Attached pending savings fee $%.2f for user %s before cancellation",
                     invoice.savings_fee_usd, current_user.id,
                 )
+                # A marker has no subscription whose final invoice would sweep
+                # this pending item, so finalize a standalone invoice to charge it.
+                if item_id and not is_real_sub:
+                    await stripe_service.create_savings_invoice(current_user.id)
 
             # Hosted Bedrock usage is prepaid (drawn down in real time), so
             # there is no markup line to settle on cancellation.
@@ -216,19 +224,42 @@ async def cancel_subscription(current_user: UserSession = Depends(validate_api_k
             )
 
         # ── Proceed with cancellation ──────────────────────────────
-        await stripe_service.cancel_subscription(sub_id)
+        if is_real_sub:
+            await stripe_service.cancel_subscription(sub_id)
 
-        # Mark in our DB
+            # Mark in our DB
+            await asyncio.to_thread(
+                lambda: supabase.table("subscriptions")
+                .update({"cancel_at_period_end": True})
+                .eq("user_id", current_user.id)
+                .execute()
+            )
+
+            return CancelResponse(
+                status="canceling",
+                message="Subscription will cancel at the end of the current billing period. Any outstanding savings fees have been applied.",
+            )
+
+        # Card-on-file marker: nothing to cancel in Stripe. Clear the
+        # billing-active flag in both tables and downgrade to free; any partial
+        # savings fee was already charged via the standalone invoice above.
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).isoformat()
         await asyncio.to_thread(
             lambda: supabase.table("subscriptions")
-            .update({"cancel_at_period_end": True})
+            .update({"status": "canceled", "plan": "free", "cancel_at_period_end": False, "updated_at": now_iso})
             .eq("user_id", current_user.id)
             .execute()
         )
-
+        await asyncio.to_thread(
+            lambda: supabase.table("user_subscriptions")
+            .update({"status": "canceled", "cancel_at_period_end": False, "updated_at": now_iso})
+            .eq("user_id", current_user.id)
+            .execute()
+        )
         return CancelResponse(
-            status="canceling",
-            message="Subscription will cancel at the end of the current billing period. Any outstanding savings fees have been applied.",
+            status="canceled",
+            message="Billing turned off. Any outstanding savings fees have been charged.",
         )
     except HTTPException:
         raise

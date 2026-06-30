@@ -149,8 +149,8 @@ const ApiKeys = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      // An active subscription row means a card is already on file (checkout
-      // forces one), so we don't prompt again on subsequent key creations.
+      // An active billing row means a card is already on file (the $5 credit
+      // checkout forces one), so we don't prompt again on subsequent key creations.
       const { data: sub } = await supabase
         .from("user_subscriptions")
         .select("status")
@@ -162,14 +162,16 @@ const ApiKeys = () => {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) return false;
 
-      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+      // $5 prepaid-credit purchase (no subscription); first top-up lands as $7
+      // of credit and puts a card on file so the savings fee can be billed.
+      const res = await fetch(`${API_BASE}/v1/billing/credits/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          plan_id: "pro",
+          amount_usd: 5,
           success_url: `${window.location.origin}/dashboard/api-keys?card=added`,
           cancel_url: `${window.location.origin}/dashboard/api-keys?card=skipped`,
         }),

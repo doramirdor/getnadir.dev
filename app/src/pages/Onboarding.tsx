@@ -397,16 +397,18 @@ const Onboarding = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      // Use Supabase JWT to call billing, no API key needed yet
-      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+      // Use Supabase JWT to call billing, no API key needed yet. This is a $5
+      // prepaid-credit purchase (no subscription); the first top-up lands as $7
+      // of credit and puts a card on file so we can bill the savings fee.
+      const res = await fetch(`${API_BASE}/v1/billing/credits/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          plan_id: "pro",
-          success_url: `${window.location.origin}/dashboard/onboarding?subscribed=true`,
+          amount_usd: 5,
+          success_url: `${window.location.origin}/dashboard/onboarding?credit=added`,
           // If Stripe cancels, return to the first-call step where the
           // billing card lives.
           cancel_url: `${window.location.origin}/dashboard/onboarding?step=1`,
@@ -429,10 +431,10 @@ const Onboarding = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let landingStep = 0;
-    if (params.get("subscribed") === "true") {
+    if (params.get("credit") === "added") {
       setBillingActive(true);
       landingStep = 1;
-      toast({ title: "Billing active", description: "Your 30-day Pro trial has started. Unlimited requests unlocked." });
+      toast({ title: "Credit added", description: "$5 added, you got $7 of credit. Billing is active and routing is unlocked." });
       window.history.replaceState({}, "", "/dashboard/onboarding");
     }
     // Came back from the in-dialog Pro upgrade (user picked Hosted mid-wizard).
@@ -983,18 +985,19 @@ console.log(response.choices[0].message.content);`;
                 <div className="p-4 bg-muted/40 border border-border rounded-xl space-y-2">
                   <div className="flex items-center gap-2">
                     <Gift className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-semibold text-foreground">Add billing when you're ready</span>
+                    <span className="text-sm font-semibold text-foreground">Add $5 of credit to get started</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    No monthly fee. You only pay a share of what we save you. Unlocks unlimited
-                    requests, semantic cache, context optimization, and priority support.
+                    No monthly fee. Add $5 and we'll top you up to $7 of credit, first time only.
+                    Puts a card on file and unlocks unlimited requests, semantic cache, context
+                    optimization, and priority support.
                   </p>
                   <div className="flex items-center gap-3">
                     <Button size="sm" onClick={handleSubscribe} disabled={subscribing}>
                       {subscribing ? (
                         <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Redirecting...</>
                       ) : (
-                        "Set up billing"
+                        "Add $5 credit, get $7"
                       )}
                     </Button>
                     <span className="text-xs text-muted-foreground">Takes about 30 seconds with Stripe.</span>

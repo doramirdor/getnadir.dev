@@ -358,6 +358,9 @@ const Billing = () => {
         description: "Your prepaid balance has been topped up.",
       });
       queryClient.invalidateQueries({ queryKey: ["billing", "credits"] });
+      // A top-up puts a card on file and marks the account billing-active, so
+      // refresh the subscription state too (drives the "billing active" UI).
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
     } else if (status === "topup_cancelled") {
       toast({
         title: "Top-up canceled",
@@ -480,9 +483,10 @@ const Billing = () => {
   const handleSubscribe = async () => {
     setSubscribing(true);
     try {
-      // Backend /v1/billing/checkout authenticates with the Supabase JWT, not
-      // an API key. This means a user who's just signed in can start checkout
-      // without ever creating a key (which is exactly the new-signup flow).
+      // Backend /v1/billing/credits/checkout authenticates with the Supabase
+      // JWT, not an API key, so a user who's just signed in can start checkout
+      // without ever creating a key (the new-signup flow). This is a $5 prepaid
+      // credit purchase (no subscription); first top-up lands as $7 of credit.
       const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !sessionData.session) {
         throw new Error("You're signed out. Please sign in and try again.");
@@ -490,11 +494,11 @@ const Billing = () => {
       const accessToken = sessionData.session.access_token;
 
       const checkoutBody: Record<string, unknown> = {
-        plan_id: "pro",
-        success_url: `${window.location.origin}/dashboard/billing?status=success`,
-        cancel_url: `${window.location.origin}/dashboard/billing?status=cancelled`,
+        amount_usd: 5,
+        success_url: `${window.location.origin}/dashboard/billing?status=topup_success`,
+        cancel_url: `${window.location.origin}/dashboard/billing?status=topup_cancelled`,
       };
-      const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
+      const res = await fetch(`${API_BASE}/v1/billing/credits/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

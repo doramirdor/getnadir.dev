@@ -56,8 +56,11 @@ async def delete_account(current_user: UserSession = Depends(validate_api_key)):
             .eq("user_id", user_id)
             .execute()
         )
-        if sub_result.data and sub_result.data[0].get("stripe_subscription_id"):
-            sub_id = sub_result.data[0]["stripe_subscription_id"]
+        sub_id = (sub_result.data[0].get("stripe_subscription_id") if sub_result.data else None)
+        # Only real Stripe subscriptions (`sub_...`) can be canceled. A
+        # `billing_active:<uid>` marker is a card-on-file flag with no Stripe
+        # subscription behind it; the Customer.delete below cleans everything up.
+        if sub_id and sub_id.startswith("sub_"):
             try:
                 stripe.Subscription.cancel(sub_id)
                 logger.info("Cancelled Stripe subscription %s for user %s", sub_id, user_id)
