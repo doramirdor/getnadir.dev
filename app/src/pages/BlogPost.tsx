@@ -1,14 +1,72 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Calendar, User, Tag, Copy, Check } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { BlogService } from "@/services/blogService";
 import MarketingLayout from "@/components/marketing/MarketingLayout";
 import { SEO } from "@/components/SEO";
 import { trackBlogRead } from "@/utils/analytics";
+import hljs from "highlight.js/lib/core";
+import python from "highlight.js/lib/languages/python";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import bash from "highlight.js/lib/languages/bash";
+import json from "highlight.js/lib/languages/json";
+import yaml from "highlight.js/lib/languages/yaml";
+import http from "highlight.js/lib/languages/http";
+import xml from "highlight.js/lib/languages/xml";
+
+// Register only the languages we expect in posts to keep the bundle lean.
+hljs.registerLanguage("python", python);
+hljs.registerLanguage("javascript", javascript);
+hljs.registerLanguage("typescript", typescript);
+hljs.registerLanguage("bash", bash);
+hljs.registerLanguage("json", json);
+hljs.registerLanguage("yaml", yaml);
+hljs.registerLanguage("http", http);
+hljs.registerLanguage("xml", xml);
+
+// Map common fence labels (```py, ```sh, ...) to a registered language.
+const CODE_LANGS: Record<string, string> = {
+  py: "python",
+  python: "python",
+  js: "javascript",
+  javascript: "javascript",
+  jsx: "javascript",
+  node: "javascript",
+  ts: "typescript",
+  typescript: "typescript",
+  tsx: "typescript",
+  sh: "bash",
+  bash: "bash",
+  shell: "bash",
+  zsh: "bash",
+  console: "bash",
+  curl: "bash",
+  json: "json",
+  yaml: "yaml",
+  yml: "yaml",
+  http: "http",
+  html: "xml",
+  xml: "xml",
+};
 
 function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false);
+
+  // Syntax-highlight to an HTML string. Use the declared language when known,
+  // otherwise let highlight.js auto-detect among the registered set. Falls back
+  // to plain text if highlighting throws.
+  const highlighted = useMemo(() => {
+    const normalized = CODE_LANGS[(lang || "").trim().toLowerCase()];
+    try {
+      return normalized
+        ? hljs.highlight(code, { language: normalized }).value
+        : hljs.highlightAuto(code).value;
+    } catch {
+      return null;
+    }
+  }, [code, lang]);
 
   const handleCopy = async () => {
     try {
@@ -41,7 +99,14 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
         </button>
       </div>
       <pre className="overflow-x-auto px-4 py-4 text-[13px] leading-relaxed">
-        <code className="whitespace-pre font-mono text-[#f5f5f7]">{code}</code>
+        {highlighted ? (
+          <code
+            className="hljs whitespace-pre bg-transparent p-0 font-mono"
+            dangerouslySetInnerHTML={{ __html: highlighted }}
+          />
+        ) : (
+          <code className="whitespace-pre font-mono text-[#f5f5f7]">{code}</code>
+        )}
       </pre>
     </div>
   );
