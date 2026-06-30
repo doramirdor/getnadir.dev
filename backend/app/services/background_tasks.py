@@ -84,7 +84,21 @@ async def refresh_classifier_centroids() -> None:
     from admin-corrected examples + seed prototypes.
     """
     try:
-        from app.complexity.classifier_learning import get_learning_service
+        try:
+            from app.complexity.classifier_learning import get_learning_service
+        except ModuleNotFoundError as e:
+            # The adaptive learning service has not been built yet, so there is
+            # nothing to refine centroids from. Skip quietly instead of logging
+            # an error on every scheduled run (fires every few hours otherwise).
+            # Scope the swallow to the not-yet-built module: if a future learning
+            # service exists but is missing a transitive dependency, that is a
+            # real problem and must surface via the outer ERROR handler.
+            if e.name not in ("app.complexity.classifier_learning", "app.complexity"):
+                raise
+            logger.debug(
+                "Classifier centroid refresh skipped (learning service not available)"
+            )
+            return
         from app.complexity.binary_classifier import get_singleton, _load_prototypes
         import numpy as np
 
