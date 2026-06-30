@@ -16,6 +16,24 @@ import { useToast } from "@/hooks/use-toast";
 
 // Lazy-loaded page components
 const Homepage = lazy(() => import("./pages/Homepage"));
+const BrandHome = lazy(() => import("./pages/BrandHome"));
+const BrandHomeEditorial = lazy(() => import("./pages/BrandHomeEditorial"));
+const RedesignBenchmarks = lazy(() => import("./pages/redesign/Benchmarks"));
+const RedesignDocs = lazy(() => import("./pages/redesign/Docs"));
+const RedesignSelfHosted = lazy(() => import("./pages/redesign/SelfHosted"));
+const RedesignPricing = lazy(() => import("./pages/redesign/Pricing"));
+const RedesignSolutions = lazy(() => import("./pages/redesign/Solutions"));
+const RedesignBlog = lazy(() => import("./pages/redesign/Blog"));
+const RedesignContact = lazy(() => import("./pages/redesign/Contact"));
+const RedesignCalculator = lazy(() => import("./pages/redesign/Calculator"));
+const RedesignFAQ = lazy(() => import("./pages/redesign/FAQ"));
+const RedesignCompare = lazy(() => import("./pages/redesign/Compare"));
+const RedesignSwitch = lazy(() => import("./pages/redesign/Switch"));
+const RedesignProductHunt = lazy(() => import("./pages/redesign/ProductHunt"));
+const RedesignSolutionDetail = lazy(() => import("./pages/redesign/Solutions").then(m => ({ default: m.SolutionDetail })));
+const RedesignOptimize = lazy(() => import("./pages/redesign/Solutions").then(m => ({ default: m.OptimizeSolution })));
+const PitchDeck = lazy(() => import("./pages/PitchDeck"));
+const Tech = lazy(() => import("./pages/Tech"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const Billing = lazy(() => import("./pages/Billing"));
@@ -151,31 +169,60 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public pages */}
-            <Route path="/" element={<Homepage />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/blog" element={<Blog />} />
+            {/* New blueprint design is now the homepage; the previous homepage
+                is preserved at /legacy so nothing is lost and it's reversible. */}
+            <Route path="/" element={<BrandHome />} />
+            <Route path="/legacy" element={<Homepage />} />
+            <Route path="/redesign" element={<BrandHome />} />
+            <Route path="/redesign/benchmarks" element={<RedesignBenchmarks />} />
+            <Route path="/redesign/docs" element={<RedesignDocs />} />
+            <Route path="/redesign/self-hosted" element={<RedesignSelfHosted />} />
+            <Route path="/redesign/pricing" element={<RedesignPricing />} />
+            <Route path="/redesign-editorial" element={<BrandHomeEditorial />} />
+            <Route path="/pitch" element={<PitchDeck />} />
+            <Route path="/tech" element={<Tech />} />
+            <Route path="/pricing" element={<RedesignPricing />} />
+            <Route path="/legacy/pricing" element={<Pricing />} />
+            <Route path="/blog" element={<RedesignBlog />} />
             <Route path="/blog/:id" element={<BlogPost />} />
-            <Route path="/docs/:section?" element={<Docs />} />
+            <Route path="/legacy/blog" element={<Blog />} />
+            <Route path="/docs/:section?" element={<RedesignDocs />} />
+            <Route path="/legacy/docs/:section?" element={<Docs />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/self-host" element={<OpenClaw />} />
-            <Route path="/openclaw" element={<OpenClaw />} />
-            <Route path="/optimize" element={<Optimize />} />
-            <Route path="/switch" element={<Switch />} />
-            <Route path="/solutions" element={<Solutions />} />
-            <Route path="/solutions/optimize" element={<Optimize />} />
-            <Route path="/solutions/routing" element={<SolutionRouting />} />
-            <Route path="/solutions/fallback" element={<SolutionFallback />} />
-            <Route path="/solutions/analytics" element={<SolutionAnalytics />} />
-            <Route path="/solutions/clustering" element={<SolutionClustering />} />
-            <Route path="/compare" element={<Compare />} />
-            <Route path="/compare/:competitor" element={<Compare />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/faq" element={<FAQPublic />} />
-            <Route path="/calculator" element={<Calculator />} />
-            <Route path="/producthunt" element={<ProductHunt />} />
+            <Route path="/self-host" element={<RedesignSelfHosted />} />
+            <Route path="/openclaw" element={<RedesignSelfHosted />} />
+            <Route path="/legacy/self-host" element={<OpenClaw />} />
+            <Route path="/legacy/openclaw" element={<OpenClaw />} />
+            <Route path="/optimize" element={<RedesignOptimize />} />
+            <Route path="/legacy/optimize" element={<Optimize />} />
+            <Route path="/switch" element={<RedesignSwitch />} />
+            <Route path="/legacy/switch" element={<Switch />} />
+            <Route path="/solutions" element={<RedesignSolutions />} />
+            <Route path="/solutions/optimize" element={<RedesignOptimize />} />
+            <Route path="/solutions/routing" element={<RedesignSolutionDetail />} />
+            <Route path="/solutions/fallback" element={<RedesignSolutionDetail />} />
+            <Route path="/solutions/analytics" element={<RedesignSolutionDetail />} />
+            <Route path="/solutions/clustering" element={<RedesignSolutionDetail />} />
+            {/* Old green-themed solution pages preserved under /legacy/* */}
+            <Route path="/legacy/solutions" element={<Solutions />} />
+            <Route path="/legacy/solutions/routing" element={<SolutionRouting />} />
+            <Route path="/legacy/solutions/fallback" element={<SolutionFallback />} />
+            <Route path="/legacy/solutions/analytics" element={<SolutionAnalytics />} />
+            <Route path="/legacy/solutions/clustering" element={<SolutionClustering />} />
+            <Route path="/compare" element={<RedesignCompare />} />
+            <Route path="/compare/:competitor" element={<RedesignCompare />} />
+            <Route path="/legacy/compare" element={<Compare />} />
+            <Route path="/contact" element={<RedesignContact />} />
+            <Route path="/legacy/contact" element={<Contact />} />
+            <Route path="/faq" element={<RedesignFAQ />} />
+            <Route path="/legacy/faq" element={<FAQPublic />} />
+            <Route path="/calculator" element={<RedesignCalculator />} />
+            <Route path="/legacy/calculator" element={<Calculator />} />
+            <Route path="/producthunt" element={<RedesignProductHunt />} />
+            <Route path="/legacy/producthunt" element={<ProductHunt />} />
 
             {/* Dashboard (authenticated) */}
             <Route path="/dashboard" element={<Layout />}>

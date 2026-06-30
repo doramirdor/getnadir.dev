@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, Calendar, User, Tag, Copy, Check } from "lucide-react";
 import React, { useEffect, useState, useMemo } from "react";
 import { BlogService } from "@/services/blogService";
-import MarketingLayout from "@/components/marketing/MarketingLayout";
+import { RedesignLayout } from "@/components/brand/redesign";
 import { SEO } from "@/components/SEO";
 import { trackBlogRead } from "@/utils/analytics";
 import hljs from "highlight.js/lib/core";
@@ -443,92 +443,57 @@ export default function BlogPost() {
   };
 
   return (
-    <MarketingLayout>
-      <SEO
-        title={`${post.title} - Nadir Blog`}
-        description={post.excerpt}
-        path={`/blog/${post.id}`}
-      />
-      <div className="container mx-auto px-6 py-8">
-        <Button
-          variant="ghost"
-          className="mb-8 hover:bg-muted text-[#028a3e]"
+    <RedesignLayout
+      title={`${post.title.slice(0, 64)} · Nadir`}
+      description={post.excerpt}
+      path={`/blog/${post.id}`}
+    >
+      <div className="mx-auto max-w-[840px] px-6 pb-20 pt-12 lg:px-10">
+        <button
           onClick={() => navigate("/blog")}
+          className="mb-8 inline-flex items-center gap-1.5 eyebrow text-[var(--ink)]/55 transition-colors hover:text-[var(--strawberry)]"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          All posts
-        </Button>
+          <ArrowLeft className="h-3.5 w-3.5" /> All posts
+        </button>
 
-        <article className="max-w-4xl mx-auto">
+        <article className="brand-prose">
           {/* Header */}
-          <header className="text-center mb-12 border-b border-border pb-8">
-            <div className="inline-block px-3 py-1 bg-[rgba(48,209,88,0.10)] text-[#028a3e] text-[12px] font-semibold uppercase tracking-[0.1em] rounded mb-6">
-              {post.thumbnail}
-            </div>
-            <h1 className="text-[40px] md:text-[56px] font-semibold text-[#1d1d1f] mb-6 leading-[1.05] tracking-[-0.034em] [text-wrap:balance]">
+          <header className="mb-10 border-b border-[var(--line)] pb-8">
+            <span className="eyebrow text-[var(--strawberry)]">{post.thumbnail}</span>
+            <h1 className="mt-4 font-editorial text-[clamp(32px,5vw,54px)] font-semibold leading-[1.04] text-[var(--ink)] [text-wrap:balance]">
               {post.title}
             </h1>
-
-            <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground mb-6">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span>{post.author}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>{BlogService.formatDate(post.date)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>{post.readingTime}</span>
-              </div>
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-[12px] text-[var(--ink)]/55">
+              <span className="inline-flex items-center gap-1.5"><User className="h-3.5 w-3.5" />{post.author}</span>
+              <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{BlogService.formatDate(post.date)}</span>
+              <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{post.readingTime}</span>
             </div>
-
-            <div className="flex flex-wrap justify-center gap-2 mb-6">
+            <div className="mt-4 flex flex-wrap gap-2">
               {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
-                >
-                  <Tag className="h-3 w-3" />
-                  {tag}
+                <span key={tag} className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-2.5 py-1 font-mono text-[11px] text-[var(--ink)]/60">
+                  <Tag className="h-3 w-3" />{tag}
                 </span>
               ))}
             </div>
-
-            <p className="text-lg text-muted-foreground italic">
-              {post.excerpt}
-            </p>
+            <p className="mt-5 font-editorial text-[18px] italic leading-relaxed text-[var(--ink)]/70">{post.excerpt}</p>
           </header>
 
           {/* Content */}
-          <div className="prose prose-lg max-w-none mb-12">
-            <div className="text-foreground leading-relaxed space-y-2">
-              {processContent(post.content)}
-            </div>
+          <div className="prose prose-lg max-w-none leading-relaxed space-y-2 text-[var(--ink)]/85">
+            {processContent(post.content)}
           </div>
 
           {/* CTA */}
-          <div className="bg-[#fbfbfd] border border-black/[0.06] rounded-2xl p-10 text-center">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#028a3e] mb-4">
-              Done reading?
-            </p>
-            <h3 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] text-[#1d1d1f] mb-3 leading-[1.15]">
-              Put it to work on your traffic.
-            </h3>
-            <p className="text-[16px] text-[#424245] mb-7 leading-[1.5] max-w-[520px] mx-auto">
+          <div className="ink-frame mt-14 bg-[var(--paper)] p-9 text-center">
+            <span className="eyebrow text-[var(--strawberry)]">Done reading?</span>
+            <h3 className="mt-3 font-editorial text-[clamp(26px,3.4vw,38px)] leading-tight text-[var(--ink)]">Put it to work on your traffic.</h3>
+            <p className="mx-auto mt-3 max-w-[520px] text-[15px] leading-relaxed text-[var(--ink)]/65">
               Two lines of code, one base URL. The savings dashboard shows the real delta against always-Opus, per request.
             </p>
-            <Button
-              onClick={() => navigate("/auth?mode=signup")}
-              size="lg"
-              className="rounded-full bg-[#1d1d1f] hover:bg-[#000] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.35)]"
-            >
-              Bring your own keys
-            </Button>
+            <button onClick={() => navigate("/auth?mode=signup")} className="btn-rect press mt-7">Bring your own keys</button>
           </div>
         </article>
       </div>
-    </MarketingLayout>
+    </RedesignLayout>
   );
 }

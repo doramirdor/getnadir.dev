@@ -1,31 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import MarketingLayout from "@/components/marketing/MarketingLayout";
-import { SEO } from "@/components/SEO";
+import { RedesignLayout } from "@/components/brand/redesign";
 
 export default function Privacy() {
   const navigate = useNavigate();
 
   return (
-    <MarketingLayout>
-      <SEO title="Privacy Policy - Nadir" description="Privacy policy for Nadir Tech LLC." path="/privacy" />
-      <div className="container mx-auto px-6 py-8 max-w-3xl">
-        <Button
-          variant="ghost"
-          className="mb-8 hover:bg-muted"
-          onClick={() => navigate("/")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Button>
+    <RedesignLayout title="Nadir · Privacy Policy" description="Privacy policy for Nadir Tech LLC." path="/privacy">
+      <div className="mx-auto max-w-3xl px-6 py-14 lg:px-10">
+        <button onClick={() => navigate("/")} className="mb-8 flex w-fit items-center gap-1.5 eyebrow text-[var(--ink)]/55 hover:text-[var(--strawberry)]">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to home
+        </button>
+        <span className="eyebrow text-[var(--strawberry)]">Legal</span>
+        <h1 className="mt-3 font-editorial text-[clamp(34px,5vw,52px)] font-semibold text-[var(--ink)]">Privacy Policy</h1>
+        <p className="mt-2 font-mono text-[12px] text-[var(--ink)]/55">Last updated: April 12, 2026</p>
 
-        <h1 className="text-4xl font-semibold text-foreground mb-2">Privacy Policy</h1>
-        <p className="text-sm text-muted-foreground mb-10">
-          Last updated: April 12, 2026
-        </p>
-
-        <div className="prose prose-neutral max-w-none space-y-8 text-muted-foreground leading-relaxed">
+        <div className="brand-prose prose prose-neutral mt-8 max-w-none space-y-8 leading-relaxed text-[var(--ink)]/80">
           <section className="space-y-3">
             <p>
               Nadir Tech LLC ("Nadir," "we," "us," or "our") operates the Nadir platform at getnadir.com. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our service.
@@ -139,6 +130,6 @@ export default function Privacy() {
           </section>
         </div>
       </div>
-    </MarketingLayout>
+    </RedesignLayout>
   );
 }
