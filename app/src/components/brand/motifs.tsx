@@ -23,11 +23,12 @@ type MotifProps = {
 
 /* — Navigation & intelligence ———————————————————————————————————————— */
 
-/** Compass burst — the Nadir mark. A radiant eight-point star. */
-export function CompassBurst({ className, style, color = "var(--terracotta)" }: MotifProps) {
+/** Compass burst — the Nadir mark. A radiant eight-point star. When `animate`,
+ *  the rays rotate slowly while the centre core breathes (reduced-motion safe). */
+export function CompassBurst({ className, style, color = "var(--terracotta)", animate = false }: MotifProps & { animate?: boolean }) {
   return (
     <svg viewBox="0 0 64 64" className={className} style={style} fill="none" aria-hidden="true">
-      <g stroke={color} strokeWidth="1.4" strokeLinecap="round">
+      <g className={animate ? "burst-spin" : undefined} stroke={color} strokeWidth="1.4" strokeLinecap="round">
         {/* cardinal long rays */}
         <path d="M32 4 L32 28 M32 36 L32 60 M4 32 L28 32 M36 32 L60 32" strokeWidth="1.8" />
         {/* diagonal short rays */}
@@ -35,7 +36,7 @@ export function CompassBurst({ className, style, color = "var(--terracotta)" }: 
         {/* fine ticks */}
         <path d="M32 12 L32 16 M32 48 L32 52 M12 32 L16 32 M48 32 L52 32" opacity="0.6" />
       </g>
-      <path d="M32 22 L37 32 L32 42 L27 32 Z" fill={color} opacity="0.92" />
+      <path className={animate ? "burst-core" : undefined} d="M32 22 L37 32 L32 42 L27 32 Z" fill={color} opacity="0.92" />
       <circle cx="32" cy="32" r="2.4" fill="var(--shell)" stroke={color} strokeWidth="1.2" />
     </svg>
   );
@@ -126,15 +127,53 @@ export function SignalDots({ className, style }: MotifProps) {
   );
 }
 
-/** Orbit trails — nested ellipses with travelling node. */
-export function OrbitTrails({ className, style, color = "var(--ink)" }: MotifProps) {
+/** Orbit trails — nested ellipses with travelling node. When `animate`, the rings
+ *  stay put and each planet dot orbits in place along its own ring (counter-rotating). */
+export function OrbitTrails({ className, style, color = "var(--ink)", animate = false }: MotifProps & { animate?: boolean }) {
+  const reduced =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const spin = animate && !reduced;
   return (
     <svg viewBox="0 0 120 80" className={className} style={style} fill="none" aria-hidden="true">
       <ellipse cx="60" cy="40" rx="52" ry="22" stroke={color} strokeWidth="1.1" opacity="0.7" />
       <ellipse cx="60" cy="40" rx="38" ry="14" stroke={color} strokeWidth="1.1" transform="rotate(-18 60 40)" opacity="0.85" />
       <circle cx="60" cy="40" r="3.2" fill={color} />
-      <circle cx="108" cy="42" r="2.6" fill="var(--terracotta)" />
-      <circle cx="22" cy="34" r="2.2" fill="var(--sky)" />
+      {spin ? (
+        <>
+          {/* terracotta planet rides the outer ring (CSS motion path) */}
+          <circle cx="0" cy="0" r="2.6" fill="var(--terracotta)" className="orbit-planet orbit-planet--outer" />
+          {/* sky planet rides the inner (tilted) ring, the other way round */}
+          <g transform="rotate(-18 60 40)">
+            <circle cx="0" cy="0" r="2.2" fill="var(--sky)" className="orbit-planet orbit-planet--inner" />
+          </g>
+        </>
+      ) : (
+        <>
+          <circle cx="108" cy="42" r="2.6" fill="var(--terracotta)" />
+          <circle cx="22" cy="34" r="2.2" fill="var(--sky)" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/** Hand-drawn arrow — a wobbly little ink stroke that replaces the geometric
+ *  unicode glyphs (↘ → ↓) in hand annotations. Inherits the annotation's colour
+ *  via stroke="currentColor"; `dir` just rotates the same base gesture. */
+export function HandArrow({
+  className,
+  style,
+  dir = "right",
+}: MotifProps & { dir?: "right" | "down-right" | "down" | "up" | "up-right" | "left" }) {
+  const angle = { right: 0, "down-right": 45, "up-right": -45, down: 90, up: -90, left: 180 }[dir];
+  return (
+    <svg viewBox="0 0 30 24" className={className} style={style} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <g transform={`rotate(${angle} 15 12)`}>
+        <path d="M3 12.6 C 10 10.7, 17 13.4, 24 11.3" />
+        <path d="M18.4 6.6 C 21.2 8.7, 23.1 10.3, 24.5 11.4" />
+        <path d="M24.5 11.4 C 22.9 13.5, 21 15.2, 18.7 16.7" />
+      </g>
     </svg>
   );
 }
@@ -171,13 +210,16 @@ export function InkSweep({ className, style, color = "var(--ink)" }: MotifProps)
   );
 }
 
-/** Contour lines — topographic nested loops. */
-export function ContourLines({ className, style, color = "var(--sage)" }: MotifProps) {
+/** Contour lines — topographic nested loops. When `animate`, the loops swirl
+ *  slowly around the steady centre dot (reduced-motion safe). */
+export function ContourLines({ className, style, color = "var(--sage)", animate = false }: MotifProps & { animate?: boolean }) {
   return (
     <svg viewBox="0 0 120 100" className={className} style={style} fill="none" stroke={color} strokeWidth="1.1" aria-hidden="true">
-      <path d="M60 12 C 96 14, 104 52, 86 72 C 66 94, 24 86, 18 58 C 14 34, 34 12, 60 12 Z" opacity="0.55" />
-      <path d="M60 24 C 86 26, 92 52, 78 66 C 62 82, 34 76, 30 56 C 28 38, 42 24, 60 24 Z" opacity="0.75" />
-      <path d="M60 36 C 76 38, 80 54, 70 62 C 58 72, 44 66, 42 54 C 41 44, 50 36, 60 36 Z" />
+      <g className={animate ? "contour-spin" : undefined}>
+        <path d="M60 12 C 96 14, 104 52, 86 72 C 66 94, 24 86, 18 58 C 14 34, 34 12, 60 12 Z" opacity="0.55" />
+        <path d="M60 24 C 86 26, 92 52, 78 66 C 62 82, 34 76, 30 56 C 28 38, 42 24, 60 24 Z" opacity="0.75" />
+        <path d="M60 36 C 76 38, 80 54, 70 62 C 58 72, 44 66, 42 54 C 41 44, 50 36, 60 36 Z" />
+      </g>
       <circle cx="58" cy="52" r="3" fill={color} stroke="none" opacity="0.8" />
     </svg>
   );

@@ -231,15 +231,16 @@ export function RedesignLayout({ title, description, path, track, children }: {
 
 const d = (ms: number): CSSProperties => ({ ["--d" as string]: `${ms}ms` });
 
-/** Page hero — eyebrow + big serif headline (one rose accent) + subcopy, on a
- *  light sketch field. Optional right-hand motif and hand annotation. */
-export function PageHero({ eyebrow, title, accent, sub, hand, motif }: {
-  eyebrow: string; title: string; accent?: string; sub: ReactNode; hand?: string; motif?: ReactNode;
+/** Page hero — big serif headline (one rose accent) + subcopy, on a light sketch
+ *  field. Optional right-hand motif and hand annotation. (`eyebrow` prop accepted
+ *  but no longer rendered — the kicker tags were removed site-wide.) */
+export function PageHero({ title, accent, sub, hand, motif }: {
+  eyebrow?: string; title: string; accent?: string; sub: ReactNode; hand?: string; motif?: ReactNode;
 }) {
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <ContourLines className="absolute -left-8 top-[26%] h-40 w-44 opacity-35 pencil" color="currentColor" />
+        <ContourLines animate className="absolute -left-8 top-[26%] h-40 w-44 opacity-35 pencil" color="currentColor" />
         <ConstructionField variant={1} className="absolute right-[3%] top-[18%] hidden h-32 w-28 opacity-55 lg:block" />
         <CrossMarks className="absolute right-[24%] top-10 hidden h-9 w-16 opacity-45 lg:block" color="var(--pencil)" />
         <Sparkle className="twinkle absolute left-[42%] top-10 hidden h-4 w-4 opacity-60 lg:block" color="var(--strawberry)" />
@@ -249,8 +250,7 @@ export function PageHero({ eyebrow, title, accent, sub, hand, motif }: {
       <div className="relative mx-auto max-w-[1180px] px-6 pb-12 pt-14 lg:px-10 lg:pb-16 lg:pt-20">
         <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.25fr_0.75fr]">
           <div>
-            <span className="rise eyebrow text-[var(--strawberry)]">{eyebrow}</span>
-            <h1 className="rise mt-4 font-editorial text-[clamp(40px,6.4vw,78px)] font-semibold leading-[0.97] text-[var(--ink)]" style={d(60)}>
+            <h1 className="rise font-editorial text-[clamp(40px,6.4vw,78px)] font-semibold leading-[0.97] text-[var(--ink)]" style={d(60)}>
               {title}{accent ? <> <span className="whitespace-nowrap"><span className="italic text-[var(--strawberry)]">{accent}</span><Sparkle className="twinkle inline-block h-4 w-4 align-super" color="var(--strawberry)" /></span></> : null}
             </h1>
             <p className="rise mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--ink)]/70" style={d(160)}>{sub}</p>
@@ -276,11 +276,10 @@ export function Section({ id, children, className = "", tint, rule = true }: {
   );
 }
 
-export function SectionHead({ eyebrow, title, note }: { eyebrow: string; title: string; note?: string }) {
+export function SectionHead({ title, note }: { eyebrow?: string; title: string; note?: string }) {
   return (
     <div className="max-w-2xl">
-      <span className="eyebrow text-[var(--strawberry)]">{eyebrow}</span>
-      <h2 className="mt-3 font-editorial text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-[var(--ink)]">{title}</h2>
+      <h2 className="font-editorial text-[clamp(28px,3.6vw,42px)] leading-[1.05] text-[var(--ink)]">{title}</h2>
       {note && <span className="mt-3 inline-block font-hand text-[17px] text-[var(--ink)]/60 -rotate-1">{note}</span>}
     </div>
   );

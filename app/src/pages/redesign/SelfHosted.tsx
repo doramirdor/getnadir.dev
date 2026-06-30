@@ -67,7 +67,7 @@ export default function SelfHosted() {
             </ul>
           </div>
           <Panel className="p-5" tint="bg-[var(--ink)]">
-            <pre className="overflow-x-auto font-mono text-[12.5px] leading-relaxed text-[var(--shell)]/90">{`$ pip install nadirclaw
+            <pre className="overflow-x-auto font-mono text-[12.5px] leading-relaxed text-[var(--shell)]">{`$ pip install nadirclaw
 
 $ nadir serve --port 8000
   ✦ binary classifier loaded (10 ms)

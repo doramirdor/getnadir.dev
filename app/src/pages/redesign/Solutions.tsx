@@ -68,7 +68,7 @@ const SOLUTIONS: Solution[] = [
       { k: "Cross-provider tiers", v: "Route across Claude, GPT, and Gemini on one OpenAI-compatible surface." },
     ],
     stats: [{ v: "60", unit: "%", k: "Lower cost vs always-Opus", color: ST }, { v: "98", unit: "%", k: "Of top-model quality" }],
-    motif: <CompassBurst className="h-28 w-28 opacity-90" color={ST} />,
+    motif: <CompassBurst animate className="h-28 w-28 opacity-90" color={ST} />,
   },
   {
     slug: "fallback",

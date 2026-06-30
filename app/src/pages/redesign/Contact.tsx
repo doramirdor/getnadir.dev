@@ -98,7 +98,7 @@ export default function Contact() {
           <Panel className="p-7">
             {sent ? (
               <div className="grid place-items-center py-10 text-center">
-                <CompassBurst className="h-10 w-10" color="var(--terracotta)" />
+                <CompassBurst animate className="h-10 w-10" color="var(--terracotta)" />
                 <h3 className="mt-4 font-editorial text-[26px] text-[var(--ink)]">Got it. Talk soon.</h3>
                 <p className="mt-2 max-w-xs text-[14px] text-[var(--ink)]/65">We'll reply within a business day at the address you gave us.</p>
               </div>

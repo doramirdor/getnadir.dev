@@ -21,11 +21,11 @@ const GET = [
 function Code({ children }: { children: ReactNode }) {
   return (
     <Panel className="p-5" tint="bg-[var(--ink)]">
-      <pre className="overflow-x-auto font-mono text-[12.5px] leading-relaxed text-[var(--shell)]/90">{children}</pre>
+      <pre className="overflow-x-auto font-mono text-[12.5px] leading-relaxed text-[var(--shell)]">{children}</pre>
     </Panel>
   );
 }
-const C = ({ children }: { children: ReactNode }) => <span className="text-[var(--shell)]/40">{children}</span>;
+const C = ({ children }: { children: ReactNode }) => <span className="text-[var(--shell)] opacity-45">{children}</span>;
 const K = ({ children }: { children: ReactNode }) => <span className="text-[var(--strawberry)]">{children}</span>;
 const S = ({ children }: { children: ReactNode }) => <span className="text-[var(--seaglass)]">{children}</span>;
 

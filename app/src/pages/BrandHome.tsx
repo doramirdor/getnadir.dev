@@ -23,7 +23,7 @@ import {
   WaveContours, FloraSprig, SeedCluster, DocCheck,
   SketchBox, SketchRule, ConstructionField, SweepLines,
   CompassBurst, OrbitTrails, SignalDots, SunDisc, CoralBranch,
-  RoutePath, InkSweep, Shell,
+  RoutePath, InkSweep, Shell, HandArrow,
 } from "@/components/brand/motifs";
 import { HeroRampArt, SelfHostArt } from "@/components/brand/illustrations";
 import { RedesignLayout } from "@/components/brand/redesign";
@@ -153,9 +153,9 @@ function SpecimenBoard() {
         <div className="rise lg:pt-6" style={{ ["--d" as string]: "500ms" }}><VerificationReceipt /></div>
       </div>
       {/* annotations */}
-      <span className="absolute left-[34%] top-[6px] hidden font-hand text-[16px] text-[var(--strawberry)] -rotate-3 lg:block">route lower ↓</span>
-      <span className="absolute left-[30%] bottom-[18%] hidden font-hand text-[15px] text-[var(--ink)]/65 lg:block">escalate only if needed</span>
-      <span className="absolute right-2 -bottom-1 hidden font-hand text-[15px] text-[var(--ink)]/65 rotate-2 lg:block">show the receipt ↑</span>
+      <span className="absolute left-[34%] top-[6px] hidden font-hand text-[16px] text-[var(--strawberry)] rotate-[-5deg] lg:block">route lower <HandArrow dir="down" className="inline-block h-[0.8em] w-[0.8em] align-[-0.1em]" /></span>
+      <span className="absolute left-[30%] bottom-[18%] hidden font-hand text-[15px] text-[var(--ink)]/65 rotate-[2deg] lg:block">escalate only if needed</span>
+      <span className="absolute right-2 -bottom-1 hidden font-hand text-[15px] text-[var(--ink)]/65 rotate-[4deg] lg:block">show the receipt <HandArrow dir="up" className="inline-block h-[0.8em] w-[0.8em] align-[-0.05em]" /></span>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function Hero() {
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <SweepLines className="absolute inset-0 hidden h-full w-full lg:block" />
         <Sailboat className="drift absolute left-6 top-12 hidden h-16 w-20 opacity-70 sm:block" color="var(--ink)" />
-        <ContourLines className="absolute -left-8 top-[30%] h-44 w-48 opacity-40 pencil" color="currentColor" />
+        <ContourLines animate className="absolute -left-8 top-[30%] h-44 w-48 opacity-40 pencil" color="currentColor" />
         <ConstructionField variant={0} className="absolute -left-2 top-1/2 hidden h-40 w-28 opacity-80 lg:block" />
         <ConstructionField variant={1} className="absolute right-0 top-1/3 hidden h-44 w-28 opacity-70 lg:block" />
         <ConstructionField variant={2} className="absolute right-[8%] bottom-[2%] hidden h-28 w-24 opacity-55 lg:block" />
@@ -185,15 +185,15 @@ function Hero() {
         <CrossMarks className="absolute left-[37%] top-[46%] hidden h-10 w-20 opacity-55 lg:block" color="var(--pencil)" />
         <Scribble className="absolute right-[2%] top-[54%] hidden h-7 w-24 opacity-55 lg:block" color="var(--pencil)" />
         <Sparkle className="twinkle absolute left-[35%] bottom-[12%] hidden h-3.5 w-3.5 opacity-60 lg:block" color="var(--sky)" style={{ ["--d" as string]: "1000ms" }} />
-        <ContourLines className="absolute right-[1%] top-2 hidden h-28 w-32 opacity-30 pencil lg:block" color="currentColor" />
+        <ContourLines animate className="absolute right-[1%] top-2 hidden h-28 w-32 opacity-30 pencil lg:block" color="currentColor" />
 
         {/* right-side abstract cluster — fills the open space, lots of motion */}
         <SunDisc className="float-slower absolute right-[21%] top-[6%] hidden h-24 w-24 opacity-[0.22] lg:block" color="var(--coral)" />
-        <OrbitTrails className="float-slow absolute right-[6%] top-[14%] hidden h-28 w-44 opacity-70 lg:block" color="var(--ink)" style={{ ["--rot" as string]: "-7deg" }} />
+        <OrbitTrails animate className="float-slow absolute right-[6%] top-[14%] hidden h-28 w-44 opacity-70 lg:block" color="var(--ink)" style={{ ["--rot" as string]: "-7deg" }} />
         <CoralBranch className="absolute right-[1%] top-[22%] hidden h-24 w-16 opacity-65 lg:block" color="var(--terracotta)" />
         <VerifierSeal className="seal-spin absolute right-[28%] top-[19%] hidden h-14 w-14 opacity-45 lg:block" color="var(--ink)" />
         <Shell className="absolute right-[33%] top-[35%] hidden h-12 w-12 opacity-45 lg:block" color="var(--strawberry)" />
-        <CompassBurst className="float-slow absolute right-[3%] top-[40%] hidden h-16 w-16 opacity-65 lg:block" color="var(--terracotta)" style={{ ["--rot" as string]: "5deg" }} />
+        <CompassBurst animate className="float-slow absolute right-[3%] top-[40%] hidden h-16 w-16 opacity-65 lg:block" color="var(--terracotta)" style={{ ["--rot" as string]: "5deg" }} />
         <SignalDots className="absolute right-[23%] top-[47%] hidden h-16 w-24 opacity-70 lg:block" />
         <RoutePath animate className="absolute right-[4%] top-[57%] hidden h-24 w-52 opacity-75 lg:block" color="var(--strawberry)" />
         <DottedGrid className="absolute right-[15%] top-[61%] hidden h-14 w-20 opacity-55 lg:block" color="var(--ink)" />
@@ -208,12 +208,18 @@ function Hero() {
         <Sparkle className="twinkle absolute left-[27%] bottom-[3%] hidden h-3.5 w-3.5 opacity-55 lg:block" color="var(--strawberry)" style={{ ["--d" as string]: "1900ms" }} />
       </div>
 
-      {/* hand annotations scattered around the hero */}
+      {/* hand annotations scattered around the hero — deliberately uneven tilt,
+          size and placement so they read jotted-by-hand, not laid out on a grid */}
       <div className="pointer-events-none absolute inset-0 z-[1] hidden lg:block" aria-hidden>
-        <span className="absolute right-[11%] top-[35%] font-hand text-[18px] text-[var(--strawberry)] -rotate-3">route, don't guess</span>
-        <span className="absolute right-[1%] top-[51%] font-hand text-[16px] text-[var(--ink)]/65 rotate-2">fits the task ↘</span>
-        <span className="absolute right-[19%] top-[70%] font-hand text-[16px] text-[var(--ink)]/65 -rotate-2">verified, not assumed</span>
-        <span className="absolute left-[0.5%] top-[62%] font-hand text-[15px] text-[var(--ink)]/55 -rotate-6">spend less →</span>
+        <span className="absolute right-[25%] top-[13%] font-hand text-[16px] text-[var(--strawberry)] rotate-[5deg]">cheaper, not dumber</span>
+        <span className="absolute right-[9.5%] top-[34%] font-hand text-[19px] text-[var(--strawberry)] rotate-[-4deg]">route, don't guess</span>
+        <span className="absolute right-[6.5%] top-[45%] font-hand text-[15px] text-[var(--ink)]/60 rotate-[-8deg]">two lines, done <HandArrow dir="down-right" className="inline-block h-[0.85em] w-[1em] align-[-0.1em]" /></span>
+        <span className="absolute right-[1.5%] top-[52.5%] font-hand text-[16.5px] text-[var(--ink)]/65 rotate-[7deg]">fits the task <HandArrow dir="down-right" className="inline-block h-[0.85em] w-[1em] align-[-0.1em]" /></span>
+        <span className="absolute left-[1.5%] top-[49%] font-hand text-[17px] text-[var(--strawberry)] rotate-[-11deg]">keep your own keys</span>
+        <span className="absolute right-[20.5%] top-[71%] font-hand text-[14.5px] text-[var(--ink)]/65 rotate-[3deg]">verified, not assumed</span>
+        <span className="absolute left-[0.5%] top-[63%] font-hand text-[15px] text-[var(--ink)]/55 rotate-[-13deg]">spend less <HandArrow dir="right" className="inline-block h-[0.8em] w-[1em] align-[-0.05em]" /></span>
+        <span className="absolute right-[27%] top-[24%] font-hand text-[15px] text-[var(--strawberry)] rotate-[13deg]">leaner by default</span>
+        <span className="absolute right-[2.5%] top-[61%] font-hand text-[14.5px] text-[var(--ink)]/60 rotate-[-17deg]">swap the URL <HandArrow dir="up-right" className="inline-block h-[0.8em] w-[1em] align-[-0.05em]" /></span>
       </div>
 
       {/* ── Message block — dominant, owns the top of the page ── */}
@@ -259,7 +265,7 @@ function Hero() {
 
       {/* ── Specimen board — the supporting proof, below the message ── */}
       <div className="relative mx-auto max-w-[1280px] px-6 pb-24 lg:px-10">
-        <span className="mb-7 block font-hand text-[18px] text-[var(--ink)]/55 -rotate-1">every prompt becomes a route, and every route gets a receipt ↓</span>
+        <span className="mb-7 inline-block font-hand text-[18px] text-[var(--ink)]/55 rotate-[-1.5deg]">every prompt becomes a route, and every route gets a receipt <HandArrow dir="down" className="inline-block h-[0.8em] w-[0.8em] align-[-0.1em]" /></span>
         <SpecimenBoard />
       </div>
     </section>
@@ -361,7 +367,7 @@ function ModelCards() {
       <SketchRule className="absolute inset-x-0 top-0 h-2 w-full opacity-40" color="var(--ink)" />
       <ConstructionField variant={1} className="pointer-events-none absolute left-2 bottom-6 hidden h-24 w-24 opacity-60 lg:block" />
       <ConstructionField variant={0} className="pointer-events-none absolute right-1 top-10 hidden h-24 w-24 opacity-50 lg:block" />
-      <ContourLines className="pointer-events-none absolute -left-6 top-[34%] hidden h-44 w-40 opacity-40 pencil lg:block" color="currentColor" />
+      <ContourLines animate className="pointer-events-none absolute -left-6 top-[34%] hidden h-44 w-40 opacity-40 pencil lg:block" color="currentColor" />
       <Sparkle className="twinkle pointer-events-none absolute right-[28%] top-7 hidden h-4 w-4 opacity-55 lg:block" color="var(--strawberry)" />
       <div className="relative mx-auto max-w-[1280px] px-6 py-16 lg:px-10">
         <div className="flex items-center justify-between">

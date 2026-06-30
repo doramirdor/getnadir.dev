@@ -25,7 +25,7 @@ export default function ProductHunt() {
         accent="Product Hunt."
         sub={<>Nadir routes every request to the smallest model that can answer with confidence, verifies the result, and escalates only when needed. If it's launch day, an upvote means the world.</>}
         hand="thank you for the support"
-        motif={<CompassBurst className="h-32 w-32 opacity-90" color="var(--terracotta)" />}
+        motif={<CompassBurst animate className="h-32 w-32 opacity-90" color="var(--terracotta)" />}
       />
 
       <Section rule={false}>

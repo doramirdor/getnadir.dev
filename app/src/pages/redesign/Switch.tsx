@@ -45,7 +45,7 @@ export default function Switch() {
             </ol>
           </div>
           <Panel className="p-5" tint="bg-[var(--ink)]">
-            <pre className="overflow-x-auto font-mono text-[12.5px] leading-relaxed text-[var(--shell)]/90">{`- base_url = "https://api.openai.com/v1"
+            <pre className="overflow-x-auto font-mono text-[12.5px] leading-relaxed text-[var(--shell)]">{`- base_url = "https://api.openai.com/v1"
 + base_url = "https://api.getnadir.com/v1"
 
 - model = "gpt-4o"

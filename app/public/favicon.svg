@@ -1,10 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00a86b"/>
-      <stop offset="100%" stop-color="#0066ff"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <text x="32" y="46" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="40" fill="white">N</text>
+  <rect width="64" height="64" rx="14" fill="#15233b"/>
+  <text x="28" y="45.5" text-anchor="middle" font-family="Didot,'Playfair Display',Baskerville,Georgia,'Times New Roman',serif" font-weight="600" font-size="43" fill="#f6f2ea">N</text>
+  <g transform="translate(43,7)" stroke="#e07d93" stroke-width="2.4" stroke-linecap="round">
+    <path d="M8 0.8 L8 15.2 M0.8 8 L15.2 8 M2.9 2.9 L13.1 13.1 M13.1 2.9 L2.9 13.1"/>
+  </g>
 </svg>

@@ -605,6 +605,44 @@
   50%      { transform: translateY(-7px) rotate(var(--rot, 0deg)); }
 }
 
+/* --- Orbit trails — planets travel their rings in place, rings stay put.
+ * The dot (geometry centred at local 0,0) is translated through 12 points on its
+ * ellipse; linear interpolation of a tiny dot reads as a smooth orbit. Using
+ * transform (not offset-distance) because Chrome won't interpolate offset-distance
+ * on bare SVG shapes. ---------------------------------------------------------- */
+.nadir-brand .orbit-planet--outer { animation: nadir-orbit-outer 30s linear infinite; }
+.nadir-brand .orbit-planet--inner { animation: nadir-orbit-inner 20s linear infinite reverse; }
+@keyframes nadir-orbit-outer {
+  0%      { transform: translate(112px, 40px); }
+  8.333%  { transform: translate(105px, 51px); }
+  16.667% { transform: translate(86px, 59px); }
+  25%     { transform: translate(60px, 62px); }
+  33.333% { transform: translate(34px, 59px); }
+  41.667% { transform: translate(15px, 51px); }
+  50%     { transform: translate(8px, 40px); }
+  58.333% { transform: translate(15px, 29px); }
+  66.667% { transform: translate(34px, 21px); }
+  75%     { transform: translate(60px, 18px); }
+  83.333% { transform: translate(86px, 21px); }
+  91.667% { transform: translate(105px, 29px); }
+  100%    { transform: translate(112px, 40px); }
+}
+@keyframes nadir-orbit-inner {
+  0%      { transform: translate(98px, 40px); }
+  8.333%  { transform: translate(93px, 47px); }
+  16.667% { transform: translate(79px, 52px); }
+  25%     { transform: translate(60px, 54px); }
+  33.333% { transform: translate(41px, 52px); }
+  41.667% { transform: translate(27px, 47px); }
+  50%     { transform: translate(22px, 40px); }
+  58.333% { transform: translate(27px, 33px); }
+  66.667% { transform: translate(41px, 28px); }
+  75%     { transform: translate(60px, 26px); }
+  83.333% { transform: translate(79px, 28px); }
+  91.667% { transform: translate(93px, 33px); }
+  100%    { transform: translate(98px, 40px); }
+}
+
 /* --- Link underline (editorial, terracotta) ----------------------------- */
 .nadir-brand .ed-link {
   background-image: linear-gradient(var(--terracotta), var(--terracotta));
@@ -619,7 +657,8 @@
   .nadir-brand .seal-spin,
   .nadir-brand .route-draw,
   .nadir-brand .float-slow,
-  .nadir-brand .float-slower { animation: none; }
+  .nadir-brand .float-slower,
+  .nadir-brand .orbit-planet { animation: none; }
 }
 
 /* --- Brand prose ---------------------------------------------------------
@@ -722,6 +761,19 @@
   50%      { opacity: 1;   transform: scale(1.12) rotate(22deg); }
 }
 
+/* Contour lines — nested loops swirl slowly around their centre. */
+.nadir-brand .contour-spin { transform-box: view-box; transform-origin: 60px 52px; animation: nadir-contour-spin 32s linear infinite; }
+@keyframes nadir-contour-spin { to { transform: rotate(360deg); } }
+
+/* Compass burst — the Nadir mark radiates: rays rotate slowly, core breathes. */
+.nadir-brand .burst-spin { transform-box: view-box; transform-origin: center; animation: nadir-burst-spin 28s linear infinite; }
+@keyframes nadir-burst-spin { to { transform: rotate(360deg); } }
+.nadir-brand .burst-core { transform-box: view-box; transform-origin: center; animation: nadir-burst-pulse 3.6s ease-in-out infinite; }
+@keyframes nadir-burst-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.92; }
+  50%      { transform: scale(1.16); opacity: 1; }
+}
+
 /* Pulse ring for the selected/active route dot. */
 .nadir-brand .pulse-ring { animation: nadir-pulse-ring 2.1s ease-out infinite; }
 @keyframes nadir-pulse-ring {
@@ -757,6 +809,9 @@
   .nadir-brand .pulse-ring,
   .nadir-brand .flow-dash,
   .nadir-brand .uline-draw,
+  .nadir-brand .burst-spin,
+  .nadir-brand .burst-core,
+  .nadir-brand .contour-spin,
   .nadir-brand .drift { animation: none; }
   .nadir-brand .lift:hover { transform: none; }
 }
