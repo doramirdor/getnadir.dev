@@ -1,14 +1,34 @@
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricsGrid } from "@/components/MetricsGrid";
-import { UsageChart } from "@/components/UsageChart";
-import { LatencyChart } from "@/components/LatencyChart";
 import { RecentActivity } from "@/components/RecentActivity";
 import { TopModels } from "@/components/TopModels";
 import { DailyQuotaBar } from "@/components/DailyQuotaBar";
+
+// The two chart cards pull in recharts (~410 KB). Load them as separate chunks
+// so the dashboard shell (header, quota, metrics) paints immediately and the
+// charts stream in afterwards, instead of blocking the whole page on recharts.
+const UsageChart = lazy(() =>
+  import("@/components/UsageChart").then((m) => ({ default: m.UsageChart })),
+);
+const LatencyChart = lazy(() =>
+  import("@/components/LatencyChart").then((m) => ({ default: m.LatencyChart })),
+);
+
+/** Placeholder that matches a chart card's title + height to avoid layout shift. */
+const ChartSkeleton = ({ title, height }: { title: string; height: string }) => (
+  <Card className="clean-card">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className={`${height} w-full animate-pulse rounded-lg bg-muted/40`} />
+    </CardContent>
+  </Card>
+);
 
 export const Dashboard = () => {
   const [liveEvents, setLiveEvents] = useState<any[]>([]);
@@ -135,11 +155,15 @@ export const Dashboard = () => {
         </Card>
       )}
 
-      {/* Charts */}
+      {/* Charts — recharts loads lazily so the shell above renders first */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <UsageChart />
-          <LatencyChart />
+          <Suspense fallback={<ChartSkeleton title="Usage Overview" height="h-[280px]" />}>
+            <UsageChart />
+          </Suspense>
+          <Suspense fallback={<ChartSkeleton title="Latency" height="h-[380px]" />}>
+            <LatencyChart />
+          </Suspense>
         </div>
         <TopModels />
       </div>

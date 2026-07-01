@@ -11,7 +11,6 @@ import { ApiKeyProvider } from "@/hooks/useApiKey";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
-import { Dashboard } from "./components/Dashboard";
 import { useToast } from "@/hooks/use-toast";
 
 // Lazy-loaded page components
@@ -34,6 +33,9 @@ const RedesignSolutionDetail = lazy(() => import("./pages/redesign/Solutions").t
 const RedesignOptimize = lazy(() => import("./pages/redesign/Solutions").then(m => ({ default: m.OptimizeSolution })));
 const PitchDeck = lazy(() => import("./pages/PitchDeck"));
 const Tech = lazy(() => import("./pages/Tech"));
+const Dashboard = lazy(() =>
+  import("./components/Dashboard").then((m) => ({ default: m.Dashboard })),
+);
 const Analytics = lazy(() => import("./pages/Analytics"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys"));
 const Billing = lazy(() => import("./pages/Billing"));
