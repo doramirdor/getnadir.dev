@@ -112,9 +112,16 @@ async def list_models_detailed(
         # Fallback to traditional method
         import litellm
         
-        # Get litellm model list
-        model_list = litellm.utils.get_litellm_model_list()
-        model_list_dict = [model.dict() for model in model_list]
+        # Get litellm model list from the pricing/metadata catalog
+        model_list_dict = [
+            {
+                "id": name,
+                "model_name": name,
+                "litellm_provider": info.get("litellm_provider", "unknown"),
+            }
+            for name, info in litellm.model_cost.items()
+            if name != "sample_spec" and isinstance(info, dict)
+        ]
         
         # Get models by provider
         models_by_provider = {}
@@ -269,15 +276,17 @@ async def list_available_models() -> AvailableModelsResponse:
     """List available models for API gateway."""
     import litellm
     models = []
-    
-    for model in litellm.utils.get_litellm_model_list():
+
+    for name, info in litellm.model_cost.items():
+        if name == "sample_spec" or not isinstance(info, dict):
+            continue
         models.append(AvailableModel(
-            id=model.id,
-            model=model.model_name,
-            provider=model.litellm_provider,
+            id=name,
+            model=name,
+            provider=info.get("litellm_provider", "unknown"),
             created_at=None
         ))
-    
+
     return AvailableModelsResponse(models=models)
 
 
