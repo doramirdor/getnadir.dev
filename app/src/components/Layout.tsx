@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { RoutingLoader } from "@/components/RoutingLoader";
+import { BillingNudge } from "@/components/BillingNudge";
 import { useAuth } from "@/hooks/useAuth";
 import { lazy } from "react";
 const Auth = lazy(() => import("@/pages/Auth"));
@@ -113,6 +114,9 @@ const Layout = () => {
         <Sidebar activeItem={getCurrentPage()} />
         <main className={cn("flex-1 min-w-0", isMobile && "pt-14")}>
           <div className="h-full max-w-6xl mx-auto px-4 md:px-8 py-8">
+            {/* Persistent $5 top-up nudge (hidden once billing-active, and on the
+                Billing page where it would be redundant). */}
+            {location.pathname !== "/dashboard/billing" && <BillingNudge />}
             <Outlet />
           </div>
         </main>
