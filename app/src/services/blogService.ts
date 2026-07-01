@@ -7158,10 +7158,10 @@ gpt4o_h_t  = gpt4o_image_tokens(w, h, "high")
 gpt4o_l_t  = gpt4o_image_tokens(w, h, "low")
 gemini_t   = gemini_image_tokens(w, h)
 
-print(f"Claude Opus 4.8:    {claude_t:,} tokens  (${claude_t * PRICING['claude'] / 1e6:.5f})")
-print(f"GPT-4o high detail: {gpt4o_h_t:,} tokens  (${gpt4o_h_t * PRICING['gpt4o'] / 1e6:.5f})")
-print(f"GPT-4o low detail:  {gpt4o_l_t:,} tokens   (${gpt4o_l_t * PRICING['gpt4o'] / 1e6:.5f})")
-print(f"Gemini 2.5 Pro:     {gemini_t:,} tokens  (${gemini_t * PRICING['gemini'] / 1e6:.5f})")
+print(f"Claude Opus 4.8:    {claude_t:,} tokens  (\${claude_t * PRICING['claude'] / 1e6:.5f})")
+print(f"GPT-4o high detail: {gpt4o_h_t:,} tokens  (\${gpt4o_h_t * PRICING['gpt4o'] / 1e6:.5f})")
+print(f"GPT-4o low detail:  {gpt4o_l_t:,} tokens   (\${gpt4o_l_t * PRICING['gpt4o'] / 1e6:.5f})")
+print(f"Gemini 2.5 Pro:     {gemini_t:,} tokens  (\${gemini_t * PRICING['gemini'] / 1e6:.5f})")
 \`\`\`
 
 \`\`\`
