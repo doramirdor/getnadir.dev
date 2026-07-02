@@ -23,6 +23,7 @@ import {
   trackOnboardingComplete,
   trackApiKeyCreated,
   trackFirstCallResult,
+  trackCheckoutStart,
 } from "@/utils/analytics";
 import CreateApiKeyDialog from "@/components/CreateApiKeyDialog";
 import OnboardingCelebration from "@/components/OnboardingCelebration";
@@ -411,8 +412,10 @@ const Onboarding = () => {
     }
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (source: string = "onboarding_offer") => {
     setSubscribing(true);
+    // Attribute which surface drove the top-up so the funnel is measurable.
+    trackCheckoutStart("credit_topup_5", typeof source === "string" ? source : "onboarding_offer");
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
@@ -597,7 +600,7 @@ console.log(response.choices[0].message.content);`;
         freeLimit={freeLimit}
         billingActive={billingActive}
         subscribing={subscribing}
-        onAddCredit={handleSubscribe}
+        onAddCredit={() => handleSubscribe("onboarding_celebration")}
         onContinue={handleCelebrationContinue}
       />
     );
@@ -1120,7 +1123,7 @@ console.log(response.choices[0].message.content);`;
                       ))}
                     </div>
 
-                    <InkButton className="mt-5 w-full py-3.5" onClick={handleSubscribe} disabled={subscribing}>
+                    <InkButton className="mt-5 w-full py-3.5" onClick={() => handleSubscribe("onboarding_offer")} disabled={subscribing}>
                       {subscribing ? (
                         <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting...</>
                       ) : (

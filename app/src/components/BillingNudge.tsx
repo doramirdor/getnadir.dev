@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Gift, X, Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackCheckoutStart } from "@/utils/analytics";
 
 // Persistent, dismissible "keep saving for $5" nudge shown across the dashboard
 // for users who are NOT billing-active. It reads the user's real savings this
@@ -55,6 +56,7 @@ export function BillingNudge() {
 
   const handleAdd = async () => {
     setSubscribing(true);
+    trackCheckoutStart("credit_topup_5", "dashboard_nudge");
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
