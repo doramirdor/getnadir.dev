@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricsGrid } from "@/components/MetricsGrid";
+import { SavingsHero } from "@/components/SavingsHero";
 import { RecentActivity } from "@/components/RecentActivity";
 import { TopModels } from "@/components/TopModels";
 import { DailyQuotaBar } from "@/components/DailyQuotaBar";
@@ -107,6 +108,9 @@ export const Dashboard = () => {
           </span>
         </div>
       </div>
+
+      {/* ROI centerpiece — real savings this month, front and center */}
+      <SavingsHero />
 
       {/* Daily free-trial quota */}
       <DailyQuotaBar />
