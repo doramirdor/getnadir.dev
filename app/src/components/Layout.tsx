@@ -36,17 +36,19 @@ const Layout = () => {
     if (location.pathname === "/dashboard/onboarding") return;
     if (localStorage.getItem(`nadir_onboarding_skipped:${user.id}`) === "1") return;
 
+    let cancelled = false;
     const checkOnboarding = async () => {
       const { count } = await supabase
         .from("api_keys")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
-      if (count !== null && count === 0) {
+      if (!cancelled && count !== null && count === 0) {
         navigate("/dashboard/onboarding");
       }
     };
     checkOnboarding();
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [user, location.pathname]);
 
   if (loading) {
     if (authTimedOut) {

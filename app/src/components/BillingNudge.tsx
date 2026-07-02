@@ -74,6 +74,7 @@ export function BillingNudge() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Checkout failed");
+      if (!data.checkout_url) throw new Error("Checkout failed");
       window.location.href = data.checkout_url;
     } catch (e: any) {
       toast({ variant: "destructive", title: "Error", description: e.message });
@@ -107,7 +108,7 @@ export function BillingNudge() {
                     <>Add <span className="text-[var(--terracotta)]">$5</span>, get <span className="text-[var(--terracotta)]">$7</span> of credit.</>
                   )}
                 </p>
-                <span className="rounded-[2px] bg-[var(--strawberry)] px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--shell)]">
+                <span className="rounded-[2px] bg-[var(--strawberry)] px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--ink)]">
                   first-time +$2
                 </span>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, type ButtonHTMLAttributes } from "react";
+import { useState, useEffect, useRef, type ButtonHTMLAttributes } from "react";
 import {
   Key,
   Zap,
@@ -46,7 +46,7 @@ type Mode = "byok" | "hosted";
 
 const FIELD =
   "w-full h-11 rounded-[2px] border border-[var(--line)] bg-[var(--paper)] px-3.5 text-[14px] text-[var(--ink)] " +
-  "placeholder:text-[#a89e8b] outline-none transition-colors focus:border-[var(--ink)] focus:ring-2 focus:ring-[var(--strawberry)]/25";
+  "placeholder:text-[#a89e8b] outline-none transition-colors focus:border-[var(--ink)] focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--strawberry)_25%,transparent)]";
 
 function InkButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
@@ -63,7 +63,7 @@ function OutlineButton({ className = "", ...props }: ButtonHTMLAttributes<HTMLBu
     <button
       type="button"
       {...props}
-      className={`press inline-flex items-center justify-center gap-2 rounded-[2px] border border-[var(--ink)]/25 bg-[var(--paper)] px-5 py-3 text-[13px] font-medium text-[var(--ink)] transition-colors hover:border-[var(--ink)]/50 hover:bg-[var(--blush-soft)] disabled:pointer-events-none disabled:opacity-60 ${className}`}
+      className={`press inline-flex items-center justify-center gap-2 rounded-[2px] border border-[color:color-mix(in_srgb,var(--ink)_25%,transparent)] bg-[var(--paper)] px-5 py-3 text-[13px] font-medium text-[var(--ink)] transition-colors hover:border-[color:color-mix(in_srgb,var(--ink)_50%,transparent)] hover:bg-[var(--blush-soft)] disabled:pointer-events-none disabled:opacity-60 ${className}`}
     />
   );
 }
@@ -164,6 +164,7 @@ interface TestResult {
   content?: string;
   costUsd?: number | null;
   benchmarkModel?: string | null;
+  benchmarkCostUsd?: number | null;
   savingsPct?: number | null;
 }
 
@@ -185,6 +186,7 @@ const Onboarding = () => {
   const [subscribing, setSubscribing] = useState(false);
   const [billingActive, setBillingActive] = useState(false);
   const [snippetLang, setSnippetLang] = useState("python");
+  const onboardingFocusedRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setApiKey: setSessionApiKey } = useApiKey();
@@ -347,6 +349,25 @@ const Onboarding = () => {
     };
   }, [user?.id]);
 
+  // Seed billing-active from the DB (like BillingNudge/DailyQuotaBar/Billing do)
+  // so an already-paid user who re-enters onboarding (deep link, email-continue
+  // link, or the zero-key redirect) is NOT shown the "first-time +$2" offer
+  // again. Only ever flips billingActive true, so it never clobbers the
+  // return-from-Stripe URL-param path.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("user_subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled && data?.status === "active") setBillingActive(true);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -396,6 +417,7 @@ const Onboarding = () => {
         content: data.choices?.[0]?.message?.content || "",
         costUsd,
         benchmarkModel: bench?.benchmark_model ?? null,
+        benchmarkCostUsd: bench?.benchmark_cost_usd ?? null,
         savingsPct,
       };
       setTestResult(result);
@@ -440,6 +462,7 @@ const Onboarding = () => {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Checkout failed");
+      if (!data.checkout_url) throw new Error("Checkout failed");
 
       // Redirect to Stripe checkout
       window.location.href = data.checkout_url;
@@ -612,7 +635,14 @@ console.log(response.choices[0].message.content);`;
       : null;
 
   return (
-    <div className="nadir-brand grain fixed inset-0 z-[55] overflow-y-auto bg-[var(--shell)]">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Nadir onboarding"
+      ref={(el) => { if (el && !onboardingFocusedRef.current) { onboardingFocusedRef.current = true; el.focus(); } }}
+      tabIndex={-1}
+      className="nadir-brand grain fixed inset-0 z-[55] overflow-y-auto bg-[var(--shell)] outline-none"
+    >
       {/* Decorative sketch marks */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
         <Sparkle className="twinkle absolute left-[12%] top-[16%] hidden h-4 w-4 opacity-50 lg:block" color="var(--strawberry)" />
@@ -628,7 +658,7 @@ console.log(response.choices[0].message.content);`;
           </span>
           <button
             onClick={handleSkip}
-            className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink)]/45 transition-colors hover:text-[var(--ink)]"
+            className="font-mono text-[11px] uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)] transition-colors hover:text-[var(--ink)]"
           >
             Skip for now
           </button>
@@ -637,7 +667,7 @@ console.log(response.choices[0].message.content);`;
         {/* Stepper */}
         <div className="mt-8 flex items-center gap-3">
           {STEPS.map((step, i) => (
-            <div key={step.id} className="flex flex-1 items-center gap-3">
+            <div key={step.id} className="flex flex-1 items-center gap-3" aria-current={i === currentStep ? "step" : undefined}>
               <div className="flex items-center gap-2">
                 <span
                   className={`grid h-7 w-7 place-items-center rounded-full border text-[12px] font-semibold transition-colors ${
@@ -645,12 +675,12 @@ console.log(response.choices[0].message.content);`;
                       ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--shell)]"
                       : i === currentStep
                         ? "border-[var(--strawberry)] bg-[var(--strawberry)] text-[var(--shell)] pulse-ring"
-                        : "border-[var(--line)] bg-[var(--paper)] text-[var(--ink)]/40"
+                        : "border-[var(--line)] bg-[var(--paper)] text-[color:color-mix(in_srgb,var(--ink)_40%,transparent)]"
                   }`}
                 >
                   {i < currentStep ? <Check className="h-3.5 w-3.5" /> : i + 1}
                 </span>
-                <span className={`eyebrow ${i <= currentStep ? "text-[var(--ink)]/70" : "text-[var(--ink)]/35"}`}>{step.label}</span>
+                <span className={`eyebrow ${i <= currentStep ? "text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]" : "text-[color:color-mix(in_srgb,var(--ink)_35%,transparent)]"}`}>{step.label}</span>
               </div>
               {i < STEPS.length - 1 && (
                 <span className="h-px flex-1 bg-[var(--line)]" />
@@ -670,7 +700,7 @@ console.log(response.choices[0].message.content);`;
                   <Sparkle className="twinkle inline-block h-4 w-4 align-super" color="var(--strawberry)" />
                 </span>
               </h1>
-              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-[var(--ink)]/70">
+              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]">
                 Pick how you want to run. In under two minutes you'll send a real request
                 and see exactly what Nadir saved you.
               </p>
@@ -684,7 +714,7 @@ console.log(response.choices[0].message.content);`;
                   <Sparkle className="twinkle inline-block h-4 w-4 align-super" color="var(--strawberry)" />
                 </span>
               </h1>
-              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-[var(--ink)]/70">
+              <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]">
                 Watch Nadir route a real call to the model that fits, then keep the savings going.
               </p>
             </>
@@ -694,31 +724,31 @@ console.log(response.choices[0].message.content);`;
         {/* Value primer strip */}
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
           {[
-            ["68%", "lower cost"],
-            ["97.6%", "quality kept"],
+            ["60%", "lower cost"],
+            ["98%", "quality kept"],
             ["$0", "base fee"],
           ].map(([v, k]) => (
             <div key={k} className="flex items-baseline gap-1.5">
               <span className="font-editorial text-[20px] leading-none text-[var(--terracotta)]">{v}</span>
-              <span className="eyebrow text-[var(--ink)]/55">{k}</span>
+              <span className="eyebrow text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">{k}</span>
             </div>
           ))}
         </div>
 
         {/* Step content card */}
-        <div className="relative mt-6 rounded-[3px] border border-[var(--ink)]/15 bg-[var(--paper)] p-5 shadow-[0_16px_40px_-24px_rgba(21,35,59,0.4)] sm:p-6">
+        <div className="relative mt-6 rounded-[3px] border border-[color:color-mix(in_srgb,var(--ink)_15%,transparent)] bg-[var(--paper)] p-5 shadow-[0_16px_40px_-24px_rgba(21,35,59,0.4)] sm:p-6">
           {/* ═══ STEP 0: Choose how you want to run, then reveal the key ═══ */}
           {currentStep === 0 && (
             <div className="space-y-5">
               {bootstrapLoading ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-10">
                   <Loader2 className="h-6 w-6 animate-spin text-[var(--terracotta)]" />
-                  <p className="text-[13px] text-[var(--ink)]/55">Loading your account...</p>
+                  <p className="text-[13px] text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">Loading your account...</p>
                 </div>
               ) : creatingKey ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-10">
                   <Loader2 className="h-6 w-6 animate-spin text-[var(--terracotta)]" />
-                  <p className="text-[13px] text-[var(--ink)]/55">Setting up your key...</p>
+                  <p className="text-[13px] text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">Setting up your key...</p>
                 </div>
               ) : createdApiKey ? (
                 <>
@@ -727,24 +757,24 @@ console.log(response.choices[0].message.content);`;
                     <h2 className="font-editorial text-[22px] text-[var(--ink)]">Your API key is ready</h2>
                   </div>
                   {mode === "hosted" ? (
-                    <p className="text-[13.5px] text-[var(--ink)]/65">
+                    <p className="text-[13.5px] text-[color:color-mix(in_srgb,var(--ink)_65%,transparent)]">
                       Routing on our keys. Add prepaid credits to make your first call,
                       billed at AWS cost + 20%.
                     </p>
                   ) : (
-                    <p className="text-[13.5px] text-[var(--ink)]/65">
+                    <p className="text-[13.5px] text-[color:color-mix(in_srgb,var(--ink)_65%,transparent)]">
                       Routing on your own provider keys. You pay your provider directly. Nadir
                       charges a savings fee only.
                     </p>
                   )}
 
-                  <div className="rounded-[2px] border border-[var(--ink)]/20 bg-[var(--shell)] p-4">
+                  <div className="rounded-[2px] border border-[color:color-mix(in_srgb,var(--ink)_20%,transparent)] bg-[var(--shell)] p-4">
                     <p className="mb-2 eyebrow text-[var(--terracotta)]">Copy it now, it won't be shown again</p>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 break-all rounded-[2px] border border-[var(--line)] bg-[var(--paper)] p-2 font-mono text-[12.5px] text-[var(--ink)]">
                         {createdApiKey}
                       </code>
-                      <OutlineButton className="px-3 py-2" onClick={() => handleCopy(createdApiKey)}>
+                      <OutlineButton className="px-3 py-2" aria-label={copied ? "Copied" : "Copy API key"} onClick={() => handleCopy(createdApiKey)}>
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                       </OutlineButton>
                     </div>
@@ -763,7 +793,7 @@ console.log(response.choices[0].message.content);`;
                           "You pay your provider directly. Nadir's fee is 25% of what we save you, 10% above $2K a month.",
                         ]
                     ).map((item) => (
-                      <div key={item} className="flex items-start gap-2 text-[13px] text-[var(--ink)]/70">
+                      <div key={item} className="flex items-start gap-2 text-[13px] text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--terracotta)]" />
                         <span>{item}</span>
                       </div>
@@ -771,14 +801,18 @@ console.log(response.choices[0].message.content);`;
                   </div>
 
                   {mode === "hosted" && (
-                    <div className="space-y-2 rounded-[2px] border border-[var(--terracotta)]/25 bg-[var(--terracotta)]/[0.06] p-3">
-                      <p className="text-[12px] text-[var(--ink)]/70">
+                    <div className="space-y-2 rounded-[2px] border border-[color:color-mix(in_srgb,var(--terracotta)_25%,transparent)] bg-[color:color-mix(in_srgb,var(--terracotta)_6%,transparent)] p-3">
+                      <p className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]">
                         Hosted keys need a prepaid balance before your first call.
                         Add credits now, or switch to your own provider keys (BYOK)
                         to route for free.
                       </p>
-                      <OutlineButton className="w-full" onClick={() => navigate("/dashboard/billing")}>
-                        <CreditCard className="h-4 w-4" /> Add credits
+                      <OutlineButton className="w-full" onClick={() => handleSubscribe("onboarding_hosted_addcredits")} disabled={subscribing}>
+                        {subscribing ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting...</>
+                        ) : (
+                          <><CreditCard className="h-4 w-4" /> Add $5 credit, get $7</>
+                        )}
                       </OutlineButton>
                     </div>
                   )}
@@ -790,7 +824,7 @@ console.log(response.choices[0].message.content);`;
                   <div className="flex justify-center">
                     <button
                       onClick={() => setCreateDialogOpen(true)}
-                      className="text-[12px] text-[var(--ink)]/50 underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
+                      className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_50%,transparent)] underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
                     >
                       Customize routing and providers instead
                     </button>
@@ -802,7 +836,7 @@ console.log(response.choices[0].message.content);`;
                     <Key className="h-5 w-5 text-[var(--terracotta)]" />
                     <h2 className="font-editorial text-[22px] text-[var(--ink)]">You already have an API key</h2>
                   </div>
-                  <p className="text-[13.5px] text-[var(--ink)]/65">
+                  <p className="text-[13.5px] text-[color:color-mix(in_srgb,var(--ink)_65%,transparent)]">
                     Your key starting with <code className="rounded-[2px] bg-[var(--shell-deep)] px-1 py-0.5 font-mono text-[12px]">{existingKeyPrefix}...</code> is
                     active. For security we can't show it again. You can set up a new key or
                     continue with the one you have.
@@ -821,7 +855,7 @@ console.log(response.choices[0].message.content);`;
                 <div className="space-y-5">
                   <div className="space-y-1">
                     <h2 className="font-editorial text-[22px] text-[var(--ink)]">Choose how you want to run Nadir</h2>
-                    <p className="text-[13.5px] text-[var(--ink)]/65">
+                    <p className="text-[13.5px] text-[color:color-mix(in_srgb,var(--ink)_65%,transparent)]">
                       Bring your own keys (BYOK) or use ours. You pay only on what we save you.
                     </p>
                   </div>
@@ -834,17 +868,17 @@ console.log(response.choices[0].message.content);`;
                       className={`relative rounded-[2px] border p-4 text-left transition-all ${
                         chooserMode === "hosted"
                           ? "border-[var(--ink)] bg-[var(--paper)] shadow-[0_12px_30px_-18px_rgba(21,35,59,0.55)]"
-                          : "border-[var(--line)] bg-[var(--paper)]/60 hover:border-[var(--ink)]/40"
+                          : "border-[var(--line)] bg-[color:color-mix(in_srgb,var(--paper)_60%,transparent)] hover:border-[color:color-mix(in_srgb,var(--ink)_40%,transparent)]"
                       }`}
                     >
                       {chooserMode === "hosted" && (
                         <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--strawberry)]" />
                       )}
                       <div className="mb-1.5 flex items-center gap-2">
-                        <Zap className={`h-4 w-4 ${chooserMode === "hosted" ? "text-[var(--terracotta)]" : "text-[var(--ink)]/45"}`} />
+                        <Zap className={`h-4 w-4 ${chooserMode === "hosted" ? "text-[var(--terracotta)]" : "text-[color:color-mix(in_srgb,var(--ink)_45%,transparent)]"}`} />
                         <span className="text-[14px] font-semibold text-[var(--ink)]">Use our keys</span>
                       </div>
-                      <p className="mb-3 text-[12px] text-[var(--ink)]/60">
+                      <p className="mb-3 text-[12px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">
                         We run the keys, nothing to set up. Add prepaid credits to start, then pay only on what we save you.
                       </p>
                       <div className="space-y-1.5">
@@ -853,7 +887,7 @@ console.log(response.choices[0].message.content);`;
                           "No provider keys to manage",
                           "Powered by Claude on AWS Bedrock",
                         ].map((b) => (
-                          <div key={b} className="flex items-start gap-1.5 text-[12px] text-[var(--ink)]/60">
+                          <div key={b} className="flex items-start gap-1.5 text-[12px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">
                             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--terracotta)]" />
                             <span>{b}</span>
                           </div>
@@ -868,17 +902,17 @@ console.log(response.choices[0].message.content);`;
                       className={`relative rounded-[2px] border p-4 text-left transition-all ${
                         chooserMode === "byok"
                           ? "border-[var(--ink)] bg-[var(--paper)] shadow-[0_12px_30px_-18px_rgba(21,35,59,0.55)]"
-                          : "border-[var(--line)] bg-[var(--paper)]/60 hover:border-[var(--ink)]/40"
+                          : "border-[var(--line)] bg-[color:color-mix(in_srgb,var(--paper)_60%,transparent)] hover:border-[color:color-mix(in_srgb,var(--ink)_40%,transparent)]"
                       }`}
                     >
                       {chooserMode === "byok" && (
                         <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-[var(--strawberry)]" />
                       )}
                       <div className="mb-1.5 flex items-center gap-2">
-                        <Key className={`h-4 w-4 ${chooserMode === "byok" ? "text-[var(--terracotta)]" : "text-[var(--ink)]/45"}`} />
+                        <Key className={`h-4 w-4 ${chooserMode === "byok" ? "text-[var(--terracotta)]" : "text-[color:color-mix(in_srgb,var(--ink)_45%,transparent)]"}`} />
                         <span className="text-[14px] font-semibold text-[var(--ink)]">Bring your keys</span>
                       </div>
-                      <p className="mb-3 text-[12px] text-[var(--ink)]/60">
+                      <p className="mb-3 text-[12px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">
                         Use your own provider keys. You pay providers directly at your rate.
                       </p>
                       <div className="space-y-1.5">
@@ -887,7 +921,7 @@ console.log(response.choices[0].message.content);`;
                           "A savings fee only: 25% of the first $2K saved a month, 10% above",
                           "No base fee. If we save you nothing, you pay nothing.",
                         ].map((b) => (
-                          <div key={b} className="flex items-start gap-1.5 text-[12px] text-[var(--ink)]/60">
+                          <div key={b} className="flex items-start gap-1.5 text-[12px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">
                             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--terracotta)]" />
                             <span>{b}</span>
                           </div>
@@ -899,17 +933,18 @@ console.log(response.choices[0].message.content);`;
                   {/* BYOK inline provider entry */}
                   {chooserMode === "byok" && (
                     <div className="space-y-3 rounded-[2px] border border-[var(--line)] bg-[var(--shell)] p-4">
-                      <span className="eyebrow text-[var(--ink)]/55">Add a provider key to start</span>
+                      <span className="eyebrow text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">Add a provider key to start</span>
                       <div className="flex flex-wrap gap-2">
                         {PROVIDER_FIELDS.map((p) => (
                           <button
                             key={p.key}
                             type="button"
+                            aria-pressed={byokProvider === p.key}
                             onClick={() => { setByokProvider(p.key); setByokKey(""); }}
                             className={`rounded-[2px] border px-2.5 py-1 text-[12px] transition-all ${
                               byokProvider === p.key
                                 ? "border-[var(--ink)] bg-[var(--ink)] font-medium text-[var(--shell)]"
-                                : "border-[var(--line)] bg-[var(--paper)] text-[var(--ink)]/60 hover:border-[var(--ink)]/40"
+                                : "border-[var(--line)] bg-[var(--paper)] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)] hover:border-[color:color-mix(in_srgb,var(--ink)_40%,transparent)]"
                             }`}
                           >
                             {p.label}
@@ -919,17 +954,20 @@ console.log(response.choices[0].message.content);`;
                       <input
                         type="password"
                         autoComplete="off"
+                        aria-label={`${PROVIDER_FIELDS.find((p) => p.key === byokProvider)?.label} API key`}
+                        aria-invalid={!!byokKey && !isProviderKeyFormatValid(byokProvider, byokKey)}
+                        aria-describedby="byok-key-error"
                         placeholder={PROVIDER_FIELDS.find((p) => p.key === byokProvider)?.placeholder}
                         value={byokKey}
                         onChange={(e) => setByokKey(e.target.value)}
                         className={FIELD}
                       />
                       {byokKey && !isProviderKeyFormatValid(byokProvider, byokKey) && (
-                        <p className="text-[12px] text-[var(--terracotta-d)]">
+                        <p id="byok-key-error" role="alert" className="text-[12px] text-[var(--terracotta-d)]">
                           That doesn't look like a {PROVIDER_FIELDS.find((p) => p.key === byokProvider)?.label} key.
                         </p>
                       )}
-                      <p className="text-[12px] text-[var(--ink)]/55">
+                      <p className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">
                         Your key is encrypted and used only to route your requests. You can add more providers later.
                       </p>
                     </div>
@@ -954,7 +992,7 @@ console.log(response.choices[0].message.content);`;
                   <div className="flex justify-center">
                     <button
                       onClick={() => setCreateDialogOpen(true)}
-                      className="text-[12px] text-[var(--ink)]/50 underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
+                      className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_50%,transparent)] underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
                     >
                       Customize routing and providers instead
                     </button>
@@ -968,12 +1006,12 @@ console.log(response.choices[0].message.content);`;
           {currentStep === 1 && (
             <div className="space-y-4">
               <h2 className="font-editorial text-[22px] text-[var(--ink)]">Make your first call</h2>
-              <p className="text-[13.5px] text-[var(--ink)]/65">
+              <p className="text-[13.5px] text-[color:color-mix(in_srgb,var(--ink)_65%,transparent)]">
                 Paste this into your code, or send a test request right here.
               </p>
 
               <div className="space-y-2">
-                <span className="eyebrow text-[var(--ink)]/55">Integration snippet</span>
+                <span className="eyebrow text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">Integration snippet</span>
                 <div className="flex gap-1.5">
                   {[["python", "Python"], ["node", "Node.js"], ["curl", "cURL"]].map(([val, lbl]) => (
                     <button
@@ -983,7 +1021,7 @@ console.log(response.choices[0].message.content);`;
                       className={`rounded-[2px] px-3 py-1.5 text-[12px] font-medium transition-colors ${
                         snippetLang === val
                           ? "bg-[var(--ink)] text-[var(--shell)]"
-                          : "bg-[var(--shell-deep)] text-[var(--ink)]/60 hover:text-[var(--ink)]"
+                          : "bg-[var(--shell-deep)] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)] hover:text-[var(--ink)]"
                       }`}
                     >
                       {lbl}
@@ -991,18 +1029,19 @@ console.log(response.choices[0].message.content);`;
                   ))}
                 </div>
                 <div className="relative">
-                  <pre className="overflow-x-auto rounded-[2px] border border-[var(--ink)]/15 bg-[var(--ink)] p-4 font-mono text-[12px] leading-relaxed text-[var(--shell)]">
+                  <pre className="overflow-x-auto rounded-[2px] border border-[color:color-mix(in_srgb,var(--ink)_15%,transparent)] bg-[var(--ink)] p-4 font-mono text-[12px] leading-relaxed text-[var(--shell)]">
                     {getSnippet(snippetLang)}
                   </pre>
                   <button
                     type="button"
-                    className="absolute right-2 top-2 rounded-[2px] p-1.5 text-[var(--shell)]/70 transition-colors hover:bg-[var(--shell)]/10 hover:text-[var(--shell)]"
+                    aria-label="Copy code snippet"
+                    className="absolute right-2 top-2 rounded-[2px] p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                     onClick={() => handleCopy(getSnippet(snippetLang))}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <p className="text-[12px] text-[var(--ink)]/55">
+                <p className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">
                   Works with any OpenAI-compatible SDK. Just change the base URL to https://{NADIR_API_HOST}/v1.
                 </p>
               </div>
@@ -1016,7 +1055,7 @@ console.log(response.choices[0].message.content);`;
                   )}
                 </OutlineButton>
               ) : (
-                <p className="text-[12px] text-[var(--ink)]/55">
+                <p className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">
                   We can only send a test from here for a key created in this session. Use the
                   snippet above with your existing key, then check the dashboard for the request.
                 </p>
@@ -1024,36 +1063,36 @@ console.log(response.choices[0].message.content);`;
 
               {/* Test-call receipt — the proof */}
               {testResult && testResult.ok && (
-                <div className="relative rounded-[2px] border border-[var(--ink)]/20 bg-[var(--paper)] p-4">
+                <div role="status" aria-live="polite" className="relative rounded-[2px] border border-[color:color-mix(in_srgb,var(--ink)_20%,transparent)] bg-[var(--paper)] p-4">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="eyebrow text-[var(--ink)]/55">Routing receipt</span>
-                    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--sage)]">
-                      <CircleCheck className="h-3.5 w-3.5" /> 200 OK
+                    <span className="eyebrow text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)]">Routing receipt</span>
+                    <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--ink)]">
+                      <CircleCheck className="h-3.5 w-3.5 text-[var(--sage)]" /> 200 OK
                     </span>
                   </div>
                   {testResult.content && (
                     <p className="mb-3 font-hand text-[18px] leading-snug text-[var(--ink)]">"{testResult.content}"</p>
                   )}
-                  <dl className="space-y-1.5 border-t border-dashed border-[var(--ink)]/15 pt-2.5">
+                  <dl className="space-y-1.5 border-t border-dashed border-[color:color-mix(in_srgb,var(--ink)_15%,transparent)] pt-2.5">
                     <div className="flex items-baseline justify-between">
-                      <dt className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink)]/50">Model</dt>
+                      <dt className="font-mono text-[10px] uppercase tracking-wider text-[color:color-mix(in_srgb,var(--ink)_50%,transparent)]">Model</dt>
                       <dd className="font-mono text-[12px] text-[var(--ink)]">{testResult.model}</dd>
                     </div>
                     {testResult.latencyMs ? (
                       <div className="flex items-baseline justify-between">
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink)]/50">Latency</dt>
+                        <dt className="font-mono text-[10px] uppercase tracking-wider text-[color:color-mix(in_srgb,var(--ink)_50%,transparent)]">Latency</dt>
                         <dd className="font-mono text-[12px] text-[var(--ink)]">{testResult.latencyMs} ms</dd>
                       </div>
                     ) : null}
                     {testResult.costUsd != null && (
                       <div className="flex items-baseline justify-between">
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink)]/50">Cost</dt>
+                        <dt className="font-mono text-[10px] uppercase tracking-wider text-[color:color-mix(in_srgb,var(--ink)_50%,transparent)]">Cost</dt>
                         <dd className="font-mono text-[12px] text-[var(--ink)]">${testResult.costUsd.toFixed(4)}</dd>
                       </div>
                     )}
                     {savedPct != null && (
                       <div className="flex items-baseline justify-between">
-                        <dt className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink)]/50">Saved vs {testResult.benchmarkModel || "benchmark"}</dt>
+                        <dt className="font-mono text-[10px] uppercase tracking-wider text-[color:color-mix(in_srgb,var(--ink)_50%,transparent)]">Saved vs {testResult.benchmarkModel || "benchmark"}</dt>
                         <dd className="font-mono text-[13px] font-semibold text-[var(--terracotta)]">{savedPct}%</dd>
                       </div>
                     )}
@@ -1062,9 +1101,9 @@ console.log(response.choices[0].message.content);`;
               )}
 
               {testResult && !testResult.ok && (
-                <div className="space-y-1 rounded-[2px] border border-[var(--terracotta)]/30 bg-[var(--terracotta)]/[0.06] p-4">
+                <div role="alert" className="space-y-1 rounded-[2px] border border-[color:color-mix(in_srgb,var(--terracotta)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--terracotta)_6%,transparent)] p-4">
                   <p className="text-[13px] font-semibold text-[var(--terracotta-d)]">Request failed</p>
-                  <p className="break-words text-[12px] text-[var(--ink)]/60">{testResult.message}</p>
+                  <p className="break-words text-[12px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">{testResult.message}</p>
                 </div>
               )}
 
@@ -1072,12 +1111,12 @@ console.log(response.choices[0].message.content);`;
 
               {/* ═══ THE CONVERSION MOMENT ═══ */}
               {billingActive ? (
-                <div className="relative overflow-hidden rounded-[2px] border border-[var(--ink)]/20 bg-[var(--paper)] p-5">
+                <div className="relative overflow-hidden rounded-[2px] border border-[color:color-mix(in_srgb,var(--ink)_20%,transparent)] bg-[var(--paper)] p-5">
                   <div className="flex items-center gap-3">
                     <VerifierSeal className="h-12 w-12 shrink-0" color="var(--terracotta)" />
                     <div>
                       <p className="font-editorial text-[19px] text-[var(--ink)]">Billing active, $7 loaded</p>
-                      <p className="text-[13px] text-[var(--ink)]/60">Unlimited routing unlocked. You only pay on what we save you.</p>
+                      <p className="text-[13px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">Unlimited routing unlocked. You only pay on what we save you.</p>
                     </div>
                   </div>
                   <InkButton className="mt-4 w-full" onClick={handleFinish}>
@@ -1087,13 +1126,13 @@ console.log(response.choices[0].message.content);`;
               ) : (
                 <div className="relative overflow-hidden rounded-[3px] border-2 border-[var(--ink)] bg-[var(--paper)]">
                   {/* bonus stamp */}
-                  <span className="absolute -right-8 top-4 rotate-12 bg-[var(--strawberry)] px-8 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--shell)] shadow-sm">
+                  <span className="absolute -right-8 top-4 rotate-12 bg-[var(--strawberry)] px-8 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink)] shadow-sm">
                     +$2 bonus
                   </span>
                   <div className="p-5">
                     <div className="flex items-center gap-2">
                       <Gift className="h-4 w-4 text-[var(--terracotta)]" />
-                      <span className="eyebrow text-[var(--ink)]/60">First-time offer</span>
+                      <span className="eyebrow text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">First-time offer</span>
                     </div>
 
                     <h3 className="mt-3 font-editorial text-[26px] leading-tight text-[var(--ink)]">
@@ -1104,7 +1143,7 @@ console.log(response.choices[0].message.content);`;
                       )}
                     </h3>
 
-                    <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--ink)]/70">
+                    <p className="mt-2 text-[13.5px] leading-relaxed text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]">
                       Your first $5 becomes <span className="font-semibold text-[var(--ink)]">$7 of credit</span>, first time only.
                       No monthly fee, you only ever pay on what we save you. Cancel anytime.
                     </p>
@@ -1116,7 +1155,7 @@ console.log(response.choices[0].message.content);`;
                         "Context optimization",
                         "Priority support",
                       ].map((b) => (
-                        <div key={b} className="flex items-center gap-1.5 text-[12.5px] text-[var(--ink)]/70">
+                        <div key={b} className="flex items-center gap-1.5 text-[12.5px] text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)]">
                           <Check className="h-3.5 w-3.5 shrink-0 text-[var(--terracotta)]" />
                           <span>{b}</span>
                         </div>
@@ -1130,15 +1169,14 @@ console.log(response.choices[0].message.content);`;
                         <>Add $5, get $7 of credit <ArrowRight className="h-3.5 w-3.5" /></>
                       )}
                     </InkButton>
-                    <p className="mt-2 text-center font-mono text-[11px] text-[var(--ink)]/45">
+                    <p className="mt-2 text-center font-mono text-[11px] text-[color:color-mix(in_srgb,var(--ink)_45%,transparent)]">
                       30 seconds with Stripe · card on file, no subscription
                     </p>
 
                     <div className="mt-4 flex justify-center">
                       <button
-                        onClick={handleFinish}
-                        disabled={!hasKey}
-                        className="text-[12px] text-[var(--ink)]/50 underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline disabled:opacity-40"
+                        onClick={hasKey ? handleFinish : () => goToStep(0)}
+                        className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)] underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
                       >
                         I'll add it later, finish setup
                       </button>
@@ -1161,7 +1199,7 @@ console.log(response.choices[0].message.content);`;
           {currentStep > 0 ? (
             <button
               onClick={() => goToStep(0)}
-              className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink)]/55 transition-colors hover:text-[var(--ink)]"
+              className="inline-flex items-center gap-1.5 text-[13px] text-[color:color-mix(in_srgb,var(--ink)_55%,transparent)] transition-colors hover:text-[var(--ink)]"
             >
               <ArrowRight className="h-3.5 w-3.5 rotate-180" /> Back
             </button>
@@ -1176,7 +1214,7 @@ console.log(response.choices[0].message.content);`;
               <Monitor className="h-4 w-4 text-[var(--terracotta)]" />
               <span className="text-[13.5px] font-semibold text-[var(--ink)]">Finish on your computer?</span>
             </div>
-            <p className="text-[12px] text-[var(--ink)]/60">
+            <p className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_60%,transparent)]">
               Making your first call is easier on a larger screen. We'll
               email a link to {user?.email ?? "your account"} so you can pick up
               right where you left off.
@@ -1200,7 +1238,7 @@ console.log(response.choices[0].message.content);`;
         <div className="mt-6 flex justify-center pb-2">
           <button
             onClick={handleSkip}
-            className="text-[12px] text-[var(--ink)]/40 underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
+            className="text-[12px] text-[color:color-mix(in_srgb,var(--ink)_70%,transparent)] underline-offset-2 transition-colors hover:text-[var(--ink)] hover:underline"
           >
             Skip onboarding for now
           </button>

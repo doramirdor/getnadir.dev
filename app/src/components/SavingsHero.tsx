@@ -79,7 +79,7 @@ export function SavingsHero() {
           </h2>
           <p className="mt-2 max-w-md text-[13.5px] leading-relaxed text-[var(--ink)]/65">
             Route your first request and watch Nadir drop it to the model that fits.
-            Typically 68% below always-Opus, with quality kept.
+            Typically 60% below always-Opus, with quality kept.
           </p>
           <Link
             to="/dashboard/playground"

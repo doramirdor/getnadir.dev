@@ -281,12 +281,12 @@ const Auth = ({ notice }: { notice?: string } = {}) => {
 
           <div className="flex items-center gap-8">
             <div>
-              <div className="font-editorial text-[30px] leading-none text-[var(--terracotta)]">68%</div>
+              <div className="font-editorial text-[30px] leading-none text-[var(--terracotta)]">60%</div>
               <div className="mt-1.5 eyebrow text-[var(--ink)]/55">lower cost</div>
             </div>
             <span className="h-9 w-px bg-[var(--line)]" />
             <div>
-              <div className="font-editorial text-[30px] leading-none text-[var(--ink)]">97.6%</div>
+              <div className="font-editorial text-[30px] leading-none text-[var(--ink)]">98%</div>
               <div className="mt-1.5 eyebrow text-[var(--ink)]/55">quality kept</div>
             </div>
           </div>

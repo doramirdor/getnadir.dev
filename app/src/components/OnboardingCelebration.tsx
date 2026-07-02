@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import { Sparkle } from "@/components/brand/motifs";
 
@@ -16,6 +16,7 @@ interface FirstCallResult {
   model?: string;
   costUsd?: number | null;
   benchmarkModel?: string | null;
+  benchmarkCostUsd?: number | null;
   savingsPct?: number | null;
 }
 
@@ -66,6 +67,7 @@ export const OnboardingCelebration = ({
   // timeout (rather than rAF, which headless/background tabs throttle) reliably
   // flips us to the final widths even if the frame callback never fires.
   const [grown, setGrown] = useState(false);
+  const focusedRef = useRef(false);
   useEffect(() => {
     const id = setTimeout(() => setGrown(true), 60);
     return () => clearTimeout(id);
@@ -75,10 +77,24 @@ export const OnboardingCelebration = ({
   const hasSavings = savings != null && savings > 0 && savings < 100;
 
   // Derived comparison numbers (only meaningful when we have a real first call).
+  // Prefer the exact benchmark cost carried from the API; only reconstruct from
+  // the (rounded) savings % as a fallback so the "Always Opus" figure and the
+  // multiplier aren't distorted by integer rounding.
   const routed = result?.costUsd ?? null;
   const benchmarkCost =
-    hasSavings && routed != null ? routed / (1 - savings / 100) : null;
-  const multiplier = hasSavings ? 100 / (100 - savings) : null;
+    result?.benchmarkCostUsd != null
+      ? result.benchmarkCostUsd
+      : hasSavings && routed != null
+        ? routed / (1 - savings / 100)
+        : null;
+  const rawMultiplier =
+    benchmarkCost != null && routed != null && routed > 0
+      ? benchmarkCost / routed
+      : hasSavings
+        ? 100 / (100 - savings)
+        : null;
+  // Cap the headline multiplier so a near-100% first call can't render "100x".
+  const multiplier = rawMultiplier != null ? Math.min(rawMultiplier, 50) : null;
   const benchModelLabel = prettyModel(result?.benchmarkModel);
 
   // "5x" / "2.5x" — integer when it lands clean, else one decimal.
@@ -93,7 +109,15 @@ export const OnboardingCelebration = ({
   const nadirBarPct = hasSavings ? Math.max(6, 100 - savings) : 100;
 
   return (
-    <div className="nadir-brand fixed inset-0 z-[60] overflow-y-auto text-[#f6f2ea]" style={{ background: INK }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Onboarding complete"
+      ref={(el) => { if (el && !focusedRef.current) { focusedRef.current = true; el.focus(); } }}
+      tabIndex={-1}
+      className="nadir-brand fixed inset-0 z-[60] overflow-y-auto text-[#f6f2ea] outline-none"
+      style={{ background: INK }}
+    >
       {/* faint brand glow so the flat ink has some depth */}
       <div
         aria-hidden
@@ -160,7 +184,7 @@ export const OnboardingCelebration = ({
                       className="h-11 shrink-0 rounded-[3px] transition-[width] duration-700 ease-out"
                       style={{ width: grown ? `${nadirBarPct}%` : "6%", transitionDelay: "120ms", background: TERRACOTTA }}
                     />
-                    <span className="whitespace-nowrap font-mono text-[15px] font-semibold" style={{ color: TERRACOTTA }}>
+                    <span className="whitespace-nowrap font-mono text-[15px] font-semibold" style={{ color: CORAL }}>
                       {routed != null ? fmtCost(routed) : ""}
                     </span>
                   </div>
@@ -186,10 +210,10 @@ export const OnboardingCelebration = ({
                     style={{ ["--stat-delay" as string]: `${280 + i * 120}ms` }}
                   >
                     <span className="flex items-center gap-3">
-                      <span style={{ color: TERRACOTTA }}>✓</span>
+                      <span aria-hidden="true" style={{ color: CORAL }}>✓</span>
                       {item.label}
                     </span>
-                    <span className="text-[13px] font-semibold" style={{ color: TERRACOTTA }}>{item.status}</span>
+                    <span className="text-[13px] font-semibold" style={{ color: CORAL }}>{item.status}</span>
                   </li>
                 ))}
               </ul>
@@ -272,6 +296,7 @@ export const OnboardingCelebration = ({
                     type="button"
                     onClick={onAddCredit}
                     disabled={subscribing}
+                    aria-busy={subscribing}
                     className="press mt-3 flex w-full items-center justify-center gap-2 rounded-[2px] px-5 py-3 text-[12px] font-semibold uppercase tracking-[0.11em] text-[#f6f2ea] transition-opacity hover:opacity-90 disabled:opacity-60"
                     style={{ background: TERRACOTTA }}
                   >
